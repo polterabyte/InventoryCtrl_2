@@ -1,0 +1,55 @@
+@using Microsoft.AspNetCore.Components.Forms
+@page "/login"
+@using System.Net.Http.Json
+@inject HttpClient Http
+
+<h3>Вход</h3>
+
+<EditForm Model="loginModel" OnValidSubmit="HandleLogin">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <div>
+        <label>Логин:</label>
+        <InputText @bind-Value="loginModel.Username" />
+    </div>
+    <div>
+        <label>Пароль:</label>
+        <InputText @bind-Value="loginModel.Password" type="password" />
+    </div>
+    <button type="submit">Войти</button>
+</EditForm>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div style="color:red">@errorMessage</div>
+}
+
+@code {
+    private LoginModel loginModel = new();
+    private string? errorMessage;
+
+    private async Task HandleLogin()
+    {
+        errorMessage = null;
+        var response = await Http.PostAsJsonAsync("api/auth/login", loginModel);
+        if (response.IsSuccessStatusCode)
+        {
+            var result = await response.Content.ReadFromJsonAsync<LoginResult>();
+            // TODO: сохранить токен и перейти на главную страницу
+        }
+        else
+        {
+            errorMessage = "Ошибка авторизации";
+        }
+    }
+
+    public class LoginModel
+    {
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+    public class LoginResult
+    {
+        public string Token { get; set; } = string.Empty;
+    }
+}
