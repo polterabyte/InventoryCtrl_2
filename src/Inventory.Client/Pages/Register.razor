@@ -1,17 +1,95 @@
 @page "/register"
 
-<RegisterForm OnRegisterSuccess="HandleRegisterSuccess" OnRegisterError="HandleRegisterError" />
+<h3>Регистрация</h3>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Создать новый аккаунт</h5>
+                    
+                    <EditForm Model="@registerModel" OnValidSubmit="@HandleRegister">
+                        <DataAnnotationsValidator />
+                        
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Имя пользователя:</label>
+                            <InputText @bind-Value="registerModel.Username" class="form-control" id="username" />
+                            <ValidationMessage For="@(() => registerModel.Username)" />
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email:</label>
+                            <InputText @bind-Value="registerModel.Email" type="email" class="form-control" id="email" />
+                            <ValidationMessage For="@(() => registerModel.Email)" />
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Пароль:</label>
+                            <InputText @bind-Value="registerModel.Password" type="password" class="form-control" id="password" />
+                            <ValidationMessage For="@(() => registerModel.Password)" />
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">Подтверждение пароля:</label>
+                            <InputText @bind-Value="registerModel.ConfirmPassword" type="password" class="form-control" id="confirmPassword" />
+                            <ValidationMessage For="@(() => registerModel.ConfirmPassword)" />
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary" disabled="@isLoading">
+                                @if (isLoading)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                }
+                                Зарегистрироваться
+                            </button>
+                        </div>
+                    </EditForm>
+                    
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger mt-3">@errorMessage</div>
+                    }
+                    
+                    @if (!string.IsNullOrEmpty(successMessage))
+                    {
+                        <div class="alert alert-success mt-3">@successMessage</div>
+                    }
+                    
+                    <div class="mt-3 text-center">
+                        <p>Уже есть аккаунт? <a href="/login">Войти</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 @code {
-    private Task HandleRegisterSuccess(AuthResult result)
-    {
-        // Success message is already displayed in the form component
-        return Task.CompletedTask;
-    }
+    private RegisterRequest registerModel = new() { Username = string.Empty, Email = string.Empty, Password = string.Empty, ConfirmPassword = string.Empty };
+    private bool isLoading = false;
+    private string errorMessage = string.Empty;
+    private string successMessage = string.Empty;
 
-    private Task HandleRegisterError(string errorMessage)
+    private async Task HandleRegister()
     {
-        // Error is already displayed in the form component
-        return Task.CompletedTask;
+        isLoading = true;
+        errorMessage = string.Empty;
+        successMessage = string.Empty;
+
+        try
+        {
+            // Здесь будет логика регистрации
+            successMessage = "Регистрация выполнена успешно!";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Ошибка регистрации: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 }

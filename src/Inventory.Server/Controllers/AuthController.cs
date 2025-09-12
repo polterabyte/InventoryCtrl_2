@@ -12,7 +12,7 @@ namespace Inventory.Server.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class AuthController(UserManager<IdentityUser> userManager, IConfiguration config) : ControllerBase
+    public class AuthController(UserManager<Inventory.Server.Models.User> userManager, IConfiguration config) : ControllerBase
     {
         private readonly IConfiguration _config = config;
 
@@ -31,7 +31,7 @@ namespace Inventory.Server.Controllers
 
             var claims = new List<Claim>
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
+            new Claim(JwtRegisteredClaimNames.Sub, user.UserName ?? string.Empty),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
@@ -50,7 +50,15 @@ namespace Inventory.Server.Controllers
                 signingCredentials: creds
             );
 
-            return Ok(new { token = new JwtSecurityTokenHandler().WriteToken(token) });
+            return Ok(new LoginResult
+            {
+                Token = new JwtSecurityTokenHandler().WriteToken(token),
+                Username = user.UserName ?? string.Empty,
+                Email = user.Email ?? string.Empty,
+                Role = user.Role,
+                Roles = roles.ToList(),
+                ExpiresAt = expires
+            });
         }
 
         [HttpPost("refresh")]
@@ -77,16 +85,20 @@ namespace Inventory.Server.Controllers
             if (existingEmail != null)
                 return BadRequest("Email already exists.");
 
-            var user = new IdentityUser
+            var user = new Inventory.Server.Models.User
             {
+                Id = Guid.NewGuid().ToString(),
                 UserName = request.Username,
                 Email = request.Email,
-                EmailConfirmed = true // Для простоты подтверждаем email автоматически
+                EmailConfirmed = true, // Для простоты подтверждаем email автоматически
+                Role = "User" // По умолчанию обычный пользователь
             };
 
             var result = await userManager.CreateAsync(user, request.Password);
             if (result.Succeeded)
             {
+                // Назначить роль пользователю
+                await userManager.AddToRoleAsync(user, "User");
                 return Ok(new { success = true, message = "User created successfully." });
             }
 

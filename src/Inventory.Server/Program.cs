@@ -36,7 +36,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<Inventory.Server.Models.AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
+builder.Services.AddIdentity<Inventory.Server.Models.User, IdentityRole>(options =>
 {
     options.Password.RequireDigit = true;
     options.Password.RequireUppercase = true;
@@ -63,7 +63,7 @@ builder.Services.AddAuthentication(options =>
             ValidateIssuerSigningKey = true,
             ValidIssuer = jwtSettings["Issuer"],
             ValidAudience = jwtSettings["Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? string.Empty))
         };
     });
 
@@ -72,7 +72,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowConfiguredOrigins", policy =>
     {
-        policy.WithOrigins(allowedOrigins)
+        policy.WithOrigins(allowedOrigins ?? Array.Empty<string>())
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -96,13 +96,55 @@ else
     db.Database.Migrate();
 
     var roleManager = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.RoleManager<Microsoft.AspNetCore.Identity.IdentityRole>>();
+    var userManager = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<Inventory.Server.Models.User>>();
 
+    // Создать роли, если их нет
     const string adminRole = "Admin";
+    const string superUserRole = "SuperUser";
+    const string userRole = "User";
 
-    // Создать роль Admin, если нет
-    if (!roleManager.RoleExistsAsync(adminRole).Result)
+    if (!await roleManager.RoleExistsAsync(adminRole))
     {
-        roleManager.CreateAsync(new Microsoft.AspNetCore.Identity.IdentityRole(adminRole)).Wait();
+        await roleManager.CreateAsync(new Microsoft.AspNetCore.Identity.IdentityRole(adminRole));
+    }
+    
+    if (!await roleManager.RoleExistsAsync(superUserRole))
+    {
+        await roleManager.CreateAsync(new Microsoft.AspNetCore.Identity.IdentityRole(superUserRole));
+    }
+    
+    if (!await roleManager.RoleExistsAsync(userRole))
+    {
+        await roleManager.CreateAsync(new Microsoft.AspNetCore.Identity.IdentityRole(userRole));
+    }
+
+    // Создать суперпользователя, если его нет
+    const string superUserEmail = "admin@inventory.com";
+    const string superUserPassword = "SuperAdmin123!";
+    
+    var superUser = await userManager.FindByEmailAsync(superUserEmail);
+    if (superUser == null)
+    {
+        superUser = new Inventory.Server.Models.User
+        {
+            Id = Guid.NewGuid().ToString(),
+            UserName = "superadmin",
+            Email = superUserEmail,
+            EmailConfirmed = true,
+            Role = superUserRole
+        };
+        
+        var result = await userManager.CreateAsync(superUser, superUserPassword);
+        if (result.Succeeded)
+        {
+            await userManager.AddToRoleAsync(superUser, superUserRole);
+            await userManager.AddToRoleAsync(superUser, adminRole);
+            Log.Information("Суперпользователь создан: {Email}", superUserEmail);
+        }
+        else
+        {
+            Log.Error("Ошибка создания суперпользователя: {Errors}", string.Join(", ", result.Errors.Select(e => e.Description)));
+        }
     }
 }
 app.UseStaticFiles();
@@ -114,11 +156,11 @@ app.UseAntiforgery();
 
 app.MapControllers();
 
-// Настройка Blazor Components с WebAssembly
-app.MapRazorComponents<Inventory.Client.App>()
-    .AddInteractiveWebAssemblyRenderMode()
-    .AddAdditionalAssemblies(
-        // typeof(Inventory.Shared.LoginRequest).Assembly
-    );
+// Разрешаем CORS для Blazor WebAssembly клиента
+app.MapFallback(async context =>
+{
+    context.Response.Headers.Append("Access-Control-Allow-Origin", "*");
+    await context.Response.WriteAsync("API Server is running. Use Blazor WebAssembly client to access the application.");
+});
 
 app.Run();

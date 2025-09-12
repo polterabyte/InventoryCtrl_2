@@ -22,7 +22,7 @@
     </div>
     <div class="mb-3">
         <label class="form-label">Подтверждение пароля:</label>
-        <InputText class="form-control" @bind-Value="confirmPassword" type="password" />
+        <InputText class="form-control" @bind-Value="registerModel.ConfirmPassword" type="password" />
     </div>
     <div class="mb-3">
         <button type="submit" class="btn btn-primary" disabled="@isLoading">
@@ -57,8 +57,7 @@
     [Parameter] public EventCallback<AuthResult> OnRegisterSuccess { get; set; }
     [Parameter] public EventCallback<string> OnRegisterError { get; set; }
 
-    private RegisterRequest registerModel = new() { Username = string.Empty, Email = string.Empty, Password = string.Empty };
-    private string confirmPassword = string.Empty;
+    private RegisterRequest registerModel = new() { Username = string.Empty, Email = string.Empty, Password = string.Empty, ConfirmPassword = string.Empty };
     private string? errorMessage;
     private string? successMessage;
     private bool isLoading = false;
@@ -72,7 +71,7 @@
         try
         {
             // Валидация паролей
-            if (registerModel.Password != confirmPassword)
+            if (registerModel.Password != registerModel.ConfirmPassword)
             {
                 errorMessage = "Пароли не совпадают";
                 await OnRegisterError.InvokeAsync(errorMessage);
@@ -93,8 +92,7 @@
             if (result.Success)
             {
                 successMessage = "Пользователь успешно создан! Теперь вы можете войти в систему.";
-                registerModel = new() { Username = string.Empty, Email = string.Empty, Password = string.Empty };
-                confirmPassword = string.Empty;
+                registerModel = new() { Username = string.Empty, Email = string.Empty, Password = string.Empty, ConfirmPassword = string.Empty };
                 await OnRegisterSuccess.InvokeAsync(result);
             }
             else

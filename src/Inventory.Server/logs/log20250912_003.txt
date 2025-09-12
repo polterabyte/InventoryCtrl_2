@@ -2951,3 +2951,611 @@ DenyAnonymousAuthorizationRequirement: Requires an authenticated user.
 DenyAnonymousAuthorizationRequirement: Requires an authenticated user.
 2025-09-12 21:24:11.023 +03:00 [INF] Executed endpoint '/register (/register)'
 2025-09-12 21:24:11.024 +03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5001/register - 200 null text/html; charset=utf-8 7.051ms
+2025-09-12 21:27:26.581 +03:00 [INF] Request starting HTTP/1.1 GET http://localhost:5001/register - null null
+2025-09-12 21:27:26.584 +03:00 [INF] Executing endpoint '/register (/register)'
+2025-09-12 21:27:26.587 +03:00 [INF] Authorization failed. These requirements were not met:
+DenyAnonymousAuthorizationRequirement: Requires an authenticated user.
+2025-09-12 21:27:26.589 +03:00 [INF] Executed endpoint '/register (/register)'
+2025-09-12 21:27:26.592 +03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5001/register - 200 null text/html; charset=utf-8 11.2361ms
+2025-09-12 21:27:37.120 +03:00 [INF] Request starting HTTP/1.1 GET http://localhost:5001/register - null null
+2025-09-12 21:27:37.122 +03:00 [INF] Executing endpoint '/register (/register)'
+2025-09-12 21:27:37.123 +03:00 [INF] Authorization failed. These requirements were not met:
+DenyAnonymousAuthorizationRequirement: Requires an authenticated user.
+2025-09-12 21:27:37.124 +03:00 [INF] Executed endpoint '/register (/register)'
+2025-09-12 21:27:37.125 +03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5001/register - 200 null text/html; charset=utf-8 4.7384ms
+2025-09-12 21:29:17.339 +03:00 [INF] Executed DbCommand (17ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-09-12 21:29:17.656 +03:00 [INF] Executed DbCommand (6ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" (
+    "MigrationId" character varying(150) NOT NULL,
+    "ProductVersion" character varying(32) NOT NULL,
+    CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY ("MigrationId")
+);
+2025-09-12 21:29:17.665 +03:00 [INF] Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+2025-09-12 21:29:17.668 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+LOCK TABLE "__EFMigrationsHistory" IN ACCESS EXCLUSIVE MODE
+2025-09-12 21:29:17.672 +03:00 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-09-12 21:29:17.677 +03:00 [INF] No migrations were applied. The database is already up to date.
+2025-09-12 21:29:17.991 +03:00 [INF] Executed DbCommand (18ms) [Parameters=[@__normalizedName_0='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT a."Id", a."ConcurrencyStamp", a."Name", a."NormalizedName"
+FROM "AspNetRoles" AS a
+WHERE a."NormalizedName" = @__normalizedName_0
+LIMIT 1
+2025-09-12 21:29:18.065 +03:00 [INF] User profile is available. Using 'C:\Users\d'd\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-09-12 21:29:18.133 +03:00 [WRN] Mapped static asset endpoints not found. Ensure 'MapStaticAssets' is called before 'AddInteractiveWebAssemblyRenderMode'.
+2025-09-12 21:29:18.327 +03:00 [INF] Now listening on: https://localhost:5000
+2025-09-12 21:29:18.418 +03:00 [INF] Now listening on: http://localhost:5001
+2025-09-12 21:29:18.589 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-09-12 21:29:18.709 +03:00 [INF] Hosting environment: Development
+2025-09-12 21:29:18.920 +03:00 [INF] Content root path: C:\rec\prg\repo\InventoryCtrl_2\src\Inventory.Server
+2025-09-12 21:29:21.613 +03:00 [INF] Request starting HTTP/2 GET https://localhost:5000/ - null null
+2025-09-12 21:29:21.938 +03:00 [INF] Executing endpoint '/ (/)'
+2025-09-12 21:29:22.016 +03:00 [INF] Authorization failed. These requirements were not met:
+DenyAnonymousAuthorizationRequirement: Requires an authenticated user.
+2025-09-12 21:29:22.101 +03:00 [INF] Executed endpoint '/ (/)'
+2025-09-12 21:29:22.107 +03:00 [INF] Request finished HTTP/2 GET https://localhost:5000/ - 200 null text/html; charset=utf-8 502.9129ms
+2025-09-12 21:29:24.508 +03:00 [INF] Request starting HTTP/2 GET https://localhost:5000/register - null null
+2025-09-12 21:29:24.515 +03:00 [INF] Executing endpoint '/register (/register)'
+2025-09-12 21:29:24.525 +03:00 [INF] Executed endpoint '/register (/register)'
+2025-09-12 21:29:24.527 +03:00 [INF] Request finished HTTP/2 GET https://localhost:5000/register - 200 null text/html; charset=utf-8 18.9908ms
+2025-09-12 21:29:31.661 +03:00 [INF] Request starting HTTP/2 GET https://localhost:5000/register - null null
+2025-09-12 21:29:31.671 +03:00 [INF] Executing endpoint '/register (/register)'
+2025-09-12 21:29:31.683 +03:00 [INF] Executed endpoint '/register (/register)'
+2025-09-12 21:29:31.686 +03:00 [INF] Request finished HTTP/2 GET https://localhost:5000/register - 200 null text/html; charset=utf-8 24.7597ms
+2025-09-12 21:29:37.625 +03:00 [INF] Request starting HTTP/1.1 GET http://localhost:5001/register - null null
+2025-09-12 21:29:37.626 +03:00 [INF] Executing endpoint '/register (/register)'
+2025-09-12 21:29:37.630 +03:00 [INF] Executed endpoint '/register (/register)'
+2025-09-12 21:29:37.631 +03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5001/register - 200 null text/html; charset=utf-8 6.0319ms
+2025-09-12 21:30:03.294 +03:00 [INF] Application is shutting down...
+2025-09-12 21:31:46.186 +03:00 [INF] Executed DbCommand (39ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-09-12 21:31:47.023 +03:00 [INF] Executed DbCommand (6ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" (
+    "MigrationId" character varying(150) NOT NULL,
+    "ProductVersion" character varying(32) NOT NULL,
+    CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY ("MigrationId")
+);
+2025-09-12 21:31:47.035 +03:00 [INF] Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+2025-09-12 21:31:47.039 +03:00 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+LOCK TABLE "__EFMigrationsHistory" IN ACCESS EXCLUSIVE MODE
+2025-09-12 21:31:47.043 +03:00 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-09-12 21:31:47.051 +03:00 [INF] No migrations were applied. The database is already up to date.
+2025-09-12 21:31:47.409 +03:00 [INF] Executed DbCommand (23ms) [Parameters=[@__normalizedName_0='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT a."Id", a."ConcurrencyStamp", a."Name", a."NormalizedName"
+FROM "AspNetRoles" AS a
+WHERE a."NormalizedName" = @__normalizedName_0
+LIMIT 1
+2025-09-12 21:31:47.502 +03:00 [INF] User profile is available. Using 'C:\Users\d'd\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-09-12 21:31:47.586 +03:00 [WRN] Mapped static asset endpoints not found. Ensure 'MapStaticAssets' is called before 'AddInteractiveWebAssemblyRenderMode'.
+2025-09-12 21:31:47.719 +03:00 [INF] Now listening on: https://localhost:5000
+2025-09-12 21:31:47.720 +03:00 [INF] Now listening on: http://localhost:5001
+2025-09-12 21:31:47.723 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-09-12 21:31:47.725 +03:00 [INF] Hosting environment: Development
+2025-09-12 21:31:47.726 +03:00 [INF] Content root path: C:\rec\prg\repo\InventoryCtrl_2\src\Inventory.Server
+2025-09-12 21:31:51.253 +03:00 [INF] Request starting HTTP/2 GET https://localhost:5000/ - null null
+2025-09-12 21:31:51.320 +03:00 [INF] Executing endpoint '/ (/)'
+2025-09-12 21:31:51.370 +03:00 [INF] Authorization failed. These requirements were not met:
+DenyAnonymousAuthorizationRequirement: Requires an authenticated user.
+2025-09-12 21:31:51.434 +03:00 [INF] Executed endpoint '/ (/)'
+2025-09-12 21:31:51.441 +03:00 [INF] Request finished HTTP/2 GET https://localhost:5000/ - 200 null text/html; charset=utf-8 189.8786ms
+2025-09-12 21:31:54.407 +03:00 [INF] Request starting HTTP/2 GET https://localhost:5000/register - null null
+2025-09-12 21:31:54.412 +03:00 [INF] Executing endpoint '/register (/register)'
+2025-09-12 21:31:54.419 +03:00 [INF] Executed endpoint '/register (/register)'
+2025-09-12 21:31:54.421 +03:00 [INF] Request finished HTTP/2 GET https://localhost:5000/register - 200 null text/html; charset=utf-8 14.5603ms
+2025-09-12 21:31:58.417 +03:00 [INF] Request starting HTTP/1.1 GET http://localhost:5001/register - null null
+2025-09-12 21:31:58.423 +03:00 [INF] Executing endpoint '/register (/register)'
+2025-09-12 21:31:58.431 +03:00 [INF] Executed endpoint '/register (/register)'
+2025-09-12 21:31:58.433 +03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5001/register - 200 null text/html; charset=utf-8 15.8483ms
+2025-09-12 21:32:58.899 +03:00 [INF] Executed DbCommand (21ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-09-12 21:32:59.193 +03:00 [INF] Executed DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" (
+    "MigrationId" character varying(150) NOT NULL,
+    "ProductVersion" character varying(32) NOT NULL,
+    CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY ("MigrationId")
+);
+2025-09-12 21:32:59.204 +03:00 [INF] Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+2025-09-12 21:32:59.207 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+LOCK TABLE "__EFMigrationsHistory" IN ACCESS EXCLUSIVE MODE
+2025-09-12 21:32:59.210 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-09-12 21:32:59.216 +03:00 [INF] No migrations were applied. The database is already up to date.
+2025-09-12 21:32:59.526 +03:00 [INF] Executed DbCommand (20ms) [Parameters=[@__normalizedName_0='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT a."Id", a."ConcurrencyStamp", a."Name", a."NormalizedName"
+FROM "AspNetRoles" AS a
+WHERE a."NormalizedName" = @__normalizedName_0
+LIMIT 1
+2025-09-12 21:32:59.601 +03:00 [INF] User profile is available. Using 'C:\Users\d'd\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-09-12 21:32:59.673 +03:00 [WRN] Mapped static asset endpoints not found. Ensure 'MapStaticAssets' is called before 'AddInteractiveWebAssemblyRenderMode'.
+2025-09-12 21:32:59.788 +03:00 [INF] Now listening on: https://localhost:5000
+2025-09-12 21:32:59.790 +03:00 [INF] Now listening on: http://localhost:5001
+2025-09-12 21:32:59.793 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-09-12 21:32:59.794 +03:00 [INF] Hosting environment: Development
+2025-09-12 21:32:59.795 +03:00 [INF] Content root path: C:\rec\prg\repo\InventoryCtrl_2\src\Inventory.Server
+2025-09-12 21:33:03.019 +03:00 [INF] Request starting HTTP/2 GET https://localhost:5000/ - null null
+2025-09-12 21:33:03.085 +03:00 [INF] Executing endpoint '/ (/)'
+2025-09-12 21:33:03.151 +03:00 [INF] Authorization failed. These requirements were not met:
+DenyAnonymousAuthorizationRequirement: Requires an authenticated user.
+2025-09-12 21:33:03.191 +03:00 [INF] Executed endpoint '/ (/)'
+2025-09-12 21:33:03.195 +03:00 [INF] Request finished HTTP/2 GET https://localhost:5000/ - 200 null text/html; charset=utf-8 177.2669ms
+2025-09-12 21:33:07.809 +03:00 [INF] Request starting HTTP/2 GET https://localhost:5000/register - null null
+2025-09-12 21:33:07.815 +03:00 [INF] Executing endpoint '/register (/register)'
+2025-09-12 21:33:07.823 +03:00 [INF] Executed endpoint '/register (/register)'
+2025-09-12 21:33:07.825 +03:00 [INF] Request finished HTTP/2 GET https://localhost:5000/register - 200 null text/html; charset=utf-8 15.6388ms
+2025-09-12 21:33:21.465 +03:00 [INF] Request starting HTTP/1.1 GET http://localhost:5001/register - null null
+2025-09-12 21:33:21.470 +03:00 [INF] Executing endpoint '/register (/register)'
+2025-09-12 21:33:21.479 +03:00 [INF] Executed endpoint '/register (/register)'
+2025-09-12 21:33:21.480 +03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5001/register - 200 null text/html; charset=utf-8 14.7371ms
+2025-09-12 21:33:28.392 +03:00 [INF] Request starting HTTP/1.1 GET http://localhost:5001/login - null null
+2025-09-12 21:33:28.393 +03:00 [INF] Executing endpoint '/login (/login)'
+2025-09-12 21:33:28.395 +03:00 [INF] Executed endpoint '/login (/login)'
+2025-09-12 21:33:28.396 +03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5001/login - 200 null text/html; charset=utf-8 4.72ms
+2025-09-12 21:44:36.434 +03:00 [INF] Executed DbCommand (14ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-09-12 21:44:36.716 +03:00 [INF] Executed DbCommand (7ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" (
+    "MigrationId" character varying(150) NOT NULL,
+    "ProductVersion" character varying(32) NOT NULL,
+    CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY ("MigrationId")
+);
+2025-09-12 21:44:36.726 +03:00 [INF] Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+2025-09-12 21:44:36.729 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+LOCK TABLE "__EFMigrationsHistory" IN ACCESS EXCLUSIVE MODE
+2025-09-12 21:44:36.732 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-09-12 21:44:36.738 +03:00 [INF] No migrations were applied. The database is already up to date.
+2025-09-12 21:44:37.142 +03:00 [INF] Executed DbCommand (28ms) [Parameters=[@__normalizedName_0='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT a."Id", a."ConcurrencyStamp", a."Name", a."NormalizedName"
+FROM "AspNetRoles" AS a
+WHERE a."NormalizedName" = @__normalizedName_0
+LIMIT 1
+2025-09-12 21:44:37.333 +03:00 [INF] User profile is available. Using 'C:\Users\d'd\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-09-12 21:44:37.570 +03:00 [WRN] Mapped static asset endpoints not found. Ensure 'MapStaticAssets' is called before 'AddInteractiveWebAssemblyRenderMode'.
+2025-09-12 21:44:37.814 +03:00 [INF] Now listening on: https://localhost:5000
+2025-09-12 21:44:37.941 +03:00 [INF] Now listening on: http://localhost:5001
+2025-09-12 21:44:38.059 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-09-12 21:44:38.120 +03:00 [INF] Hosting environment: Development
+2025-09-12 21:44:38.171 +03:00 [INF] Content root path: C:\rec\prg\repo\InventoryCtrl_2\src\Inventory.Server
+2025-09-12 21:44:40.498 +03:00 [INF] Request starting HTTP/2 GET https://localhost:5000/ - null null
+2025-09-12 21:44:40.591 +03:00 [INF] Executing endpoint '/ (/)'
+2025-09-12 21:44:40.677 +03:00 [INF] Authorization failed. These requirements were not met:
+DenyAnonymousAuthorizationRequirement: Requires an authenticated user.
+2025-09-12 21:44:40.759 +03:00 [INF] Executed endpoint '/ (/)'
+2025-09-12 21:44:40.767 +03:00 [INF] Request finished HTTP/2 GET https://localhost:5000/ - 200 null text/html; charset=utf-8 271.599ms
+2025-09-12 21:44:40.893 +03:00 [INF] Request starting HTTP/1.1 GET http://localhost:5001/register - null null
+2025-09-12 21:44:40.905 +03:00 [INF] Executing endpoint '/register (/register)'
+2025-09-12 21:44:40.922 +03:00 [INF] Executed endpoint '/register (/register)'
+2025-09-12 21:44:40.924 +03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5001/register - 200 null text/html; charset=utf-8 31.461ms
+2025-09-12 21:44:42.959 +03:00 [INF] Request starting HTTP/2 GET https://localhost:5000/register - null null
+2025-09-12 21:44:42.963 +03:00 [INF] Executing endpoint '/register (/register)'
+2025-09-12 21:44:42.970 +03:00 [INF] Executed endpoint '/register (/register)'
+2025-09-12 21:44:42.972 +03:00 [INF] Request finished HTTP/2 GET https://localhost:5000/register - 200 null text/html; charset=utf-8 13.0868ms
+2025-09-12 21:44:52.318 +03:00 [INF] Application is shutting down...
+2025-09-12 21:47:32.327 +03:00 [INF] Executed DbCommand (25ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-09-12 21:47:32.740 +03:00 [INF] Executed DbCommand (7ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" (
+    "MigrationId" character varying(150) NOT NULL,
+    "ProductVersion" character varying(32) NOT NULL,
+    CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY ("MigrationId")
+);
+2025-09-12 21:47:32.755 +03:00 [INF] Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+2025-09-12 21:47:32.758 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+LOCK TABLE "__EFMigrationsHistory" IN ACCESS EXCLUSIVE MODE
+2025-09-12 21:47:32.764 +03:00 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-09-12 21:47:32.772 +03:00 [INF] No migrations were applied. The database is already up to date.
+2025-09-12 21:47:33.144 +03:00 [INF] Executed DbCommand (25ms) [Parameters=[@__normalizedName_0='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT a."Id", a."ConcurrencyStamp", a."Name", a."NormalizedName"
+FROM "AspNetRoles" AS a
+WHERE a."NormalizedName" = @__normalizedName_0
+LIMIT 1
+2025-09-12 21:47:33.241 +03:00 [INF] User profile is available. Using 'C:\Users\d'd\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-09-12 21:47:33.423 +03:00 [INF] Now listening on: https://localhost:5000
+2025-09-12 21:47:33.425 +03:00 [INF] Now listening on: http://localhost:5001
+2025-09-12 21:47:33.429 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-09-12 21:47:33.431 +03:00 [INF] Hosting environment: Development
+2025-09-12 21:47:33.432 +03:00 [INF] Content root path: C:\rec\prg\repo\InventoryCtrl_2\src\Inventory.Server
+2025-09-12 22:10:19.811 +03:00 [INF] Executed DbCommand (28ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-09-12 22:10:20.176 +03:00 [INF] Executed DbCommand (7ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" (
+    "MigrationId" character varying(150) NOT NULL,
+    "ProductVersion" character varying(32) NOT NULL,
+    CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY ("MigrationId")
+);
+2025-09-12 22:10:20.186 +03:00 [INF] Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+2025-09-12 22:10:20.189 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+LOCK TABLE "__EFMigrationsHistory" IN ACCESS EXCLUSIVE MODE
+2025-09-12 22:10:20.194 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-09-12 22:10:20.203 +03:00 [INF] Applying migration '20250912190946_AddUserRoles'.
+2025-09-12 22:10:20.236 +03:00 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+VALUES ('20250912190946_AddUserRoles', '9.0.8');
+2025-09-12 22:15:49.940 +03:00 [INF] Executed DbCommand (12ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-09-12 22:15:50.166 +03:00 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" (
+    "MigrationId" character varying(150) NOT NULL,
+    "ProductVersion" character varying(32) NOT NULL,
+    CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY ("MigrationId")
+);
+2025-09-12 22:15:50.174 +03:00 [INF] Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+2025-09-12 22:15:50.176 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+LOCK TABLE "__EFMigrationsHistory" IN ACCESS EXCLUSIVE MODE
+2025-09-12 22:15:50.181 +03:00 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-09-12 22:15:50.186 +03:00 [INF] No migrations were applied. The database is already up to date.
+2025-09-12 22:15:50.211 +03:00 [INF] User profile is available. Using 'C:\Users\d'd\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-09-12 22:15:50.428 +03:00 [INF] Executed DbCommand (14ms) [Parameters=[@__normalizedName_0='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT a."Id", a."ConcurrencyStamp", a."Name", a."NormalizedName"
+FROM "AspNetRoles" AS a
+WHERE a."NormalizedName" = @__normalizedName_0
+LIMIT 1
+2025-09-12 22:15:50.480 +03:00 [INF] Executed DbCommand (2ms) [Parameters=[@__normalizedName_0='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT a."Id", a."ConcurrencyStamp", a."Name", a."NormalizedName"
+FROM "AspNetRoles" AS a
+WHERE a."NormalizedName" = @__normalizedName_0
+LIMIT 1
+2025-09-12 22:15:50.486 +03:00 [INF] Executed DbCommand (2ms) [Parameters=[@__normalizedName_0='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT a."Id", a."ConcurrencyStamp", a."Name", a."NormalizedName"
+FROM "AspNetRoles" AS a
+WHERE a."NormalizedName" = @__normalizedName_0
+LIMIT 1
+2025-09-12 22:15:50.574 +03:00 [INF] Executed DbCommand (4ms) [Parameters=[@p0='?', @p1='?', @p2='?', @p3='?'], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO "AspNetRoles" ("Id", "ConcurrencyStamp", "Name", "NormalizedName")
+VALUES (@p0, @p1, @p2, @p3);
+2025-09-12 22:15:50.587 +03:00 [INF] Executed DbCommand (2ms) [Parameters=[@__normalizedName_0='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT a."Id", a."ConcurrencyStamp", a."Name", a."NormalizedName"
+FROM "AspNetRoles" AS a
+WHERE a."NormalizedName" = @__normalizedName_0
+LIMIT 1
+2025-09-12 22:15:50.592 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedName_0='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT a."Id", a."ConcurrencyStamp", a."Name", a."NormalizedName"
+FROM "AspNetRoles" AS a
+WHERE a."NormalizedName" = @__normalizedName_0
+LIMIT 1
+2025-09-12 22:15:50.598 +03:00 [INF] Executed DbCommand (3ms) [Parameters=[@p0='?', @p1='?', @p2='?', @p3='?'], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO "AspNetRoles" ("Id", "ConcurrencyStamp", "Name", "NormalizedName")
+VALUES (@p0, @p1, @p2, @p3);
+2025-09-12 22:15:50.621 +03:00 [INF] Executed DbCommand (11ms) [Parameters=[@__normalizedEmail_0='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u."Id", u."AccessFailedCount", u."ConcurrencyStamp", u."Email", u."EmailConfirmed", u."LockoutEnabled", u."LockoutEnd", u."NormalizedEmail", u."NormalizedUserName", u."PasswordHash", u."PhoneNumber", u."PhoneNumberConfirmed", u."Role", u."SecurityStamp", u."TwoFactorEnabled", u."UserName"
+FROM "User" AS u
+WHERE u."NormalizedEmail" = @__normalizedEmail_0
+LIMIT 2
+2025-09-12 22:15:50.691 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedUserName_0='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u."Id", u."AccessFailedCount", u."ConcurrencyStamp", u."Email", u."EmailConfirmed", u."LockoutEnabled", u."LockoutEnd", u."NormalizedEmail", u."NormalizedUserName", u."PasswordHash", u."PhoneNumber", u."PhoneNumberConfirmed", u."Role", u."SecurityStamp", u."TwoFactorEnabled", u."UserName"
+FROM "User" AS u
+WHERE u."NormalizedUserName" = @__normalizedUserName_0
+LIMIT 1
+2025-09-12 22:16:48.964 +03:00 [INF] Executed DbCommand (21ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-09-12 22:16:49.386 +03:00 [INF] Executed DbCommand (9ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" (
+    "MigrationId" character varying(150) NOT NULL,
+    "ProductVersion" character varying(32) NOT NULL,
+    CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY ("MigrationId")
+);
+2025-09-12 22:16:49.411 +03:00 [INF] Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+2025-09-12 22:16:49.426 +03:00 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+LOCK TABLE "__EFMigrationsHistory" IN ACCESS EXCLUSIVE MODE
+2025-09-12 22:16:49.432 +03:00 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-09-12 22:16:49.439 +03:00 [INF] No migrations were applied. The database is already up to date.
+2025-09-12 22:16:49.472 +03:00 [INF] User profile is available. Using 'C:\Users\d'd\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-09-12 22:16:49.909 +03:00 [INF] Executed DbCommand (21ms) [Parameters=[@__normalizedName_0='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT a."Id", a."ConcurrencyStamp", a."Name", a."NormalizedName"
+FROM "AspNetRoles" AS a
+WHERE a."NormalizedName" = @__normalizedName_0
+LIMIT 1
+2025-09-12 22:16:49.981 +03:00 [INF] Executed DbCommand (3ms) [Parameters=[@__normalizedName_0='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT a."Id", a."ConcurrencyStamp", a."Name", a."NormalizedName"
+FROM "AspNetRoles" AS a
+WHERE a."NormalizedName" = @__normalizedName_0
+LIMIT 1
+2025-09-12 22:16:49.990 +03:00 [INF] Executed DbCommand (2ms) [Parameters=[@__normalizedName_0='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT a."Id", a."ConcurrencyStamp", a."Name", a."NormalizedName"
+FROM "AspNetRoles" AS a
+WHERE a."NormalizedName" = @__normalizedName_0
+LIMIT 1
+2025-09-12 22:16:50.019 +03:00 [INF] Executed DbCommand (3ms) [Parameters=[@__normalizedEmail_0='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u."Id", u."AccessFailedCount", u."ConcurrencyStamp", u."Email", u."EmailConfirmed", u."LockoutEnabled", u."LockoutEnd", u."NormalizedEmail", u."NormalizedUserName", u."PasswordHash", u."PhoneNumber", u."PhoneNumberConfirmed", u."Role", u."SecurityStamp", u."TwoFactorEnabled", u."UserName"
+FROM "User" AS u
+WHERE u."NormalizedEmail" = @__normalizedEmail_0
+LIMIT 2
+2025-09-12 22:16:50.415 +03:00 [INF] Executed DbCommand (3ms) [Parameters=[@__normalizedUserName_0='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u."Id", u."AccessFailedCount", u."ConcurrencyStamp", u."Email", u."EmailConfirmed", u."LockoutEnabled", u."LockoutEnd", u."NormalizedEmail", u."NormalizedUserName", u."PasswordHash", u."PhoneNumber", u."PhoneNumberConfirmed", u."Role", u."SecurityStamp", u."TwoFactorEnabled", u."UserName"
+FROM "User" AS u
+WHERE u."NormalizedUserName" = @__normalizedUserName_0
+LIMIT 1
+2025-09-12 22:16:50.924 +03:00 [INF] Executed DbCommand (16ms) [Parameters=[@p0='?', @p1='?' (DbType = Int32), @p2='?', @p3='?', @p4='?' (DbType = Boolean), @p5='?' (DbType = Boolean), @p6='?' (DbType = DateTime), @p7='?', @p8='?', @p9='?', @p10='?', @p11='?' (DbType = Boolean), @p12='?', @p13='?', @p14='?' (DbType = Boolean), @p15='?'], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO "User" ("Id", "AccessFailedCount", "ConcurrencyStamp", "Email", "EmailConfirmed", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "Role", "SecurityStamp", "TwoFactorEnabled", "UserName")
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9, @p10, @p11, @p12, @p13, @p14, @p15);
+2025-09-12 22:16:50.955 +03:00 [INF] Executed DbCommand (2ms) [Parameters=[@__normalizedRoleName_0='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT a."Id", a."ConcurrencyStamp", a."Name", a."NormalizedName"
+FROM "AspNetRoles" AS a
+WHERE a."NormalizedName" = @__normalizedRoleName_0
+LIMIT 2
+2025-09-12 22:16:50.997 +03:00 [INF] Executed DbCommand (3ms) [Parameters=[@__p_0='?', @__p_1='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT a."UserId", a."RoleId"
+FROM "AspNetUserRoles" AS a
+WHERE a."UserId" = @__p_0 AND a."RoleId" = @__p_1
+LIMIT 1
+2025-09-12 22:16:51.008 +03:00 [INF] Executed DbCommand (2ms) [Parameters=[@__normalizedRoleName_0='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT a."Id", a."ConcurrencyStamp", a."Name", a."NormalizedName"
+FROM "AspNetRoles" AS a
+WHERE a."NormalizedName" = @__normalizedRoleName_0
+LIMIT 2
+2025-09-12 22:16:51.030 +03:00 [INF] Executed DbCommand (2ms) [Parameters=[@__normalizedUserName_0='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT u."Id", u."AccessFailedCount", u."ConcurrencyStamp", u."Email", u."EmailConfirmed", u."LockoutEnabled", u."LockoutEnd", u."NormalizedEmail", u."NormalizedUserName", u."PasswordHash", u."PhoneNumber", u."PhoneNumberConfirmed", u."Role", u."SecurityStamp", u."TwoFactorEnabled", u."UserName"
+FROM "User" AS u
+WHERE u."NormalizedUserName" = @__normalizedUserName_0
+LIMIT 1
+2025-09-12 22:16:51.066 +03:00 [ERR] Failed executing DbCommand (10ms) [Parameters=[@p0='?', @p1='?', @p17='?', @p2='?' (DbType = Int32), @p3='?', @p4='?', @p5='?' (DbType = Boolean), @p6='?' (DbType = Boolean), @p7='?' (DbType = DateTime), @p8='?', @p9='?', @p10='?', @p11='?', @p12='?' (DbType = Boolean), @p13='?', @p14='?', @p15='?' (DbType = Boolean), @p16='?'], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO "AspNetUserRoles" ("RoleId", "UserId")
+VALUES (@p0, @p1);
+UPDATE "User" SET "AccessFailedCount" = @p2, "ConcurrencyStamp" = @p3, "Email" = @p4, "EmailConfirmed" = @p5, "LockoutEnabled" = @p6, "LockoutEnd" = @p7, "NormalizedEmail" = @p8, "NormalizedUserName" = @p9, "PasswordHash" = @p10, "PhoneNumber" = @p11, "PhoneNumberConfirmed" = @p12, "Role" = @p13, "SecurityStamp" = @p14, "TwoFactorEnabled" = @p15, "UserName" = @p16
+WHERE "Id" = @p17;
+2025-09-12 22:16:51.098 +03:00 [ERR] An exception occurred in the database while saving changes for context type 'Inventory.Server.Models.AppDbContext'.
+Microsoft.EntityFrameworkCore.DbUpdateException: An error occurred while saving the entity changes. See the inner exception for details.
+ ---> Npgsql.PostgresException (0x80004005): 23503: insert or update on table "AspNetUserRoles" violates foreign key constraint "FK_AspNetUserRoles_AspNetUsers_UserId"
+
+DETAIL: Detail redacted as it may contain sensitive data. Specify 'Include Error Detail' in the connection string to include this information.
+   at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+   at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+  Exception data:
+    Severity: ERROR
+    SqlState: 23503
+    MessageText: insert or update on table "AspNetUserRoles" violates foreign key constraint "FK_AspNetUserRoles_AspNetUsers_UserId"
+    Detail: Detail redacted as it may contain sensitive data. Specify 'Include Error Detail' in the connection string to include this information.
+    SchemaName: public
+    TableName: AspNetUserRoles
+    ConstraintName: FK_AspNetUserRoles_AspNetUsers_UserId
+    File: ri_triggers.c
+    Line: 2599
+    Routine: ri_ReportViolation
+   --- End of inner exception stack trace ---
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.NpgsqlExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+Microsoft.EntityFrameworkCore.DbUpdateException: An error occurred while saving the entity changes. See the inner exception for details.
+ ---> Npgsql.PostgresException (0x80004005): 23503: insert or update on table "AspNetUserRoles" violates foreign key constraint "FK_AspNetUserRoles_AspNetUsers_UserId"
+
+DETAIL: Detail redacted as it may contain sensitive data. Specify 'Include Error Detail' in the connection string to include this information.
+   at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+   at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+  Exception data:
+    Severity: ERROR
+    SqlState: 23503
+    MessageText: insert or update on table "AspNetUserRoles" violates foreign key constraint "FK_AspNetUserRoles_AspNetUsers_UserId"
+    Detail: Detail redacted as it may contain sensitive data. Specify 'Include Error Detail' in the connection string to include this information.
+    SchemaName: public
+    TableName: AspNetUserRoles
+    ConstraintName: FK_AspNetUserRoles_AspNetUsers_UserId
+    File: ri_triggers.c
+    Line: 2599
+    Routine: ri_ReportViolation
+   --- End of inner exception stack trace ---
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.NpgsqlExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+2025-09-12 22:17:29.826 +03:00 [INF] Executed DbCommand (18ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-09-12 22:17:30.089 +03:00 [INF] Executed DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" (
+    "MigrationId" character varying(150) NOT NULL,
+    "ProductVersion" character varying(32) NOT NULL,
+    CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY ("MigrationId")
+);
+2025-09-12 22:17:30.098 +03:00 [INF] Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+2025-09-12 22:17:30.101 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+LOCK TABLE "__EFMigrationsHistory" IN ACCESS EXCLUSIVE MODE
+2025-09-12 22:17:30.105 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-09-12 22:17:30.113 +03:00 [INF] Applying migration '20250912191716_UpdateIdentityTables'.
+2025-09-12 22:17:30.134 +03:00 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE "InventoryTransactions" DROP CONSTRAINT "FK_InventoryTransactions_User_UserId";
+2025-09-12 22:17:30.138 +03:00 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE "ProductHistories" DROP CONSTRAINT "FK_ProductHistories_User_UserId";
+2025-09-12 22:17:30.143 +03:00 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+DROP TABLE "User";
+2025-09-12 22:17:30.150 +03:00 [INF] Executed DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE "AspNetUsers" ADD "Role" text NOT NULL DEFAULT '';
+2025-09-12 22:17:30.161 +03:00 [INF] Executed DbCommand (8ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE "InventoryTransactions" ADD CONSTRAINT "FK_InventoryTransactions_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers" ("Id") ON DELETE CASCADE;
+2025-09-12 22:17:30.165 +03:00 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE "ProductHistories" ADD CONSTRAINT "FK_ProductHistories_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers" ("Id") ON DELETE CASCADE;
+2025-09-12 22:17:30.169 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+VALUES ('20250912191716_UpdateIdentityTables', '9.0.8');
+2025-09-12 22:17:41.578 +03:00 [INF] Executed DbCommand (14ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-09-12 22:17:41.833 +03:00 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" (
+    "MigrationId" character varying(150) NOT NULL,
+    "ProductVersion" character varying(32) NOT NULL,
+    CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY ("MigrationId")
+);
+2025-09-12 22:17:41.840 +03:00 [INF] Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+2025-09-12 22:17:41.843 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+LOCK TABLE "__EFMigrationsHistory" IN ACCESS EXCLUSIVE MODE
+2025-09-12 22:17:41.847 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT "MigrationId", "ProductVersion"
+FROM "__EFMigrationsHistory"
+ORDER BY "MigrationId";
+2025-09-12 22:17:41.851 +03:00 [INF] No migrations were applied. The database is already up to date.
+2025-09-12 22:17:41.872 +03:00 [INF] User profile is available. Using 'C:\Users\d'd\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-09-12 22:17:42.102 +03:00 [INF] Executed DbCommand (14ms) [Parameters=[@__normalizedName_0='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT a."Id", a."ConcurrencyStamp", a."Name", a."NormalizedName"
+FROM "AspNetRoles" AS a
+WHERE a."NormalizedName" = @__normalizedName_0
+LIMIT 1
+2025-09-12 22:17:42.140 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedName_0='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT a."Id", a."ConcurrencyStamp", a."Name", a."NormalizedName"
+FROM "AspNetRoles" AS a
+WHERE a."NormalizedName" = @__normalizedName_0
+LIMIT 1
+2025-09-12 22:17:42.143 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedName_0='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT a."Id", a."ConcurrencyStamp", a."Name", a."NormalizedName"
+FROM "AspNetRoles" AS a
+WHERE a."NormalizedName" = @__normalizedName_0
+LIMIT 1
+2025-09-12 22:17:42.156 +03:00 [INF] Executed DbCommand (2ms) [Parameters=[@__normalizedEmail_0='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT a."Id", a."AccessFailedCount", a."ConcurrencyStamp", a."Email", a."EmailConfirmed", a."LockoutEnabled", a."LockoutEnd", a."NormalizedEmail", a."NormalizedUserName", a."PasswordHash", a."PhoneNumber", a."PhoneNumberConfirmed", a."Role", a."SecurityStamp", a."TwoFactorEnabled", a."UserName"
+FROM "AspNetUsers" AS a
+WHERE a."NormalizedEmail" = @__normalizedEmail_0
+LIMIT 2
+2025-09-12 22:17:42.234 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedUserName_0='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT a."Id", a."AccessFailedCount", a."ConcurrencyStamp", a."Email", a."EmailConfirmed", a."LockoutEnabled", a."LockoutEnd", a."NormalizedEmail", a."NormalizedUserName", a."PasswordHash", a."PhoneNumber", a."PhoneNumberConfirmed", a."Role", a."SecurityStamp", a."TwoFactorEnabled", a."UserName"
+FROM "AspNetUsers" AS a
+WHERE a."NormalizedUserName" = @__normalizedUserName_0
+LIMIT 1
+2025-09-12 22:17:42.349 +03:00 [INF] Executed DbCommand (8ms) [Parameters=[@p0='?', @p1='?' (DbType = Int32), @p2='?', @p3='?', @p4='?' (DbType = Boolean), @p5='?' (DbType = Boolean), @p6='?' (DbType = DateTime), @p7='?', @p8='?', @p9='?', @p10='?', @p11='?' (DbType = Boolean), @p12='?', @p13='?', @p14='?' (DbType = Boolean), @p15='?'], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO "AspNetUsers" ("Id", "AccessFailedCount", "ConcurrencyStamp", "Email", "EmailConfirmed", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "Role", "SecurityStamp", "TwoFactorEnabled", "UserName")
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9, @p10, @p11, @p12, @p13, @p14, @p15);
+2025-09-12 22:17:42.364 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedRoleName_0='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT a."Id", a."ConcurrencyStamp", a."Name", a."NormalizedName"
+FROM "AspNetRoles" AS a
+WHERE a."NormalizedName" = @__normalizedRoleName_0
+LIMIT 2
+2025-09-12 22:17:42.383 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[@__p_0='?', @__p_1='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT a."UserId", a."RoleId"
+FROM "AspNetUserRoles" AS a
+WHERE a."UserId" = @__p_0 AND a."RoleId" = @__p_1
+LIMIT 1
+2025-09-12 22:17:42.388 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedRoleName_0='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT a."Id", a."ConcurrencyStamp", a."Name", a."NormalizedName"
+FROM "AspNetRoles" AS a
+WHERE a."NormalizedName" = @__normalizedRoleName_0
+LIMIT 2
+2025-09-12 22:17:42.400 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedUserName_0='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT a."Id", a."AccessFailedCount", a."ConcurrencyStamp", a."Email", a."EmailConfirmed", a."LockoutEnabled", a."LockoutEnd", a."NormalizedEmail", a."NormalizedUserName", a."PasswordHash", a."PhoneNumber", a."PhoneNumberConfirmed", a."Role", a."SecurityStamp", a."TwoFactorEnabled", a."UserName"
+FROM "AspNetUsers" AS a
+WHERE a."NormalizedUserName" = @__normalizedUserName_0
+LIMIT 1
+2025-09-12 22:17:42.416 +03:00 [INF] Executed DbCommand (2ms) [Parameters=[@p0='?', @p1='?', @p17='?', @p2='?' (DbType = Int32), @p3='?', @p18='?', @p4='?', @p5='?' (DbType = Boolean), @p6='?' (DbType = Boolean), @p7='?' (DbType = DateTime), @p8='?', @p9='?', @p10='?', @p11='?', @p12='?' (DbType = Boolean), @p13='?', @p14='?', @p15='?' (DbType = Boolean), @p16='?'], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO "AspNetUserRoles" ("RoleId", "UserId")
+VALUES (@p0, @p1);
+UPDATE "AspNetUsers" SET "AccessFailedCount" = @p2, "ConcurrencyStamp" = @p3, "Email" = @p4, "EmailConfirmed" = @p5, "LockoutEnabled" = @p6, "LockoutEnd" = @p7, "NormalizedEmail" = @p8, "NormalizedUserName" = @p9, "PasswordHash" = @p10, "PhoneNumber" = @p11, "PhoneNumberConfirmed" = @p12, "Role" = @p13, "SecurityStamp" = @p14, "TwoFactorEnabled" = @p15, "UserName" = @p16
+WHERE "Id" = @p17 AND "ConcurrencyStamp" = @p18;
+2025-09-12 22:17:42.427 +03:00 [INF] Executed DbCommand (2ms) [Parameters=[@__normalizedRoleName_0='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT a."Id", a."ConcurrencyStamp", a."Name", a."NormalizedName"
+FROM "AspNetRoles" AS a
+WHERE a."NormalizedName" = @__normalizedRoleName_0
+LIMIT 2
+2025-09-12 22:17:42.432 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[@__p_0='?', @__p_1='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT a."UserId", a."RoleId"
+FROM "AspNetUserRoles" AS a
+WHERE a."UserId" = @__p_0 AND a."RoleId" = @__p_1
+LIMIT 1
+2025-09-12 22:17:42.435 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedRoleName_0='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT a."Id", a."ConcurrencyStamp", a."Name", a."NormalizedName"
+FROM "AspNetRoles" AS a
+WHERE a."NormalizedName" = @__normalizedRoleName_0
+LIMIT 2
+2025-09-12 22:17:42.438 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedUserName_0='?'], CommandType='"Text"', CommandTimeout='30']
+SELECT a."Id", a."AccessFailedCount", a."ConcurrencyStamp", a."Email", a."EmailConfirmed", a."LockoutEnabled", a."LockoutEnd", a."NormalizedEmail", a."NormalizedUserName", a."PasswordHash", a."PhoneNumber", a."PhoneNumberConfirmed", a."Role", a."SecurityStamp", a."TwoFactorEnabled", a."UserName"
+FROM "AspNetUsers" AS a
+WHERE a."NormalizedUserName" = @__normalizedUserName_0
+LIMIT 1
+2025-09-12 22:17:42.442 +03:00 [INF] Executed DbCommand (1ms) [Parameters=[@p0='?', @p1='?', @p17='?', @p2='?' (DbType = Int32), @p3='?', @p18='?', @p4='?', @p5='?' (DbType = Boolean), @p6='?' (DbType = Boolean), @p7='?' (DbType = DateTime), @p8='?', @p9='?', @p10='?', @p11='?', @p12='?' (DbType = Boolean), @p13='?', @p14='?', @p15='?' (DbType = Boolean), @p16='?'], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO "AspNetUserRoles" ("RoleId", "UserId")
+VALUES (@p0, @p1);
+UPDATE "AspNetUsers" SET "AccessFailedCount" = @p2, "ConcurrencyStamp" = @p3, "Email" = @p4, "EmailConfirmed" = @p5, "LockoutEnabled" = @p6, "LockoutEnd" = @p7, "NormalizedEmail" = @p8, "NormalizedUserName" = @p9, "PasswordHash" = @p10, "PhoneNumber" = @p11, "PhoneNumberConfirmed" = @p12, "Role" = @p13, "SecurityStamp" = @p14, "TwoFactorEnabled" = @p15, "UserName" = @p16
+WHERE "Id" = @p17 AND "ConcurrencyStamp" = @p18;
+2025-09-12 22:17:42.447 +03:00 [INF] Суперпользователь создан: admin@inventory.com
+2025-09-12 22:17:42.599 +03:00 [INF] Now listening on: https://localhost:5000
+2025-09-12 22:17:42.600 +03:00 [INF] Now listening on: http://localhost:5001
+2025-09-12 22:17:42.601 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-09-12 22:17:42.602 +03:00 [INF] Hosting environment: Development
+2025-09-12 22:17:42.603 +03:00 [INF] Content root path: C:\rec\prg\repo\InventoryCtrl_2\src\Inventory.Server
+2025-09-12 22:17:49.858 +03:00 [INF] Request starting HTTP/2 GET https://localhost:5000/ - null null
+2025-09-12 22:17:49.906 +03:00 [INF] Executing endpoint 'Fallback {*path:nonfile}'
+2025-09-12 22:17:49.909 +03:00 [INF] Executed endpoint 'Fallback {*path:nonfile}'
+2025-09-12 22:17:49.912 +03:00 [INF] Request finished HTTP/2 GET https://localhost:5000/ - 200 null null 54.0708ms
+2025-09-12 22:17:58.777 +03:00 [INF] Request starting HTTP/2 GET https://localhost:5000/ - null null
+2025-09-12 22:17:58.782 +03:00 [INF] Executing endpoint 'Fallback {*path:nonfile}'
+2025-09-12 22:17:58.785 +03:00 [INF] Executed endpoint 'Fallback {*path:nonfile}'
+2025-09-12 22:17:58.786 +03:00 [INF] Request finished HTTP/2 GET https://localhost:5000/ - 200 null null 9.5033ms
+2025-09-12 22:18:06.038 +03:00 [INF] Request starting HTTP/2 GET https://localhost:5000/login - null null
+2025-09-12 22:18:06.043 +03:00 [INF] Executing endpoint 'Fallback {*path:nonfile}'
+2025-09-12 22:18:06.044 +03:00 [INF] Executed endpoint 'Fallback {*path:nonfile}'
+2025-09-12 22:18:06.046 +03:00 [INF] Request finished HTTP/2 GET https://localhost:5000/login - 200 null null 7.4532ms
+2025-09-12 22:18:08.331 +03:00 [INF] Request starting HTTP/2 GET https://localhost:5000/login - null null
+2025-09-12 22:18:08.336 +03:00 [INF] Executing endpoint 'Fallback {*path:nonfile}'
+2025-09-12 22:18:08.338 +03:00 [INF] Executed endpoint 'Fallback {*path:nonfile}'
+2025-09-12 22:18:08.340 +03:00 [INF] Request finished HTTP/2 GET https://localhost:5000/login - 200 null null 9.5202ms
+2025-09-12 22:18:23.766 +03:00 [INF] Request starting HTTP/2 GET https://localhost:5000/register - null null
+2025-09-12 22:18:23.768 +03:00 [INF] Executing endpoint 'Fallback {*path:nonfile}'
+2025-09-12 22:18:23.770 +03:00 [INF] Executed endpoint 'Fallback {*path:nonfile}'
+2025-09-12 22:18:23.771 +03:00 [INF] Request finished HTTP/2 GET https://localhost:5000/register - 200 null null 5.6652ms
+2025-09-12 22:18:45.963 +03:00 [INF] Application is shutting down...
