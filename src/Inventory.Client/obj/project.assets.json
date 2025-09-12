@@ -472,6 +472,16 @@
           "build/Microsoft.NET.Sdk.WebAssembly.Pack.props": {},
           "build/Microsoft.NET.Sdk.WebAssembly.Pack.targets": {}
         }
+      },
+      "Inventory.Shared/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v9.0",
+        "compile": {
+          "bin/placeholder/Inventory.Shared.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/Inventory.Shared.dll": {}
+        }
       }
     },
     "net9.0/browser-wasm": {
@@ -944,6 +954,16 @@
         "build": {
           "build/Microsoft.NET.Sdk.WebAssembly.Pack.props": {},
           "build/Microsoft.NET.Sdk.WebAssembly.Pack.targets": {}
+        }
+      },
+      "Inventory.Shared/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v9.0",
+        "compile": {
+          "bin/placeholder/Inventory.Shared.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/Inventory.Shared.dll": {}
         }
       }
     }
@@ -1862,10 +1882,16 @@
         "tools/net9.0/Microsoft.NET.Sdk.WebAssembly.Pack.Tasks.dll",
         "tools/net9.0/Microsoft.NET.WebAssembly.Webcil.dll"
       ]
+    },
+    "Inventory.Shared/1.0.0": {
+      "type": "project",
+      "path": "../Inventory.Shared/Inventory.Shared.csproj",
+      "msbuildProject": "../Inventory.Shared/Inventory.Shared.csproj"
     }
   },
   "projectFileDependencyGroups": {
     "net9.0": [
+      "Inventory.Shared >= 1.0.0",
       "Microsoft.AspNetCore.Components.WebAssembly >= 9.0.8",
       "Microsoft.AspNetCore.Components.WebAssembly.Authentication >= 9.0.4",
       "Microsoft.AspNetCore.Components.WebAssembly.DevServer >= 9.0.8",
@@ -1906,7 +1932,11 @@
       "frameworks": {
         "net9.0": {
           "targetAlias": "net9.0",
-          "projectReferences": {}
+          "projectReferences": {
+            "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Shared\\Inventory.Shared.csproj": {
+              "projectPath": "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Shared\\Inventory.Shared.csproj"
+            }
+          }
         }
       },
       "warningProperties": {

@@ -1,3 +1,4 @@
+using Inventory.Shared;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -5,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+
 
 namespace Inventory.Server.Controllers
 {
@@ -66,21 +68,5 @@ namespace Inventory.Server.Controllers
                 return BadRequest();
             return Ok(new { success = true });
         }
-    }
-
-    public class LoginRequest
-    {
-        public required string Username { get; set; }
-        public required string Password { get; set; }
-    }
-    public class RefreshRequest
-    {
-        public required string Username { get; set; }
-        public required string RefreshToken { get; set; }
-    }
-    public class RegisterRequest
-    {
-        public required string Username { get; set; }
-        public required string Password { get; set; }
     }
 }

@@ -174,6 +174,25 @@
           "buildMultiTargeting/Microsoft.AspNetCore.Components.WebAssembly.Authentication.props": {}
         }
       },
+      "Microsoft.AspNetCore.Components.WebAssembly.Server/9.0.8": {
+        "type": "package",
+        "compile": {
+          "lib/net9.0/Microsoft.AspNetCore.Components.WebAssembly.Server.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net9.0/Microsoft.AspNetCore.Components.WebAssembly.Server.dll": {
+            "related": ".xml"
+          }
+        },
+        "frameworkReferences": [
+          "Microsoft.AspNetCore.App"
+        ],
+        "build": {
+          "build/Microsoft.AspNetCore.Components.WebAssembly.Server.targets": {}
+        }
+      },
       "Microsoft.AspNetCore.Cryptography.Internal/9.0.8": {
         "type": "package",
         "compile": {
@@ -1718,6 +1737,7 @@
         "type": "project",
         "framework": ".NETCoreApp,Version=v9.0",
         "dependencies": {
+          "Inventory.Shared": "1.0.0",
           "Microsoft.AspNetCore.Components.WebAssembly": "9.0.8",
           "Microsoft.AspNetCore.Components.WebAssembly.Authentication": "9.0.4"
         },
@@ -1726,6 +1746,16 @@
         },
         "runtime": {
           "bin/placeholder/Inventory.Client.dll": {}
+        }
+      },
+      "Inventory.Shared/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v9.0",
+        "compile": {
+          "bin/placeholder/Inventory.Shared.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/Inventory.Shared.dll": {}
         }
       }
     }
@@ -1896,6 +1926,34 @@
         "microsoft.aspnetcore.components.webassembly.authentication.9.0.4.nupkg.sha512",
         "microsoft.aspnetcore.components.webassembly.authentication.nuspec",
         "staticwebassets/AuthenticationService.js"
+      ]
+    },
+    "Microsoft.AspNetCore.Components.WebAssembly.Server/9.0.8": {
+      "sha512": "HelrX+9Q55A0uGUFsW0t5RbZaOn8pCUGpGk115ByrJQS8TKkKsOzMwhZEcVnZbdMYAhuj0TzHYhzW11LblFi8A==",
+      "type": "package",
+      "path": "microsoft.aspnetcore.components.webassembly.server/9.0.8",
+      "hasTools": true,
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "THIRD-PARTY-NOTICES.txt",
+        "build/Microsoft.AspNetCore.Components.WebAssembly.Server.targets",
+        "lib/net9.0/Microsoft.AspNetCore.Components.WebAssembly.Server.dll",
+        "lib/net9.0/Microsoft.AspNetCore.Components.WebAssembly.Server.xml",
+        "microsoft.aspnetcore.components.webassembly.server.9.0.8.nupkg.sha512",
+        "microsoft.aspnetcore.components.webassembly.server.nuspec",
+        "tools/BlazorDebugProxy/BrowserDebugHost.dll",
+        "tools/BlazorDebugProxy/BrowserDebugHost.runtimeconfig.json",
+        "tools/BlazorDebugProxy/BrowserDebugProxy.dll",
+        "tools/BlazorDebugProxy/Microsoft.CodeAnalysis.CSharp.Scripting.dll",
+        "tools/BlazorDebugProxy/Microsoft.CodeAnalysis.CSharp.dll",
+        "tools/BlazorDebugProxy/Microsoft.CodeAnalysis.Scripting.dll",
+        "tools/BlazorDebugProxy/Microsoft.CodeAnalysis.dll",
+        "tools/BlazorDebugProxy/Microsoft.FileFormats.dll",
+        "tools/BlazorDebugProxy/Microsoft.NET.WebAssembly.Webcil.dll",
+        "tools/BlazorDebugProxy/Microsoft.SymbolStore.dll",
+        "tools/BlazorDebugProxy/Newtonsoft.Json.dll"
       ]
     },
     "Microsoft.AspNetCore.Cryptography.Internal/9.0.8": {
@@ -4586,12 +4644,19 @@
       "type": "project",
       "path": "../Inventory.Client/Inventory.Client.csproj",
       "msbuildProject": "../Inventory.Client/Inventory.Client.csproj"
+    },
+    "Inventory.Shared/1.0.0": {
+      "type": "project",
+      "path": "../Inventory.Shared/Inventory.Shared.csproj",
+      "msbuildProject": "../Inventory.Shared/Inventory.Shared.csproj"
     }
   },
   "projectFileDependencyGroups": {
     "net9.0": [
       "Inventory.Client >= 1.0.0",
+      "Inventory.Shared >= 1.0.0",
       "Microsoft.AspNetCore.Authentication.JwtBearer >= 9.0.8",
+      "Microsoft.AspNetCore.Components.WebAssembly.Server >= 9.0.8",
       "Microsoft.AspNetCore.Identity.EntityFrameworkCore >= 9.0.8",
       "Microsoft.EntityFrameworkCore.Design >= 9.0.8",
       "Npgsql.EntityFrameworkCore.PostgreSQL >= 9.0.0",
@@ -4637,6 +4702,9 @@
           "projectReferences": {
             "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Client\\Inventory.Client.csproj": {
               "projectPath": "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Client\\Inventory.Client.csproj"
+            },
+            "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Shared\\Inventory.Shared.csproj": {
+              "projectPath": "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Shared\\Inventory.Shared.csproj"
             }
           }
         }
@@ -4658,6 +4726,11 @@
         "targetAlias": "net9.0",
         "dependencies": {
           "Microsoft.AspNetCore.Authentication.JwtBearer": {
+            "target": "Package",
+            "version": "[9.0.8, )",
+            "versionCentrallyManaged": true
+          },
+          "Microsoft.AspNetCore.Components.WebAssembly.Server": {
             "target": "Package",
             "version": "[9.0.8, )",
             "versionCentrallyManaged": true

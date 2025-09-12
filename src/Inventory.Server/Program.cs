@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog((ctx, lc) => lc
@@ -14,6 +15,10 @@ builder.Host.UseSerilog((ctx, lc) => lc
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
+builder.Services.AddRazorComponents()
+    .AddInteractiveWebAssemblyComponents();
+
+
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -106,16 +111,19 @@ else
         }
     }
 }
-app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseCors("AllowConfiguredOrigins");
 app.UseAuthentication();
 app.UseAuthorization();
 
-
-// Endpoints
-app.MapRazorPages();
 app.MapControllers();
+
+// Настройка Blazor Components с WebAssembly
+app.MapRazorComponents<Inventory.Client.App>()
+    .AddInteractiveWebAssemblyRenderMode()
+    .AddAdditionalAssemblies(
+        // typeof(Inventory.Shared.LoginRequest).Assembly
+    );
 
 app.Run();

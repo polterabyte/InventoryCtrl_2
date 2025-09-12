@@ -8,7 +8,7 @@ public class ProductHistory
     public DateTime Date { get; set; }
     public int OldQuantity { get; set; }
     public int NewQuantity { get; set; }
-    public int UserId { get; set; }
+    public string UserId { get; set; } = string.Empty;
     public User User { get; set; } = null!;
     public string? Description { get; set; }
 }
