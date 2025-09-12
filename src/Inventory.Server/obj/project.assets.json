@@ -2,6 +2,18 @@
   "version": 3,
   "targets": {
     "net9.0": {
+      "Blazored.LocalStorage/4.5.0": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.AspNetCore.Components.Web": "8.0.0"
+        },
+        "compile": {
+          "lib/net8.0/Blazored.LocalStorage.dll": {}
+        },
+        "runtime": {
+          "lib/net8.0/Blazored.LocalStorage.dll": {}
+        }
+      },
       "Humanizer.Core/2.14.1": {
         "type": "package",
         "compile": {
@@ -75,11 +87,11 @@
           "buildTransitive/netstandard2.0/Microsoft.AspNetCore.Components.Analyzers.targets": {}
         }
       },
-      "Microsoft.AspNetCore.Components.Authorization/9.0.4": {
+      "Microsoft.AspNetCore.Components.Authorization/9.0.8": {
         "type": "package",
         "dependencies": {
-          "Microsoft.AspNetCore.Authorization": "9.0.4",
-          "Microsoft.AspNetCore.Components": "9.0.4"
+          "Microsoft.AspNetCore.Authorization": "9.0.8",
+          "Microsoft.AspNetCore.Components": "9.0.8"
         },
         "compile": {
           "lib/net9.0/Microsoft.AspNetCore.Components.Authorization.dll": {
@@ -1666,6 +1678,22 @@
           "buildTransitive/net6.0/_._": {}
         }
       },
+      "System.Net.Http.Json/9.0.0": {
+        "type": "package",
+        "compile": {
+          "lib/net9.0/System.Net.Http.Json.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net9.0/System.Net.Http.Json.dll": {
+            "related": ".xml"
+          }
+        },
+        "build": {
+          "buildTransitive/net8.0/_._": {}
+        }
+      },
       "System.Reflection.Metadata/7.0.0": {
         "type": "package",
         "dependencies": {
@@ -1737,6 +1765,7 @@
         "type": "project",
         "framework": ".NETCoreApp,Version=v9.0",
         "dependencies": {
+          "Blazored.LocalStorage": "4.5.0",
           "Inventory.Shared": "1.0.0",
           "Microsoft.AspNetCore.Components.WebAssembly": "9.0.8",
           "Microsoft.AspNetCore.Components.WebAssembly.Authentication": "9.0.4"
@@ -1751,6 +1780,11 @@
       "Inventory.Shared/1.0.0": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v9.0",
+        "dependencies": {
+          "Microsoft.AspNetCore.Components.Authorization": "9.0.8",
+          "Microsoft.AspNetCore.Components.Web": "9.0.8",
+          "System.Net.Http.Json": "9.0.0"
+        },
         "compile": {
           "bin/placeholder/Inventory.Shared.dll": {}
         },
@@ -1761,6 +1795,22 @@
     }
   },
   "libraries": {
+    "Blazored.LocalStorage/4.5.0": {
+      "sha512": "6nZuJwA7zNIKx83IsObiHXZb09ponJOpCClU3en+hI8ZFvrOKXeOw+H7TegQZQrvdR1n9fkrVkEBQZg8vx6ZTw==",
+      "type": "package",
+      "path": "blazored.localstorage/4.5.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "README.md",
+        "blazored.localstorage.4.5.0.nupkg.sha512",
+        "blazored.localstorage.nuspec",
+        "icon.png",
+        "lib/net6.0/Blazored.LocalStorage.dll",
+        "lib/net7.0/Blazored.LocalStorage.dll",
+        "lib/net8.0/Blazored.LocalStorage.dll"
+      ]
+    },
     "Humanizer.Core/2.14.1": {
       "sha512": "lQKvtaTDOXnoVJ20ibTuSIOf2i0uO0MPbDhd1jm238I+U/2ZnRENj0cktKZhtchBMtCUSRQ5v4xBCUbKNmyVMw==",
       "type": "package",
@@ -1845,10 +1895,10 @@
         "microsoft.aspnetcore.components.analyzers.nuspec"
       ]
     },
-    "Microsoft.AspNetCore.Components.Authorization/9.0.4": {
-      "sha512": "BgS8VbdTa3s1AIVssOC/XoEYrEIeIWbKfvF2DevQ0aDokoIajWqEjjGrnVzSTc9vlDp158SZMY1hMeC1PulMqA==",
+    "Microsoft.AspNetCore.Components.Authorization/9.0.8": {
+      "sha512": "tfXXMpTb8gqTRA1IEQ+Fb/xZHNIw/ZFkuGpRTgYfD2jf8xF45h3mRxfIthMIWkxCGvVPF3D/BckucAtVG6ylAQ==",
       "type": "package",
-      "path": "microsoft.aspnetcore.components.authorization/9.0.4",
+      "path": "microsoft.aspnetcore.components.authorization/9.0.8",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -1856,7 +1906,7 @@
         "THIRD-PARTY-NOTICES.txt",
         "lib/net9.0/Microsoft.AspNetCore.Components.Authorization.dll",
         "lib/net9.0/Microsoft.AspNetCore.Components.Authorization.xml",
-        "microsoft.aspnetcore.components.authorization.9.0.4.nupkg.sha512",
+        "microsoft.aspnetcore.components.authorization.9.0.8.nupkg.sha512",
         "microsoft.aspnetcore.components.authorization.nuspec"
       ]
     },
@@ -4487,6 +4537,34 @@
         "useSharedDesignerContext.txt"
       ]
     },
+    "System.Net.Http.Json/9.0.0": {
+      "sha512": "e8s0BFOwHaFTqz6wi3l+9tm0SuKOUs5wiahHTjnAabF9n1+0NuZeG/vOLo2vSfUp+DlIChaRfnAiOFkRpHN/ew==",
+      "type": "package",
+      "path": "system.net.http.json/9.0.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "LICENSE.TXT",
+        "PACKAGE.md",
+        "THIRD-PARTY-NOTICES.TXT",
+        "buildTransitive/net461/System.Net.Http.Json.targets",
+        "buildTransitive/net462/_._",
+        "buildTransitive/net8.0/_._",
+        "buildTransitive/netcoreapp2.0/System.Net.Http.Json.targets",
+        "lib/net462/System.Net.Http.Json.dll",
+        "lib/net462/System.Net.Http.Json.xml",
+        "lib/net8.0/System.Net.Http.Json.dll",
+        "lib/net8.0/System.Net.Http.Json.xml",
+        "lib/net9.0/System.Net.Http.Json.dll",
+        "lib/net9.0/System.Net.Http.Json.xml",
+        "lib/netstandard2.0/System.Net.Http.Json.dll",
+        "lib/netstandard2.0/System.Net.Http.Json.xml",
+        "system.net.http.json.9.0.0.nupkg.sha512",
+        "system.net.http.json.nuspec",
+        "useSharedDesignerContext.txt"
+      ]
+    },
     "System.Reflection.Metadata/7.0.0": {
       "sha512": "MclTG61lsD9sYdpNz9xsKBzjsmsfCtcMZYXz/IUr2zlhaTaABonlr1ESeompTgM+Xk+IwtGYU7/voh3YWB/fWw==",
       "type": "package",
@@ -4772,6 +4850,7 @@
           }
         },
         "centralPackageVersions": {
+          "Blazored.LocalStorage": "4.5.0",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "9.0.8",
           "Microsoft.AspNetCore.Components": "9.0.8",
           "Microsoft.AspNetCore.Components.Authorization": "9.0.8",
@@ -4796,7 +4875,8 @@
           "Serilog.AspNetCore": "9.0.0",
           "Swashbuckle.AspNetCore.Swagger": "9.0.4",
           "Swashbuckle.AspNetCore.SwaggerGen": "9.0.4",
-          "Swashbuckle.AspNetCore.SwaggerUI": "9.0.4"
+          "Swashbuckle.AspNetCore.SwaggerUI": "9.0.4",
+          "System.Net.Http.Json": "9.0.0"
         },
         "imports": [
           "net461",

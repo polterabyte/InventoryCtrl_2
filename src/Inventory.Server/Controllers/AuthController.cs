@@ -1,4 +1,4 @@
-using Inventory.Shared;
+using Inventory.Shared.DTOs;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -62,11 +62,35 @@ namespace Inventory.Server.Controllers
         }
 
         [HttpPost("register")]
-        public IActionResult Register([FromBody] RegisterRequest request)
+        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
-            if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
-                return BadRequest();
-            return Ok(new { success = true });
+            if (string.IsNullOrWhiteSpace(request.Username) || 
+                string.IsNullOrWhiteSpace(request.Password) ||
+                string.IsNullOrWhiteSpace(request.Email))
+                return BadRequest("Username, email and password are required.");
+
+            var existingUser = await userManager.FindByNameAsync(request.Username);
+            if (existingUser != null)
+                return BadRequest("Username already exists.");
+
+            var existingEmail = await userManager.FindByEmailAsync(request.Email);
+            if (existingEmail != null)
+                return BadRequest("Email already exists.");
+
+            var user = new IdentityUser
+            {
+                UserName = request.Username,
+                Email = request.Email,
+                EmailConfirmed = true // Для простоты подтверждаем email автоматически
+            };
+
+            var result = await userManager.CreateAsync(user, request.Password);
+            if (result.Succeeded)
+            {
+                return Ok(new { success = true, message = "User created successfully." });
+            }
+
+            return BadRequest(string.Join(", ", result.Errors.Select(e => e.Description)));
         }
     }
 }

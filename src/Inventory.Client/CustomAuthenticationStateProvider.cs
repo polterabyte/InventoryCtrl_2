@@ -7,23 +7,25 @@ using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components.Authorization;
+using Blazored.LocalStorage;
 
 namespace Inventory.Client
 {
     public class CustomAuthenticationStateProvider : AuthenticationStateProvider
     {
-        private readonly AuthState _authState;
         private readonly HttpClient _httpClient;
+        private readonly ILocalStorageService _localStorage;
 
-        public CustomAuthenticationStateProvider(AuthState authState, HttpClient httpClient)
+        public CustomAuthenticationStateProvider(HttpClient httpClient, ILocalStorageService localStorage)
         {
-            _authState = authState;
             _httpClient = httpClient;
+            _localStorage = localStorage;
         }
 
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
-            var token = await _authState.GetTokenAsync();
+            // Попробуем получить токен из LocalStorage
+            var token = await _localStorage.GetItemAsStringAsync("authToken");
             var identity = new ClaimsIdentity();
             _httpClient.DefaultRequestHeaders.Authorization = null;
 
@@ -37,15 +39,21 @@ namespace Inventory.Client
             return new AuthenticationState(user);
         }
 
-        public void MarkUserAsAuthenticated(string token)
+        public async Task MarkUserAsAuthenticatedAsync(string token)
         {
+            // Сохраняем токен в LocalStorage
+            await _localStorage.SetItemAsStringAsync("authToken", token);
+            
             var authenticatedUser = new ClaimsPrincipal(new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt"));
             var authState = Task.FromResult(new AuthenticationState(authenticatedUser));
             NotifyAuthenticationStateChanged(authState);
         }
 
-        public void MarkUserAsLoggedOut()
+        public async Task MarkUserAsLoggedOutAsync()
         {
+            // Очищаем токен из LocalStorage
+            await _localStorage.RemoveItemAsync("authToken");
+            
             var anonymousUser = new ClaimsPrincipal(new ClaimsIdentity());
             var authState = Task.FromResult(new AuthenticationState(anonymousUser));
             NotifyAuthenticationStateChanged(authState);

@@ -1,0 +1,32 @@
+@inherits LayoutComponentBase
+@using Microsoft.AspNetCore.Components.Authorization
+@using Inventory.Shared.Models
+
+<div class="page">
+    <AuthorizeView>
+        <Authorized>
+            <div class="sidebar">
+                <NavigationMenu AppTitle="@AppTitle" MenuItems="@MenuItems" />
+                <main>
+                    <div class="top-row px-4">
+                        @TopRowContent
+                    </div>
+
+                    <article class="content px-4">
+                        @Body
+                    </article>
+                </main>
+            </div>
+        </Authorized>
+        <NotAuthorized>
+            @LoginComponent
+        </NotAuthorized>
+    </AuthorizeView>
+</div>
+
+@code {
+    [Parameter] public string AppTitle { get; set; } = "Inventory App";
+    [Parameter] public List<NavMenuItem> MenuItems { get; set; } = new();
+    [Parameter] public RenderFragment? TopRowContent { get; set; }
+    [Parameter] public RenderFragment? LoginComponent { get; set; }
+}

@@ -56,6 +56,11 @@
         "net9.0": {
           "targetAlias": "net9.0",
           "dependencies": {
+            "Blazored.LocalStorage": {
+              "target": "Package",
+              "version": "[4.5.0, )",
+              "versionCentrallyManaged": true
+            },
             "Microsoft.AspNetCore.Components.WebAssembly": {
               "target": "Package",
               "version": "[9.0.8, )",
@@ -86,6 +91,7 @@
             }
           },
           "centralPackageVersions": {
+            "Blazored.LocalStorage": "4.5.0",
             "Microsoft.AspNetCore.Authentication.JwtBearer": "9.0.8",
             "Microsoft.AspNetCore.Components": "9.0.8",
             "Microsoft.AspNetCore.Components.Authorization": "9.0.8",
@@ -110,7 +116,8 @@
             "Serilog.AspNetCore": "9.0.0",
             "Swashbuckle.AspNetCore.Swagger": "9.0.4",
             "Swashbuckle.AspNetCore.SwaggerGen": "9.0.4",
-            "Swashbuckle.AspNetCore.SwaggerUI": "9.0.4"
+            "Swashbuckle.AspNetCore.SwaggerUI": "9.0.4",
+            "System.Net.Http.Json": "9.0.0"
           },
           "imports": [
             "net461",
@@ -190,7 +197,25 @@
       "frameworks": {
         "net9.0": {
           "targetAlias": "net9.0",
+          "dependencies": {
+            "Microsoft.AspNetCore.Components.Authorization": {
+              "target": "Package",
+              "version": "[9.0.8, )",
+              "versionCentrallyManaged": true
+            },
+            "Microsoft.AspNetCore.Components.Web": {
+              "target": "Package",
+              "version": "[9.0.8, )",
+              "versionCentrallyManaged": true
+            },
+            "System.Net.Http.Json": {
+              "target": "Package",
+              "version": "[9.0.0, )",
+              "versionCentrallyManaged": true
+            }
+          },
           "centralPackageVersions": {
+            "Blazored.LocalStorage": "4.5.0",
             "Microsoft.AspNetCore.Authentication.JwtBearer": "9.0.8",
             "Microsoft.AspNetCore.Components": "9.0.8",
             "Microsoft.AspNetCore.Components.Authorization": "9.0.8",
@@ -215,7 +240,8 @@
             "Serilog.AspNetCore": "9.0.0",
             "Swashbuckle.AspNetCore.Swagger": "9.0.4",
             "Swashbuckle.AspNetCore.SwaggerGen": "9.0.4",
-            "Swashbuckle.AspNetCore.SwaggerUI": "9.0.4"
+            "Swashbuckle.AspNetCore.SwaggerUI": "9.0.4",
+            "System.Net.Http.Json": "9.0.0"
           },
           "imports": [
             "net461",

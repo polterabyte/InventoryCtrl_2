@@ -1,0 +1,17 @@
+@page "/register"
+
+<RegisterForm OnRegisterSuccess="HandleRegisterSuccess" OnRegisterError="HandleRegisterError" />
+
+@code {
+    private Task HandleRegisterSuccess(AuthResult result)
+    {
+        // Success message is already displayed in the form component
+        return Task.CompletedTask;
+    }
+
+    private Task HandleRegisterError(string errorMessage)
+    {
+        // Error is already displayed in the form component
+        return Task.CompletedTask;
+    }
+}

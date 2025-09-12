@@ -5,6 +5,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.FileProviders;
+using Inventory.Shared.Interfaces;
+using Inventory.Shared.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog((ctx, lc) => lc
@@ -17,6 +19,14 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents();
+
+// Add HttpClient for Blazor components
+builder.Services.AddHttpClient();
+
+// Register Shared services for Razor components
+builder.Services.AddScoped<IAuthService, AuthApiService>();
+builder.Services.AddScoped<IProductService, ProductApiService>();
+builder.Services.AddScoped<ICategoryService, CategoryApiService>();
 
 
 
@@ -85,12 +95,8 @@ else
     var db = scope.ServiceProvider.GetRequiredService<Inventory.Server.Models.AppDbContext>();
     db.Database.Migrate();
 
-    var userManager = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<Microsoft.AspNetCore.Identity.IdentityUser>>();
     var roleManager = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.RoleManager<Microsoft.AspNetCore.Identity.IdentityRole>>();
 
-    const string adminUser = "admin";
-    const string adminEmail = "admin@localhost";
-    const string adminPassword = "Admin123!";
     const string adminRole = "Admin";
 
     // Создать роль Admin, если нет
@@ -98,24 +104,13 @@ else
     {
         roleManager.CreateAsync(new Microsoft.AspNetCore.Identity.IdentityRole(adminRole)).Wait();
     }
-
-    // Создать пользователя admin, если нет
-    var user = userManager.FindByNameAsync(adminUser).Result;
-    if (user == null)
-    {
-        user = new Microsoft.AspNetCore.Identity.IdentityUser { UserName = adminUser, Email = adminEmail, EmailConfirmed = true };
-        var result = userManager.CreateAsync(user, adminPassword).Result;
-        if (result.Succeeded)
-        {
-            userManager.AddToRoleAsync(user, adminRole).Wait();
-        }
-    }
 }
 app.UseStaticFiles();
 app.UseRouting();
 app.UseCors("AllowConfiguredOrigins");
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseAntiforgery();
 
 app.MapControllers();
 

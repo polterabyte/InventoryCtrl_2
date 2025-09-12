@@ -1,0 +1,22 @@
+@page "/products"
+
+<ProductList OnProductEdit="EditProduct" 
+             OnProductDelete="DeleteProduct" 
+             OnProductAdd="AddProduct" />
+
+@code {
+    private void EditProduct(ProductDto product)
+    {
+        // TODO: Navigate to edit page or show modal
+    }
+
+    private void DeleteProduct(ProductDto product)
+    {
+        // TODO: Show confirmation dialog
+    }
+
+    private void AddProduct()
+    {
+        // TODO: Navigate to add page or show modal
+    }
+}

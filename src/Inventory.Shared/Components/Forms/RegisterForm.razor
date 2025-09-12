@@ -1,0 +1,116 @@
+@using Microsoft.AspNetCore.Components.Forms
+@using Inventory.Shared.DTOs
+@using Inventory.Shared.Interfaces
+@inject IAuthService AuthService
+
+<h3>@Title</h3>
+
+<EditForm Model="registerModel" OnValidSubmit="HandleRegister">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <div class="mb-3">
+        <label class="form-label">Логин:</label>
+        <InputText class="form-control" @bind-Value="registerModel.Username" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Email:</label>
+        <InputText class="form-control" @bind-Value="registerModel.Email" type="email" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Пароль:</label>
+        <InputText class="form-control" @bind-Value="registerModel.Password" type="password" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Подтверждение пароля:</label>
+        <InputText class="form-control" @bind-Value="confirmPassword" type="password" />
+    </div>
+    <div class="mb-3">
+        <button type="submit" class="btn btn-primary" disabled="@isLoading">
+            @if (isLoading)
+            {
+                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+            }
+            Зарегистрироваться
+        </button>
+    </div>
+</EditForm>
+
+@if (ShowLoginLink)
+{
+    <p>Уже есть аккаунт? <a href="@LoginLink">Войти</a></p>
+}
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger" role="alert">@errorMessage</div>
+}
+
+@if (!string.IsNullOrEmpty(successMessage))
+{
+    <div class="alert alert-success" role="alert">@successMessage</div>
+}
+
+@code {
+    [Parameter] public string Title { get; set; } = "Регистрация";
+    [Parameter] public bool ShowLoginLink { get; set; } = true;
+    [Parameter] public string LoginLink { get; set; } = "/login";
+    [Parameter] public EventCallback<AuthResult> OnRegisterSuccess { get; set; }
+    [Parameter] public EventCallback<string> OnRegisterError { get; set; }
+
+    private RegisterRequest registerModel = new() { Username = string.Empty, Email = string.Empty, Password = string.Empty };
+    private string confirmPassword = string.Empty;
+    private string? errorMessage;
+    private string? successMessage;
+    private bool isLoading = false;
+
+    private async Task HandleRegister()
+    {
+        errorMessage = null;
+        successMessage = null;
+        isLoading = true;
+
+        try
+        {
+            // Валидация паролей
+            if (registerModel.Password != confirmPassword)
+            {
+                errorMessage = "Пароли не совпадают";
+                await OnRegisterError.InvokeAsync(errorMessage);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(registerModel.Username) || 
+                string.IsNullOrWhiteSpace(registerModel.Password) ||
+                string.IsNullOrWhiteSpace(registerModel.Email))
+            {
+                errorMessage = "Все поля обязательны для заполнения";
+                await OnRegisterError.InvokeAsync(errorMessage);
+                return;
+            }
+
+            var result = await AuthService.RegisterAsync(registerModel);
+            
+            if (result.Success)
+            {
+                successMessage = "Пользователь успешно создан! Теперь вы можете войти в систему.";
+                registerModel = new() { Username = string.Empty, Email = string.Empty, Password = string.Empty };
+                confirmPassword = string.Empty;
+                await OnRegisterSuccess.InvokeAsync(result);
+            }
+            else
+            {
+                errorMessage = result.ErrorMessage ?? "Ошибка регистрации";
+                await OnRegisterError.InvokeAsync(errorMessage);
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Ошибка: {ex.Message}";
+            await OnRegisterError.InvokeAsync(errorMessage);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

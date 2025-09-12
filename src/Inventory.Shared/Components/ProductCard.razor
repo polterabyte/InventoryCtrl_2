@@ -1,0 +1,62 @@
+@using Inventory.Shared.DTOs
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-8">
+                <h5 class="card-title">@Product.Name</h5>
+                <p class="card-text">
+                    <strong>SKU:</strong> @Product.SKU<br/>
+                    <strong>Категория:</strong> @Product.CategoryName<br/>
+                    <strong>Производитель:</strong> @Product.ManufacturerName
+                </p>
+                @if (!string.IsNullOrEmpty(Product.Description))
+                {
+                    <p class="card-text">@Product.Description</p>
+                }
+            </div>
+            <div class="col-md-4">
+                <div class="text-end">
+                    <div class="mb-2">
+                        <span class="badge @GetStockBadgeClass() fs-6">
+                            @Product.Quantity @Product.Unit
+                        </span>
+                    </div>
+                    @if (Product.MinStock > 0 || Product.MaxStock > 0)
+                    {
+                        <small class="text-muted">
+                            Мин: @Product.MinStock | Макс: @Product.MaxStock
+                        </small>
+                    }
+                    <div class="mt-2">
+                        <button class="btn btn-sm btn-outline-primary" @onclick="() => OnEdit.InvokeAsync(Product)">
+                            <i class="bi bi-pencil"></i> Изменить
+                        </button>
+                        @if (ShowDeleteButton)
+                        {
+                            <button class="btn btn-sm btn-outline-danger ms-1" @onclick="() => OnDelete.InvokeAsync(Product)">
+                                <i class="bi bi-trash"></i> Удалить
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public ProductDto Product { get; set; } = new();
+    [Parameter] public bool ShowDeleteButton { get; set; } = true;
+    [Parameter] public EventCallback<ProductDto> OnEdit { get; set; }
+    [Parameter] public EventCallback<ProductDto> OnDelete { get; set; }
+
+    private string GetStockBadgeClass()
+    {
+        if (Product.Quantity <= Product.MinStock)
+            return "bg-danger";
+        if (Product.Quantity >= Product.MaxStock)
+            return "bg-warning";
+        return "bg-success";
+    }
+}

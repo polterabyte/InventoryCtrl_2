@@ -1,0 +1,176 @@
+@using Microsoft.AspNetCore.Components.Forms
+@using Inventory.Shared.DTOs
+@using Inventory.Shared.Interfaces
+@inject IProductService ProductService
+@inject ICategoryService CategoryService
+
+<h3>@Title</h3>
+
+<EditForm Model="productModel" OnValidSubmit="HandleSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label class="form-label">Название товара:</label>
+                <InputText class="form-control" @bind-Value="productModel.Name" />
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label class="form-label">SKU:</label>
+                <InputText class="form-control" @bind-Value="productModel.SKU" />
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Описание:</label>
+        <InputTextArea class="form-control" @bind-Value="productModel.Description" rows="3" />
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="mb-3">
+                <label class="form-label">Категория:</label>
+                <InputSelect class="form-select" @bind-Value="productModel.CategoryId">
+                    <option value="">Выберите категорию</option>
+                    @foreach (var category in categories)
+                    {
+                        <option value="@category.Id">@category.Name</option>
+                    }
+                </InputSelect>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="mb-3">
+                <label class="form-label">Производитель:</label>
+                <InputSelect class="form-select" @bind-Value="productModel.ManufacturerId">
+                    <option value="">Выберите производителя</option>
+                    @foreach (var manufacturer in manufacturers)
+                    {
+                        <option value="@manufacturer.Id">@manufacturer.Name</option>
+                    }
+                </InputSelect>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="mb-3">
+                <label class="form-label">Единица измерения:</label>
+                <InputText class="form-control" @bind-Value="productModel.Unit" placeholder="шт, кг, м, л..." />
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="mb-3">
+                <label class="form-label">Минимальный остаток:</label>
+                <InputNumber class="form-control" @bind-Value="productModel.MinStock" />
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="mb-3">
+                <label class="form-label">Максимальный остаток:</label>
+                <InputNumber class="form-control" @bind-Value="productModel.MaxStock" />
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="mb-3">
+                <div class="form-check mt-4">
+                    <InputCheckbox class="form-check-input" @bind-Value="productModel.IsActive" />
+                    <label class="form-check-label">Активный товар</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Примечание:</label>
+        <InputTextArea class="form-control" @bind-Value="productModel.Note" rows="2" />
+    </div>
+
+    <div class="mb-3">
+        <button type="submit" class="btn btn-primary" disabled="@isLoading">
+            @if (isLoading)
+            {
+                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+            }
+            @SubmitButtonText
+        </button>
+        <button type="button" class="btn btn-secondary ms-2" @onclick="OnCancel">Отмена</button>
+    </div>
+</EditForm>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger" role="alert">@errorMessage</div>
+}
+
+@code {
+    [Parameter] public string Title { get; set; } = "Товар";
+    [Parameter] public CreateProductDto? InitialProduct { get; set; }
+    [Parameter] public EventCallback<ProductDto> OnSave { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private CreateProductDto productModel = new();
+    private List<CategoryDto> categories = new();
+    private List<ManufacturerDto> manufacturers = new();
+    private string? errorMessage;
+    private bool isLoading = false;
+
+    private string SubmitButtonText => InitialProduct == null ? "Создать товар" : "Обновить товар";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadReferenceData();
+        
+        if (InitialProduct != null)
+        {
+            productModel = InitialProduct;
+        }
+    }
+
+    private async Task LoadReferenceData()
+    {
+        try
+        {
+            categories = await CategoryService.GetAllCategoriesAsync();
+            // manufacturers = await ManufacturerService.GetAllManufacturersAsync(); // TODO: Implement
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Ошибка загрузки справочников: {ex.Message}";
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        errorMessage = null;
+        isLoading = true;
+
+        try
+        {
+            if (InitialProduct == null)
+            {
+                var result = await ProductService.CreateProductAsync(productModel);
+                await OnSave.InvokeAsync(result);
+            }
+            else
+            {
+                // TODO: Implement update functionality
+                // var updateDto = new UpdateProductDto { ... };
+                // var result = await ProductService.UpdateProductAsync(productId, updateDto);
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Ошибка сохранения: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
