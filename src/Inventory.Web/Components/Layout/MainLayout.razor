@@ -1,0 +1,47 @@
+@inherits LayoutComponentBase
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Routing
+@using Inventory.Shared.Models
+@inject NavigationManager Navigation
+
+<div class="page">
+    @if (IsAuthPage)
+    {
+        @* Показываем содержимое страницы без проверки авторизации для страниц входа/регистрации *@
+        <article class="content px-4">
+            @Body
+        </article>
+    }
+    else
+    {
+        @* Обычная логика с проверкой авторизации *@
+        <AuthorizeView>
+            <Authorized>
+                <div class="sidebar">
+                    <NavigationMenu AppTitle="@AppTitle" MenuItems="@MenuItems" />
+                    <main>
+                        <div class="top-row px-4">
+                            @TopRowContent
+                        </div>
+
+                        <article class="content px-4">
+                            @Body
+                        </article>
+                    </main>
+                </div>
+            </Authorized>
+            <NotAuthorized>
+                @LoginComponent
+            </NotAuthorized>
+        </AuthorizeView>
+    }
+</div>
+
+@code {
+    [Parameter] public string AppTitle { get; set; } = "Inventory App";
+    [Parameter] public List<NavMenuItem> MenuItems { get; set; } = new();
+    [Parameter] public RenderFragment? TopRowContent { get; set; }
+    [Parameter] public RenderFragment? LoginComponent { get; set; }
+
+    private bool IsAuthPage => Navigation.Uri.Contains("/login") || Navigation.Uri.Contains("/register");
+}

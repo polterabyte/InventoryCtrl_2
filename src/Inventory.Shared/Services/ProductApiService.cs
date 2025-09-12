@@ -1,12 +1,14 @@
 using Inventory.Shared.Constants;
 using Inventory.Shared.DTOs;
 using Inventory.Shared.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace Inventory.Shared.Services;
 
 public class ProductApiService : BaseApiService, IProductService
 {
-    public ProductApiService(HttpClient httpClient) : base(httpClient, ApiEndpoints.Products)
+    public ProductApiService(HttpClient httpClient, ILogger<ProductApiService> logger) 
+        : base(httpClient, ApiEndpoints.Products, logger)
     {
     }
 

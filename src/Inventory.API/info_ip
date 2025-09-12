@@ -1,0 +1,7 @@
+      "http://localhost:5142",         // Blazor WASM dev
+      "https://localhost:5001",        // Blazor WASM dev (HTTPS)
+      "http://localhost:5000",         // API server
+      "https://localhost:7000",        // API server (HTTPS)
+      "http://10.0.2.2:8080",          // Android emulator
+      "capacitor://localhost",         // Ionic/Capacitor
+      "https://yourmobileapp.com"      // Продакшн

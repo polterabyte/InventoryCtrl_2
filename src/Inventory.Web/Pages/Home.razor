@@ -1,0 +1,21 @@
+﻿@page "/"
+
+<PageTitle>Home</PageTitle>
+
+<h1>Hello, world!</h1>
+
+Welcome to your new app.
+
+<AuthorizeView>
+    <Authorized Context="authContext">
+        <p>Привет, <b>@authContext.User.Identity?.Name</b>!</p>
+        <p>Вы авторизованы.</p>
+        @if (authContext.User.IsInRole("Admin"))
+        {
+            <p>У вас есть права администратора.</p>
+        }
+    </Authorized>
+    <NotAuthorized>
+        <p>Вы не авторизованы.</p>
+    </NotAuthorized>
+</AuthorizeView>

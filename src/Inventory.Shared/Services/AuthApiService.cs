@@ -2,12 +2,14 @@ using Inventory.Shared.Constants;
 using Inventory.Shared.DTOs;
 using Inventory.Shared.Interfaces;
 using System.Net.Http.Json;
+using Microsoft.Extensions.Logging;
 
 namespace Inventory.Shared.Services;
 
 public class AuthApiService : BaseApiService, IAuthService
 {
-    public AuthApiService(HttpClient httpClient) : base(httpClient, ApiEndpoints.BaseUrl)
+    public AuthApiService(HttpClient httpClient, ILogger<AuthApiService> logger) 
+        : base(httpClient, ApiEndpoints.BaseUrl, logger)
     {
     }
 

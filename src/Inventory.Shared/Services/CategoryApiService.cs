@@ -1,12 +1,14 @@
 using Inventory.Shared.Constants;
 using Inventory.Shared.DTOs;
 using Inventory.Shared.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace Inventory.Shared.Services;
 
 public class CategoryApiService : BaseApiService, ICategoryService
 {
-    public CategoryApiService(HttpClient httpClient) : base(httpClient, ApiEndpoints.Categories)
+    public CategoryApiService(HttpClient httpClient, ILogger<CategoryApiService> logger) 
+        : base(httpClient, ApiEndpoints.Categories, logger)
     {
     }
 
