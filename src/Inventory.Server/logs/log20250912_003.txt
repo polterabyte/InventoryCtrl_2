@@ -2936,3 +2936,18 @@ DenyAnonymousAuthorizationRequirement: Requires an authenticated user.
 DenyAnonymousAuthorizationRequirement: Requires an authenticated user.
 2025-09-12 21:23:36.963 +03:00 [INF] Executed endpoint '/ (/)'
 2025-09-12 21:23:36.964 +03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5001/ - 200 null text/html; charset=utf-8 13.6562ms
+2025-09-12 21:24:09.005 +03:00 [INF] Request starting HTTP/1.1 GET http://localhost:5001/ - null null
+2025-09-12 21:24:09.009 +03:00 [INF] Executing endpoint '/ (/)'
+2025-09-12 21:24:09.018 +03:00 [INF] Authorization failed. These requirements were not met:
+DenyAnonymousAuthorizationRequirement: Requires an authenticated user.
+2025-09-12 21:24:09.026 +03:00 [INF] Executed endpoint '/ (/)'
+2025-09-12 21:24:09.033 +03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5001/ - 200 null text/html; charset=utf-8 27.8468ms
+2025-09-12 21:24:09.239 +03:00 [INF] Request starting HTTP/1.1 GET http://localhost:5001/favicon.ico - null null
+2025-09-12 21:24:09.243 +03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5001/favicon.ico - 404 0 null 4.0058ms
+2025-09-12 21:24:09.247 +03:00 [INF] Request reached the end of the middleware pipeline without being handled by application code. Request path: GET http://localhost:5001/favicon.ico, Response status code: 404
+2025-09-12 21:24:11.017 +03:00 [INF] Request starting HTTP/1.1 GET http://localhost:5001/register - null null
+2025-09-12 21:24:11.019 +03:00 [INF] Executing endpoint '/register (/register)'
+2025-09-12 21:24:11.021 +03:00 [INF] Authorization failed. These requirements were not met:
+DenyAnonymousAuthorizationRequirement: Requires an authenticated user.
+2025-09-12 21:24:11.023 +03:00 [INF] Executed endpoint '/register (/register)'
+2025-09-12 21:24:11.024 +03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5001/register - 200 null text/html; charset=utf-8 7.051ms
