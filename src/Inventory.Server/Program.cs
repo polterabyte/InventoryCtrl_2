@@ -1,11 +1,9 @@
 using Serilog;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog((ctx, lc) => lc
@@ -13,9 +11,25 @@ builder.Host.UseSerilog((ctx, lc) => lc
     .WriteTo.Console()
     .WriteTo.File("logs/log.txt", rollingInterval: RollingInterval.Day)
 );
+
 builder.Services.AddControllersWithViews();
+builder.Services.AddRazorPages();
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 builder.Services.AddDbContext<Inventory.Server.Models.AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
+{
+    options.Password.RequireDigit = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequiredLength = 6;
+})
+.AddEntityFrameworkStores<Inventory.Server.Models.AppDbContext>()
+.AddDefaultTokenProviders();
 
 // JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("Jwt");
@@ -37,6 +51,18 @@ builder.Services.AddAuthentication(options =>
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]))
         };
     });
+
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowConfiguredOrigins", policy =>
+    {
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
 var app = builder.Build();
 
 
@@ -47,46 +73,49 @@ if (!app.Environment.IsDevelopment())
 }
 else
 {
+    app.UseSwagger();
+    app.UseSwaggerUI();
     // Автоматическое применение миграций
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<Inventory.Server.Models.AppDbContext>();
     db.Database.Migrate();
-    
-        var userManager = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<Microsoft.AspNetCore.Identity.IdentityUser>>();
-        var roleManager = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.RoleManager<Microsoft.AspNetCore.Identity.IdentityRole>>();
-    
-        const string adminUser = "admin";
-        const string adminEmail = "admin@localhost";
-        const string adminPassword = "Admin123!";
-        const string adminRole = "Admin";
-    
-        // Создать роль Admin, если нет
-        if (!roleManager.RoleExistsAsync(adminRole).Result)
-        {
-            roleManager.CreateAsync(new Microsoft.AspNetCore.Identity.IdentityRole(adminRole)).Wait();
-        }
-    
-        // Создать пользователя admin, если нет
-        var user = userManager.FindByNameAsync(adminUser).Result;
-        if (user == null)
-        {
-            user = new Microsoft.AspNetCore.Identity.IdentityUser { UserName = adminUser, Email = adminEmail, EmailConfirmed = true };
-            var result = userManager.CreateAsync(user, adminPassword).Result;
-            if (result.Succeeded)
-            {
-                userManager.AddToRoleAsync(user, adminRole).Wait();
-            }
-        }
-}
 
-    app.UseHttpsRedirection();
+    var userManager = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<Microsoft.AspNetCore.Identity.IdentityUser>>();
+    var roleManager = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.RoleManager<Microsoft.AspNetCore.Identity.IdentityRole>>();
+
+    const string adminUser = "admin";
+    const string adminEmail = "admin@localhost";
+    const string adminPassword = "Admin123!";
+    const string adminRole = "Admin";
+
+    // Создать роль Admin, если нет
+    if (!roleManager.RoleExistsAsync(adminRole).Result)
+    {
+        roleManager.CreateAsync(new Microsoft.AspNetCore.Identity.IdentityRole(adminRole)).Wait();
+    }
+
+    // Создать пользователя admin, если нет
+    var user = userManager.FindByNameAsync(adminUser).Result;
+    if (user == null)
+    {
+        user = new Microsoft.AspNetCore.Identity.IdentityUser { UserName = adminUser, Email = adminEmail, EmailConfirmed = true };
+        var result = userManager.CreateAsync(user, adminPassword).Result;
+        if (result.Succeeded)
+        {
+            userManager.AddToRoleAsync(user, adminRole).Wait();
+        }
+    }
+}
+app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
-app.UseAuthorization();
+app.UseCors("AllowConfiguredOrigins");
 app.UseAuthentication();
+app.UseAuthorization();
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+
+// Endpoints
+app.MapRazorPages();
+app.MapControllers();
 
 app.Run();

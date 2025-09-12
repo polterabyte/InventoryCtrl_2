@@ -10,5 +10,12 @@
   <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
   <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
   <PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
+  <PackageReference Include="Swashbuckle.AspNetCore.Swagger" />
+  <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen"  />
+  <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI"  />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Inventory.Client\Inventory.Client.csproj" />
   </ItemGroup>
 </Project>

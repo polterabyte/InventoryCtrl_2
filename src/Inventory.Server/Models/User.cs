@@ -1,6 +1,6 @@
 namespace Inventory.Server.Models;
 
-public class User
+public class User : Microsoft.AspNetCore.Identity.IdentityUser<string>
 {
     public int Id { get; set; }
     public string Username { get; set; } = string.Empty;

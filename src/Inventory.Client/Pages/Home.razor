@@ -5,3 +5,17 @@
 <h1>Hello, world!</h1>
 
 Welcome to your new app.
+
+<AuthorizeView>
+    <Authorized>
+        <p>Привет, <b>@context.User.Identity?.Name</b>!</p>
+        <p>Вы авторизованы.</p>
+        @if (context.User.IsInRole("Admin"))
+        {
+            <p>У вас есть права администратора.</p>
+        }
+    </Authorized>
+    <NotAuthorized>
+        <p>Вы не авторизованы.</p>
+    </NotAuthorized>
+</AuthorizeView>
