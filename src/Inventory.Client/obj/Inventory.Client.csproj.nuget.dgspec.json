@@ -57,6 +57,11 @@
               "version": "[9.0.8, )",
               "versionCentrallyManaged": true
             },
+            "Microsoft.AspNetCore.Components.WebAssembly.Authentication": {
+              "target": "Package",
+              "version": "[9.0.4, )",
+              "versionCentrallyManaged": true
+            },
             "Microsoft.AspNetCore.Components.WebAssembly.DevServer": {
               "suppressParent": "All",
               "target": "Package",

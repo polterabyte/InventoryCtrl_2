@@ -1,15 +1,17 @@
 {
   "version": 2,
-  "dgSpecHash": "p9MboM27dIA=",
+  "dgSpecHash": "cPekcNEaTqg=",
   "success": true,
   "projectFilePath": "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Client\\Inventory.Client.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\d'd\\.nuget\\packages\\microsoft.aspnetcore.authorization\\9.0.8\\microsoft.aspnetcore.authorization.9.0.8.nupkg.sha512",
     "C:\\Users\\d'd\\.nuget\\packages\\microsoft.aspnetcore.components\\9.0.8\\microsoft.aspnetcore.components.9.0.8.nupkg.sha512",
     "C:\\Users\\d'd\\.nuget\\packages\\microsoft.aspnetcore.components.analyzers\\9.0.8\\microsoft.aspnetcore.components.analyzers.9.0.8.nupkg.sha512",
+    "C:\\Users\\d'd\\.nuget\\packages\\microsoft.aspnetcore.components.authorization\\9.0.4\\microsoft.aspnetcore.components.authorization.9.0.4.nupkg.sha512",
     "C:\\Users\\d'd\\.nuget\\packages\\microsoft.aspnetcore.components.forms\\9.0.8\\microsoft.aspnetcore.components.forms.9.0.8.nupkg.sha512",
     "C:\\Users\\d'd\\.nuget\\packages\\microsoft.aspnetcore.components.web\\9.0.8\\microsoft.aspnetcore.components.web.9.0.8.nupkg.sha512",
     "C:\\Users\\d'd\\.nuget\\packages\\microsoft.aspnetcore.components.webassembly\\9.0.8\\microsoft.aspnetcore.components.webassembly.9.0.8.nupkg.sha512",
+    "C:\\Users\\d'd\\.nuget\\packages\\microsoft.aspnetcore.components.webassembly.authentication\\9.0.4\\microsoft.aspnetcore.components.webassembly.authentication.9.0.4.nupkg.sha512",
     "C:\\Users\\d'd\\.nuget\\packages\\microsoft.aspnetcore.components.webassembly.devserver\\9.0.8\\microsoft.aspnetcore.components.webassembly.devserver.9.0.8.nupkg.sha512",
     "C:\\Users\\d'd\\.nuget\\packages\\microsoft.aspnetcore.metadata\\9.0.8\\microsoft.aspnetcore.metadata.9.0.8.nupkg.sha512",
     "C:\\Users\\d'd\\.nuget\\packages\\microsoft.extensions.configuration\\9.0.8\\microsoft.extensions.configuration.9.0.8.nupkg.sha512",

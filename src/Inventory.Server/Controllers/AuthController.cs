@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -9,24 +10,36 @@ namespace Inventory.Server.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class AuthController(IConfiguration config) : ControllerBase
+    public class AuthController(UserManager<IdentityUser> userManager, IConfiguration config) : ControllerBase
     {
         private readonly IConfiguration _config = config;
 
         [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginRequest request)
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
-                return BadRequest();
+                return BadRequest("Username and password are required.");
 
-            var claims = new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, request.Username),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
+            var user = await userManager.FindByNameAsync(request.Username);
+            if (user == null || !await userManager.CheckPasswordAsync(user, request.Password))
+                return Unauthorized("Invalid credentials.");
+
+            var userClaims = await userManager.GetClaimsAsync(user);
+            var roles = await userManager.GetRolesAsync(user);
+
+            var claims = new List<Claim>
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
+
+            claims.AddRange(userClaims);
+            claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"] ?? string.Empty));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             var expires = DateTime.UtcNow.AddMinutes(int.TryParse(_config["Jwt:ExpireMinutes"], out var m) ? m : 60);
+
             var token = new JwtSecurityToken(
                 issuer: _config["Jwt:Issuer"],
                 audience: _config["Jwt:Audience"],
@@ -34,6 +47,7 @@ namespace Inventory.Server.Controllers
                 expires: expires,
                 signingCredentials: creds
             );
+
             return Ok(new { token = new JwtSecurityTokenHandler().WriteToken(token) });
         }
 
@@ -42,7 +56,7 @@ namespace Inventory.Server.Controllers
         {
             if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.RefreshToken))
                 return BadRequest();
-            return Login(new LoginRequest { Username = request.Username, Password = "" });
+            return (IActionResult)Login(new LoginRequest { Username = request.Username, Password = "" });
         }
 
         [HttpPost("register")]
