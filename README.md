@@ -6,7 +6,8 @@
 
 ## Структура проекта
 - `src/Inventory.API` — серверная часть (ASP.NET Core Web API, PostgreSQL)
-- `src/Inventory.Web` — клиентская часть (Blazor WebAssembly)
+- `src/Inventory.Web.Client` — клиентская часть (Blazor WebAssembly)
+- `src/Inventory.UI` — Razor Class Library (компоненты, стили, страницы)
 - `src/Inventory.Shared` — общие компоненты, модели и сервисы
 
 ## Быстрый старт
@@ -32,7 +33,7 @@
    ```
 4. В новом терминале запустите Web клиент:
    ```bash
-   dotnet run --project "src/Inventory.Web/Inventory.Web.csproj"
+   dotnet run --project "src/Inventory.Web.Client/Inventory.Web.Client.csproj"
    ```
 
 ### Доступ к приложению
@@ -164,13 +165,25 @@
 
 ## Разработка
 
-### Структура Shared проекта
+### Структура проектов
+
+#### Inventory.Shared
 - **Models/** — общие модели данных
 - **DTOs/** — Data Transfer Objects для API
 - **Interfaces/** — интерфейсы сервисов
 - **Services/** — реализация API сервисов
 - **Constants/** — константы и настройки
-- **Components/** — общие Razor компоненты
+
+#### Inventory.UI
+- **Components/** — переиспользуемые Razor компоненты
+- **Layout/** — компоненты макета
+- **Pages/** — компоненты страниц
+- **wwwroot/** — статические ресурсы
+
+#### Inventory.Web.Client
+- **Pages/** — страницы приложения
+- **Services/** — клиентские сервисы
+- **Program.cs** — конфигурация клиента
 
 ### Инструкции для разработчиков
 См. файл `.ai-agent-prompts` для постоянных пожеланий и инструкций по разработке.

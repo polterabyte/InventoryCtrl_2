@@ -81,6 +81,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+// Configure static files
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 // Add global exception handling middleware
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
@@ -90,5 +94,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Serve static files from WebAssembly client
+app.MapFallbackToFile("index.html");
 
 app.Run();

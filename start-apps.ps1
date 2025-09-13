@@ -97,7 +97,7 @@ try {
         Start-Sleep -Seconds 3
         
         Write-Host "Запуск Web клиента..." -ForegroundColor Cyan
-        $webProcess = Start-Process -FilePath "dotnet" -ArgumentList "run", "--project", "src/Inventory.Web/Inventory.Web.csproj" -PassThru -WindowStyle Normal
+        $webProcess = Start-Process -FilePath "dotnet" -ArgumentList "run", "--project", "src/Inventory.Web.Client/Inventory.Web.Client.csproj" -PassThru -WindowStyle Normal
         
         Write-Host ""
         Write-Host "Приложения запущены!" -ForegroundColor Green
@@ -126,7 +126,7 @@ try {
         Write-Host "2. Starting Web client..." -ForegroundColor Cyan
         Write-Host "   Ports: https://localhost:$($webPorts.Https), http://localhost:$($webPorts.Http)" -ForegroundColor Gray
         
-        $webProcess = Start-Process -FilePath "dotnet" -ArgumentList "run", "--project", "src/Inventory.Web/Inventory.Web.csproj" -PassThru -WindowStyle Normal
+        $webProcess = Start-Process -FilePath "dotnet" -ArgumentList "run", "--project", "src/Inventory.Web.Client/Inventory.Web.Client.csproj" -PassThru -WindowStyle Normal
         
         # Wait for Web client to start (check HTTP port)
         if (-not (Wait-ForServer -Port $webPorts.Http -ServiceName "Web Client")) {

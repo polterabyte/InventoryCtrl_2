@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="System.Net.Http.Json" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" />
   </ItemGroup>
 
 </Project>

@@ -20,7 +20,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Inventory.Shared\Inventory.Shared.csproj" />
-    <ProjectReference Include="..\Inventory.Web\Inventory.Web.csproj" />
   </ItemGroup>
 
 </Project>

@@ -19,7 +19,8 @@
 
 ### Project Structure
 - `src/Inventory.API` — серверная часть (ASP.NET Core Web API, PostgreSQL)
-- `src/Inventory.Web` — клиентская часть (Blazor WebAssembly)
+- `src/Inventory.Web.Client` — клиентская часть (Blazor WebAssembly)
+- `src/Inventory.UI` — Razor Class Library (компоненты, стили, страницы)
 - `src/Inventory.Shared` — общие компоненты, модели и сервисы
 
 ### Quick Start
@@ -45,7 +46,7 @@
    ```
 4. In new terminal, start Web client:
    ```bash
-   dotnet run --project "src/Inventory.Web/Inventory.Web.csproj"
+   dotnet run --project "src/Inventory.Web.Client/Inventory.Web.Client.csproj"
    ```
 
 ### Application Access
@@ -98,11 +99,16 @@ InventoryCtrl_2/
 │   │   ├── Migrations/        # Database migrations
 │   │   └── Program.cs         # Server configuration
 │   │
-│   ├── Inventory.Web/          # Blazor WebAssembly client
+│   ├── Inventory.Web.Client/   # Blazor WebAssembly client
 │   │   ├── Pages/             # Razor pages
-│   │   ├── Layout/            # Layouts
 │   │   ├── Services/          # Client services
 │   │   └── Program.cs         # Client configuration
+│   │
+│   ├── Inventory.UI/           # Razor Class Library
+│   │   ├── Components/        # Reusable Razor components
+│   │   ├── Layout/            # Layout components
+│   │   ├── Pages/             # Page components
+│   │   └── wwwroot/           # Static assets
 │   │
 │   └── Inventory.Shared/       # Common components
 │       ├── Models/            # Common data models
@@ -160,9 +166,9 @@ InventoryCtrl_2/
 - `TransactionTypes.cs` - Transaction types
 - `StorageKeys.cs` - Storage keys
 
-### Web Project - Blazor Components
+### UI Project - Razor Class Library
 
-#### Components/ - Razor Components (located in Inventory.Web)
+#### Components/ - Reusable Razor Components (located in Inventory.UI)
 - `Forms/LoginForm.razor` - Login form
 - `Forms/RegisterForm.razor` - Registration form
 - `Forms/ProductForm.razor` - Product form
@@ -172,17 +178,29 @@ InventoryCtrl_2/
 - `ProductCard.razor` - Product card
 - `ProductList.razor` - Product list
 
+### Web Client - Blazor WebAssembly
+
+#### Pages/ - Application Pages (located in Inventory.Web.Client)
+- `Home.razor` - Home page
+- `Login.razor` - Login page
+- `Products.razor` - Products page
+- `Register.razor` - Registration page
+
+#### Services/ - Client Services
+- `PortConfigurationService.cs` - Port configuration service
+
 ### Architecture Benefits
 
 #### 1. Code Reuse
 - All common models, DTOs, and services are in Shared project
+- UI components are reusable across different client applications
 - Client applications use the same interfaces and models
 - Simplified synchronization between clients
 
 #### 2. Mobile App Preparation
 - Shared project ready for .NET MAUI use
+- UI components can be reused in Blazor Hybrid (MAUI)
 - API services can be used in both Blazor and mobile app
-- Razor components in Web project can be reused in Blazor Hybrid (MAUI)
 - Common constants and settings
 
 #### 3. Type Safety
@@ -193,7 +211,13 @@ InventoryCtrl_2/
 #### 4. Scalability
 - Easy to add new client applications
 - Centralized API contract management
+- Reusable UI components
 - Uniform error handling
+
+#### 5. Separation of Concerns
+- UI components separated from client logic
+- Clear boundaries between presentation and business logic
+- Easy to maintain and test individual components
 
 ### Database Structure
 
@@ -580,12 +604,14 @@ src/
 │   │   ├── light.css                     # Light theme
 │   │   └── dark.css                      # Dark theme
 │   └── README.md                         # CSS architecture documentation
-├── Inventory.Web/                        # Web client
+├── Inventory.UI/                          # UI components
 │   └── Component-specific CSS files      # Scoped component styles
 │       ├── Layout/MainLayout.razor.css
 │       ├── Layout/NavMenu.razor.css
 │       ├── Components/Notifications/
 │       └── Pages/Home.razor.css
+├── Inventory.Web.Client/                  # Web client
+│   └── wwwroot/                          # Client-specific assets
 ├── Inventory.Mobile/                     # Future MAUI client
 └── Inventory.Desktop/                    # Future Electron/WPF client
 ```
@@ -1031,7 +1057,7 @@ dotnet run
 
 #### 2. Start Web Client (in new terminal)
 ```bash
-cd src/Inventory.Web
+cd src/Inventory.Web.Client
 dotnet run
 ```
 **Ports:**
