@@ -118,4 +118,9 @@ packages/
 .cursor
 ehthumbs.db
 Thumbs.db
+
+# AI Agent files
+.ai-agent-prompts
+
+# Project specific
 witch main
