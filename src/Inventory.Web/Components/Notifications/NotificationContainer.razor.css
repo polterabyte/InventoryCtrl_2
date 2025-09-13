@@ -1,0 +1,24 @@
+.notification-container {
+    position: fixed;
+    top: var(--spacing-5);
+    right: var(--spacing-5);
+    z-index: var(--z-notification);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    pointer-events: none;
+}
+
+.notification-container > * {
+    pointer-events: auto;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 640px) {
+    .notification-container {
+        top: var(--spacing-3);
+        right: var(--spacing-3);
+        left: var(--spacing-3);
+        align-items: stretch;
+    }
+}

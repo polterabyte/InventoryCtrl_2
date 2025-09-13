@@ -1,0 +1,10 @@
+<Project>
+  <PropertyGroup>
+    <PortConfigPath>$(MSBuildThisFileDirectory)ports.json</PortConfigPath>
+  </PropertyGroup>
+  
+  <Target Name="ApplyPortConfiguration" BeforeTargets="Build" Condition="Exists('$(PortConfigPath)')">
+    <Exec Command="powershell -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)scripts\Apply-PortConfig.ps1&quot; -ConfigPath &quot;$(PortConfigPath)&quot; -ProjectRoot &quot;$(MSBuildThisFileDirectory)&quot;" 
+          ContinueOnError="false" />
+  </Target>
+</Project>

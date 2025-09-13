@@ -7,13 +7,30 @@ namespace Inventory.Shared.Services;
 
 public class ProductApiService : BaseApiService, IProductService
 {
-    public ProductApiService(HttpClient httpClient, ILogger<ProductApiService> logger) 
+    private readonly IRetryService? _retryService;
+    private readonly INotificationService? _notificationService;
+
+    public ProductApiService(HttpClient httpClient, ILogger<ProductApiService> logger, IRetryService? retryService = null, INotificationService? notificationService = null) 
         : base(httpClient, ApiEndpoints.Products, logger)
     {
+        _retryService = retryService;
+        _notificationService = notificationService;
     }
 
     public async Task<List<ProductDto>> GetAllProductsAsync()
     {
+        if (_retryService != null)
+        {
+            return await _retryService.ExecuteWithRetryAsync(
+                async () =>
+                {
+                    var response = await GetAsync<List<ProductDto>>(BaseUrl);
+                    return response.Data ?? new List<ProductDto>();
+                },
+                "GetAllProducts"
+            );
+        }
+        
         var response = await GetAsync<List<ProductDto>>(BaseUrl);
         return response.Data ?? new List<ProductDto>();
     }

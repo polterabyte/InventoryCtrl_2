@@ -1,21 +1,158 @@
 ﻿@page "/"
+@using Inventory.Web
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
 
-<PageTitle>Home</PageTitle>
-
-<h1>Hello, world!</h1>
-
-Welcome to your new app.
+<PageTitle>Inventory Control System</PageTitle>
 
 <AuthorizeView>
     <Authorized Context="authContext">
-        <p>Привет, <b>@authContext.User.Identity?.Name</b>!</p>
-        <p>Вы авторизованы.</p>
-        @if (authContext.User.IsInRole("Admin"))
-        {
-            <p>У вас есть права администратора.</p>
-        }
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <h1 class="display-4 text-primary mb-4">Добро пожаловать в систему управления складом!</h1>
+                    <p class="lead text-dark">Привет, <strong class="text-primary">@authContext.User.Identity?.Name</strong>!</p>
+                    <p class="text-muted">Вы успешно авторизованы в системе.</p>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-4">
+                            <div class="card shadow-sm mb-3">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-box-seam text-primary" style="font-size: 3rem;"></i>
+                                    <h5 class="card-title mt-2">Управление товарами</h5>
+                                    <p class="card-text text-muted">Добавляйте, редактируйте и отслеживайте товары на складе</p>
+                                    <a href="/products" class="btn btn-primary">Перейти</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card shadow-sm mb-3">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-graph-up text-success" style="font-size: 3rem;"></i>
+                                    <h5 class="card-title mt-2">Аналитика</h5>
+                                    <p class="card-text text-muted">Просматривайте отчеты и статистику по складу</p>
+                                    <button class="btn btn-success" disabled>Скоро</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card shadow-sm mb-3">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-people text-info" style="font-size: 3rem;"></i>
+                                    <h5 class="card-title mt-2">Пользователи</h5>
+                                    <p class="card-text text-muted">Управление пользователями системы</p>
+                                    <button class="btn btn-info" disabled>Скоро</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Быстрые действия</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <a href="/products" class="btn btn-outline-primary btn-lg w-100 mb-2">
+                                                <i class="bi bi-plus-circle"></i> Добавить товар
+                                            </a>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <button class="btn btn-outline-success btn-lg w-100 mb-2" disabled>
+                                                <i class="bi bi-arrow-down-circle"></i> Приход
+                                            </button>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <button class="btn btn-outline-warning btn-lg w-100 mb-2" disabled>
+                                                <i class="bi bi-arrow-up-circle"></i> Расход
+                                            </button>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <button class="btn btn-outline-info btn-lg w-100 mb-2" disabled>
+                                                <i class="bi bi-file-earmark-text"></i> Отчет
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </Authorized>
+    
     <NotAuthorized>
-        <p>Вы не авторизованы.</p>
+        <div class="container-fluid">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="text-center mb-5">
+                        <h1 class="display-4 text-primary mb-4">Система управления складом</h1>
+                        <p class="lead text-dark">Эффективное управление товарами и запасами</p>
+                        <p class="text-muted">Для доступа к системе необходимо авторизоваться</p>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card shadow-sm mb-4">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-box-seam text-primary" style="font-size: 4rem;"></i>
+                                    <h4 class="card-title mt-3">Управление товарами</h4>
+                                    <p class="card-text text-muted">Добавляйте, редактируйте и отслеживайте товары на складе</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card shadow-sm mb-4">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-graph-up text-success" style="font-size: 4rem;"></i>
+                                    <h4 class="card-title mt-3">Аналитика и отчеты</h4>
+                                    <p class="card-text text-muted">Получайте детальную информацию о состоянии склада</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card shadow-sm mb-4">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-people text-info" style="font-size: 4rem;"></i>
+                                    <h4 class="card-title mt-3">Многопользовательский режим</h4>
+                                    <p class="card-text text-muted">Работайте в команде с разными уровнями доступа</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card shadow-sm mb-4">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-shield-check text-warning" style="font-size: 4rem;"></i>
+                                    <h4 class="card-title mt-3">Безопасность</h4>
+                                    <p class="card-text text-muted">Надежная защита данных и контроль доступа</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-5">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <a href="/login" class="btn btn-primary btn-lg w-100 mb-3">
+                                    <i class="bi bi-box-arrow-in-right"></i> Войти в систему
+                                </a>
+                            </div>
+                            <div class="col-md-6">
+                                <a href="/register" class="btn btn-outline-primary btn-lg w-100 mb-3">
+                                    <i class="bi bi-person-plus"></i> Зарегистрироваться
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </NotAuthorized>
 </AuthorizeView>

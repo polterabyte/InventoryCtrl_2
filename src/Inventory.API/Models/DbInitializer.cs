@@ -76,14 +76,14 @@ public static class DbInitializer
         else
         {
             // Обновляем имя пользователя если оно изменилось
-            if (superUser.UserName != "SuperUser")
+            if (superUser.UserName != "superadmin")
             {
-                superUser.UserName = "SuperUser";
-                superUser.NormalizedUserName = userManager.NormalizeName("SuperUser");
+                superUser.UserName = "superadmin";
+                superUser.NormalizedUserName = userManager.NormalizeName("superadmin");
                 var updateResult = await userManager.UpdateAsync(superUser);
                 if (updateResult.Succeeded)
                 {
-                    Log.Information("Имя пользователя обновлено на SuperUser для {Email}", superUserEmail);
+                    Log.Information("Имя пользователя обновлено на superadmin для {Email}", superUserEmail);
                 }
                 else
                 {

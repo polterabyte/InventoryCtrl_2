@@ -5,20 +5,23 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Inventory.API.Middleware;
+using Inventory.Shared.Services;
+using Inventory.API.Services;
+using Inventory.API.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Отключаем встроенное логирование ASP.NET Core, так как используем Serilog
+// Clear default logging and configure Serilog
 builder.Logging.ClearProviders();
+builder.Host.UseSerilog((ctx, lc) => lc.ReadFrom.Configuration(ctx.Configuration));
 
-builder.Host.UseSerilog((ctx, lc) => lc
-    .ReadFrom.Configuration(ctx.Configuration)
-);
-
-// Add services to the container.
+// Add services
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Add port configuration service
+builder.Services.AddPortConfiguration();
 
 // Database
 builder.Services.AddDbContext<Inventory.API.Models.AppDbContext>(options =>
@@ -56,16 +59,13 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// CORS
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowConfiguredOrigins", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
-});
+// CORS with port configuration
+builder.Services.AddCorsWithPorts();
+
+// Add custom services
+builder.Services.AddScoped<ILoggingService, LoggingService>();
+builder.Services.AddScoped<IDebugLogsService, DebugLogsService>();
+builder.Services.AddScoped<IErrorHandlingService, ErrorHandlingService>();
 
 var app = builder.Build();
 
@@ -84,7 +84,8 @@ app.UseHttpsRedirection();
 // Add global exception handling middleware
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
-app.UseCors("AllowConfiguredOrigins");
+// Configure CORS with port configuration
+app.ConfigureCorsWithPorts();
 app.UseAuthentication();
 app.UseAuthorization();
 

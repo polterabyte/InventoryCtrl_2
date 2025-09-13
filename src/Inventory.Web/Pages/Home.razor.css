@@ -1,0 +1,15 @@
+.card {
+    transition: transform var(--transition-normal);
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.btn {
+    transition: all var(--transition-normal);
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}

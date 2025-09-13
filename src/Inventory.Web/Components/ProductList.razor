@@ -3,6 +3,7 @@
 @using Inventory.Shared.Services
 @inject IProductService ProductService
 @inject IErrorHandlingService ErrorHandlingService
+@inject INotificationService NotificationService
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h3>Товары</h3>
@@ -86,6 +87,11 @@ else
         {
             products = await ProductService.GetAllProductsAsync();
             totalPages = (int)Math.Ceiling((double)products.Count / PageSize);
+            
+            if (products.Any())
+            {
+                NotificationService.ShowSuccess("Products Loaded", $"Successfully loaded {products.Count} products");
+            }
         }
         catch (Exception ex)
         {

@@ -87,3 +87,100 @@ System.ArgumentOutOfRangeException: IDX10720: Unable to create KeyedHashAlgorith
 [2025-09-13 00:56:17.997 +03:00 INF] Inventory.Server.Controllers.AuthController: Успешный вход пользователя SuperUser с ролью SuperUser. Email: admin@inventory.com
 [2025-09-13 01:12:19.966 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
 [2025-09-13 01:13:10.408 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 01:58:16.816 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 01:58:16.927 +03:00 FTL] Microsoft.AspNetCore.Hosting.Diagnostics: Application startup exception
+System.InvalidOperationException: Cannot resolve scoped service 'Inventory.Shared.Services.IDebugLogsService' from root provider.
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteValidator.ValidateResolution(ServiceCallSite callSite, IServiceScope scope, IServiceScope rootScope)
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(ServiceIdentifier serviceIdentifier, ServiceProviderEngineScope serviceProviderEngineScope)
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(Type serviceType)
+   at Microsoft.Extensions.DependencyInjection.ActivatorUtilities.ConstructorMatcher.CreateInstance(IServiceProvider provider)
+   at Microsoft.Extensions.DependencyInjection.ActivatorUtilities.CreateInstance(IServiceProvider provider, Type instanceType, Object[] parameters)
+   at Microsoft.AspNetCore.Builder.UseMiddlewareExtensions.ReflectionMiddlewareBinder.CreateMiddleware(RequestDelegate next)
+   at Microsoft.AspNetCore.Builder.ApplicationBuilder.Build()
+   at Microsoft.AspNetCore.Builder.ApplicationBuilder.Build()
+   at Microsoft.AspNetCore.Hosting.GenericWebHostService.StartAsync(CancellationToken cancellationToken)
+[2025-09-13 01:58:16.935 +03:00 ERR] Microsoft.Extensions.Hosting.Internal.Host: Hosting failed to start
+System.InvalidOperationException: Cannot resolve scoped service 'Inventory.Shared.Services.IDebugLogsService' from root provider.
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteValidator.ValidateResolution(ServiceCallSite callSite, IServiceScope scope, IServiceScope rootScope)
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(ServiceIdentifier serviceIdentifier, ServiceProviderEngineScope serviceProviderEngineScope)
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(Type serviceType)
+   at Microsoft.Extensions.DependencyInjection.ActivatorUtilities.ConstructorMatcher.CreateInstance(IServiceProvider provider)
+   at Microsoft.Extensions.DependencyInjection.ActivatorUtilities.CreateInstance(IServiceProvider provider, Type instanceType, Object[] parameters)
+   at Microsoft.AspNetCore.Builder.UseMiddlewareExtensions.ReflectionMiddlewareBinder.CreateMiddleware(RequestDelegate next)
+   at Microsoft.AspNetCore.Builder.ApplicationBuilder.Build()
+   at Microsoft.AspNetCore.Builder.ApplicationBuilder.Build()
+   at Microsoft.AspNetCore.Hosting.GenericWebHostService.StartAsync(CancellationToken cancellationToken)
+   at Microsoft.Extensions.Hosting.Internal.Host.<StartAsync>b__14_1(IHostedService service, CancellationToken token)
+   at Microsoft.Extensions.Hosting.Internal.Host.ForeachService[T](IEnumerable`1 services, CancellationToken token, Boolean concurrent, Boolean abortOnFirstException, List`1 exceptions, Func`3 operation)
+[2025-09-13 01:58:48.683 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 01:58:48.783 +03:00 FTL] Microsoft.AspNetCore.Hosting.Diagnostics: Application startup exception
+System.InvalidOperationException: Cannot resolve scoped service 'Inventory.Shared.Services.IDebugLogsService' from root provider.
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteValidator.ValidateResolution(ServiceCallSite callSite, IServiceScope scope, IServiceScope rootScope)
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(ServiceIdentifier serviceIdentifier, ServiceProviderEngineScope serviceProviderEngineScope)
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(Type serviceType)
+   at Microsoft.Extensions.DependencyInjection.ActivatorUtilities.ConstructorMatcher.CreateInstance(IServiceProvider provider)
+   at Microsoft.Extensions.DependencyInjection.ActivatorUtilities.CreateInstance(IServiceProvider provider, Type instanceType, Object[] parameters)
+   at Microsoft.AspNetCore.Builder.UseMiddlewareExtensions.ReflectionMiddlewareBinder.CreateMiddleware(RequestDelegate next)
+   at Microsoft.AspNetCore.Builder.ApplicationBuilder.Build()
+   at Microsoft.AspNetCore.Builder.ApplicationBuilder.Build()
+   at Microsoft.AspNetCore.Hosting.GenericWebHostService.StartAsync(CancellationToken cancellationToken)
+[2025-09-13 01:58:48.792 +03:00 ERR] Microsoft.Extensions.Hosting.Internal.Host: Hosting failed to start
+System.InvalidOperationException: Cannot resolve scoped service 'Inventory.Shared.Services.IDebugLogsService' from root provider.
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteValidator.ValidateResolution(ServiceCallSite callSite, IServiceScope scope, IServiceScope rootScope)
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(ServiceIdentifier serviceIdentifier, ServiceProviderEngineScope serviceProviderEngineScope)
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(Type serviceType)
+   at Microsoft.Extensions.DependencyInjection.ActivatorUtilities.ConstructorMatcher.CreateInstance(IServiceProvider provider)
+   at Microsoft.Extensions.DependencyInjection.ActivatorUtilities.CreateInstance(IServiceProvider provider, Type instanceType, Object[] parameters)
+   at Microsoft.AspNetCore.Builder.UseMiddlewareExtensions.ReflectionMiddlewareBinder.CreateMiddleware(RequestDelegate next)
+   at Microsoft.AspNetCore.Builder.ApplicationBuilder.Build()
+   at Microsoft.AspNetCore.Builder.ApplicationBuilder.Build()
+   at Microsoft.AspNetCore.Hosting.GenericWebHostService.StartAsync(CancellationToken cancellationToken)
+   at Microsoft.Extensions.Hosting.Internal.Host.<StartAsync>b__14_1(IHostedService service, CancellationToken token)
+   at Microsoft.Extensions.Hosting.Internal.Host.ForeachService[T](IEnumerable`1 services, CancellationToken token, Boolean concurrent, Boolean abortOnFirstException, List`1 exceptions, Func`3 operation)
+[2025-09-13 01:59:24.041 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 01:59:57.532 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 02:03:15.688 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 02:07:58.023 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 02:08:35.809 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 02:12:00.185 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 02:13:42.393 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 02:15:08.006 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 02:15:47.863 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 02:19:06.916 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 02:20:22.155 +03:00 WRN] Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware: Failed to determine the https port for redirect.
+[2025-09-13 02:20:22.262 +03:00 INF] Inventory.API.Controllers.AuthController: Попытка входа пользователя: SuperUser
+[2025-09-13 02:20:22.451 +03:00 INF] Inventory.API.Controllers.AuthController: Успешный вход пользователя SuperUser с ролью SuperUser. Email: admin@inventory.com
+[2025-09-13 02:22:44.686 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 02:23:26.597 +03:00 WRN] Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware: Failed to determine the https port for redirect.
+[2025-09-13 02:23:26.687 +03:00 INF] Inventory.API.Controllers.AuthController: Попытка входа пользователя: SuperUser
+[2025-09-13 02:23:26.855 +03:00 INF] Inventory.API.Controllers.AuthController: Успешный вход пользователя SuperUser с ролью SuperUser. Email: admin@inventory.com
+[2025-09-13 02:25:14.959 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 02:26:11.632 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 02:28:12.038 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 02:29:43.448 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 02:31:28.842 +03:00 WRN] Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware: Failed to determine the https port for redirect.
+[2025-09-13 02:31:28.912 +03:00 INF] Inventory.API.Controllers.AuthController: Попытка входа пользователя: SuperUser
+[2025-09-13 02:31:29.074 +03:00 INF] Inventory.API.Controllers.AuthController: Успешный вход пользователя SuperUser с ролью SuperUser. Email: admin@inventory.com
+[2025-09-13 02:35:57.798 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 02:36:42.934 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 02:38:11.370 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 02:40:42.787 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 02:44:16.524 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 02:47:21.439 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 02:50:24.777 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 02:52:39.403 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 02:54:16.255 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 02:59:44.910 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 03:05:46.476 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 03:05:48.665 +03:00 WRN] Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware: Failed to determine the https port for redirect.
+[2025-09-13 03:06:04.842 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 03:06:05.417 +03:00 WRN] Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware: Failed to determine the https port for redirect.
+[2025-09-13 03:07:25.823 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 03:07:26.423 +03:00 WRN] Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware: Failed to determine the https port for redirect.
+[2025-09-13 03:07:41.782 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 03:07:42.345 +03:00 WRN] Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware: Failed to determine the https port for redirect.
+[2025-09-13 11:18:23.860 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 11:34:50.189 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 11:37:46.898 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
+[2025-09-13 11:38:10.726 +03:00 WRN] Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware: Failed to determine the https port for redirect.
+[2025-09-13 11:41:14.667 +03:00 INF] : Суперпользователь уже существует: admin@inventory.com
