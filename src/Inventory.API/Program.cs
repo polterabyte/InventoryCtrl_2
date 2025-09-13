@@ -14,6 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Clear default logging and configure Serilog
 builder.Logging.ClearProviders();
 builder.Host.UseSerilog((ctx, lc) => lc.ReadFrom.Configuration(ctx.Configuration));
+;
 
 // Add services
 builder.Services.AddControllers();

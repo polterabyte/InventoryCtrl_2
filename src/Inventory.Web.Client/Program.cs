@@ -10,18 +10,22 @@ using Inventory.Shared.Interfaces;
 using Inventory.Shared.Services;
 using Microsoft.Extensions.Logging;
 using Inventory.Web.Client.Services;
+using Microsoft.AspNetCore.Components;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-// Add port configuration service
+// Add port configuration service first
 builder.Services.AddScoped<PortConfigurationService>();
 
-// Configure HTTP client to point to API server
-var portService = new PortConfigurationService(builder.Services.BuildServiceProvider().GetRequiredService<ILogger<PortConfigurationService>>());
-var apiUrl = portService.GetApiUrl();
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(apiUrl) });
+// Configure API HTTP client using port configuration service
+builder.Services.AddScoped(sp =>
+{
+    var portService = sp.GetRequiredService<PortConfigurationService>();
+    var apiUrl = portService.GetApiUrl();
+    return new HttpClient { BaseAddress = new Uri(apiUrl) };
+});
 
 // Add Blazor authorization services
 builder.Services.AddAuthorizationCore();

@@ -1,37 +1,34 @@
-using System.Text.Json;
+using Microsoft.Extensions.Configuration;
 
 namespace Inventory.Web.Client.Services;
 
 public class PortConfigurationService
 {
     private readonly ILogger<PortConfigurationService> _logger;
+    private readonly IConfiguration _configuration;
     
-    public PortConfigurationService(ILogger<PortConfigurationService> logger)
+    public PortConfigurationService(ILogger<PortConfigurationService> logger, IConfiguration configuration)
     {
         _logger = logger;
+        _configuration = configuration;
     }
     
     public string GetApiUrl()
     {
-        var portsConfigPath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "ports.json");
-        
-        if (!File.Exists(portsConfigPath))
-        {
-            _logger.LogWarning("ports.json not found, using default API URL");
-            return "https://localhost:7000";
-        }
-        
         try
         {
-            var portsConfigJson = File.ReadAllText(portsConfigPath);
-            var portsConfig = JsonSerializer.Deserialize<JsonElement>(portsConfigJson);
-            var apiHttpsPort = portsConfig.GetProperty("api").GetProperty("https").GetInt32();
-            return $"https://localhost:{apiHttpsPort}";
+            var apiUrl = _configuration["ApiSettings:BaseUrl"];
+            if (!string.IsNullOrEmpty(apiUrl))
+            {
+                return apiUrl;
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to load port configuration, using default API URL");
-            return "https://localhost:7000";
+            _logger.LogWarning(ex, "Failed to read API URL from configuration, using default");
         }
+        
+        // Fallback to default
+        return "http://localhost:5000";
     }
 }
