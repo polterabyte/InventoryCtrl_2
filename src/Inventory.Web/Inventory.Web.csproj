@@ -18,4 +18,8 @@
     <ProjectReference Include="..\Inventory.Shared\Inventory.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="..\Inventory.Shared\wwwroot\**\*" Link="wwwroot/_content/Inventory.Shared/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" Exclude="..\Inventory.Shared\wwwroot\index.html" />
+  </ItemGroup>
+
 </Project>
