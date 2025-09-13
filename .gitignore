@@ -1,0 +1,120 @@
+# Binaries for projects
+*.dll
+*.exe
+*.pdb
+*.dll.config
+*.exe.config
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+browsers/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+
+# Logs directories
+**/logs/
+
+# Visual Studio files
+*.user
+*.suo
+*.cache
+*.ilk
+*.log
+*.vspscc
+*.vssscc
+*.vsix
+*.vsixmanifest
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+# ReSharper files
+*.resharper
+*.DotSettings.user
+*.DotCover
+*.DotCover.bak
+*.vs.SolutionExplorer*
+*.DotSettings
+
+# ReSharper task runner cache
+_ReSharper.Caches/
+_ReSharper.Cache
+
+# Visual Studio Code files
+.vscode/
+
+# Rider files
+.idea/
+*.sln.iml
+
+# Visual Studio 2015 cache options
+*.userosscache
+
+# NuGet Packages
+*.nupkg
+packages/
+
+# MSTest test Results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+# nCover
+*.ncov
+*.dotCover
+*.cover
+*.coverage
+
+# Web deploy
+*.publishsettings
+*.pubxml
+*.pubxml.user
+
+# Windows installer files
+*.msi
+*.msix
+*.msm
+*.msp
+
+# Windows shortcuts
+*.lnk
+
+# Mono
+*.mdb
+*.MonoDevelop.*
+*.MonoDevelop*
+
+# Visual Studio 2022
+*.sln.md
+
+# Assembly
+*.cr2
+*.cr2.sig
+
+# Source control
+.git/
+.gitignore
+.gitattributes
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+.cursor
+ehthumbs.db
+Thumbs.db
