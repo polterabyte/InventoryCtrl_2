@@ -1,0 +1,62 @@
+.stats-widget {
+    transition: all 0.3s ease;
+    border-left: 4px solid;
+}
+
+.stats-widget:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.stats-value {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.stats-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    margin-bottom: 0.125rem;
+}
+
+.stats-sublabel {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+}
+
+.border-primary .stats-value {
+    color: var(--color-primary);
+}
+
+.border-success .stats-value {
+    color: var(--color-success);
+}
+
+.border-warning .stats-value {
+    color: var(--color-warning);
+}
+
+.border-danger .stats-value {
+    color: var(--color-error);
+}
+
+.border-info .stats-value {
+    color: var(--color-info);
+}
+
+/* Dark theme support */
+[data-bs-theme="dark"] .stats-widget {
+    background-color: var(--color-bg-secondary);
+    border-color: var(--color-border);
+}
+
+[data-bs-theme="dark"] .stats-label {
+    color: var(--color-text-secondary);
+}
+
+[data-bs-theme="dark"] .stats-sublabel {
+    color: var(--color-text-muted);
+}

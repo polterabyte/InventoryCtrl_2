@@ -1,0 +1,328 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Inventory.API.Models;
+using Inventory.Shared.DTOs;
+using Serilog;
+
+namespace Inventory.API.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+[Authorize]
+public class TransactionController(AppDbContext context, ILogger<TransactionController> logger) : ControllerBase
+{
+    [HttpGet]
+    public async Task<IActionResult> GetTransactions()
+    {
+        try
+        {
+            var transactions = await context.InventoryTransactions
+                .Include(t => t.Product)
+                .Include(t => t.Warehouse)
+                .Include(t => t.User)
+                .Include(t => t.Location)
+                .OrderByDescending(t => t.Date)
+                .Select(t => new InventoryTransactionDto
+                {
+                    Id = t.Id,
+                    ProductId = t.ProductId,
+                    ProductName = t.Product.Name,
+                    ProductSku = t.Product.SKU,
+                    WarehouseId = t.WarehouseId,
+                    WarehouseName = t.Warehouse.Name,
+                    UserId = t.UserId,
+                    UserName = t.User.UserName ?? "Unknown",
+                    LocationId = t.LocationId,
+                    LocationName = t.Location != null ? t.Location.Name : null,
+                    Type = t.Type.ToString(),
+                    Quantity = t.Quantity,
+                    Date = t.Date,
+                    Description = t.Description
+                })
+                .ToListAsync();
+
+            return Ok(new ApiResponse<List<InventoryTransactionDto>>
+            {
+                Success = true,
+                Data = transactions
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving transactions");
+            return StatusCode(500, new ApiResponse<List<InventoryTransactionDto>>
+            {
+                Success = false,
+                ErrorMessage = "Failed to retrieve transactions"
+            });
+        }
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetTransaction(int id)
+    {
+        try
+        {
+            var transaction = await context.InventoryTransactions
+                .Include(t => t.Product)
+                .Include(t => t.Warehouse)
+                .Include(t => t.User)
+                .Include(t => t.Location)
+                .FirstOrDefaultAsync(t => t.Id == id);
+
+            if (transaction == null)
+            {
+                return NotFound(new ApiResponse<InventoryTransactionDto>
+                {
+                    Success = false,
+                    ErrorMessage = "Transaction not found"
+                });
+            }
+
+            var transactionDto = new InventoryTransactionDto
+            {
+                Id = transaction.Id,
+                ProductId = transaction.ProductId,
+                ProductName = transaction.Product.Name,
+                ProductSku = transaction.Product.SKU,
+                WarehouseId = transaction.WarehouseId,
+                WarehouseName = transaction.Warehouse.Name,
+                UserId = transaction.UserId,
+                UserName = transaction.User.UserName ?? "Unknown",
+                LocationId = transaction.LocationId,
+                LocationName = transaction.Location?.Name,
+                Type = transaction.Type.ToString(),
+                Quantity = transaction.Quantity,
+                Date = transaction.Date,
+                Description = transaction.Description
+            };
+
+            return Ok(new ApiResponse<InventoryTransactionDto>
+            {
+                Success = true,
+                Data = transactionDto
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving transaction {TransactionId}", id);
+            return StatusCode(500, new ApiResponse<InventoryTransactionDto>
+            {
+                Success = false,
+                ErrorMessage = "Failed to retrieve transaction"
+            });
+        }
+    }
+
+    [HttpGet("product/{productId}")]
+    public async Task<IActionResult> GetTransactionsByProduct(int productId)
+    {
+        try
+        {
+            var transactions = await context.InventoryTransactions
+                .Include(t => t.Product)
+                .Include(t => t.Warehouse)
+                .Include(t => t.User)
+                .Include(t => t.Location)
+                .Where(t => t.ProductId == productId)
+                .OrderByDescending(t => t.Date)
+                .Select(t => new InventoryTransactionDto
+                {
+                    Id = t.Id,
+                    ProductId = t.ProductId,
+                    ProductName = t.Product.Name,
+                    ProductSku = t.Product.SKU,
+                    WarehouseId = t.WarehouseId,
+                    WarehouseName = t.Warehouse.Name,
+                    UserId = t.UserId,
+                    UserName = t.User.UserName ?? "Unknown",
+                    LocationId = t.LocationId,
+                    LocationName = t.Location != null ? t.Location.Name : null,
+                    Type = t.Type.ToString(),
+                    Quantity = t.Quantity,
+                    Date = t.Date,
+                    Description = t.Description
+                })
+                .ToListAsync();
+
+            return Ok(new ApiResponse<List<InventoryTransactionDto>>
+            {
+                Success = true,
+                Data = transactions
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving transactions for product {ProductId}", productId);
+            return StatusCode(500, new ApiResponse<List<InventoryTransactionDto>>
+            {
+                Success = false,
+                ErrorMessage = "Failed to retrieve transactions"
+            });
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateTransaction([FromBody] CreateInventoryTransactionDto request)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new ApiResponse<InventoryTransactionDto>
+                {
+                    Success = false,
+                    ErrorMessage = "Invalid model state",
+                    Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList()
+                });
+            }
+
+            // Verify product exists
+            var product = await context.Products.FindAsync(request.ProductId);
+            if (product == null)
+            {
+                return BadRequest(new ApiResponse<InventoryTransactionDto>
+                {
+                    Success = false,
+                    ErrorMessage = "Product not found"
+                });
+            }
+
+            // Verify warehouse exists
+            var warehouse = await context.Warehouses.FindAsync(request.WarehouseId);
+            if (warehouse == null)
+            {
+                return BadRequest(new ApiResponse<InventoryTransactionDto>
+                {
+                    Success = false,
+                    ErrorMessage = "Warehouse not found"
+                });
+            }
+
+            // Verify location exists (if specified)
+            if (request.LocationId.HasValue)
+            {
+                var location = await context.Locations.FindAsync(request.LocationId.Value);
+                if (location == null)
+                {
+                    return BadRequest(new ApiResponse<InventoryTransactionDto>
+                    {
+                        Success = false,
+                        ErrorMessage = "Location not found"
+                    });
+                }
+            }
+
+            // Update product quantity
+            var oldQuantity = product.Quantity;
+            if (request.Type == "Income")
+            {
+                product.Quantity += request.Quantity;
+            }
+            else if (request.Type == "Outcome")
+            {
+                if (product.Quantity < request.Quantity)
+                {
+                    return BadRequest(new ApiResponse<InventoryTransactionDto>
+                    {
+                        Success = false,
+                        ErrorMessage = "Insufficient stock for this transaction"
+                    });
+                }
+                product.Quantity -= request.Quantity;
+            }
+            // For "Install" type, we don't change the quantity
+
+            product.UpdatedAt = DateTime.UtcNow;
+
+            var transaction = new InventoryTransaction
+            {
+                ProductId = request.ProductId,
+                WarehouseId = request.WarehouseId,
+                UserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "system",
+                LocationId = request.LocationId,
+                Type = Enum.Parse<TransactionType>(request.Type),
+                Quantity = request.Quantity,
+                Date = request.Date ?? DateTime.UtcNow,
+                Description = request.Description
+            };
+
+            context.InventoryTransactions.Add(transaction);
+            await context.SaveChangesAsync();
+
+            logger.LogInformation("Transaction created: {TransactionType} for product {ProductId}, quantity {Quantity}", 
+                request.Type, request.ProductId, request.Quantity);
+
+            // Return the created transaction with related data
+            var createdTransaction = await context.InventoryTransactions
+                .Include(t => t.Product)
+                .Include(t => t.Warehouse)
+                .Include(t => t.User)
+                .Include(t => t.Location)
+                .FirstAsync(t => t.Id == transaction.Id);
+
+            var transactionDto = new InventoryTransactionDto
+            {
+                Id = createdTransaction.Id,
+                ProductId = createdTransaction.ProductId,
+                ProductName = createdTransaction.Product.Name,
+                ProductSku = createdTransaction.Product.SKU,
+                WarehouseId = createdTransaction.WarehouseId,
+                WarehouseName = createdTransaction.Warehouse.Name,
+                UserId = createdTransaction.UserId,
+                UserName = createdTransaction.User.UserName ?? "Unknown",
+                LocationId = createdTransaction.LocationId,
+                LocationName = createdTransaction.Location?.Name,
+                Type = createdTransaction.Type.ToString(),
+                Quantity = createdTransaction.Quantity,
+                Date = createdTransaction.Date,
+                Description = createdTransaction.Description
+            };
+
+            return CreatedAtAction(nameof(GetTransaction), new { id = transaction.Id }, new ApiResponse<InventoryTransactionDto>
+            {
+                Success = true,
+                Data = transactionDto
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error creating transaction");
+            return StatusCode(500, new ApiResponse<InventoryTransactionDto>
+            {
+                Success = false,
+                ErrorMessage = "Failed to create transaction"
+            });
+        }
+    }
+}
+
+public class InventoryTransactionDto
+{
+    public int Id { get; set; }
+    public int ProductId { get; set; }
+    public string ProductName { get; set; } = string.Empty;
+    public string ProductSku { get; set; } = string.Empty;
+    public int WarehouseId { get; set; }
+    public string WarehouseName { get; set; } = string.Empty;
+    public string UserId { get; set; } = string.Empty;
+    public string UserName { get; set; } = string.Empty;
+    public int? LocationId { get; set; }
+    public string? LocationName { get; set; }
+    public string Type { get; set; } = string.Empty;
+    public int Quantity { get; set; }
+    public DateTime Date { get; set; }
+    public string? Description { get; set; }
+}
+
+public class CreateInventoryTransactionDto
+{
+    public int ProductId { get; set; }
+    public int WarehouseId { get; set; }
+    public int? LocationId { get; set; }
+    public string Type { get; set; } = string.Empty;
+    public int Quantity { get; set; }
+    public DateTime? Date { get; set; }
+    public string? Description { get; set; }
+}

@@ -128,7 +128,7 @@ namespace Inventory.API.Controllers
                 await userManager.AddToRoleAsync(user, "User");
                 _logger.LogInformation("Successful user registration: {Username} with email {Email}", 
                     user.UserName, user.Email);
-                return Ok(new { success = true, message = "User created successfully." });
+                return Created("", new { success = true, message = "User created successfully." });
             }
 
             var errors = string.Join(", ", result.Errors.Select(e => e.Description));

@@ -1,7 +1,21 @@
 ﻿<CascadingAuthenticationState>
     <Router AppAssembly="@typeof(App).Assembly" AdditionalAssemblies="new[] { typeof(Inventory.UI.Pages.Login).Assembly }">
         <Found Context="routeData">
-            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                <NotAuthorized>
+                    @if (routeData.PageType != typeof(Inventory.UI.Pages.Login))
+                    {
+                        <Inventory.UI.Components.RedirectToLogin />
+                    }
+                    else
+                    {
+                        <PageTitle>Login</PageTitle>
+                        <LayoutView Layout="@typeof(MainLayout)">
+                            <Inventory.UI.Pages.Login />
+                        </LayoutView>
+                    }
+                </NotAuthorized>
+            </AuthorizeRouteView>
         </Found>
         <NotFound>
             <PageTitle>Not found</PageTitle>

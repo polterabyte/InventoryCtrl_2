@@ -1,0 +1,27 @@
+@using Microsoft.AspNetCore.Components
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="text-center mb-5">
+                <LoadingSpinner Message="Перенаправление на страницу авторизации..." 
+                               LoadingText="Redirecting..." 
+                               Color="SpinnerColor.Primary" 
+                               Size="SpinnerSize.Large" />
+                <h1 class="display-4 text-primary mb-4">Система управления складом</h1>
+                <p class="lead text-dark">Эффективное управление товарами и запасами</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        // Add a small delay to prevent flash of content and show loading message
+        await Task.Delay(500);
+        Navigation.NavigateTo("/login", true);
+    }
+}

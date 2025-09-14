@@ -1,0 +1,68 @@
+.loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100px;
+}
+
+.loading-fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.9);
+    z-index: 9999;
+    min-height: 100vh;
+}
+
+.loading-message {
+    max-width: 300px;
+    text-align: center;
+}
+
+/* Custom spinner animations */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-spinner .spinner-border {
+    animation: spin 1s linear infinite;
+}
+
+/* Size variations */
+.spinner-border-lg {
+    width: 3rem;
+    height: 3rem;
+    border-width: 0.3em;
+}
+
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.1em;
+}
+
+/* Color variations with custom properties */
+.text-primary { color: var(--bs-primary) !important; }
+.text-secondary { color: var(--bs-secondary) !important; }
+.text-success { color: var(--bs-success) !important; }
+.text-danger { color: var(--bs-danger) !important; }
+.text-warning { color: var(--bs-warning) !important; }
+.text-info { color: var(--bs-info) !important; }
+.text-light { color: var(--bs-light) !important; }
+.text-dark { color: var(--bs-dark) !important; }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .loading-spinner {
+        min-height: 80px;
+    }
+    
+    .loading-message {
+        max-width: 250px;
+        font-size: 0.9rem;
+    }
+}

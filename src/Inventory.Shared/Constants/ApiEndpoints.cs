@@ -37,4 +37,10 @@ public static class ApiEndpoints
     public const string Transactions = $"{BaseUrl}/transactions";
     public const string TransactionById = $"{Transactions}/{{id}}";
     public const string TransactionsByProduct = $"{Transactions}/product/{{productId}}";
+    
+    // Dashboard endpoints
+    public const string Dashboard = $"{BaseUrl}/dashboard";
+    public const string DashboardStats = $"{Dashboard}/stats";
+    public const string DashboardRecentActivity = $"{Dashboard}/recent-activity";
+    public const string DashboardLowStockProducts = $"{Dashboard}/low-stock-products";
 }

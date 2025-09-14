@@ -1,0 +1,97 @@
+@using Inventory.Shared.DTOs
+@inject IDashboardService DashboardService
+
+<div class="card border-warning">
+    <div class="card-header bg-warning bg-opacity-10">
+        <h5 class="mb-0 text-warning">
+            <i class="bi bi-exclamation-triangle me-2"></i>Товары с низким остатком
+        </h5>
+    </div>
+    <div class="card-body">
+        @if (isLoading)
+        {
+            <div class="text-center py-4">
+                <div class="spinner-border text-warning" role="status">
+                    <span class="visually-hidden">Загрузка...</span>
+                </div>
+            </div>
+        }
+        else if (lowStockProducts?.Any() == true)
+        {
+            <div class="low-stock-list">
+                @foreach (var product in lowStockProducts.Take(5))
+                {
+                    <div class="low-stock-item">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <i class="bi bi-box-seam text-warning" style="font-size: 1.5rem;"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="fw-semibold">@product.Name</div>
+                                <div class="text-muted small">@product.SKU • @product.CategoryName</div>
+                            </div>
+                            <div class="flex-shrink-0 text-end">
+                                <div class="fw-bold text-warning">@product.CurrentQuantity @product.Unit</div>
+                                <div class="text-muted small">мин: @product.MinStock</div>
+                            </div>
+                        </div>
+                        <div class="progress mt-2" style="height: 4px;">
+                            <div class="progress-bar bg-warning" 
+                                 style="width: @GetStockPercentage(product.CurrentQuantity, product.MinStock)%"></div>
+                        </div>
+                    </div>
+                }
+            </div>
+            
+            @if (lowStockProducts.Count > 5)
+            {
+                <div class="text-center mt-3">
+                    <button class="btn btn-sm btn-outline-warning">
+                        Показать все (@lowStockProducts.Count)
+                    </button>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="text-center py-4 text-success">
+                <i class="bi bi-check-circle" style="font-size: 2rem;"></i>
+                <p class="mt-2 mb-0">Все товары в норме</p>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<LowStockProductDto>? lowStockProducts;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadLowStockProducts();
+    }
+
+    private async Task LoadLowStockProducts()
+    {
+        try
+        {
+            isLoading = true;
+            lowStockProducts = await DashboardService.GetLowStockProductsAsync();
+        }
+        catch (Exception ex)
+        {
+            // Handle error - could show notification
+            Console.WriteLine($"Error loading low stock products: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private int GetStockPercentage(int current, int min)
+    {
+        if (min <= 0) return 100;
+        return Math.Min(100, (current * 100) / min);
+    }
+}

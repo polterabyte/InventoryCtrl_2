@@ -17,4 +17,12 @@ public abstract class ComponentTestBase : TestContext
         Services.AddSingleton(Mock.Of<ILogger<NotificationService>>());
         Services.AddSingleton(Mock.Of<INotificationService>());
     }
+
+    /// <summary>
+    /// Helper method to add singleton service to test context
+    /// </summary>
+    protected void AddSingletonService<TService>(TService service) where TService : class
+    {
+        Services.AddSingleton(service);
+    }
 }

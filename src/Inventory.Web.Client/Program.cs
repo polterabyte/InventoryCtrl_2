@@ -43,6 +43,7 @@ builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Informatio
 builder.Services.AddScoped<IAuthService, AuthApiService>();
 builder.Services.AddScoped<IProductService, ProductApiService>();
 builder.Services.AddScoped<ICategoryService, CategoryApiService>();
+builder.Services.AddScoped<IDashboardService, DashboardApiService>();
 
 // Register logging and error handling services
 builder.Services.AddScoped<ILoggingService, LoggingService>();
@@ -52,5 +53,8 @@ builder.Services.AddScoped<IErrorHandlingService, ErrorHandlingService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IRetryService, RetryService>();
 builder.Services.AddScoped<IDebugLogsService, DebugLogsService>();
+
+// Register authorization services
+builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 
 await builder.Build().RunAsync();

@@ -13,16 +13,8 @@ public static class DbInitializer
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
 
-        // Применение миграций (только для реляционных баз данных)
-        if (db.Database.IsRelational())
-        {
-            await db.Database.MigrateAsync();
-        }
-        else
-        {
-            // Для InMemory базы создаем схему
-            await db.Database.EnsureCreatedAsync();
-        }
+        // Применение миграций
+        await db.Database.MigrateAsync();
 
         // Создание ролей
         await CreateRolesAsync(roleManager);

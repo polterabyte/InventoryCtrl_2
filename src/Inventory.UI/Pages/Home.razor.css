@@ -1,0 +1,76 @@
+/* Quick Actions Styling */
+.quick-action-btn {
+    transition: all 0.3s ease;
+    border: 2px solid;
+    min-height: 120px;
+}
+
+.quick-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.quick-action-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.quick-action-btn:disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* Stats Widgets Animation */
+.stats-widget {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Stagger animation for stats widgets */
+.stats-widget:nth-child(1) { animation-delay: 0.1s; }
+.stats-widget:nth-child(2) { animation-delay: 0.2s; }
+.stats-widget:nth-child(3) { animation-delay: 0.3s; }
+.stats-widget:nth-child(4) { animation-delay: 0.4s; }
+
+/* Dashboard Cards */
+.dashboard-card {
+    transition: all 0.3s ease;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark theme support */
+[data-bs-theme="dark"] .quick-action-btn {
+    background-color: var(--color-bg-secondary);
+    border-color: var(--color-border);
+}
+
+[data-bs-theme="dark"] .quick-action-btn:hover {
+    background-color: var(--color-bg-primary);
+    border-color: var(--color-primary);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .quick-action-btn {
+        min-height: 100px;
+        font-size: 0.9rem;
+    }
+    
+    .stats-widget {
+        margin-bottom: 1rem;
+    }
+}

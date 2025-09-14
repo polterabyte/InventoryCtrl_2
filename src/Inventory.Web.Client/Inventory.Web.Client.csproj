@@ -19,4 +19,5 @@
     <ProjectReference Include="..\Inventory.UI\Inventory.UI.csproj" />
   </ItemGroup>
 
+
 </Project>

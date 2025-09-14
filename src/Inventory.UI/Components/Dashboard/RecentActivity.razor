@@ -1,0 +1,146 @@
+@using Inventory.Shared.DTOs
+@inject IDashboardService DashboardService
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="bi bi-clock-history me-2"></i>Последняя активность
+        </h5>
+        <button class="btn btn-sm btn-outline-primary" @onclick="RefreshActivity">
+            <i class="bi bi-arrow-clockwise"></i> Обновить
+        </button>
+    </div>
+    <div class="card-body">
+        @if (isLoading)
+        {
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Загрузка...</span>
+                </div>
+            </div>
+        }
+        else if (recentActivity?.RecentTransactions?.Any() == true)
+        {
+            <div class="activity-list">
+                @foreach (var transaction in recentActivity.RecentTransactions.Take(5))
+                {
+                    <div class="activity-item">
+                        <div class="activity-icon @GetTransactionIconClass(transaction.Type)">
+                            <i class="@GetTransactionIcon(transaction.Type)"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">
+                                @GetTransactionTitle(transaction.Type) товара
+                                <strong>@transaction.ProductName</strong>
+                            </div>
+                            <div class="activity-details">
+                                <span class="badge @GetTransactionBadgeClass(transaction.Type)">
+                                    @transaction.Quantity @transaction.ProductSku
+                                </span>
+                                <span class="text-muted ms-2">
+                                    @transaction.UserName • @transaction.WarehouseName
+                                </span>
+                            </div>
+                            <div class="activity-time">
+                                <i class="bi bi-clock"></i> @transaction.Date.ToString("dd.MM.yyyy HH:mm")
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+            
+            @if (recentActivity.RecentTransactions.Count > 5)
+            {
+                <div class="text-center mt-3">
+                    <button class="btn btn-sm btn-outline-secondary">
+                        Показать все (@recentActivity.RecentTransactions.Count)
+                    </button>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="text-center py-4 text-muted">
+                <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                <p class="mt-2 mb-0">Нет недавней активности</p>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private RecentActivityDto? recentActivity;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRecentActivity();
+    }
+
+    private async Task LoadRecentActivity()
+    {
+        try
+        {
+            isLoading = true;
+            recentActivity = await DashboardService.GetRecentActivityAsync();
+        }
+        catch (Exception ex)
+        {
+            // Handle error - could show notification
+            Console.WriteLine($"Error loading recent activity: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task RefreshActivity()
+    {
+        await LoadRecentActivity();
+    }
+
+    private string GetTransactionIcon(string type)
+    {
+        return type.ToLower() switch
+        {
+            "income" => "bi bi-arrow-down-circle",
+            "outcome" => "bi bi-arrow-up-circle",
+            "install" => "bi bi-tools",
+            _ => "bi bi-arrow-right-circle"
+        };
+    }
+
+    private string GetTransactionIconClass(string type)
+    {
+        return type.ToLower() switch
+        {
+            "income" => "text-success",
+            "outcome" => "text-warning",
+            "install" => "text-info",
+            _ => "text-primary"
+        };
+    }
+
+    private string GetTransactionTitle(string type)
+    {
+        return type.ToLower() switch
+        {
+            "income" => "Приход",
+            "outcome" => "Расход",
+            "install" => "Установка",
+            _ => "Операция"
+        };
+    }
+
+    private string GetTransactionBadgeClass(string type)
+    {
+        return type.ToLower() switch
+        {
+            "income" => "bg-success",
+            "outcome" => "bg-warning",
+            "install" => "bg-info",
+            _ => "bg-primary"
+        };
+    }
+}

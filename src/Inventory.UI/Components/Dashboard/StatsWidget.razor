@@ -1,0 +1,41 @@
+@using Inventory.Shared.DTOs
+
+<div class="col-md-3 mb-4">
+    <div class="card stats-widget @GetCardClass()">
+        <div class="card-body">
+            <div class="d-flex align-items-center">
+                <div class="flex-shrink-0">
+                    <i class="@IconClass" style="font-size: 2.5rem;"></i>
+                </div>
+                <div class="flex-grow-1 ms-3">
+                    <div class="stats-value">@Value</div>
+                    <div class="stats-label">@Label</div>
+                    @if (!string.IsNullOrEmpty(SubLabel))
+                    {
+                        <div class="stats-sublabel">@SubLabel</div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Label { get; set; } = string.Empty;
+    [Parameter] public int Value { get; set; }
+    [Parameter] public string? SubLabel { get; set; }
+    [Parameter] public string IconClass { get; set; } = "bi bi-info-circle";
+    [Parameter] public string CardClass { get; set; } = "primary";
+
+    private string GetCardClass()
+    {
+        return CardClass switch
+        {
+            "success" => "border-success",
+            "warning" => "border-warning",
+            "danger" => "border-danger",
+            "info" => "border-info",
+            _ => "border-primary"
+        };
+    }
+}
