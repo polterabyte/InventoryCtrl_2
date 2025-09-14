@@ -68,6 +68,15 @@ public class PagedResponse<T>
     public bool HasNextPage => PageNumber < TotalPages;
 }
 
+public class PagedApiResponse<T>
+{
+    public bool Success { get; set; }
+    public PagedResponse<T>? Data { get; set; }
+    public string? ErrorMessage { get; set; }
+    public List<string>? Errors { get; set; }
+    public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+}
+
 // DTOs with primary constructors for common operations
 public record CreateEntityResult<T>(bool Success, T? Entity, string? ErrorMessage);
 

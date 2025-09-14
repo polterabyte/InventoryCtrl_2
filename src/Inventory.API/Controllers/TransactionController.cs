@@ -13,16 +13,61 @@ namespace Inventory.API.Controllers;
 public class TransactionController(AppDbContext context, ILogger<TransactionController> logger) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetTransactions()
+    public async Task<IActionResult> GetTransactions(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] int? productId = null,
+        [FromQuery] int? warehouseId = null,
+        [FromQuery] string? type = null,
+        [FromQuery] DateTime? startDate = null,
+        [FromQuery] DateTime? endDate = null)
     {
         try
         {
-            var transactions = await context.InventoryTransactions
+            var query = context.InventoryTransactions
                 .Include(t => t.Product)
                 .Include(t => t.Warehouse)
                 .Include(t => t.User)
                 .Include(t => t.Location)
+                .AsQueryable();
+
+            // Apply filters
+            if (productId.HasValue)
+            {
+                query = query.Where(t => t.ProductId == productId.Value);
+            }
+
+            if (warehouseId.HasValue)
+            {
+                query = query.Where(t => t.WarehouseId == warehouseId.Value);
+            }
+
+            if (!string.IsNullOrEmpty(type))
+            {
+                if (Enum.TryParse<TransactionType>(type, out var transactionType))
+                {
+                    query = query.Where(t => t.Type == transactionType);
+                }
+            }
+
+            if (startDate.HasValue)
+            {
+                query = query.Where(t => t.Date >= startDate.Value);
+            }
+
+            if (endDate.HasValue)
+            {
+                query = query.Where(t => t.Date <= endDate.Value);
+            }
+
+            // Get total count
+            var totalCount = await query.CountAsync();
+
+            // Apply pagination
+            var transactions = await query
                 .OrderByDescending(t => t.Date)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(t => new InventoryTransactionDto
                 {
                     Id = t.Id,
@@ -42,16 +87,24 @@ public class TransactionController(AppDbContext context, ILogger<TransactionCont
                 })
                 .ToListAsync();
 
-            return Ok(new ApiResponse<List<InventoryTransactionDto>>
+            var pagedResponse = new PagedResponse<InventoryTransactionDto>
+            {
+                Items = transactions,
+                TotalCount = totalCount,
+                PageNumber = page,
+                PageSize = pageSize
+            };
+
+            return Ok(new PagedApiResponse<InventoryTransactionDto>
             {
                 Success = true,
-                Data = transactions
+                Data = pagedResponse
             });
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving transactions");
-            return StatusCode(500, new ApiResponse<List<InventoryTransactionDto>>
+            return StatusCode(500, new PagedApiResponse<InventoryTransactionDto>
             {
                 Success = false,
                 ErrorMessage = "Failed to retrieve transactions"
@@ -116,17 +169,28 @@ public class TransactionController(AppDbContext context, ILogger<TransactionCont
     }
 
     [HttpGet("product/{productId}")]
-    public async Task<IActionResult> GetTransactionsByProduct(int productId)
+    public async Task<IActionResult> GetTransactionsByProduct(
+        int productId,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10)
     {
         try
         {
-            var transactions = await context.InventoryTransactions
+            var query = context.InventoryTransactions
                 .Include(t => t.Product)
                 .Include(t => t.Warehouse)
                 .Include(t => t.User)
                 .Include(t => t.Location)
-                .Where(t => t.ProductId == productId)
+                .Where(t => t.ProductId == productId);
+
+            // Get total count
+            var totalCount = await query.CountAsync();
+
+            // Apply pagination
+            var transactions = await query
                 .OrderByDescending(t => t.Date)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(t => new InventoryTransactionDto
                 {
                     Id = t.Id,
@@ -146,16 +210,24 @@ public class TransactionController(AppDbContext context, ILogger<TransactionCont
                 })
                 .ToListAsync();
 
-            return Ok(new ApiResponse<List<InventoryTransactionDto>>
+            var pagedResponse = new PagedResponse<InventoryTransactionDto>
+            {
+                Items = transactions,
+                TotalCount = totalCount,
+                PageNumber = page,
+                PageSize = pageSize
+            };
+
+            return Ok(new PagedApiResponse<InventoryTransactionDto>
             {
                 Success = true,
-                Data = transactions
+                Data = pagedResponse
             });
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving transactions for product {ProductId}", productId);
-            return StatusCode(500, new ApiResponse<List<InventoryTransactionDto>>
+            return StatusCode(500, new PagedApiResponse<InventoryTransactionDto>
             {
                 Success = false,
                 ErrorMessage = "Failed to retrieve transactions"

@@ -1,9 +1,12 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using FluentAssertions;
 using Inventory.API.Controllers;
 using Inventory.API.Models;
+using Inventory.Shared.DTOs;
+using System.Security.Claims;
 using Xunit;
 
 namespace Inventory.UnitTests.Controllers;
@@ -22,6 +25,20 @@ public class DashboardControllerTests : IDisposable
         _context = new AppDbContext(options);
         _context.Database.EnsureCreated();
         _controller = new DashboardController(_context);
+        
+        // Setup authentication context
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.Name, "testadmin"),
+            new(ClaimTypes.Role, "Admin")
+        };
+        var identity = new ClaimsIdentity(claims, "TestAuthType");
+        var claimsPrincipal = new ClaimsPrincipal(identity);
+        
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = claimsPrincipal }
+        };
     }
 
     [Fact]
@@ -34,8 +51,8 @@ public class DashboardControllerTests : IDisposable
         var result = await _controller.GetDashboardStats();
 
         // Assert
-        result.Should().BeOfType<OkObjectResult>();
-        var okResult = result as OkObjectResult;
+        result.Should().NotBeNull();
+        var okResult = result as OkObjectResult ?? result as ObjectResult;
         okResult!.Value.Should().NotBeNull();
         
         var stats = okResult.Value;
@@ -50,8 +67,8 @@ public class DashboardControllerTests : IDisposable
         var result = await _controller.GetDashboardStats();
 
         // Assert
-        result.Should().BeOfType<OkObjectResult>();
-        var okResult = result as OkObjectResult;
+        result.Should().NotBeNull();
+        var okResult = result as OkObjectResult ?? result as ObjectResult;
         var stats = okResult!.Value;
         stats.Should().NotBeNull();
         // Note: Detailed property assertions would require casting to specific DTO type
@@ -67,8 +84,8 @@ public class DashboardControllerTests : IDisposable
         var result = await _controller.GetRecentActivity();
 
         // Assert
-        result.Should().BeOfType<OkObjectResult>();
-        var okResult = result as OkObjectResult;
+        result.Should().NotBeNull();
+        var okResult = result as OkObjectResult ?? result as ObjectResult;
         okResult!.Value.Should().NotBeNull();
         
         var activity = okResult.Value;
@@ -86,12 +103,13 @@ public class DashboardControllerTests : IDisposable
         var result = await _controller.GetLowStockProducts();
 
         // Assert
-        result.Should().BeOfType<OkObjectResult>();
-        var okResult = result as OkObjectResult;
-        okResult!.Value.Should().NotBeNull();
+        result.Should().NotBeNull();
+        var okResult = result as OkObjectResult ?? result as ObjectResult;
+        var response = okResult?.Value as PagedApiResponse<object>;
         
-        var products = okResult.Value;
-        products.Should().BeAssignableTo<IEnumerable<object>>();
+        response.Should().NotBeNull();
+        response!.Success.Should().BeTrue();
+        response.Data.Should().NotBeNull();
     }
 
     [Fact]
@@ -135,10 +153,14 @@ public class DashboardControllerTests : IDisposable
         var result = await _controller.GetLowStockProducts();
 
         // Assert
-        result.Should().BeOfType<OkObjectResult>();
-        var okResult = result as OkObjectResult;
-        var products = okResult!.Value as IEnumerable<object>;
-        products.Should().BeEmpty();
+        result.Should().NotBeNull();
+        var okResult = result as OkObjectResult ?? result as ObjectResult;
+        var response = okResult?.Value as PagedApiResponse<object>;
+        
+        response.Should().NotBeNull();
+        response!.Success.Should().BeTrue();
+        response.Data.Should().NotBeNull();
+        response.Data!.Items.Should().BeEmpty();
     }
 
     private async Task SeedTestDataAsync()

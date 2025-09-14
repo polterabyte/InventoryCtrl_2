@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Inventory.API.Models;
 using Inventory.Shared.DTOs;
 using Serilog;
+using System.Security.Claims;
 
 namespace Inventory.API.Controllers;
 
@@ -13,16 +14,62 @@ namespace Inventory.API.Controllers;
 public class ProductController(AppDbContext context, ILogger<ProductController> logger) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetProducts()
+    public async Task<IActionResult> GetProducts(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? search = null,
+        [FromQuery] int? categoryId = null,
+        [FromQuery] int? manufacturerId = null,
+        [FromQuery] bool? isActive = null)
     {
         try
         {
-            var products = await context.Products
+            var query = context.Products
                 .Include(p => p.Category)
                 .Include(p => p.Manufacturer)
                 .Include(p => p.ProductModel)
                 .Include(p => p.ProductGroup)
-                .Where(p => p.IsActive)
+                .AsQueryable();
+
+            // Apply filters
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(p => p.Name.Contains(search) || p.SKU.Contains(search) || 
+                    (p.Description != null && p.Description.Contains(search)));
+            }
+
+            if (categoryId.HasValue)
+            {
+                query = query.Where(p => p.CategoryId == categoryId.Value);
+            }
+
+            if (manufacturerId.HasValue)
+            {
+                query = query.Where(p => p.ManufacturerId == manufacturerId.Value);
+            }
+
+            if (isActive.HasValue)
+            {
+                query = query.Where(p => p.IsActive == isActive.Value);
+            }
+            else
+            {
+                // By default, show only active products for non-admin users
+                var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+                if (userRole != "Admin")
+                {
+                    query = query.Where(p => p.IsActive);
+                }
+            }
+
+            // Get total count
+            var totalCount = await query.CountAsync();
+
+            // Apply pagination
+            var products = await query
+                .OrderBy(p => p.Name)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(p => new ProductDto
                 {
                     Id = p.Id,
@@ -48,16 +95,24 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 })
                 .ToListAsync();
 
-            return Ok(new ApiResponse<List<ProductDto>>
+            var pagedResponse = new PagedResponse<ProductDto>
+            {
+                Items = products,
+                TotalCount = totalCount,
+                PageNumber = page,
+                PageSize = pageSize
+            };
+
+            return Ok(new PagedApiResponse<ProductDto>
             {
                 Success = true,
-                Data = products
+                Data = pagedResponse
             });
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving products");
-            return StatusCode(500, new ApiResponse<List<ProductDto>>
+            return StatusCode(500, new PagedApiResponse<ProductDto>
             {
                 Success = false,
                 ErrorMessage = "Failed to retrieve products"
@@ -204,6 +259,13 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 });
             }
 
+            // Check if user has permission to set IsActive
+            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+            if (userRole != "Admin" && request.IsActive != true)
+            {
+                return Forbid("Only administrators can create inactive products");
+            }
+
             // Check if SKU already exists
             var existingProduct = await context.Products.FirstOrDefaultAsync(p => p.SKU == request.SKU);
             if (existingProduct != null)
@@ -222,7 +284,7 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 Description = request.Description,
                 Quantity = 0, // New products start with 0 quantity
                 Unit = request.Unit,
-                IsActive = request.IsActive,
+                IsActive = userRole == "Admin" ? request.IsActive : true, // Only Admin can set IsActive
                 CategoryId = request.CategoryId,
                 ManufacturerId = request.ManufacturerId,
                 ProductModelId = request.ProductModelId,
@@ -312,6 +374,13 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 });
             }
 
+            // Check if user has permission to modify IsActive
+            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+            if (userRole != "Admin" && product.IsActive != request.IsActive)
+            {
+                return Forbid("Only administrators can modify the IsActive status of products");
+            }
+
             product.Name = request.Name;
             product.Description = request.Description;
             product.Unit = request.Unit;
@@ -322,6 +391,13 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
             product.MinStock = request.MinStock;
             product.MaxStock = request.MaxStock;
             product.Note = request.Note;
+            
+            // Only Admin can modify IsActive
+            if (userRole == "Admin")
+            {
+                product.IsActive = request.IsActive;
+            }
+            
             product.UpdatedAt = DateTime.UtcNow;
 
             await context.SaveChangesAsync();
@@ -364,6 +440,7 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteProduct(int id)
     {
         try

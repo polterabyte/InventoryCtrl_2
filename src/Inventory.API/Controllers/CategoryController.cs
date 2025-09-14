@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Inventory.API.Models;
 using Inventory.Shared.DTOs;
 using Serilog;
+using System.Security.Claims;
 
 namespace Inventory.API.Controllers;
 
@@ -13,12 +14,53 @@ namespace Inventory.API.Controllers;
 public class CategoryController(AppDbContext context, ILogger<CategoryController> logger) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetCategories()
+    public async Task<IActionResult> GetCategories(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? search = null,
+        [FromQuery] int? parentId = null,
+        [FromQuery] bool? isActive = null)
     {
         try
         {
-            var categories = await context.Categories
-                .Where(c => c.IsActive)
+            var query = context.Categories
+                .Include(c => c.ParentCategory)
+                .AsQueryable();
+
+            // Apply filters
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(c => c.Name.Contains(search) || 
+                    (c.Description != null && c.Description.Contains(search)));
+            }
+
+            if (parentId.HasValue)
+            {
+                query = query.Where(c => c.ParentCategoryId == parentId.Value);
+            }
+
+            if (isActive.HasValue)
+            {
+                query = query.Where(c => c.IsActive == isActive.Value);
+            }
+            else
+            {
+                // By default, show only active categories for non-admin users
+                var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+                if (userRole != "Admin")
+                {
+                    query = query.Where(c => c.IsActive);
+                }
+            }
+
+            // Get total count
+            var totalCount = await query.CountAsync();
+
+            // Apply pagination
+            var categories = await query
+                .OrderBy(c => c.Name)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(c => new CategoryDto
                 {
                     Id = c.Id,
@@ -32,16 +74,24 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
                 })
                 .ToListAsync();
 
-            return Ok(new ApiResponse<List<CategoryDto>>
+            var pagedResponse = new PagedResponse<CategoryDto>
+            {
+                Items = categories,
+                TotalCount = totalCount,
+                PageNumber = page,
+                PageSize = pageSize
+            };
+
+            return Ok(new PagedApiResponse<CategoryDto>
             {
                 Success = true,
-                Data = categories
+                Data = pagedResponse
             });
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving categories");
-            return StatusCode(500, new ApiResponse<List<CategoryDto>>
+            return StatusCode(500, new PagedApiResponse<CategoryDto>
             {
                 Success = false,
                 ErrorMessage = "Failed to retrieve categories"
@@ -170,6 +220,7 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> CreateCategory([FromBody] CreateCategoryDto request)
     {
         try
@@ -205,7 +256,7 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
                 Name = request.Name,
                 Description = request.Description,
                 ParentCategoryId = request.ParentCategoryId,
-                IsActive = true,
+                IsActive = true, // Categories are created as active by default
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -243,6 +294,7 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UpdateCategory(int id, [FromBody] UpdateCategoryDto request)
     {
         try
@@ -285,7 +337,7 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
 
             category.Name = request.Name;
             category.Description = request.Description;
-            category.IsActive = request.IsActive;
+            category.IsActive = request.IsActive; // Only Admin can modify IsActive
             category.ParentCategoryId = request.ParentCategoryId;
             category.UpdatedAt = DateTime.UtcNow;
 
@@ -322,6 +374,7 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteCategory(int id)
     {
         try

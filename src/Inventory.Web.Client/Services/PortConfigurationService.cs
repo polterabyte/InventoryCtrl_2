@@ -23,6 +23,6 @@ public class PortConfigurationService(ILogger<PortConfigurationService> logger, 
         }
         
         // Fallback to default
-        return "http://localhost:5000";
+        return "https://localhost:7000";
     }
 }

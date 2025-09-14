@@ -27,11 +27,11 @@ public class CategoryControllerIntegrationTestsNew : IntegrationTestBase
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<ApiResponse<List<CategoryDto>>>();
+        var result = await response.Content.ReadFromJsonAsync<PagedApiResponse<CategoryDto>>();
         result.Should().NotBeNull();
         result!.Success.Should().BeTrue();
         result.Data.Should().NotBeNull();
-        result.Data.Should().HaveCount(2); // Only active categories
+        result.Data!.Items.Should().HaveCount(2); // Only active categories
     }
 
     [Fact]
@@ -47,11 +47,11 @@ public class CategoryControllerIntegrationTestsNew : IntegrationTestBase
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<ApiResponse<List<CategoryDto>>>();
+        var result = await response.Content.ReadFromJsonAsync<PagedApiResponse<CategoryDto>>();
         result.Should().NotBeNull();
         result!.Success.Should().BeTrue();
         result.Data.Should().NotBeNull();
-        result.Data.Should().BeEmpty();
+        result.Data!.Items.Should().BeEmpty();
     }
 
     [Fact]
@@ -114,7 +114,7 @@ public class CategoryControllerIntegrationTestsNew : IntegrationTestBase
         result.Should().NotBeNull();
         result!.Success.Should().BeTrue();
         result.Data.Should().NotBeNull();
-        result.Data.Should().HaveCount(1); // Only root category
+        result.Data!.Should().HaveCount(1); // Only root category
     }
 
     [Fact]
@@ -137,7 +137,7 @@ public class CategoryControllerIntegrationTestsNew : IntegrationTestBase
         result.Should().NotBeNull();
         result!.Success.Should().BeTrue();
         result.Data.Should().NotBeNull();
-        result.Data.Should().HaveCount(1); // One subcategory
+        result.Data!.Should().HaveCount(1); // One subcategory
     }
 
     [Fact]
@@ -158,7 +158,7 @@ public class CategoryControllerIntegrationTestsNew : IntegrationTestBase
         result.Should().NotBeNull();
         result!.Success.Should().BeTrue();
         result.Data.Should().NotBeNull();
-        result.Data.Should().BeEmpty();
+        result.Data!.Should().BeEmpty();
     }
 
     [Fact]

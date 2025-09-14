@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Inventory.API.Models;
+using Inventory.Shared.DTOs;
 
 namespace Inventory.API.Controllers;
 
@@ -52,7 +53,11 @@ public class DashboardController(AppDbContext context) : ControllerBase
                 RecentProducts = recentProducts
             };
 
-            return Ok(stats);
+            return Ok(new ApiResponse<object>
+            {
+                Success = true,
+                Data = stats
+            });
         }
         catch (Exception ex)
         {
@@ -112,7 +117,11 @@ public class DashboardController(AppDbContext context) : ControllerBase
                 RecentProducts = recentProducts
             };
 
-            return Ok(activity);
+            return Ok(new ApiResponse<object>
+            {
+                Success = true,
+                Data = activity
+            });
         }
         catch (Exception ex)
         {
@@ -121,15 +130,25 @@ public class DashboardController(AppDbContext context) : ControllerBase
     }
 
     [HttpGet("low-stock-products")]
-    public async Task<IActionResult> GetLowStockProducts()
+    public async Task<IActionResult> GetLowStockProducts(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10)
     {
         try
         {
-            var lowStockProducts = await context.Products
+            var query = context.Products
                 .Include(p => p.Category)
                 .Include(p => p.Manufacturer)
-                .Where(p => p.IsActive && p.Quantity <= p.MinStock)
+                .Where(p => p.IsActive && p.Quantity <= p.MinStock);
+
+            // Get total count
+            var totalCount = await query.CountAsync();
+
+            // Apply pagination
+            var lowStockProducts = await query
                 .OrderBy(p => p.Quantity)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(p => new
                 {
                     Id = p.Id,
@@ -144,11 +163,27 @@ public class DashboardController(AppDbContext context) : ControllerBase
                 })
                 .ToListAsync();
 
-            return Ok(lowStockProducts);
+            var pagedResponse = new PagedResponse<object>
+            {
+                Items = lowStockProducts.Cast<object>().ToList(),
+                TotalCount = totalCount,
+                PageNumber = page,
+                PageSize = pageSize
+            };
+
+            return Ok(new PagedApiResponse<object>
+            {
+                Success = true,
+                Data = pagedResponse
+            });
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { error = "Failed to retrieve low stock products", details = ex.Message });
+            return StatusCode(500, new PagedApiResponse<object>
+            {
+                Success = false,
+                ErrorMessage = "Failed to retrieve low stock products"
+            });
         }
     }
 }

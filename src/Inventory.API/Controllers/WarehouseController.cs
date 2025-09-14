@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Inventory.API.Models;
 using Inventory.Shared.DTOs;
 using Serilog;
+using System.Security.Claims;
 
 namespace Inventory.API.Controllers;
 
@@ -13,12 +14,44 @@ namespace Inventory.API.Controllers;
 public class WarehouseController(AppDbContext context, ILogger<WarehouseController> logger) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetWarehouses()
+    public async Task<IActionResult> GetWarehouses(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? search = null,
+        [FromQuery] bool? isActive = null)
     {
         try
         {
-            var warehouses = await context.Warehouses
-                .Where(w => w.IsActive)
+            var query = context.Warehouses.AsQueryable();
+
+            // Apply filters
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(w => w.Name.Contains(search) || w.Location.Contains(search));
+            }
+
+            if (isActive.HasValue)
+            {
+                query = query.Where(w => w.IsActive == isActive.Value);
+            }
+            else
+            {
+                // By default, show only active warehouses for non-admin users
+                var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+                if (userRole != "Admin")
+                {
+                    query = query.Where(w => w.IsActive);
+                }
+            }
+
+            // Get total count
+            var totalCount = await query.CountAsync();
+
+            // Apply pagination
+            var warehouses = await query
+                .OrderBy(w => w.Name)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(w => new WarehouseDto
                 {
                     Id = w.Id,
@@ -30,16 +63,24 @@ public class WarehouseController(AppDbContext context, ILogger<WarehouseControll
                 })
                 .ToListAsync();
 
-            return Ok(new ApiResponse<List<WarehouseDto>>
+            var pagedResponse = new PagedResponse<WarehouseDto>
+            {
+                Items = warehouses,
+                TotalCount = totalCount,
+                PageNumber = page,
+                PageSize = pageSize
+            };
+
+            return Ok(new PagedApiResponse<WarehouseDto>
             {
                 Success = true,
-                Data = warehouses
+                Data = pagedResponse
             });
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving warehouses");
-            return StatusCode(500, new ApiResponse<List<WarehouseDto>>
+            return StatusCode(500, new PagedApiResponse<WarehouseDto>
             {
                 Success = false,
                 ErrorMessage = "Failed to retrieve warehouses"
@@ -92,6 +133,7 @@ public class WarehouseController(AppDbContext context, ILogger<WarehouseControll
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> CreateWarehouse([FromBody] CreateWarehouseDto request)
     {
         try
@@ -160,6 +202,7 @@ public class WarehouseController(AppDbContext context, ILogger<WarehouseControll
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UpdateWarehouse(int id, [FromBody] UpdateWarehouseDto request)
     {
         try
@@ -234,6 +277,7 @@ public class WarehouseController(AppDbContext context, ILogger<WarehouseControll
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteWarehouse(int id)
     {
         try
