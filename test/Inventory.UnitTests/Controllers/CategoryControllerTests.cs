@@ -7,6 +7,8 @@ using Inventory.API.Controllers;
 using Inventory.API.Models;
 using Inventory.Shared.DTOs;
 using Xunit;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
 
 namespace Inventory.UnitTests.Controllers;
 
@@ -27,6 +29,9 @@ public class CategoryControllerTests : IDisposable
         _context = new AppDbContext(options);
         _context.Database.EnsureCreated();
         _controller = new CategoryController(_context, Mock.Of<ILogger<CategoryController>>());
+        
+        // Setup authentication context for tests
+        SetupAuthenticationContext();
     }
 
     [Fact]
@@ -43,11 +48,11 @@ public class CategoryControllerTests : IDisposable
         var okResult = result as OkObjectResult ?? result as ObjectResult;
         okResult!.Value.Should().NotBeNull();
         
-        var response = okResult.Value as ApiResponse<List<CategoryDto>>;
+        var response = okResult.Value as PagedApiResponse<CategoryDto>;
         response.Should().NotBeNull();
         response!.Success.Should().BeTrue();
         response.Data.Should().NotBeNull();
-        response.Data.Should().HaveCount(2); // Only active categories
+        response.Data!.Items.Should().HaveCount(3); // Admin sees all categories (active + inactive)
     }
 
     [Fact]
@@ -59,11 +64,11 @@ public class CategoryControllerTests : IDisposable
         // Assert
         result.Should().NotBeNull();
         var okResult = result as OkObjectResult ?? result as ObjectResult;
-        var response = okResult!.Value as ApiResponse<List<CategoryDto>>;
+        var response = okResult!.Value as PagedApiResponse<CategoryDto>;
         response.Should().NotBeNull();
         response!.Success.Should().BeTrue();
         response.Data.Should().NotBeNull();
-        response.Data.Should().BeEmpty();
+        response.Data!.Items.Should().BeEmpty();
     }
 
     [Fact]
@@ -305,6 +310,30 @@ public class CategoryControllerTests : IDisposable
         response.Should().NotBeNull();
         response!.Success.Should().BeFalse();
         response.ErrorMessage.Should().NotBeNullOrEmpty();
+    }
+
+    private void SetupAuthenticationContext()
+    {
+        // Create a mock HttpContext with authenticated user
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, "test-user-id"),
+            new(ClaimTypes.Name, "testuser"),
+            new(ClaimTypes.Role, "Admin") // Set as Admin to see all categories
+        };
+
+        var identity = new ClaimsIdentity(claims, "TestAuthType");
+        var claimsPrincipal = new ClaimsPrincipal(identity);
+
+        var httpContext = new DefaultHttpContext
+        {
+            User = claimsPrincipal
+        };
+
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = httpContext
+        };
     }
 
     private async Task SeedTestDataAsync()

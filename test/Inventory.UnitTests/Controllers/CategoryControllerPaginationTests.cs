@@ -36,8 +36,35 @@ public class CategoryControllerPaginationTests : IDisposable
         _mockLogger = new Mock<ILogger<CategoryController>>();
         _controller = new CategoryController(_context, _mockLogger.Object);
 
+        // Setup authentication context for tests
+        SetupAuthenticationContext();
+
         // Setup test data
         SetupTestData();
+    }
+
+    private void SetupAuthenticationContext()
+    {
+        // Create a mock HttpContext with authenticated user
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, "test-user-id"),
+            new(ClaimTypes.Name, "testuser"),
+            new(ClaimTypes.Role, "Admin") // Set as Admin to see all categories
+        };
+
+        var identity = new ClaimsIdentity(claims, "TestAuthType");
+        var claimsPrincipal = new ClaimsPrincipal(identity);
+
+        var httpContext = new DefaultHttpContext
+        {
+            User = claimsPrincipal
+        };
+
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = httpContext
+        };
     }
 
     private void SetupTestData()
@@ -97,8 +124,8 @@ public class CategoryControllerPaginationTests : IDisposable
         response.Should().NotBeNull();
         response!.Success.Should().BeTrue();
         response.Data.Should().NotBeNull();
-        response.Data!.Items.Should().HaveCount(2); // Only active categories
-        response.Data.TotalCount.Should().Be(3); // 3 active categories
+        response.Data!.Items.Should().HaveCount(2); // Page size is 2
+        response.Data.TotalCount.Should().Be(4); // 4 total categories (Admin sees all)
         response.Data.PageNumber.Should().Be(1);
         response.Data.PageSize.Should().Be(2);
         response.Data.TotalPages.Should().Be(2);

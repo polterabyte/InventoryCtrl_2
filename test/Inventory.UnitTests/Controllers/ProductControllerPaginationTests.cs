@@ -155,11 +155,11 @@ public class ProductControllerPaginationTests : IDisposable
         response.Should().NotBeNull();
         response!.Success.Should().BeTrue();
         response.Data.Should().NotBeNull();
-        response.Data!.Items.Should().HaveCount(2); // Only active products
-        response.Data.TotalCount.Should().Be(2);
+        response.Data!.Items.Should().HaveCount(2); // Page size is 2
+        response.Data.TotalCount.Should().Be(3); // 3 total products (Admin sees all)
         response.Data.PageNumber.Should().Be(1);
         response.Data.PageSize.Should().Be(2);
-        response.Data.TotalPages.Should().Be(1);
+        response.Data.TotalPages.Should().Be(2); // 3 products / 2 per page = 2 pages
     }
 
     [Fact]
@@ -198,7 +198,7 @@ public class ProductControllerPaginationTests : IDisposable
         
         response.Should().NotBeNull();
         response!.Success.Should().BeTrue();
-        response.Data!.Items.Should().HaveCount(2); // Both active products are in the same category
+        response.Data!.Items.Should().HaveCount(3); // All 3 products are in the same category (Admin sees all)
     }
 
     [Fact]

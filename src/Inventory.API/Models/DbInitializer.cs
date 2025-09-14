@@ -44,7 +44,7 @@ public static class DbInitializer
     private static async Task CreateSuperUserAsync(UserManager<User> userManager)
     {
         const string superUserEmail = "admin@inventory.com";
-        const string superUserPassword = "SuperAdmin123!";
+        const string superUserPassword = "SuperAdmin123!!";
         const string superUserRole = "SuperUser";
         const string adminRole = "Admin";
 
