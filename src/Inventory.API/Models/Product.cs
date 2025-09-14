@@ -20,5 +20,8 @@ public class Product
     public int MinStock { get; set; }
     public int MaxStock { get; set; }
     public string? Note { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
     public ICollection<InventoryTransaction> Transactions { get; set; } = new List<InventoryTransaction>();
+    public ICollection<ProductTag> ProductTags { get; set; } = new List<ProductTag>();
 }

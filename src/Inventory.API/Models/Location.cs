@@ -10,4 +10,6 @@ public class Location
     public Location? ParentLocation { get; set; }
     public ICollection<Location> SubLocations { get; set; } = new List<Location>();
     public ICollection<InventoryTransaction> InstallTransactions { get; set; } = new List<InventoryTransaction>();
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
 }

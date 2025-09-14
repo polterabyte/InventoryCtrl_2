@@ -6,12 +6,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Inventory.Shared.Services;
 
-public class AuthApiService : BaseApiService, IAuthService
+public class AuthApiService(HttpClient httpClient, ILogger<AuthApiService> logger) 
+    : BaseApiService(httpClient, ApiEndpoints.BaseUrl, logger), IAuthService
 {
-    public AuthApiService(HttpClient httpClient, ILogger<AuthApiService> logger) 
-        : base(httpClient, ApiEndpoints.BaseUrl, logger)
-    {
-    }
 
     public async Task<AuthResult> LoginAsync(LoginRequest request)
     {

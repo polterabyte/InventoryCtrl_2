@@ -1,0 +1,152 @@
+name: CI Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  DOTNET_VERSION: '9.0.304'
+  POSTGRESQL_VERSION: '15'
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: inventory_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: Cache .NET packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/Directory.Packages.props') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+          
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build solution
+      run: dotnet build --no-restore --configuration Release
+      
+    - name: Run Unit Tests
+      run: dotnet test test/Inventory.UnitTests --no-build --configuration Release --logger trx --results-directory TestResults/Unit
+      
+    - name: Run Integration Tests
+      run: dotnet test test/Inventory.IntegrationTests --no-build --configuration Release --logger trx --results-directory TestResults/Integration
+      env:
+        ConnectionStrings__DefaultConnection: "Host=localhost;Database=inventory_test;Username=postgres;Password=postgres"
+        
+    - name: Run Component Tests
+      run: dotnet test test/Inventory.ComponentTests --no-build --configuration Release --logger trx --results-directory TestResults/Component
+      
+    - name: Run All Tests with Coverage
+      run: dotnet test --no-build --configuration Release --collect:"XPlat Code Coverage" --logger trx --results-directory TestResults/Coverage
+      env:
+        ConnectionStrings__DefaultConnection: "Host=localhost;Database=inventory_test;Username=postgres;Password=postgres"
+        
+    - name: Publish Test Results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Test Results
+        path: 'TestResults/**/*.trx'
+        reporter: dotnet-trx
+        
+    - name: Upload Coverage Reports
+      uses: codecov/codecov-action@v4
+      if: always()
+      with:
+        files: 'TestResults/Coverage/**/coverage.cobertura.xml'
+        fail_ci_if_error: false
+        
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results
+        path: TestResults/
+        retention-days: 30
+
+  build-and-package:
+    name: Build and Package
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build API
+      run: dotnet build src/Inventory.API --configuration Release --no-restore
+      
+    - name: Build Web Client
+      run: dotnet build src/Inventory.Web.Client --configuration Release --no-restore
+      
+    - name: Publish API
+      run: dotnet publish src/Inventory.API --configuration Release --output ./publish/api --no-build
+      
+    - name: Publish Web Client
+      run: dotnet publish src/Inventory.Web.Client --configuration Release --output ./publish/web --no-build
+      
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-artifacts
+        path: publish/
+        retention-days: 7
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: Run Security Scan
+      run: |
+        dotnet list package --vulnerable --include-transitive
+        dotnet list package --deprecated --include-transitive
+        
+    - name: Run Code Analysis
+      run: |
+        dotnet build --configuration Release --verbosity minimal
+        dotnet format --verify-no-changes --verbosity diagnostic

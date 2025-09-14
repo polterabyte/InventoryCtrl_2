@@ -2,15 +2,14 @@
 # Starts API server, then Web client
 # Supports both full launch with checks and quick launch without checks
 
-# Set UTF-8 encoding for proper text display
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-$OutputEncoding = [System.Text.Encoding]::UTF8
-
-# Parse command line parameters
 param(
     [switch]$Quick,
     [switch]$Help
 )
+
+# Set UTF-8 encoding for proper text display
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
 
 if ($Help) {
     Write-Host "Usage: .\start-apps.ps1 [-Quick] [-Help]" -ForegroundColor Cyan
@@ -69,7 +68,7 @@ function Test-Port {
 function Wait-ForServer {
     param([int]$Port, [string]$ServiceName)
     Write-Host "Waiting for $ServiceName to start on port $Port..." -ForegroundColor Yellow
-    $timeout = 30
+    $timeout = 15
     $elapsed = 0
     
     while ($elapsed -lt $timeout) {

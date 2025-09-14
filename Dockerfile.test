@@ -1,0 +1,44 @@
+# Dockerfile for running tests in containerized environment
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS test-runner
+
+# Set working directory
+WORKDIR /app
+
+# Install PostgreSQL client tools
+RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
+
+# Copy project files
+COPY . .
+
+# Restore dependencies
+RUN dotnet restore
+
+# Build the solution
+RUN dotnet build --configuration Release --no-restore
+
+# Create test results directory
+RUN mkdir -p /app/test-results
+
+# Default command to run all tests
+CMD ["dotnet", "test", "--configuration", "Release", "--collect:XPlat Code Coverage", "--logger", "trx", "--results-directory", "/app/test-results"]
+
+# Multi-stage build for different test types
+FROM test-runner AS unit-tests
+CMD ["dotnet", "test", "test/Inventory.UnitTests", "--configuration", "Release", "--logger", "trx", "--results-directory", "/app/test-results"]
+
+FROM test-runner AS integration-tests
+# Wait for PostgreSQL to be ready
+RUN echo '#!/bin/bash\n\
+until pg_isready -h postgres -p 5432; do\n\
+  echo "Waiting for PostgreSQL..."\n\
+  sleep 2\n\
+done\n\
+dotnet test test/Inventory.IntegrationTests --configuration Release --logger trx --results-directory /app/test-results' > /app/run-integration-tests.sh
+RUN chmod +x /app/run-integration-tests.sh
+CMD ["/app/run-integration-tests.sh"]
+
+FROM test-runner AS component-tests
+CMD ["dotnet", "test", "test/Inventory.ComponentTests", "--configuration", "Release", "--logger", "trx", "--results-directory", "/app/test-results"]
+
+FROM test-runner AS all-tests
+CMD ["dotnet", "test", "--configuration", "Release", "--collect:XPlat Code Coverage", "--logger", "trx", "--results-directory", "/app/test-results"]

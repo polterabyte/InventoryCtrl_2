@@ -121,6 +121,7 @@ Thumbs.db
 
 # AI Agent files
 .ai-agent-prompts
+.ai-agents/
 
 # Project specific
 witch main

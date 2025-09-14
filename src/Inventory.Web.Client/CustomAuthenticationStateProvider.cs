@@ -12,16 +12,11 @@ using Inventory.Shared.Interfaces;
 
 namespace Inventory.Web.Client
 {
-    public class CustomAuthenticationStateProvider : AuthenticationStateProvider, ICustomAuthenticationStateProvider
+    public class CustomAuthenticationStateProvider(HttpClient httpClient, ILocalStorageService localStorage) 
+        : AuthenticationStateProvider, ICustomAuthenticationStateProvider
     {
-        private readonly HttpClient _httpClient;
-        private readonly ILocalStorageService _localStorage;
-
-        public CustomAuthenticationStateProvider(HttpClient httpClient, ILocalStorageService localStorage)
-        {
-            _httpClient = httpClient;
-            _localStorage = localStorage;
-        }
+        private readonly HttpClient _httpClient = httpClient;
+        private readonly ILocalStorageService _localStorage = localStorage;
 
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {

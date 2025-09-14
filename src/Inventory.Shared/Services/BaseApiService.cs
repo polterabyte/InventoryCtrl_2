@@ -5,18 +5,11 @@ using Microsoft.Extensions.Logging;
 
 namespace Inventory.Shared.Services;
 
-public abstract class BaseApiService
+public abstract class BaseApiService(HttpClient httpClient, string baseUrl, ILogger logger)
 {
-    protected readonly HttpClient HttpClient;
-    protected readonly string BaseUrl;
-    protected readonly ILogger Logger;
-
-    protected BaseApiService(HttpClient httpClient, string baseUrl, ILogger logger)
-    {
-        HttpClient = httpClient;
-        BaseUrl = baseUrl;
-        Logger = logger;
-    }
+    protected readonly HttpClient HttpClient = httpClient;
+    protected readonly string BaseUrl = baseUrl;
+    protected readonly ILogger Logger = logger;
 
     protected async Task<ApiResponse<T>> GetAsync<T>(string endpoint)
     {

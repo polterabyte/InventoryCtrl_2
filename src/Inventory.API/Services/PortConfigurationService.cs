@@ -3,21 +3,13 @@ using System.Collections.Generic;
 
 namespace Inventory.API.Services;
 
-public class PortConfigurationService
+public class PortConfigurationService(IConfiguration configuration, ILogger<PortConfigurationService> logger) : IPortConfigurationService
 {
-    private readonly IConfiguration _configuration;
-    private readonly ILogger<PortConfigurationService> _logger;
+    private readonly IConfiguration _configuration = configuration;
+    private readonly ILogger<PortConfigurationService> _logger = logger;
     
-    public PortConfigurationService(IConfiguration configuration, ILogger<PortConfigurationService> logger)
+    public PortConfigurationService(IConfiguration configuration) : this(configuration, new Logger<PortConfigurationService>(new LoggerFactory()))
     {
-        _configuration = configuration;
-        _logger = logger;
-    }
-    
-    public PortConfigurationService(IConfiguration configuration)
-    {
-        _configuration = configuration;
-        _logger = new Logger<PortConfigurationService>(new LoggerFactory());
     }
     
     public PortConfiguration LoadPortConfiguration()

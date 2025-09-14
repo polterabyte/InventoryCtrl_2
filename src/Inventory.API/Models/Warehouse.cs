@@ -7,4 +7,6 @@ public class Warehouse
     public string Location { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
     public ICollection<InventoryTransaction> Transactions { get; set; } = new List<InventoryTransaction>();
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
 }

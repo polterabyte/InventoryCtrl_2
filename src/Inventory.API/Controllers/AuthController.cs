@@ -14,7 +14,7 @@ namespace Inventory.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class AuthController(UserManager<Inventory.API.Models.User> userManager, IConfiguration config, ILogger<AuthController> logger, PortConfigurationService portService) : ControllerBase
+    public class AuthController(UserManager<Inventory.API.Models.User> userManager, IConfiguration config, ILogger<AuthController> logger, IPortConfigurationService portService) : ControllerBase
     {
         private readonly IConfiguration _config = config;
         private readonly ILogger<AuthController> _logger = logger;
@@ -22,18 +22,18 @@ namespace Inventory.API.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            _logger.LogInformation("Попытка входа пользователя: {Username}", request.Username);
+            _logger.LogInformation("User login attempt: {Username}", request.Username);
             
             if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
             {
-                _logger.LogWarning("Неудачная попытка входа: отсутствуют имя пользователя или пароль для {Username}", request.Username);
+                _logger.LogWarning("Failed login attempt: missing username or password for {Username}", request.Username);
                 return BadRequest("Username and password are required.");
             }
 
             var user = await userManager.FindByNameAsync(request.Username);
             if (user == null || !await userManager.CheckPasswordAsync(user, request.Password))
             {
-                _logger.LogWarning("Неудачная попытка входа: неверные учетные данные для пользователя {Username}", request.Username);
+                _logger.LogWarning("Failed login attempt: invalid credentials for user {Username}", request.Username);
                 return Unauthorized("Invalid credentials.");
             }
 
@@ -61,7 +61,7 @@ namespace Inventory.API.Controllers
                 signingCredentials: creds
             );
 
-            _logger.LogInformation("Успешный вход пользователя {Username} с ролью {Role}. Email: {Email}", 
+            _logger.LogInformation("Successful login for user {Username} with role {Role}. Email: {Email}", 
                 user.UserName, user.Role, user.Email);
 
             return Ok(new LoginResult
@@ -86,28 +86,28 @@ namespace Inventory.API.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
-            _logger.LogInformation("Попытка регистрации нового пользователя: {Username}, Email: {Email}", 
+            _logger.LogInformation("New user registration attempt: {Username}, Email: {Email}", 
                 request.Username, request.Email);
             
             if (string.IsNullOrWhiteSpace(request.Username) || 
                 string.IsNullOrWhiteSpace(request.Password) ||
                 string.IsNullOrWhiteSpace(request.Email))
             {
-                _logger.LogWarning("Неудачная попытка регистрации: отсутствуют обязательные поля для {Username}", request.Username);
+                _logger.LogWarning("Failed registration attempt: missing required fields for {Username}", request.Username);
                 return BadRequest("Username, email and password are required.");
             }
 
             var existingUser = await userManager.FindByNameAsync(request.Username);
             if (existingUser != null)
             {
-                _logger.LogWarning("Неудачная попытка регистрации: имя пользователя {Username} уже существует", request.Username);
+                _logger.LogWarning("Failed registration attempt: username {Username} already exists", request.Username);
                 return BadRequest("Username already exists.");
             }
 
             var existingEmail = await userManager.FindByEmailAsync(request.Email);
             if (existingEmail != null)
             {
-                _logger.LogWarning("Неудачная попытка регистрации: email {Email} уже используется", request.Email);
+                _logger.LogWarning("Failed registration attempt: email {Email} already in use", request.Email);
                 return BadRequest("Email already exists.");
             }
 
@@ -117,7 +117,8 @@ namespace Inventory.API.Controllers
                 UserName = request.Username,
                 Email = request.Email,
                 EmailConfirmed = true, // Для простоты подтверждаем email автоматически
-                Role = "User" // По умолчанию обычный пользователь
+                Role = "User", // По умолчанию обычный пользователь
+                CreatedAt = DateTime.UtcNow
             };
 
             var result = await userManager.CreateAsync(user, request.Password);
@@ -125,13 +126,13 @@ namespace Inventory.API.Controllers
             {
                 // Назначить роль пользователю
                 await userManager.AddToRoleAsync(user, "User");
-                _logger.LogInformation("Успешная регистрация пользователя {Username} с email {Email}", 
+                _logger.LogInformation("Successful user registration: {Username} with email {Email}", 
                     user.UserName, user.Email);
                 return Ok(new { success = true, message = "User created successfully." });
             }
 
             var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-            _logger.LogError("Неудачная регистрация пользователя {Username}: {Errors}", 
+            _logger.LogError("Failed user registration for {Username}: {Errors}", 
                 request.Username, errors);
             return BadRequest(errors);
         }

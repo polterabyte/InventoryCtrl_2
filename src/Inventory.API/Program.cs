@@ -66,6 +66,8 @@ builder.Services.AddCorsWithPorts();
 // Add custom services
 builder.Services.AddScoped<ILoggingService, LoggingService>();
 builder.Services.AddScoped<IDebugLogsService, DebugLogsService>();
+builder.Services.AddScoped<IRetryService, RetryService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IErrorHandlingService, ErrorHandlingService>();
 
 var app = builder.Build();
@@ -76,11 +78,18 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
     
-    // Initialize database
-    await Inventory.API.Models.DbInitializer.InitializeAsync(app.Services);
+    // Initialize database (skip in testing environment)
+    if (!app.Environment.IsEnvironment("Testing"))
+    {
+        await Inventory.API.Models.DbInitializer.InitializeAsync(app.Services);
+    }
 }
 
-app.UseHttpsRedirection();
+// Skip HTTPS redirection in testing environment
+if (!app.Environment.IsEnvironment("Testing"))
+{
+    app.UseHttpsRedirection();
+}
 
 // Add global exception handling middleware
 app.UseMiddleware<GlobalExceptionMiddleware>();
@@ -93,3 +102,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Make Program class public for testing
+public partial class Program { }

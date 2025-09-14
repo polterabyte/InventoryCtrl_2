@@ -5,12 +5,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Inventory.Shared.Services;
 
-public class CategoryApiService : BaseApiService, ICategoryService
+public class CategoryApiService(HttpClient httpClient, ILogger<CategoryApiService> logger) 
+    : BaseApiService(httpClient, ApiEndpoints.Categories, logger), ICategoryService
 {
-    public CategoryApiService(HttpClient httpClient, ILogger<CategoryApiService> logger) 
-        : base(httpClient, ApiEndpoints.Categories, logger)
-    {
-    }
 
     public async Task<List<CategoryDto>> GetAllCategoriesAsync()
     {

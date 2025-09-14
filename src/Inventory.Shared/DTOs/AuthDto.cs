@@ -67,3 +67,19 @@ public class PagedResponse<T>
     public bool HasPreviousPage => PageNumber > 1;
     public bool HasNextPage => PageNumber < TotalPages;
 }
+
+// DTOs with primary constructors for common operations
+public record CreateEntityResult<T>(bool Success, T? Entity, string? ErrorMessage);
+
+public record UpdateEntityResult<T>(bool Success, T? Entity, string? ErrorMessage);
+
+public record DeleteEntityResult(bool Success, string? ErrorMessage);
+
+public record ValidationResult(bool IsValid, List<string> Errors);
+
+// Configuration DTOs with primary constructors
+public record DatabaseConfiguration(string ConnectionString, int CommandTimeout, bool EnableRetryOnFailure);
+
+public record LoggingConfiguration(string LogLevel, string LogPath, bool EnableConsoleLogging);
+
+public record ApiConfiguration(string BaseUrl, int TimeoutSeconds, bool EnableCompression);

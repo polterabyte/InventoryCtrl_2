@@ -40,5 +40,15 @@
     <PackageVersion Include="Microsoft.AspNetCore.Components.Authorization" Version="9.0.8" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.Forms" Version="9.0.8" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="9.0.8" />
+    <!-- Testing packages -->
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageVersion Include="xunit" Version="2.9.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageVersion Include="coverlet.collector" Version="6.0.2" />
+    <PackageVersion Include="Moq" Version="4.20.72" />
+    <PackageVersion Include="FluentAssertions" Version="7.0.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.8" />
+    <PackageVersion Include="bunit" Version="1.34.0" />
+    <PackageVersion Include="bunit.web" Version="1.34.0" />
   </ItemGroup>
 </Project>

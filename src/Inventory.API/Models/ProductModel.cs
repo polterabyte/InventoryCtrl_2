@@ -7,4 +7,6 @@ public class ProductModel
     public int ManufacturerId { get; set; }
     public Manufacturer Manufacturer { get; set; } = null!;
     public ICollection<Product> Products { get; set; } = new List<Product>();
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
 }

@@ -5,17 +5,11 @@ using Microsoft.Extensions.Logging;
 
 namespace Inventory.Shared.Services;
 
-public class ProductApiService : BaseApiService, IProductService
+public class ProductApiService(HttpClient httpClient, ILogger<ProductApiService> logger, IRetryService? retryService = null, INotificationService? notificationService = null) 
+    : BaseApiService(httpClient, ApiEndpoints.Products, logger), IProductService
 {
-    private readonly IRetryService? _retryService;
-    private readonly INotificationService? _notificationService;
-
-    public ProductApiService(HttpClient httpClient, ILogger<ProductApiService> logger, IRetryService? retryService = null, INotificationService? notificationService = null) 
-        : base(httpClient, ApiEndpoints.Products, logger)
-    {
-        _retryService = retryService;
-        _notificationService = notificationService;
-    }
+    private readonly IRetryService? _retryService = retryService;
+    private readonly INotificationService? _notificationService = notificationService;
 
     public async Task<List<ProductDto>> GetAllProductsAsync()
     {

@@ -1,117 +1,98 @@
 using Inventory.Shared.Models;
+using Microsoft.Extensions.Logging;
 
 namespace Inventory.Shared.Services;
 
 public interface INotificationService
 {
-    void ShowSuccess(string title, string message, int duration = 5000);
-    void ShowError(string title, string message, Action? onRetry = null, string? retryText = "Retry", int duration = 0);
-    void ShowWarning(string title, string message, int duration = 5000);
-    void ShowInfo(string title, string message, int duration = 5000);
-    void ShowDebug(string title, string message, int duration = 10000);
-    void RemoveNotification(string id);
-    void ClearAll();
+    void ShowSuccess(string title, string message);
+    void ShowError(string title, string message, Action? retryAction = null, string? retryText = null);
+    void ShowWarning(string title, string message);
+    void ShowInfo(string title, string message);
+    void ShowDebug(string title, string message);
     NotificationState GetState();
+    void RemoveNotification(string id);
+    event Action<ToastNotification>? NotificationReceived;
 }
 
-public class NotificationService : INotificationService
+public class NotificationService(ILogger<NotificationService> logger) : INotificationService
 {
-    private readonly NotificationState _state;
-    private readonly Timer? _cleanupTimer;
+    private readonly ILogger<NotificationService> _logger = logger;
+    private readonly NotificationState _state = new();
+    
+    public event Action<ToastNotification>? NotificationReceived;
 
-    public NotificationService()
-    {
-        _state = new NotificationState();
-        
-        // Cleanup expired notifications every 30 seconds
-        _cleanupTimer = new Timer(CleanupExpiredNotifications, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
-    }
-
-    public void ShowSuccess(string title, string message, int duration = 5000)
+    public void ShowSuccess(string title, string message)
     {
         var notification = new Notification
         {
             Title = title,
             Message = message,
-            Type = NotificationType.Success,
-            Duration = duration
+            Type = NotificationType.Success
         };
         
         _state.AddNotification(notification);
-        AutoRemoveNotification(notification.Id, duration);
+        _logger.LogInformation("Success notification: {Title} - {Message}", title, message);
+        NotificationReceived?.Invoke(new ToastNotification(notification.Id, title, message, NotificationType.Success));
     }
 
-    public void ShowError(string title, string message, Action? onRetry = null, string? retryText = "Retry", int duration = 0)
+    public void ShowError(string title, string message, Action? retryAction = null, string? retryText = null)
     {
         var notification = new Notification
         {
             Title = title,
             Message = message,
             Type = NotificationType.Error,
-            Duration = duration,
-            OnRetry = onRetry,
-            RetryText = retryText,
-            IsDismissible = true
+            Duration = 10000, // Longer duration for errors
+            OnRetry = retryAction,
+            RetryText = retryText
         };
         
         _state.AddNotification(notification);
-        
-        if (duration > 0)
-        {
-            AutoRemoveNotification(notification.Id, duration);
-        }
+        _logger.LogError("Error notification: {Title} - {Message}", title, message);
+        NotificationReceived?.Invoke(new ToastNotification(notification.Id, title, message, NotificationType.Error, notification.Duration));
     }
 
-    public void ShowWarning(string title, string message, int duration = 5000)
+    public void ShowWarning(string title, string message)
     {
         var notification = new Notification
         {
             Title = title,
             Message = message,
-            Type = NotificationType.Warning,
-            Duration = duration
+            Type = NotificationType.Warning
         };
         
         _state.AddNotification(notification);
-        AutoRemoveNotification(notification.Id, duration);
+        _logger.LogWarning("Warning notification: {Title} - {Message}", title, message);
+        NotificationReceived?.Invoke(new ToastNotification(notification.Id, title, message, NotificationType.Warning));
     }
 
-    public void ShowInfo(string title, string message, int duration = 5000)
+    public void ShowInfo(string title, string message)
     {
         var notification = new Notification
         {
             Title = title,
             Message = message,
-            Type = NotificationType.Info,
-            Duration = duration
+            Type = NotificationType.Info
         };
         
         _state.AddNotification(notification);
-        AutoRemoveNotification(notification.Id, duration);
+        _logger.LogInformation("Info notification: {Title} - {Message}", title, message);
+        NotificationReceived?.Invoke(new ToastNotification(notification.Id, title, message, NotificationType.Info));
     }
 
-    public void ShowDebug(string title, string message, int duration = 10000)
+    public void ShowDebug(string title, string message)
     {
         var notification = new Notification
         {
             Title = title,
             Message = message,
-            Type = NotificationType.Debug,
-            Duration = duration
+            Type = NotificationType.Debug
         };
         
         _state.AddNotification(notification);
-        AutoRemoveNotification(notification.Id, duration);
-    }
-
-    public void RemoveNotification(string id)
-    {
-        _state.RemoveNotification(id);
-    }
-
-    public void ClearAll()
-    {
-        _state.ClearAll();
+        _logger.LogDebug("Debug notification: {Title} - {Message}", title, message);
+        NotificationReceived?.Invoke(new ToastNotification(notification.Id, title, message, NotificationType.Debug));
     }
 
     public NotificationState GetState()
@@ -119,33 +100,8 @@ public class NotificationService : INotificationService
         return _state;
     }
 
-    private void AutoRemoveNotification(string id, int duration)
+    public void RemoveNotification(string id)
     {
-        if (duration > 0)
-        {
-            Task.Delay(duration).ContinueWith(_ =>
-            {
-                RemoveNotification(id);
-            });
-        }
-    }
-
-    private void CleanupExpiredNotifications(object? state)
-    {
-        var now = DateTime.UtcNow;
-        var expiredNotifications = _state.Notifications
-            .Where(n => n.Duration > 0 && (now - n.CreatedAt).TotalMilliseconds > n.Duration)
-            .Select(n => n.Id)
-            .ToList();
-
-        foreach (var id in expiredNotifications)
-        {
-            RemoveNotification(id);
-        }
-    }
-
-    public void Dispose()
-    {
-        _cleanupTimer?.Dispose();
+        _state.RemoveNotification(id);
     }
 }

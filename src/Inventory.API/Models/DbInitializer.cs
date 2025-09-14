@@ -13,8 +13,16 @@ public static class DbInitializer
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
 
-        // Применение миграций
-        await db.Database.MigrateAsync();
+        // Применение миграций (только для реляционных баз данных)
+        if (db.Database.IsRelational())
+        {
+            await db.Database.MigrateAsync();
+        }
+        else
+        {
+            // Для InMemory базы создаем схему
+            await db.Database.EnsureCreatedAsync();
+        }
 
         // Создание ролей
         await CreateRolesAsync(roleManager);
@@ -36,7 +44,7 @@ public static class DbInitializer
             if (!await roleManager.RoleExistsAsync(role))
             {
                 await roleManager.CreateAsync(new IdentityRole(role));
-                Log.Information("Роль создана: {Role}", role);
+                Log.Information("Role created: {Role}", role);
             }
         }
     }
@@ -57,7 +65,8 @@ public static class DbInitializer
                 UserName = "superadmin",
                 Email = superUserEmail,
                 EmailConfirmed = true,
-                Role = superUserRole
+                Role = superUserRole,
+                CreatedAt = DateTime.UtcNow
             };
 
             var result = await userManager.CreateAsync(superUser, superUserPassword);
@@ -65,11 +74,11 @@ public static class DbInitializer
             {
                 await userManager.AddToRoleAsync(superUser, superUserRole);
                 await userManager.AddToRoleAsync(superUser, adminRole);
-                Log.Information("Суперпользователь создан: {Email}", superUserEmail);
+                Log.Information("Superuser created: {Email}", superUserEmail);
             }
             else
             {
-                Log.Error("Ошибка создания суперпользователя: {Errors}", 
+                Log.Error("Error creating superuser: {Errors}", 
                     string.Join(", ", result.Errors.Select(e => e.Description)));
             }
         }
@@ -83,15 +92,15 @@ public static class DbInitializer
                 var updateResult = await userManager.UpdateAsync(superUser);
                 if (updateResult.Succeeded)
                 {
-                    Log.Information("Имя пользователя обновлено на superadmin для {Email}", superUserEmail);
+                    Log.Information("Username updated to superadmin for {Email}", superUserEmail);
                 }
                 else
                 {
-                    Log.Error("Ошибка обновления имени пользователя: {Errors}", 
+                    Log.Error("Error updating username: {Errors}", 
                         string.Join(", ", updateResult.Errors.Select(e => e.Description)));
                 }
             }
-            Log.Information("Суперпользователь уже существует: {Email}", superUserEmail);
+            Log.Information("Superuser already exists: {Email}", superUserEmail);
         }
     }
 }

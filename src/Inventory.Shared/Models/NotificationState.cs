@@ -73,11 +73,3 @@ public class Notification
     public string? RetryText { get; set; }
 }
 
-public enum NotificationType
-{
-    Success,
-    Error,
-    Warning,
-    Info,
-    Debug
-}

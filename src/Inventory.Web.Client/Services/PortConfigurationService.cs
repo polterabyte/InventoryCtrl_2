@@ -2,16 +2,10 @@ using Microsoft.Extensions.Configuration;
 
 namespace Inventory.Web.Client.Services;
 
-public class PortConfigurationService
+public class PortConfigurationService(ILogger<PortConfigurationService> logger, IConfiguration configuration)
 {
-    private readonly ILogger<PortConfigurationService> _logger;
-    private readonly IConfiguration _configuration;
-    
-    public PortConfigurationService(ILogger<PortConfigurationService> logger, IConfiguration configuration)
-    {
-        _logger = logger;
-        _configuration = configuration;
-    }
+    private readonly ILogger<PortConfigurationService> _logger = logger;
+    private readonly IConfiguration _configuration = configuration;
     
     public string GetApiUrl()
     {

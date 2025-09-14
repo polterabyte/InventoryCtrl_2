@@ -6,7 +6,7 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddPortConfiguration(this IServiceCollection services)
     {
-        services.AddSingleton<PortConfigurationService>();
+        services.AddSingleton<IPortConfigurationService, PortConfigurationService>();
         return services;
     }
     
@@ -29,7 +29,7 @@ public static class WebApplicationExtensions
 {
     public static WebApplication ConfigureCorsWithPorts(this WebApplication app)
     {
-        var portService = app.Services.GetRequiredService<PortConfigurationService>();
+        var portService = app.Services.GetRequiredService<IPortConfigurationService>();
         var corsOrigins = portService.GetCorsOrigins();
         
         app.UseCors(builder =>

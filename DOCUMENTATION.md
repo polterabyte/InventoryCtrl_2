@@ -9,6 +9,7 @@
 6. [Launch Instructions](#launch-instructions)
 7. [Testing Guide](#testing-guide)
 8. [Development Guidelines](#development-guidelines)
+9. [Test Documentation](#test-documentation)
 
 ---
 
@@ -1152,6 +1153,53 @@ After launch, open browser and navigate to:
 
 ---
 
+## CI/CD Pipeline
+
+### Overview
+Проект включает комплексную систему CI/CD для автоматического запуска тестов и развертывания. Система поддерживает несколько вариантов развертывания и обеспечивает высокое качество кода.
+
+### GitHub Actions
+- **Основной workflow**: `.github/workflows/ci-tests.yml`
+  - Автоматический запуск тестов при push и pull requests
+  - Интеграция с PostgreSQL для интеграционных тестов
+  - Генерация отчетов о покрытии кода
+  - Сканирование безопасности
+- **Кросс-платформенный workflow**: `.github/workflows/cross-platform-tests.yml`
+  - Тестирование на Windows, macOS, Ubuntu
+  - Еженедельное тестирование по расписанию
+  - Тесты производительности
+
+### Azure DevOps
+- **Pipeline**: `azure-pipelines.yml`
+  - Многоэтапный pipeline (Test → Build → Deploy)
+  - Параллельное выполнение разных типов тестов
+  - Автоматическое развертывание в staging/production
+
+### Docker Testing
+- **Dockerfile**: `Dockerfile.test` - контейнеризация тестов
+- **Docker Compose**: `docker-compose.test.yml` - оркестрация сервисов
+- **PowerShell скрипт**: `scripts/Run-Tests-Docker.ps1` - запуск тестов в Docker
+
+### Coverage Reports
+- **Конфигурация**: `test/coverlet.runsettings` - настройки покрытия кода
+- **Генератор отчетов**: `scripts/Generate-Coverage-Report.ps1`
+- **Поддержка форматов**: HTML, JSON, LCOV, Cobertura
+
+### Quick Start CI/CD
+```powershell
+# Локальный запуск тестов
+cd test
+.\run-tests.ps1 -Coverage
+
+# Docker запуск тестов
+.\scripts\Run-Tests-Docker.ps1 -TestType all -Coverage
+
+# Генерация отчетов о покрытии
+.\scripts\Generate-Coverage-Report.ps1 -OpenReport
+```
+
+> 📖 **Подробная документация**: См. [.ai-agents/reports/cicd-setup-report.md](.ai-agents/reports/cicd-setup-report.md) для полной информации о CI/CD системе.
+
 ## Testing Guide
 
 ### Test Data
@@ -1324,3 +1372,76 @@ See `.ai-agent-prompts` file for permanent preferences and development instructi
 - Caching with Redis
 - Message Queues for asynchronous processing
 - Microservices architecture
+
+---
+
+## Test Documentation
+
+### Overview
+Проект включает комплексную систему тестирования с тремя типами тестов:
+
+- **Unit Tests** — тестирование бизнес-логики и моделей
+- **Integration Tests** — тестирование API endpoints
+- **Component Tests** — тестирование Blazor компонентов
+
+### Quick Start
+
+#### Запуск всех тестов
+```powershell
+# Из корня проекта
+dotnet test
+
+# Или из папки test
+cd test
+.\run-tests.ps1
+```
+
+#### Запуск конкретных тестов
+```powershell
+# Unit тесты
+.\run-tests.ps1 -Project unit
+
+# Integration тесты
+.\run-tests.ps1 -Project integration
+
+# Component тесты
+.\run-tests.ps1 -Project component
+```
+
+### Test Structure
+
+```
+test/
+├── Inventory.UnitTests/           # Unit-тесты
+│   ├── Services/                  # Тесты сервисов
+│   ├── Models/                    # Тесты моделей
+│   ├── TestData/                  # Тестовые данные
+│   └── TestBase.cs                # Базовый класс
+├── Inventory.IntegrationTests/    # Integration-тесты
+│   └── Controllers/               # Тесты API
+├── Inventory.ComponentTests/      # Component-тесты
+│   └── Components/                # Тесты Blazor компонентов
+└── run-tests.ps1                  # Скрипт запуска
+```
+
+### Technologies
+
+- **xUnit** — фреймворк для тестирования
+- **Moq** — мокирование зависимостей
+- **FluentAssertions** — читаемые утверждения
+- **bUnit** — тестирование Blazor компонентов
+- **Microsoft.AspNetCore.Mvc.Testing** — тестирование API
+- **Entity Framework InMemory** — тестовая база данных
+
+### Best Practices
+
+1. **Именование тестов**: `MethodName_Scenario_ExpectedResult`
+2. **Структура теста**: Arrange-Act-Assert
+3. **Мокирование**: Использовать Moq для внешних зависимостей
+4. **Утверждения**: Использовать FluentAssertions
+5. **Тестовые данные**: Создавать в TestData классах
+6. **Покрытие**: Стремиться к 80%+ покрытию
+
+### Detailed Documentation
+
+> 📖 **Полная документация по тестированию**: См. [test/README.md](test/README.md) для подробной информации о тестах, принципах тестирования, инструкциях по написанию тестов и лучших практиках.
