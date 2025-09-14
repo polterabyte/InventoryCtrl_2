@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Collections.Generic;
 
 namespace Inventory.API.Services;
 
@@ -57,16 +58,22 @@ public class PortConfigurationService
     public string[] GetCorsOrigins()
     {
         var config = LoadPortConfiguration();
-        return new[]
+        var origins = new List<string>
         {
             $"http://localhost:{config.ApiHttp}",
             $"https://localhost:{config.ApiHttps}",
             $"http://localhost:{config.WebHttp}",
-            $"https://localhost:{config.WebHttps}",
-            "http://10.0.2.2:8080",
-            "capacitor://localhost",
-            "https://yourmobileapp.com"
+            $"https://localhost:{config.WebHttps}"
         };
+        
+        // Add additional origins from configuration
+        var additionalOrigins = _configuration.GetSection("Cors:AdditionalOrigins").Get<string[]>();
+        if (additionalOrigins != null)
+        {
+            origins.AddRange(additionalOrigins);
+        }
+        
+        return origins.ToArray();
     }
 }
 

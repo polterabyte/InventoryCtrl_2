@@ -2,7 +2,7 @@
 <CascadingAuthenticationState>
     <Router AppAssembly="@typeof(App).Assembly">
         <Found Context="routeData">
-            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+            <AuthorizeRouteView RouteData="@routeData" ChildContent="autchContext" DefaultLayout="@typeof(MainLayout)" />
         </Found>
         <NotFound>
             <PageTitle>Not found</PageTitle>

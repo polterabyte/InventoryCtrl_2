@@ -3,6 +3,7 @@
 @using Microsoft.AspNetCore.Components.Routing
 @using Inventory.Shared.Models
 @using Inventory.UI.Components.Notifications
+@using Inventory.UI.Components
 @inject NavigationManager Navigation
 
 <div class="page">
@@ -34,6 +35,9 @@
         @* Обычная логика с проверкой авторизации *@
         <AuthorizeView>
             <Authorized>
+                @* User greeting bar *@
+                <UserGreeting />
+                
                 <div class="sidebar">
                     <NavigationMenu AppTitle="@AppTitle" MenuItems="@MenuItems" />
                     <main>

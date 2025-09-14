@@ -143,6 +143,8 @@ InventoryCtrl_2/
 - `Warehouse.cs` - Warehouse model for client
 - `Location.cs` - Location model for client
 - `InventoryTransaction.cs` - Inventory transaction model for client
+- `User.cs` - User model for client (simplified version)
+- `ProductHistory.cs` - Product history model for client
 
 #### DTOs/ - Data Transfer Objects
 - `AuthDto.cs` - Authentication (LoginRequest, RegisterRequest, etc.)
@@ -177,6 +179,36 @@ InventoryCtrl_2/
 - `Notifications/ToastNotification.razor` - Toast notifications
 - `ProductCard.razor` - Product card
 - `ProductList.razor` - Product list
+- `UserGreeting.razor` - User greeting and logout component
+
+#### UserGreeting Component Details
+
+The `UserGreeting.razor` component provides user authentication status display and logout functionality:
+
+**Features:**
+- **User Greeting**: Displays "Привет, [Username]!" with user icon
+- **Logout Button**: Secure logout with token cleanup
+- **Authentication Integration**: Uses `AuthorizeView` for conditional rendering
+- **LocalStorage Integration**: Manages authentication tokens
+- **Responsive Design**: Adapts to mobile and desktop screens
+- **Theme Support**: Full light/dark theme compatibility
+
+**Usage:**
+```razor
+<UserGreeting />
+```
+
+**Dependencies:**
+- `Microsoft.AspNetCore.Components.Authorization`
+- `Inventory.Shared.Interfaces` (IAuthService, ICustomAuthenticationStateProvider)
+- `Blazored.LocalStorage`
+- `Inventory.Shared.DTOs`
+
+**Styling:**
+- Component-specific styles in `UserGreeting.razor.css`
+- Uses design system tokens for consistent theming
+- Responsive breakpoints for mobile optimization
+- Smooth animations and hover effects
 
 ### Web Client - Blazor WebAssembly
 
@@ -316,6 +348,25 @@ Archive/hide operations available only to Admin.
 - `POST /api/auth/refresh` - Token refresh
 - `POST /api/auth/logout` - Logout
 
+#### Authentication UI Components
+
+**UserGreeting Component** - User authentication status and logout:
+- **Location**: `src/Inventory.UI/Components/UserGreeting.razor`
+- **Integration**: Automatically displayed in `MainLayout.razor` for authenticated users
+- **Features**:
+  - Displays personalized greeting: "Привет, [Username]!"
+  - User icon with Bootstrap Icons
+  - Secure logout button with token cleanup
+  - Responsive design for mobile and desktop
+  - Dark/light theme support
+- **Logout Process**:
+  1. Retrieves JWT token from LocalStorage
+  2. Calls API logout endpoint
+  3. Clears token from LocalStorage
+  4. Notifies AuthenticationStateProvider
+  5. Redirects to login page
+- **Styling**: Component-specific CSS with design system integration
+
 #### Products
 - `GET /api/products` - Product list
 - `GET /api/products/{id}` - Product by ID
@@ -454,6 +505,17 @@ Form styling with validation states:
 - `.validation-message` - Error message styling
 - `.valid.modified` - Valid field styling
 - `.invalid` - Invalid field styling
+
+#### User Greeting
+User greeting component with authentication status:
+- `.user-greeting` - Main container with flex layout
+- `.user-info` - User information container
+- `.greeting-text` - Greeting text with icon styling
+- `.greeting-text i` - User icon styling
+- Responsive design with mobile breakpoints
+- Dark theme support with `[data-bs-theme="dark"]`
+- Hover effects and smooth animations
+- Fade-in animation for greeting text
 
 ### Utility Classes
 
@@ -608,6 +670,7 @@ src/
 │   └── Component-specific CSS files      # Scoped component styles
 │       ├── Layout/MainLayout.razor.css
 │       ├── Layout/NavMenu.razor.css
+│       ├── Components/UserGreeting.razor.css
 │       ├── Components/Notifications/
 │       └── Pages/Home.razor.css
 ├── Inventory.Web.Client/                  # Web client
@@ -1094,10 +1157,10 @@ After launch, open browser and navigate to:
 ### Test Data
 
 #### Valid User (Created Automatically on Launch)
-- **Username**: `superadmin`
-- **Password**: `SuperAdmin123!`
-- **Email**: `admin@inventory.com`
-- **Roles**: `SuperUser`, `Admin`
+- **Username**: `admin`
+- **Password**: `Admin123!`
+- **Email**: `admin@localhost`
+- **Roles**: `Admin`
 - **Note**: User is created automatically by `DbInitializer` on first launch
 
 #### Invalid Data for Error Testing
@@ -1108,9 +1171,9 @@ After launch, open browser and navigate to:
 
 #### 1. Successful Login with Valid Data ✅
 **Steps:**
-1. Open https://localhost:5001/login
-2. Enter `superadmin` in Username field
-3. Enter `SuperAdmin123!` in Password field
+1. Open https://localhost:7001/login
+2. Enter `admin` in Username field
+3. Enter `Admin123!` in Password field
 4. Click "Sign In" button or press Enter
 
 **Expected Result:**
@@ -1121,7 +1184,7 @@ After launch, open browser and navigate to:
 
 #### 2. Failed Login with Invalid Data 🔄
 **Steps:**
-1. Open https://localhost:5001/login
+1. Open https://localhost:7001/login
 2. Enter `testuser` in Username field
 3. Enter `wrongpassword` in Password field
 4. Click "Sign In" button
@@ -1133,7 +1196,7 @@ After launch, open browser and navigate to:
 
 #### 3. Real-time Validation 🔄
 **Steps:**
-1. Open https://localhost:5001/login
+1. Open https://localhost:7001/login
 2. Start typing in Username field:
    - When entering 1-2 characters: field highlights red
    - When entering 3+ characters: field highlights green
@@ -1154,7 +1217,7 @@ After launch, open browser and navigate to:
 - Shows "Login successful! Redirecting..." message
 - Button shows "Redirecting..." with spinner
 - After 1.5 seconds, redirects to main page
-- URL changes to https://localhost:5001/
+- URL changes to https://localhost:7001/
 
 #### 5. Close Message Button 🔄
 **Steps:**
@@ -1167,7 +1230,7 @@ After launch, open browser and navigate to:
 
 #### 6. Login on Enter Press 🔄
 **Steps:**
-1. Open https://localhost:5001/login
+1. Open https://localhost:7001/login
 2. Enter valid data
 3. Press Enter in any field
 
