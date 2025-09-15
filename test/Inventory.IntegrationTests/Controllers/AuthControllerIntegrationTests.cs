@@ -31,7 +31,8 @@ public class AuthControllerIntegrationTestsNew : IntegrationTestBase
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<LoginResult>();
+        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<LoginResult>>();
+        var result = apiResponse?.Data;
         result.Should().NotBeNull();
         result!.Token.Should().NotBeNullOrEmpty();
         result.Username.Should().Be("testadmin");

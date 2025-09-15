@@ -19,7 +19,53 @@ builder.Host.UseSerilog((ctx, lc) => lc.ReadFrom.Configuration(ctx.Configuration
 // Add services
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "Inventory Control API",
+        Version = "v1",
+        Description = "RESTful API for inventory management system",
+        Contact = new Microsoft.OpenApi.Models.OpenApiContact
+        {
+            Name = "Inventory Control Team",
+            Email = "support@inventorycontrol.com"
+        }
+    });
+
+    // Add JWT authentication to Swagger
+    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+        Name = "Authorization",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+
+    // Include XML comments if available
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = System.IO.Path.Combine(System.AppContext.BaseDirectory, xmlFile);
+    if (System.IO.File.Exists(xmlPath))
+    {
+        c.IncludeXmlComments(xmlPath);
+    }
+});
 
 // Add port configuration service
 builder.Services.AddPortConfiguration();
@@ -100,6 +146,25 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Configure ports and log information
+var portConfigService = app.Services.GetRequiredService<IPortConfigurationService>();
+var portConfig = portConfigService.LoadPortConfiguration();
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
+
+// Configure Kestrel to listen on configured ports
+app.Urls.Clear();
+app.Urls.Add($"http://localhost:{portConfig.ApiHttp}");
+app.Urls.Add($"https://localhost:{portConfig.ApiHttps}");
+
+// Log port information on startup
+logger.LogInformation("🚀 Inventory Control API starting...");
+logger.LogInformation("📡 API HTTP Port: {HttpPort}", portConfig.ApiHttp);
+logger.LogInformation("🔒 API HTTPS Port: {HttpsPort}", portConfig.ApiHttps);
+logger.LogInformation("🌐 Web HTTP Port: {WebHttpPort}", portConfig.WebHttp);
+logger.LogInformation("🔐 Web HTTPS Port: {WebHttpsPort}", portConfig.WebHttps);
+logger.LogInformation("🔗 API URLs: http://localhost:{HttpPort} | https://localhost:{HttpsPort}", portConfig.ApiHttp, portConfig.ApiHttps);
+logger.LogInformation("🔗 Web URLs: http://localhost:{WebHttpPort} | https://localhost:{WebHttpsPort}", portConfig.WebHttp, portConfig.WebHttps);
 
 app.Run();
 

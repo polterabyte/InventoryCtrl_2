@@ -18,7 +18,8 @@ public static class ServiceCollectionExtensions
             {
                 // CORS будет настроен в ConfigureCorsWithPorts с использованием портов из ports.json
                 policy.AllowAnyHeader()
-                      .AllowAnyMethod();
+                      .AllowAnyMethod()
+                      .AllowCredentials(); // Required for Blazor WASM authentication
             });
         });
         return services;
@@ -36,7 +37,8 @@ public static class WebApplicationExtensions
         {
             builder.WithOrigins(corsOrigins)
                    .AllowAnyHeader()
-                   .AllowAnyMethod();
+                   .AllowAnyMethod()
+                   .AllowCredentials(); // Required for Blazor WASM authentication
         });
         
         return app;

@@ -3,6 +3,9 @@
 @using Inventory.Shared.Interfaces
 @inject IProductService ProductService
 @inject ICategoryService CategoryService
+@inject IManufacturerService ManufacturerService
+@inject IProductModelService ProductModelService
+@inject IProductGroupService ProductGroupService
 
 <h3>@Title</h3>
 
@@ -31,7 +34,7 @@
     </div>
 
     <div class="row">
-        <div class="col-md-4">
+        <div class="col-md-6">
             <div class="mb-3">
                 <label class="form-label">Категория:</label>
                 <InputSelect class="form-select" @bind-Value="productModel.CategoryId">
@@ -43,10 +46,10 @@
                 </InputSelect>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-6">
             <div class="mb-3">
                 <label class="form-label">Производитель:</label>
-                <InputSelect class="form-select" @bind-Value="productModel.ManufacturerId">
+                <InputSelect class="form-select" @bind-Value="productModel.ManufacturerId" @onchange="OnManufacturerChanged">
                     <option value="">Выберите производителя</option>
                     @foreach (var manufacturer in manufacturers)
                     {
@@ -55,33 +58,63 @@
                 </InputSelect>
             </div>
         </div>
-        <div class="col-md-4">
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
             <div class="mb-3">
-                <label class="form-label">Единица измерения:</label>
-                <InputText class="form-control" @bind-Value="productModel.Unit" placeholder="шт, кг, м, л..." />
+                <label class="form-label">Модель товара:</label>
+                <InputSelect class="form-select" @bind-Value="productModel.ProductModelId">
+                    <option value="">Выберите модель</option>
+                    @foreach (var model in productModels)
+                    {
+                        <option value="@model.Id">@model.Name</option>
+                    }
+                </InputSelect>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label class="form-label">Группа товара:</label>
+                <InputSelect class="form-select" @bind-Value="productModel.ProductGroupId">
+                    <option value="">Выберите группу</option>
+                    @foreach (var group in productGroups)
+                    {
+                        <option value="@group.Id">@group.Name</option>
+                    }
+                </InputSelect>
             </div>
         </div>
     </div>
 
     <div class="row">
-        <div class="col-md-4">
+        <div class="col-md-6">
             <div class="mb-3">
-                <label class="form-label">Минимальный остаток:</label>
-                <InputNumber class="form-control" @bind-Value="productModel.MinStock" />
+                <label class="form-label">Единица измерения:</label>
+                <InputText class="form-control" @bind-Value="productModel.Unit" placeholder="шт, кг, м, л..." />
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="mb-3">
-                <label class="form-label">Максимальный остаток:</label>
-                <InputNumber class="form-control" @bind-Value="productModel.MaxStock" />
-            </div>
-        </div>
-        <div class="col-md-4">
+        <div class="col-md-6">
             <div class="mb-3">
                 <div class="form-check mt-4">
                     <InputCheckbox class="form-check-input" @bind-Value="productModel.IsActive" />
                     <label class="form-check-label">Активный товар</label>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label class="form-label">Минимальный остаток:</label>
+                <InputNumber class="form-control" @bind-Value="productModel.MinStock" />
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label class="form-label">Максимальный остаток:</label>
+                <InputNumber class="form-control" @bind-Value="productModel.MaxStock" />
             </div>
         </div>
     </div>
@@ -117,6 +150,8 @@
     private CreateProductDto productModel = new();
     private List<CategoryDto> categories = new();
     private List<ManufacturerDto> manufacturers = new();
+    private List<ProductModelDto> productModels = new();
+    private List<ProductGroupDto> productGroups = new();
     private string? errorMessage;
     private bool isLoading = false;
 
@@ -137,11 +172,36 @@
         try
         {
             categories = await CategoryService.GetAllCategoriesAsync();
-            // manufacturers = await ManufacturerService.GetAllManufacturersAsync(); // TODO: Implement
+            manufacturers = await ManufacturerService.GetAllManufacturersAsync();
+            productModels = await ProductModelService.GetAllProductModelsAsync();
+            productGroups = await ProductGroupService.GetAllProductGroupsAsync();
         }
         catch (Exception ex)
         {
             errorMessage = $"Ошибка загрузки справочников: {ex.Message}";
+        }
+    }
+
+    private async Task OnManufacturerChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int manufacturerId) && manufacturerId > 0)
+        {
+            try
+            {
+                productModels = await ProductModelService.GetProductModelsByManufacturerAsync(manufacturerId);
+                productModel.ProductModelId = 0; // Reset model selection
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Ошибка загрузки моделей: {ex.Message}";
+            }
+        }
+        else
+        {
+            productModels = new List<ProductModelDto>();
+            productModel.ProductModelId = 0;
+            StateHasChanged();
         }
     }
 

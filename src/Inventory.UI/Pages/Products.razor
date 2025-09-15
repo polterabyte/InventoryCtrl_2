@@ -1,5 +1,6 @@
 @page "/products"
 @attribute [Authorize]
+@inject NavigationManager Navigation
 
 <ProductList OnProductEdit="EditProduct" 
              OnProductDelete="DeleteProduct" 
@@ -18,6 +19,6 @@
 
     private void AddProduct()
     {
-        // TODO: Navigate to add page or show modal
+        Navigation.NavigateTo("/products/add");
     }
 }

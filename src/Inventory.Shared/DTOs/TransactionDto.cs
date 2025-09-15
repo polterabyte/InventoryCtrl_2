@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Inventory.Shared.DTOs;
 
 public class InventoryTransactionDto
@@ -20,17 +22,36 @@ public class InventoryTransactionDto
 
 public class CreateInventoryTransactionDto
 {
+    [Required(ErrorMessage = "Product ID is required")]
+    [Range(1, int.MaxValue, ErrorMessage = "Product ID must be greater than 0")]
     public int ProductId { get; set; }
+    
+    [Required(ErrorMessage = "Warehouse ID is required")]
+    [Range(1, int.MaxValue, ErrorMessage = "Warehouse ID must be greater than 0")]
     public int WarehouseId { get; set; }
+    
+    [Range(1, int.MaxValue, ErrorMessage = "Location ID must be greater than 0")]
     public int? LocationId { get; set; }
+    
+    [Required(ErrorMessage = "Transaction type is required")]
+    [RegularExpression("^(Income|Outcome|Install)$", ErrorMessage = "Transaction type must be Income, Outcome, or Install")]
     public string Type { get; set; } = string.Empty;
+    
+    [Required(ErrorMessage = "Quantity is required")]
+    [Range(1, int.MaxValue, ErrorMessage = "Quantity must be greater than 0")]
     public int Quantity { get; set; }
+    
     public DateTime? Date { get; set; }
+    
+    [StringLength(500, ErrorMessage = "Description must not exceed 500 characters")]
     public string? Description { get; set; }
 }
 
 public class UpdateInventoryTransactionDto
 {
+    [Range(1, int.MaxValue, ErrorMessage = "Location ID must be greater than 0")]
     public int? LocationId { get; set; }
+    
+    [StringLength(500, ErrorMessage = "Description must not exceed 500 characters")]
     public string? Description { get; set; }
 }

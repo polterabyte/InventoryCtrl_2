@@ -48,9 +48,9 @@ public abstract class BaseApiService(HttpClient httpClient, string baseUrl, ILog
             
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<T>();
+                var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<T>>();
                 Logger.LogDebug("POST request successful for {Endpoint}", endpoint);
-                return new ApiResponse<T> { Success = true, Data = result };
+                return apiResponse ?? new ApiResponse<T> { Success = false, ErrorMessage = "Failed to deserialize response" };
             }
             else
             {

@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Inventory.Shared.DTOs;
 
 public class ManufacturerDto
@@ -14,17 +16,36 @@ public class ManufacturerDto
 
 public class CreateManufacturerDto
 {
+    [Required(ErrorMessage = "Manufacturer name is required")]
+    [StringLength(100, MinimumLength = 2, ErrorMessage = "Manufacturer name must be between 2 and 100 characters")]
     public string Name { get; set; } = string.Empty;
+    
+    [StringLength(500, ErrorMessage = "Description must not exceed 500 characters")]
     public string? Description { get; set; }
+    
+    [StringLength(200, ErrorMessage = "Contact info must not exceed 200 characters")]
     public string? ContactInfo { get; set; }
+    
+    [Url(ErrorMessage = "Invalid website URL format")]
+    [StringLength(200, ErrorMessage = "Website URL must not exceed 200 characters")]
     public string? Website { get; set; }
 }
 
 public class UpdateManufacturerDto
 {
+    [Required(ErrorMessage = "Manufacturer name is required")]
+    [StringLength(100, MinimumLength = 2, ErrorMessage = "Manufacturer name must be between 2 and 100 characters")]
     public string Name { get; set; } = string.Empty;
+    
+    [StringLength(500, ErrorMessage = "Description must not exceed 500 characters")]
     public string? Description { get; set; }
+    
+    [StringLength(200, ErrorMessage = "Contact info must not exceed 200 characters")]
     public string? ContactInfo { get; set; }
+    
+    [Url(ErrorMessage = "Invalid website URL format")]
+    [StringLength(200, ErrorMessage = "Website URL must not exceed 200 characters")]
     public string? Website { get; set; }
+    
     public bool IsActive { get; set; } = true;
 }

@@ -146,8 +146,8 @@ public abstract class IntegrationTestBase : IClassFixture<WebApplicationFactory<
         
         if (response.IsSuccessStatusCode)
         {
-            var result = await response.Content.ReadFromJsonAsync<LoginResult>();
-            return result?.Token ?? string.Empty;
+            var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<LoginResult>>();
+            return apiResponse?.Data?.Token ?? string.Empty;
         }
         else
         {
@@ -180,36 +180,69 @@ public abstract class IntegrationTestBase : IClassFixture<WebApplicationFactory<
     /// </summary>
     protected async Task CleanupDatabaseAsync()
     {
-        // Delete all data from tables in reverse dependency order
-        Context.InventoryTransactions.RemoveRange(Context.InventoryTransactions);
-        Context.Products.RemoveRange(Context.Products);
-        Context.Categories.RemoveRange(Context.Categories);
-        Context.Manufacturers.RemoveRange(Context.Manufacturers);
-        Context.ProductModels.RemoveRange(Context.ProductModels);
-        Context.ProductGroups.RemoveRange(Context.ProductGroups);
-        Context.Warehouses.RemoveRange(Context.Warehouses);
-        Context.Locations.RemoveRange(Context.Locations);
-        Context.Users.RemoveRange(Context.Users);
-        
-        await Context.SaveChangesAsync();
-        
-        // Clear Identity tables
-        using var scope = Factory.Services.CreateScope();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-        
-        // Remove all users
-        var users = userManager.Users.ToList();
-        foreach (var user in users)
+        try
         {
-            await userManager.DeleteAsync(user);
+            // Use raw SQL to disable foreign key constraints temporarily
+            await Context.Database.ExecuteSqlRawAsync("SET session_replication_role = replica;");
+            
+            // Clear all tables in correct order (respecting foreign key dependencies)
+            await Context.Database.ExecuteSqlRawAsync("DELETE FROM \"AspNetUserRoles\";");
+            await Context.Database.ExecuteSqlRawAsync("DELETE FROM \"AspNetUserClaims\";");
+            await Context.Database.ExecuteSqlRawAsync("DELETE FROM \"AspNetUserLogins\";");
+            await Context.Database.ExecuteSqlRawAsync("DELETE FROM \"AspNetUserTokens\";");
+            await Context.Database.ExecuteSqlRawAsync("DELETE FROM \"AspNetRoleClaims\";");
+            await Context.Database.ExecuteSqlRawAsync("DELETE FROM \"AspNetUsers\";");
+            await Context.Database.ExecuteSqlRawAsync("DELETE FROM \"AspNetRoles\";");
+            
+            // Clear application tables
+            await Context.Database.ExecuteSqlRawAsync("DELETE FROM \"InventoryTransactions\";");
+            await Context.Database.ExecuteSqlRawAsync("DELETE FROM \"Products\";");
+            await Context.Database.ExecuteSqlRawAsync("DELETE FROM \"ProductModels\";");
+            await Context.Database.ExecuteSqlRawAsync("DELETE FROM \"ProductGroups\";");
+            await Context.Database.ExecuteSqlRawAsync("DELETE FROM \"Categories\";");
+            await Context.Database.ExecuteSqlRawAsync("DELETE FROM \"Manufacturers\";");
+            await Context.Database.ExecuteSqlRawAsync("DELETE FROM \"Warehouses\";");
+            await Context.Database.ExecuteSqlRawAsync("DELETE FROM \"Locations\";");
+            
+            // Re-enable foreign key constraints
+            await Context.Database.ExecuteSqlRawAsync("SET session_replication_role = DEFAULT;");
+            
+            // Reset identity sequences to start from 1
+            await Context.Database.ExecuteSqlRawAsync("ALTER SEQUENCE \"Categories_Id_seq\" RESTART WITH 1;");
+            await Context.Database.ExecuteSqlRawAsync("ALTER SEQUENCE \"Manufacturers_Id_seq\" RESTART WITH 1;");
+            await Context.Database.ExecuteSqlRawAsync("ALTER SEQUENCE \"ProductGroups_Id_seq\" RESTART WITH 1;");
+            await Context.Database.ExecuteSqlRawAsync("ALTER SEQUENCE \"ProductModels_Id_seq\" RESTART WITH 1;");
+            await Context.Database.ExecuteSqlRawAsync("ALTER SEQUENCE \"Products_Id_seq\" RESTART WITH 1;");
+            await Context.Database.ExecuteSqlRawAsync("ALTER SEQUENCE \"Warehouses_Id_seq\" RESTART WITH 1;");
+            await Context.Database.ExecuteSqlRawAsync("ALTER SEQUENCE \"Locations_Id_seq\" RESTART WITH 1;");
+            await Context.Database.ExecuteSqlRawAsync("ALTER SEQUENCE \"InventoryTransactions_Id_seq\" RESTART WITH 1;");
+            
+            // Clear EF Core change tracker
+            Context.ChangeTracker.Clear();
         }
-        
-        // Remove all roles
-        var roles = roleManager.Roles.ToList();
-        foreach (var role in roles)
+        catch (Exception ex)
         {
-            await roleManager.DeleteAsync(role);
+            Console.WriteLine($"Warning: Error during database cleanup: {ex.Message}");
+            
+            // Fallback to EF Core cleanup if raw SQL fails
+            try
+            {
+                Context.InventoryTransactions.RemoveRange(Context.InventoryTransactions);
+                Context.Products.RemoveRange(Context.Products);
+                Context.Categories.RemoveRange(Context.Categories);
+                Context.Manufacturers.RemoveRange(Context.Manufacturers);
+                Context.ProductModels.RemoveRange(Context.ProductModels);
+                Context.ProductGroups.RemoveRange(Context.ProductGroups);
+                Context.Warehouses.RemoveRange(Context.Warehouses);
+                Context.Locations.RemoveRange(Context.Locations);
+                
+                await Context.SaveChangesAsync();
+                Context.ChangeTracker.Clear();
+            }
+            catch (Exception fallbackEx)
+            {
+                Console.WriteLine($"Warning: Fallback cleanup also failed: {fallbackEx.Message}");
+            }
         }
     }
 

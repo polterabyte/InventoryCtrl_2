@@ -24,7 +24,12 @@ builder.Services.AddScoped(sp =>
 {
     var portService = sp.GetRequiredService<PortConfigurationService>();
     var apiUrl = portService.GetApiUrl();
-    return new HttpClient { BaseAddress = new Uri(apiUrl) };
+    var httpClient = new HttpClient { BaseAddress = new Uri(apiUrl) };
+    
+    // Configure for CORS with credentials
+    httpClient.DefaultRequestHeaders.Add("X-Requested-With", "XMLHttpRequest");
+    
+    return httpClient;
 });
 
 // Add Blazor authorization services
@@ -43,6 +48,7 @@ builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Informatio
 builder.Services.AddScoped<IAuthService, AuthApiService>();
 builder.Services.AddScoped<IProductService, ProductApiService>();
 builder.Services.AddScoped<ICategoryService, CategoryApiService>();
+builder.Services.AddScoped<IManufacturerService, ManufacturerApiService>();
 builder.Services.AddScoped<IDashboardService, DashboardApiService>();
 
 // Register logging and error handling services

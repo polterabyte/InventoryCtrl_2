@@ -60,7 +60,7 @@ public class PortConfigurationService(IConfiguration configuration, ILogger<Port
         
         // Add additional origins from configuration
         var additionalOrigins = _configuration.GetSection("Cors:AdditionalOrigins").Get<string[]>();
-        if (additionalOrigins != null)
+        if (additionalOrigins != null && additionalOrigins.Length > 0)
         {
             origins.AddRange(additionalOrigins);
         }

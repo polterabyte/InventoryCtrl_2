@@ -12,23 +12,34 @@ public class AuthApiService(HttpClient httpClient, ILogger<AuthApiService> logge
 
     public async Task<AuthResult> LoginAsync(LoginRequest request)
     {
+        logger.LogInformation("Attempting login for user: {Username}", request.Username);
+        
         var response = await PostAsync<LoginResult>(ApiEndpoints.Login, request);
         
-        if (response.Success && response.Data != null)
+        logger.LogInformation("Login response - Success: {Success}, HasData: {HasData}, HasToken: {HasToken}", 
+            response.Success, 
+            response.Data != null, 
+            response.Data?.Token != null);
+        
+        if (response.Success && response.Data != null && !string.IsNullOrEmpty(response.Data.Token))
         {
+            logger.LogInformation("Login successful for user: {Username}", request.Username);
             return new AuthResult
             {
                 Success = true,
                 Token = response.Data.Token,
-                RefreshToken = response.Data.RefreshToken,
+                RefreshToken = response.Data.RefreshToken ?? string.Empty,
                 ExpiresAt = response.Data.ExpiresAt
             };
         }
 
+        logger.LogWarning("Login failed for user: {Username}, Error: {Error}", 
+            request.Username, response.ErrorMessage);
+        
         return new AuthResult
         {
             Success = false,
-            ErrorMessage = response.ErrorMessage
+            ErrorMessage = response.ErrorMessage ?? "Login failed. Please check your credentials."
         };
     }
 
