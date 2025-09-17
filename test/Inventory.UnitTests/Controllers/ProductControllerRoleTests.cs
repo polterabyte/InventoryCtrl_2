@@ -6,6 +6,7 @@ using Moq;
 using System.Security.Claims;
 using Inventory.API.Controllers;
 using Inventory.API.Models;
+using Inventory.API.Services;
 using Inventory.Shared.DTOs;
 using Xunit;
 using FluentAssertions;
@@ -25,7 +26,7 @@ public class ProductControllerRoleTests : IDisposable
         _testDatabaseName = $"inventory_unit_test_{Guid.NewGuid():N}_{DateTime.UtcNow:yyyyMMddHHmmss}";
         
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql($"Host=localhost;Database={_testDatabaseName};Username=postgres;Password=postgres")
+            .UseInMemoryDatabase(_testDatabaseName)
             .Options;
 
         _context = new AppDbContext(options);
@@ -34,7 +35,8 @@ public class ProductControllerRoleTests : IDisposable
         _context.Database.EnsureCreated();
         
         _mockLogger = new Mock<ILogger<ProductController>>();
-        _controller = new ProductController(_context, _mockLogger.Object);
+        var mockAuditService = new Mock<AuditService>(_context, Mock.Of<IHttpContextAccessor>(), Mock.Of<ILogger<AuditService>>());
+        _controller = new ProductController(_context, _mockLogger.Object, mockAuditService.Object);
 
         // Setup test data
         SetupTestData();
@@ -83,7 +85,7 @@ public class ProductControllerRoleTests : IDisposable
             Name = "Test Product",
             SKU = "TEST-001",
             Description = "Test description",
-            Unit = "pcs",
+                UnitOfMeasureId = 1,
             IsActive = false, // Admin can set to false
             CategoryId = _context.Categories.First().Id,
             ManufacturerId = _context.Manufacturers.First().Id,
@@ -126,7 +128,7 @@ public class ProductControllerRoleTests : IDisposable
             Name = "Test Product",
             SKU = "TEST-002",
             Description = "Test description",
-            Unit = "pcs",
+                UnitOfMeasureId = 1,
             IsActive = false, // User tries to set to false
             CategoryId = _context.Categories.First().Id,
             ManufacturerId = _context.Manufacturers.First().Id,
@@ -165,7 +167,7 @@ public class ProductControllerRoleTests : IDisposable
             Name = "Test Product",
             SKU = "TEST-003",
             Description = "Test description",
-            Unit = "pcs",
+                UnitOfMeasureId = 1,
             IsActive = true, // User sets to true
             CategoryId = _context.Categories.First().Id,
             ManufacturerId = _context.Manufacturers.First().Id,
@@ -210,7 +212,7 @@ public class ProductControllerRoleTests : IDisposable
             SKU = "TEST-004",
             Description = "Test description",
             Quantity = 0,
-            Unit = "pcs",
+                UnitOfMeasureId = 1,
             IsActive = true,
             CategoryId = _context.Categories.First().Id,
             ManufacturerId = _context.Manufacturers.First().Id,
@@ -229,7 +231,7 @@ public class ProductControllerRoleTests : IDisposable
             Name = "Updated Product",
             SKU = "TEST-004",
             Description = "Updated description",
-            Unit = "pcs",
+                UnitOfMeasureId = 1,
             IsActive = false, // Admin can change to false
             CategoryId = _context.Categories.First().Id,
             ManufacturerId = _context.Manufacturers.First().Id,
@@ -274,7 +276,7 @@ public class ProductControllerRoleTests : IDisposable
             SKU = "TEST-005",
             Description = "Test description",
             Quantity = 0,
-            Unit = "pcs",
+                UnitOfMeasureId = 1,
             IsActive = true,
             CategoryId = _context.Categories.First().Id,
             ManufacturerId = _context.Manufacturers.First().Id,
@@ -293,7 +295,7 @@ public class ProductControllerRoleTests : IDisposable
             Name = "Updated Product",
             SKU = "TEST-005",
             Description = "Updated description",
-            Unit = "pcs",
+                UnitOfMeasureId = 1,
             IsActive = false, // User tries to change to false
             CategoryId = _context.Categories.First().Id,
             ManufacturerId = _context.Manufacturers.First().Id,
@@ -334,7 +336,7 @@ public class ProductControllerRoleTests : IDisposable
             SKU = "TEST-006",
             Description = "Test description",
             Quantity = 0,
-            Unit = "pcs",
+                UnitOfMeasureId = 1,
             IsActive = true,
             CategoryId = _context.Categories.First().Id,
             ManufacturerId = _context.Manufacturers.First().Id,
@@ -379,7 +381,7 @@ public class ProductControllerRoleTests : IDisposable
             SKU = "TEST-007",
             Description = "Test description",
             Quantity = 0,
-            Unit = "pcs",
+                UnitOfMeasureId = 1,
             IsActive = true,
             CategoryId = _context.Categories.First().Id,
             ManufacturerId = _context.Manufacturers.First().Id,

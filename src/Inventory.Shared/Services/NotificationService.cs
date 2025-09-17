@@ -1,9 +1,10 @@
 using Inventory.Shared.Models;
+using Inventory.Shared.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace Inventory.Shared.Services;
 
-public interface INotificationService
+public interface IUINotificationService
 {
     void ShowSuccess(string title, string message);
     void ShowError(string title, string message, Action? retryAction = null, string? retryText = null);
@@ -15,7 +16,7 @@ public interface INotificationService
     event Action<ToastNotification>? NotificationReceived;
 }
 
-public class NotificationService(ILogger<NotificationService> logger) : INotificationService
+public class NotificationService(ILogger<NotificationService> logger) : IUINotificationService
 {
     private readonly ILogger<NotificationService> _logger = logger;
     private readonly NotificationState _state = new();

@@ -130,26 +130,17 @@ public class DashboardController(AppDbContext context) : ControllerBase
     }
 
     [HttpGet("low-stock-products")]
-    public async Task<IActionResult> GetLowStockProducts(
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 10)
+    public async Task<IActionResult> GetLowStockProducts()
     {
         try
         {
-            var query = context.Products
+            var lowStockProducts = await context.Products
                 .Include(p => p.Category)
                 .Include(p => p.Manufacturer)
-                .Where(p => p.IsActive && p.Quantity <= p.MinStock);
-
-            // Get total count
-            var totalCount = await query.CountAsync();
-
-            // Apply pagination
-            var lowStockProducts = await query
+                .Include(p => p.UnitOfMeasure)
+                .Where(p => p.IsActive && p.Quantity <= p.MinStock)
                 .OrderBy(p => p.Quantity)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(p => new
+                .Select(p => new LowStockProductDto
                 {
                     Id = p.Id,
                     Name = p.Name,
@@ -159,27 +150,19 @@ public class DashboardController(AppDbContext context) : ControllerBase
                     MaxStock = p.MaxStock,
                     CategoryName = p.Category.Name,
                     ManufacturerName = p.Manufacturer.Name,
-                    Unit = p.Unit
+                    UnitOfMeasureSymbol = p.UnitOfMeasure.Symbol
                 })
                 .ToListAsync();
 
-            var pagedResponse = new PagedResponse<object>
-            {
-                Items = lowStockProducts.Cast<object>().ToList(),
-                TotalCount = totalCount,
-                PageNumber = page,
-                PageSize = pageSize
-            };
-
-            return Ok(new PagedApiResponse<object>
+            return Ok(new ApiResponse<List<LowStockProductDto>>
             {
                 Success = true,
-                Data = pagedResponse
+                Data = lowStockProducts
             });
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new PagedApiResponse<object>
+            return StatusCode(500, new ApiResponse<List<LowStockProductDto>>
             {
                 Success = false,
                 ErrorMessage = "Failed to retrieve low stock products"

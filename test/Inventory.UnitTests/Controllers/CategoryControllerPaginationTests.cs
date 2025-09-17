@@ -25,7 +25,7 @@ public class CategoryControllerPaginationTests : IDisposable
         _testDatabaseName = $"inventory_unit_test_{Guid.NewGuid():N}_{DateTime.UtcNow:yyyyMMddHHmmss}";
         
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql($"Host=localhost;Database={_testDatabaseName};Username=postgres;Password=postgres")
+            .UseInMemoryDatabase(_testDatabaseName)
             .Options;
 
         _context = new AppDbContext(options);

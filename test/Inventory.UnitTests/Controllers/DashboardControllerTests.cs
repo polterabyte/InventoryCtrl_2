@@ -19,7 +19,7 @@ public class DashboardControllerTests : IDisposable
     public DashboardControllerTests()
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql($"Host=localhost;Port=5432;Database=inventory_test_{Guid.NewGuid():N};Username=postgres;Password=postgres;Pooling=true;")
+            .UseInMemoryDatabase($"inventory_test_{Guid.NewGuid():N}")
             .Options;
 
         _context = new AppDbContext(options);

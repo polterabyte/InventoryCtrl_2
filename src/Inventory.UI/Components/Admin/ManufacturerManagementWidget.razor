@@ -1,0 +1,254 @@
+@using Inventory.Shared.DTOs
+@using Inventory.Shared.Interfaces
+@using Inventory.Shared.Services
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@inject IManufacturerService ManufacturerService
+@inject IUINotificationService NotificationService
+@inject IJSRuntime JSRuntime
+
+<AuthorizeView Roles="Admin">
+    <Authorized>
+        <div class="reference-data-widget">
+            <div class="widget-header">
+                <h4><i class="fas fa-industry"></i> Manufacturers Management</h4>
+                <div class="widget-actions">
+                    <button class="btn btn-primary btn-sm" @onclick="ShowCreateModal">
+                        <i class="fas fa-plus"></i> Add New Manufacturer
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" @onclick="RefreshData">
+                        <i class="fas fa-refresh"></i> Refresh
+                    </button>
+                </div>
+            </div>
+
+            <div class="widget-content">
+                @if (isLoading)
+                {
+                    <div class="text-center p-4">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                }
+                else if (data?.Any() == true)
+                {
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Created</th>
+                                    <th>Updated</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in data)
+                                {
+                                    <tr>
+                                        <td><strong>@item.Name</strong></td>
+                                        <td>@item.CreatedAt.ToString("MMM dd, yyyy")</td>
+                                        <td>@(item.UpdatedAt?.ToString("MMM dd, yyyy") ?? "-")</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-primary" @onclick="() => EditItem(item)" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-outline-danger" @onclick="() => DeleteItem(item)" title="Delete">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center p-4">
+                        <p class="text-muted">No manufacturers found</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Create/Edit Modal -->
+        <div class="modal @(showModal ? "show d-block" : "d-none")" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">@(isEditing ? "Edit" : "Create") Manufacturer</h5>
+                        <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <EditForm Model="@currentItem" OnValidSubmit="@SaveItem" Context="editFormContext">
+                            <DataAnnotationsValidator />
+                            <div class="mb-3">
+                                <label class="form-label">Name *</label>
+                                <InputText class="form-control" @bind-Value="currentItem.Name" />
+                                <ValidationMessage For="@(() => currentItem.Name)" />
+                            </div>
+                        </EditForm>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
+                        <button type="button" class="btn btn-primary" @onclick="SaveItem" disabled="@isSaving">
+                            @if (isSaving)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                            }
+                            @(isEditing ? "Update" : "Create")
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle"></i>
+            Access denied. Administrator role required.
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private List<ManufacturerDto> data = new();
+    private bool isLoading = false;
+    private bool showModal = false;
+    private bool isEditing = false;
+    private bool isSaving = false;
+
+    private CreateManufacturerDto currentItem = new();
+    private ManufacturerDto? selectedItem = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        try
+        {
+            data = await ManufacturerService.GetAllManufacturersAsync();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
+            data = new();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task RefreshData()
+    {
+        await LoadData();
+    }
+
+    private void ShowCreateModal()
+    {
+        currentItem = new CreateManufacturerDto();
+        isEditing = false;
+        showModal = true;
+    }
+
+    private void EditItem(ManufacturerDto item)
+    {
+        selectedItem = item;
+        currentItem = new CreateManufacturerDto
+        {
+            Name = item.Name
+        };
+        isEditing = true;
+        showModal = true;
+    }
+
+    private void CloseModal()
+    {
+        showModal = false;
+        currentItem = new CreateManufacturerDto();
+        selectedItem = null;
+        isEditing = false;
+    }
+
+    private async Task SaveItem()
+    {
+        isSaving = true;
+        try
+        {
+            if (isEditing && selectedItem != null)
+            {
+                var updateDto = new UpdateManufacturerDto
+                {
+                    Name = currentItem.Name
+                };
+                var result = await ManufacturerService.UpdateManufacturerAsync(selectedItem.Id, updateDto);
+                if (result != null)
+                {
+                    NotificationService.ShowSuccess("Success", "Manufacturer updated successfully");
+                    CloseModal();
+                    await RefreshData();
+                }
+                else
+                {
+                    NotificationService.ShowError("Error", "Failed to update manufacturer");
+                }
+            }
+            else
+            {
+                var result = await ManufacturerService.CreateManufacturerAsync(currentItem);
+                if (result != null)
+                {
+                    NotificationService.ShowSuccess("Success", "Manufacturer created successfully");
+                    CloseModal();
+                    await RefreshData();
+                }
+                else
+                {
+                    NotificationService.ShowError("Error", "Failed to create manufacturer");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private async Task DeleteItem(ManufacturerDto item)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete '{item.Name}'?");
+        if (confirmed)
+        {
+            try
+            {
+                var success = await ManufacturerService.DeleteManufacturerAsync(item.Id);
+                if (success)
+                {
+                    NotificationService.ShowSuccess("Success", "Manufacturer deleted successfully");
+                    await RefreshData();
+                }
+                else
+                {
+                    NotificationService.ShowError("Error", "Failed to delete manufacturer");
+                }
+            }
+            catch (Exception ex)
+            {
+                NotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
+            }
+        }
+    }
+}

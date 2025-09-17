@@ -1,0 +1,461 @@
+@using Inventory.Shared.DTOs
+@using Inventory.Shared.Interfaces
+@using Inventory.Shared.Services
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@inject ICategoryService CategoryService
+@inject IUINotificationService NotificationService
+@inject IJSRuntime JSRuntime
+
+<AuthorizeView Roles="Admin">
+    <Authorized>
+        <div class="reference-data-widget">
+            <div class="widget-header">
+                <h4><i class="fas fa-tags"></i> Categories Management</h4>
+                <div class="widget-actions">
+                    <button class="btn btn-primary btn-sm" @onclick="ShowCreateModal">
+                        <i class="fas fa-plus"></i> Add New Category
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" @onclick="RefreshData">
+                        <i class="fas fa-refresh"></i> Refresh
+                    </button>
+                </div>
+            </div>
+
+            <div class="widget-filters">
+                <div class="row">
+                    <div class="col-md-4">
+                        <input type="text" class="form-control" placeholder="Search categories..." @bind="searchTerm" @onkeyup="OnSearchKeyUp" />
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" @bind="isActiveFilter">
+                            <option value="">All</option>
+                            <option value="true">Active</option>
+                            <option value="false">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" @bind="parentCategoryFilter">
+                            <option value="">All Categories</option>
+                            <option value="root">Root Categories Only</option>
+                            @foreach (var category in rootCategories)
+                            {
+                                <option value="@category.Id">@category.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" @bind="pageSize">
+                            <option value="10">10 per page</option>
+                            <option value="25">25 per page</option>
+                            <option value="50">50 per page</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="widget-content">
+                @if (isLoading)
+                {
+                    <div class="text-center p-4">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                }
+                else if (data?.Any() == true)
+                {
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th>Parent Category</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in data)
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong>@item.Name</strong>
+                                            @if (item.ParentCategoryId.HasValue)
+                                            {
+                                                <br><small class="text-muted">Subcategory</small>
+                                            }
+                                        </td>
+                                        <td>@(item.Description ?? "-")</td>
+                                        <td>@(item.ParentCategoryName ?? "Root Category")</td>
+                                        <td>
+                                            @if (item.IsActive)
+                                            {
+                                                <span class="badge bg-success">Active</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">Inactive</span>
+                                            }
+                                        </td>
+                                        <td>@item.CreatedAt.ToString("MMM dd, yyyy")</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-primary" @onclick="() => EditItem(item)" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-outline-danger" @onclick="() => DeleteItem(item)" title="Delete">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    @if (totalPages > 1)
+                    {
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                                    <button class="page-link" @onclick="() => ChangePage(1)">First</button>
+                                </li>
+                                <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                                    <button class="page-link" @onclick="() => ChangePage(currentPage - 1)">Previous</button>
+                                </li>
+                                
+                                @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(totalPages, currentPage + 2); i++)
+                                {
+                                    <li class="page-item @(i == currentPage ? "active" : "")">
+                                        <button class="page-link" @onclick="() => ChangePage(i)">@i</button>
+                                    </li>
+                                }
+                                
+                                <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                                    <button class="page-link" @onclick="() => ChangePage(currentPage + 1)">Next</button>
+                                </li>
+                                <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                                    <button class="page-link" @onclick="() => ChangePage(totalPages)">Last</button>
+                                </li>
+                            </ul>
+                        </nav>
+                    }
+                }
+                else
+                {
+                    <div class="text-center p-4">
+                        <p class="text-muted">No categories found</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Create/Edit Modal -->
+        <div class="modal @(showModal ? "show d-block" : "d-none")" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">@(isEditing ? "Edit" : "Create") Category</h5>
+                        <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <EditForm Model="@currentItem" OnValidSubmit="@SaveItem" Context="editFormContext">
+                            <DataAnnotationsValidator />
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Name *</label>
+                                        <InputText class="form-control" @bind-Value="currentItem.Name" />
+                                        <ValidationMessage For="@(() => currentItem.Name)" />
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Parent Category</label>
+                                        <InputSelect class="form-select" @bind-Value="currentItem.ParentCategoryId">
+                                            <option value="">Root Category</option>
+                                            @foreach (var category in rootCategories)
+                                            {
+                                                <option value="@category.Id">@category.Name</option>
+                                            }
+                                        </InputSelect>
+                                        <ValidationMessage For="@(() => currentItem.ParentCategoryId)" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <InputTextArea class="form-control" @bind-Value="currentItem.Description" rows="3" />
+                                <ValidationMessage For="@(() => currentItem.Description)" />
+                            </div>
+                            @if (isEditing)
+                            {
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <InputCheckbox class="form-check-input" @bind-Value="isActive" />
+                                        <label class="form-check-label">Active</label>
+                                    </div>
+                                </div>
+                            }
+                        </EditForm>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
+                        <button type="button" class="btn btn-primary" @onclick="SaveItem" disabled="@isSaving">
+                            @if (isSaving)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                            }
+                            @(isEditing ? "Update" : "Create")
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle"></i>
+            Access denied. Administrator role required.
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private List<CategoryDto> data = new();
+    private List<CategoryDto> rootCategories = new();
+    private bool isLoading = false;
+    private bool showModal = false;
+    private bool isEditing = false;
+    private bool isSaving = false;
+    private string searchTerm = "";
+    private string isActiveFilter = "";
+    private string parentCategoryFilter = "";
+    private int currentPage = 1;
+    private int pageSize = 10;
+    private int totalPages = 0;
+    private int totalCount = 0;
+
+    private CreateCategoryDto currentItem = new();
+    private CategoryDto? selectedItem = null;
+    private bool isActive = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRootCategories();
+        await LoadData();
+    }
+
+    private async Task LoadRootCategories()
+    {
+        try
+        {
+            rootCategories = await CategoryService.GetRootCategoriesAsync();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.ShowError("Error", $"Failed to load root categories: {ex.Message}");
+        }
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        try
+        {
+            var allCategories = await CategoryService.GetAllCategoriesAsync();
+            Console.WriteLine($"LoadData: Received {allCategories?.Count ?? 0} categories from API");
+            
+            // Apply filters
+            var filteredCategories = (allCategories ?? new List<CategoryDto>()).AsEnumerable();
+            Console.WriteLine($"LoadData: Before filtering: {filteredCategories.Count()} categories");
+            
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                filteredCategories = filteredCategories.Where(c => 
+                    c.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    (c.Description?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false));
+            }
+            
+            if (!string.IsNullOrEmpty(isActiveFilter))
+            {
+                var isActive = bool.Parse(isActiveFilter);
+                filteredCategories = filteredCategories.Where(c => c.IsActive == isActive);
+            }
+            
+            if (!string.IsNullOrEmpty(parentCategoryFilter))
+            {
+                if (parentCategoryFilter == "root")
+                {
+                    filteredCategories = filteredCategories.Where(c => !c.ParentCategoryId.HasValue);
+                }
+                else
+                {
+                    var parentId = int.Parse(parentCategoryFilter);
+                    filteredCategories = filteredCategories.Where(c => c.ParentCategoryId == parentId);
+                }
+            }
+            
+            var categoriesList = filteredCategories.ToList();
+            Console.WriteLine($"LoadData: After filtering: {categoriesList.Count} categories");
+            totalCount = categoriesList.Count;
+            totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+            
+            // Apply pagination
+            data = categoriesList
+                .Skip((currentPage - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+            Console.WriteLine($"LoadData: After pagination: {data.Count} categories displayed");
+        }
+        catch (Exception ex)
+        {
+            NotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
+            data = new();
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged(); // Force UI update
+        }
+    }
+
+    private async Task RefreshData()
+    {
+        currentPage = 1;
+        // Reset filters to show all categories
+        searchTerm = "";
+        isActiveFilter = "";
+        parentCategoryFilter = "";
+        await LoadRootCategories();
+        await LoadData();
+    }
+
+    private async Task OnSearchKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            currentPage = 1;
+            await LoadData();
+        }
+    }
+
+    private async Task ChangePage(int page)
+    {
+        if (page >= 1 && page <= totalPages && page != currentPage)
+        {
+            currentPage = page;
+            await LoadData();
+        }
+    }
+
+    private void ShowCreateModal()
+    {
+        currentItem = new CreateCategoryDto();
+        isActive = true;
+        isEditing = false;
+        showModal = true;
+    }
+
+    private void EditItem(CategoryDto item)
+    {
+        selectedItem = item;
+        currentItem = new CreateCategoryDto
+        {
+            Name = item.Name,
+            Description = item.Description,
+            ParentCategoryId = item.ParentCategoryId
+        };
+        isActive = item.IsActive;
+        isEditing = true;
+        showModal = true;
+    }
+
+    private void CloseModal()
+    {
+        showModal = false;
+        currentItem = new CreateCategoryDto();
+        selectedItem = null;
+        isEditing = false;
+    }
+
+    private async Task SaveItem()
+    {
+        isSaving = true;
+        try
+        {
+            if (isEditing && selectedItem != null)
+            {
+                var updateDto = new UpdateCategoryDto
+                {
+                    Name = currentItem.Name,
+                    Description = currentItem.Description,
+                    ParentCategoryId = currentItem.ParentCategoryId,
+                    IsActive = isActive
+                };
+                var result = await CategoryService.UpdateCategoryAsync(selectedItem.Id, updateDto);
+                if (result != null)
+                {
+                    NotificationService.ShowSuccess("Success", "Category updated successfully");
+                    CloseModal();
+                    await RefreshData();
+                }
+                else
+                {
+                    NotificationService.ShowError("Error", "Failed to update category");
+                }
+            }
+            else
+            {
+                var result = await CategoryService.CreateCategoryAsync(currentItem);
+                if (result != null)
+                {
+                    NotificationService.ShowSuccess("Success", "Category created successfully");
+                    CloseModal();
+                    await RefreshData();
+                }
+                else
+                {
+                    NotificationService.ShowError("Error", "Failed to create category");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private async Task DeleteItem(CategoryDto item)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete '{item.Name}'?");
+        if (confirmed)
+        {
+            try
+            {
+                var success = await CategoryService.DeleteCategoryAsync(item.Id);
+                if (success)
+                {
+                    NotificationService.ShowSuccess("Success", "Category deleted successfully");
+                    await RefreshData();
+                }
+                else
+                {
+                    NotificationService.ShowError("Error", "Failed to delete category");
+                }
+            }
+            catch (Exception ex)
+            {
+                NotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
+            }
+        }
+    }
+}

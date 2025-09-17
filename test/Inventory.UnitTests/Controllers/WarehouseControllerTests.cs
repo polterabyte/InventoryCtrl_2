@@ -8,6 +8,7 @@ using Inventory.API.Controllers;
 using Inventory.API.Models;
 using Inventory.Shared.DTOs;
 using Xunit;
+#pragma warning disable CS8602 // Dereference of a possibly null reference
 using FluentAssertions;
 
 namespace Inventory.UnitTests.Controllers;
@@ -25,7 +26,7 @@ public class WarehouseControllerTests : IDisposable
         _testDatabaseName = $"inventory_unit_test_{Guid.NewGuid():N}_{DateTime.UtcNow:yyyyMMddHHmmss}";
         
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql($"Host=localhost;Database={_testDatabaseName};Username=postgres;Password=postgres")
+            .UseInMemoryDatabase(_testDatabaseName)
             .Options;
 
         _context = new AppDbContext(options);

@@ -15,7 +15,7 @@ public class ProductTests
         // Assert
         product.Name.Should().BeEmpty();
         product.SKU.Should().BeEmpty();
-        product.Unit.Should().BeEmpty();
+        product.UnitOfMeasureId.Should().Be(0);
         product.IsActive.Should().BeTrue();
         product.Quantity.Should().Be(0);
         product.MinStock.Should().Be(0);
@@ -34,7 +34,7 @@ public class ProductTests
             SKU = "TEST-001",
             Description = "Test Description",
             Quantity = 100,
-            Unit = "pcs",
+                UnitOfMeasureId = 1,
             IsActive = true,
             MinStock = 10,
             MaxStock = 1000,
@@ -46,7 +46,7 @@ public class ProductTests
         product.SKU.Should().Be("TEST-001");
         product.Description.Should().Be("Test Description");
         product.Quantity.Should().Be(100);
-        product.Unit.Should().Be("pcs");
+        product.UnitOfMeasureId.Should().Be(1);
         product.IsActive.Should().BeTrue();
         product.MinStock.Should().Be(10);
         product.MaxStock.Should().Be(1000);

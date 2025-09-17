@@ -47,8 +47,12 @@ builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Informatio
 // Register Shared services
 builder.Services.AddScoped<IAuthService, AuthApiService>();
 builder.Services.AddScoped<IProductService, ProductApiService>();
+builder.Services.AddScoped<IUnitOfMeasureApiService, UnitOfMeasureApiService>();
 builder.Services.AddScoped<ICategoryService, CategoryApiService>();
 builder.Services.AddScoped<IManufacturerService, ManufacturerApiService>();
+builder.Services.AddScoped<IProductGroupService, ProductGroupApiService>();
+builder.Services.AddScoped<IProductModelService, ProductModelApiService>();
+builder.Services.AddScoped<IWarehouseService, WarehouseApiService>();
 builder.Services.AddScoped<IDashboardService, DashboardApiService>();
 
 // Register logging and error handling services
@@ -56,11 +60,14 @@ builder.Services.AddScoped<ILoggingService, LoggingService>();
 builder.Services.AddScoped<IErrorHandlingService, ErrorHandlingService>();
 
 // Register notification and retry services
-builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IUINotificationService, NotificationService>();
 builder.Services.AddScoped<IRetryService, RetryService>();
 builder.Services.AddScoped<IDebugLogsService, DebugLogsService>();
 
 // Register authorization services
 builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
+
+// Register audit services
+builder.Services.AddScoped<IAuditService, AuditApiService>();
 
 await builder.Build().RunAsync();

@@ -8,6 +8,12 @@ using Inventory.API.Middleware;
 using Inventory.Shared.Services;
 using Inventory.API.Services;
 using Inventory.API.Extensions;
+using Inventory.Shared.Interfaces;
+using Inventory.Shared.DTOs;
+using System.Threading.RateLimiting;
+using FluentValidation;
+using Inventory.API.Validators;
+using Inventory.API.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -102,7 +108,48 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = jwtSettings["Issuer"],
         ValidAudience = jwtSettings["Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? string.Empty))
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? string.Empty)),
+        ClockSkew = TimeSpan.FromMinutes(5) // Add some clock skew tolerance
+    };
+    
+    // Configure JWT for SignalR and add event handlers for debugging
+    options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+            
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/notificationHub"))
+            {
+                context.Token = accessToken;
+            }
+            
+            return Task.CompletedTask;
+        },
+        OnAuthenticationFailed = context =>
+        {
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+            logger.LogError("JWT Authentication failed: {Error}", context.Exception?.Message ?? "Unknown error");
+            logger.LogError("JWT Exception: {Exception}", context.Exception?.ToString());
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+            var userId = context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var username = context.Principal?.Identity?.Name;
+            logger.LogInformation("JWT Token validated for user: {User} (ID: {UserId})", username ?? "Unknown", userId ?? "Unknown");
+            return Task.CompletedTask;
+        },
+        OnChallenge = context =>
+        {
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+            logger.LogWarning("JWT Challenge: {Error}", context.Error);
+            logger.LogWarning("JWT Challenge Description: {Description}", context.ErrorDescription);
+            logger.LogWarning("JWT Challenge URI: {Uri}", context.ErrorUri);
+            return Task.CompletedTask;
+        }
     };
 });
 
@@ -113,10 +160,141 @@ builder.Services.AddCorsWithPorts();
 builder.Services.AddScoped<ILoggingService, LoggingService>();
 builder.Services.AddScoped<IDebugLogsService, DebugLogsService>();
 builder.Services.AddScoped<IRetryService, RetryService>();
-builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<Inventory.Shared.Interfaces.INotificationService, Inventory.API.Services.NotificationService>();
+builder.Services.AddScoped<Inventory.Shared.Services.IUINotificationService, Inventory.Shared.Services.NotificationService>();
 builder.Services.AddScoped<IErrorHandlingService, ErrorHandlingService>();
+builder.Services.AddScoped<RefreshTokenService>();
+
+// Add audit services
+builder.Services.AddAuditServices();
+
+// Add notification services
+builder.Services.AddNotificationServices();
+
+// Add SignalR
+builder.Services.AddSignalR(options =>
+{
+    options.EnableDetailedErrors = builder.Environment.IsDevelopment();
+    options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+    options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
+    options.HandshakeTimeout = TimeSpan.FromSeconds(15);
+});
+
+// Add SignalR notification service
+builder.Services.AddScoped<ISignalRNotificationService, SignalRNotificationService>();
+
+// Add notification rule engine
+builder.Services.AddScoped<Inventory.Shared.Interfaces.INotificationRuleEngine, Inventory.API.Services.NotificationRuleEngine>();
+
+// Add reference data services
+builder.Services.AddScoped<IReferenceDataService<UnitOfMeasureDto, CreateUnitOfMeasureDto, UpdateUnitOfMeasureDto>, UnitOfMeasureService>();
+
+// Add FluentValidation
+builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
+
+// Add Rate Limiting
+builder.Services.AddRateLimiter(options =>
+{
+    // Global rate limiting policy
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+    {
+        // Get user role for different rate limits
+        var userRole = context.User?.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "Anonymous";
+        
+        return RateLimitPartition.GetTokenBucketLimiter(
+            partitionKey: userRole,
+            factory: partitionKey => new TokenBucketRateLimiterOptions
+            {
+                TokenLimit = partitionKey switch
+                {
+                    "Admin" => 1000,
+                    "Manager" => 500,
+                    "User" => 100,
+                    _ => 50 // Anonymous users
+                },
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 10,
+                ReplenishmentPeriod = TimeSpan.FromMinutes(1),
+                TokensPerPeriod = partitionKey switch
+                {
+                    "Admin" => 1000,
+                    "Manager" => 500,
+                    "User" => 100,
+                    _ => 50 // Anonymous users
+                },
+                AutoReplenishment = true
+            });
+    });
+
+    // Specific policies for different endpoints
+    options.AddPolicy("AuthPolicy", context =>
+    {
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "Unknown",
+            factory: partitionKey => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5, // 5 attempts per window
+                Window = TimeSpan.FromMinutes(15), // 15 minute window
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 2
+            });
+    });
+
+    options.AddPolicy("ApiPolicy", context =>
+    {
+        var userRole = context.User?.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "Anonymous";
+        return RateLimitPartition.GetTokenBucketLimiter(
+            partitionKey: userRole,
+            factory: partitionKey => new TokenBucketRateLimiterOptions
+            {
+                TokenLimit = partitionKey switch
+                {
+                    "Admin" => 200,
+                    "Manager" => 100,
+                    "User" => 50,
+                    _ => 20 // Anonymous users
+                },
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 5,
+                ReplenishmentPeriod = TimeSpan.FromMinutes(1),
+                TokensPerPeriod = partitionKey switch
+                {
+                    "Admin" => 200,
+                    "Manager" => 100,
+                    "User" => 50,
+                    _ => 20 // Anonymous users
+                },
+                AutoReplenishment = true
+            });
+    });
+
+    // Configure rejection response
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, token) =>
+    {
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        context.HttpContext.Response.ContentType = "application/json";
+        
+        var response = new
+        {
+            success = false,
+            errorMessage = "Rate limit exceeded. Please try again later.",
+            retryAfter = 60
+        };
+        
+        await context.HttpContext.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(response));
+    };
+});
+
+// Note: API services are registered in the client application, not in the API project
 
 var app = builder.Build();
+
+// Log JWT configuration for debugging
+var jwtConfigLogger = app.Services.GetRequiredService<ILogger<Program>>();
+var jwtConfigSettings = app.Configuration.GetSection("Jwt");
+jwtConfigLogger.LogInformation("JWT Configuration - Issuer: {Issuer}, Audience: {Audience}, Key: {Key}", 
+    jwtConfigSettings["Issuer"], jwtConfigSettings["Audience"], jwtConfigSettings["Key"]?.Substring(0, 10) + "...");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -140,12 +318,22 @@ if (!app.Environment.IsEnvironment("Testing"))
 // Add global exception handling middleware
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
+// Add audit middleware
+app.UseMiddleware<AuditMiddleware>();
+
 // Configure CORS with port configuration
 app.ConfigureCorsWithPorts();
+
+// Add rate limiting
+app.UseRateLimiter();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Map SignalR hubs
+app.MapHub<NotificationHub>("/notificationHub");
 
 // Configure ports and log information
 var portConfigService = app.Services.GetRequiredService<IPortConfigurationService>();

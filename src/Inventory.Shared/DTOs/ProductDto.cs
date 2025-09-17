@@ -9,7 +9,9 @@ public class ProductDto
     public string SKU { get; set; } = string.Empty;
     public string? Description { get; set; }
     public int Quantity { get; set; }
-    public string Unit { get; set; } = string.Empty;
+    public int UnitOfMeasureId { get; set; }
+    public string UnitOfMeasureName { get; set; } = string.Empty;
+    public string UnitOfMeasureSymbol { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
     public int CategoryId { get; set; }
     public string CategoryName { get; set; } = string.Empty;
@@ -39,9 +41,9 @@ public class CreateProductDto
     [StringLength(1000, ErrorMessage = "Description must not exceed 1000 characters")]
     public string? Description { get; set; }
     
-    [Required(ErrorMessage = "Unit is required")]
-    [StringLength(20, ErrorMessage = "Unit must not exceed 20 characters")]
-    public string Unit { get; set; } = string.Empty;
+    [Required(ErrorMessage = "Unit of measure is required")]
+    [Range(1, int.MaxValue, ErrorMessage = "Unit of measure ID must be greater than 0")]
+    public int UnitOfMeasureId { get; set; }
     
     public bool IsActive { get; set; } = true;
     
@@ -84,9 +86,9 @@ public class UpdateProductDto
     [StringLength(1000, ErrorMessage = "Description must not exceed 1000 characters")]
     public string? Description { get; set; }
     
-    [Required(ErrorMessage = "Unit is required")]
-    [StringLength(20, ErrorMessage = "Unit must not exceed 20 characters")]
-    public string Unit { get; set; } = string.Empty;
+    [Required(ErrorMessage = "Unit of measure is required")]
+    [Range(1, int.MaxValue, ErrorMessage = "Unit of measure ID must be greater than 0")]
+    public int UnitOfMeasureId { get; set; }
     
     public bool IsActive { get; set; } = true;
     

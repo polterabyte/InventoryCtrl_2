@@ -2,16 +2,20 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Inventory.API.Models;
+using Inventory.API.Services;
+using Inventory.API.Enums;
 using Inventory.Shared.DTOs;
 using Serilog;
 using System.Security.Claims;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Inventory.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/products")]
 [Authorize]
-public class ProductController(AppDbContext context, ILogger<ProductController> logger) : ControllerBase
+[EnableRateLimiting("ApiPolicy")]
+public class ProductController(AppDbContext context, ILogger<ProductController> logger, AuditService auditService) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetProducts(
@@ -29,6 +33,7 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 .Include(p => p.Manufacturer)
                 .Include(p => p.ProductModel)
                 .Include(p => p.ProductGroup)
+                .Include(p => p.UnitOfMeasure)
                 .AsQueryable();
 
             // Apply filters
@@ -77,7 +82,9 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                     SKU = p.SKU,
                     Description = p.Description,
                     Quantity = p.Quantity,
-                    Unit = p.Unit,
+                    UnitOfMeasureId = p.UnitOfMeasureId,
+                    UnitOfMeasureName = p.UnitOfMeasure.Name,
+                    UnitOfMeasureSymbol = p.UnitOfMeasure.Symbol,
                     IsActive = p.IsActive,
                     CategoryId = p.CategoryId,
                     CategoryName = p.Category.Name,
@@ -130,6 +137,7 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 .Include(p => p.Manufacturer)
                 .Include(p => p.ProductModel)
                 .Include(p => p.ProductGroup)
+                .Include(p => p.UnitOfMeasure)
                 .FirstOrDefaultAsync(p => p.Id == id && p.IsActive);
 
             if (product == null)
@@ -148,7 +156,9 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 SKU = product.SKU,
                 Description = product.Description,
                 Quantity = product.Quantity,
-                Unit = product.Unit,
+                UnitOfMeasureId = product.UnitOfMeasureId,
+                UnitOfMeasureName = product.UnitOfMeasure.Name,
+                UnitOfMeasureSymbol = product.UnitOfMeasure.Symbol,
                 IsActive = product.IsActive,
                 CategoryId = product.CategoryId,
                 CategoryName = product.Category.Name,
@@ -210,7 +220,9 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 SKU = product.SKU,
                 Description = product.Description,
                 Quantity = product.Quantity,
-                Unit = product.Unit,
+                UnitOfMeasureId = product.UnitOfMeasureId,
+                UnitOfMeasureName = product.UnitOfMeasure.Name,
+                UnitOfMeasureSymbol = product.UnitOfMeasure.Symbol,
                 IsActive = product.IsActive,
                 CategoryId = product.CategoryId,
                 CategoryName = product.Category.Name,
@@ -283,7 +295,7 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 SKU = request.SKU,
                 Description = request.Description,
                 Quantity = 0, // New products start with 0 quantity
-                Unit = request.Unit,
+                UnitOfMeasureId = request.UnitOfMeasureId,
                 IsActive = userRole == "Admin" ? request.IsActive : true, // Only Admin can set IsActive
                 CategoryId = request.CategoryId,
                 ManufacturerId = request.ManufacturerId,
@@ -298,12 +310,41 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
             context.Products.Add(product);
             await context.SaveChangesAsync();
 
+            // Log audit entry for product creation with enhanced details
+            var requestId = HttpContext.Items["RequestId"]?.ToString() ?? Guid.NewGuid().ToString();
+            await auditService.LogEntityChangeAsync(
+                "Product",
+                product.Id.ToString(),
+                "CREATE",
+                ActionType.Create,
+                "Product",
+                null,
+                new { 
+                    Name = product.Name, 
+                    SKU = product.SKU, 
+                    Description = product.Description,
+                    CategoryId = product.CategoryId,
+                    ManufacturerId = product.ManufacturerId,
+                    ProductModelId = product.ProductModelId,
+                    ProductGroupId = product.ProductGroupId,
+                    UnitOfMeasureId = product.UnitOfMeasureId,
+                    MinStock = product.MinStock,
+                    MaxStock = product.MaxStock,
+                    Note = product.Note,
+                    IsActive = product.IsActive,
+                    CreatedAt = product.CreatedAt
+                },
+                $"Product '{product.Name}' created with SKU '{product.SKU}'",
+                requestId
+            );
+
             // Return the created product
             var createdProduct = await context.Products
                 .Include(p => p.Category)
                 .Include(p => p.Manufacturer)
                 .Include(p => p.ProductModel)
                 .Include(p => p.ProductGroup)
+                .Include(p => p.UnitOfMeasure)
                 .FirstAsync(p => p.Id == product.Id);
 
             var productDto = new ProductDto
@@ -313,7 +354,9 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 SKU = createdProduct.SKU,
                 Description = createdProduct.Description,
                 Quantity = createdProduct.Quantity,
-                Unit = createdProduct.Unit,
+                UnitOfMeasureId = createdProduct.UnitOfMeasureId,
+                UnitOfMeasureName = createdProduct.UnitOfMeasure.Name,
+                UnitOfMeasureSymbol = createdProduct.UnitOfMeasure.Symbol,
                 IsActive = createdProduct.IsActive,
                 CategoryId = createdProduct.CategoryId,
                 CategoryName = createdProduct.Category.Name,
@@ -381,9 +424,26 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 return Forbid("Only administrators can modify the IsActive status of products");
             }
 
+            // Store old values for audit
+            var oldValues = new
+            {
+                Name = product.Name,
+                Description = product.Description,
+                UnitOfMeasureId = product.UnitOfMeasureId,
+                CategoryId = product.CategoryId,
+                ManufacturerId = product.ManufacturerId,
+                ProductModelId = product.ProductModelId,
+                ProductGroupId = product.ProductGroupId,
+                MinStock = product.MinStock,
+                MaxStock = product.MaxStock,
+                Note = product.Note,
+                IsActive = product.IsActive,
+                UpdatedAt = product.UpdatedAt
+            };
+
             product.Name = request.Name;
             product.Description = request.Description;
-            product.Unit = request.Unit;
+            product.UnitOfMeasureId = request.UnitOfMeasureId;
             product.CategoryId = request.CategoryId;
             product.ManufacturerId = request.ManufacturerId;
             product.ProductModelId = request.ProductModelId;
@@ -402,6 +462,36 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
 
             await context.SaveChangesAsync();
 
+            // Log audit entry for product update with enhanced details
+            var requestId = HttpContext.Items["RequestId"]?.ToString() ?? Guid.NewGuid().ToString();
+            var newValues = new
+            {
+                Name = product.Name,
+                Description = product.Description,
+                UnitOfMeasureId = product.UnitOfMeasureId,
+                CategoryId = product.CategoryId,
+                ManufacturerId = product.ManufacturerId,
+                ProductModelId = product.ProductModelId,
+                ProductGroupId = product.ProductGroupId,
+                MinStock = product.MinStock,
+                MaxStock = product.MaxStock,
+                Note = product.Note,
+                IsActive = product.IsActive,
+                UpdatedAt = product.UpdatedAt
+            };
+
+            await auditService.LogEntityChangeAsync(
+                "Product",
+                product.Id.ToString(),
+                "UPDATE",
+                ActionType.Update,
+                "Product",
+                oldValues,
+                newValues,
+                $"Product '{product.Name}' updated",
+                requestId
+            );
+
             logger.LogInformation("Product updated: {ProductName} with ID {ProductId}", product.Name, product.Id);
 
             return Ok(new ApiResponse<ProductDto>
@@ -414,7 +504,9 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                     SKU = product.SKU,
                     Description = product.Description,
                     Quantity = product.Quantity,
-                    Unit = product.Unit,
+                    UnitOfMeasureId = product.UnitOfMeasureId,
+                UnitOfMeasureName = product.UnitOfMeasure.Name,
+                UnitOfMeasureSymbol = product.UnitOfMeasure.Symbol,
                     IsActive = product.IsActive,
                     CategoryId = product.CategoryId,
                     ManufacturerId = product.ManufacturerId,
@@ -455,11 +547,44 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 });
             }
 
+            // Store old values for audit
+            var oldValues = new
+            {
+                Name = product.Name,
+                SKU = product.SKU,
+                Description = product.Description,
+                IsActive = product.IsActive,
+                UpdatedAt = product.UpdatedAt
+            };
+
             // Soft delete - set IsActive to false
             product.IsActive = false;
             product.UpdatedAt = DateTime.UtcNow;
 
             await context.SaveChangesAsync();
+
+            // Log audit entry for product deletion with enhanced details
+            var requestId = HttpContext.Items["RequestId"]?.ToString() ?? Guid.NewGuid().ToString();
+            var newValues = new
+            {
+                Name = product.Name,
+                SKU = product.SKU,
+                Description = product.Description,
+                IsActive = product.IsActive,
+                UpdatedAt = product.UpdatedAt
+            };
+
+            await auditService.LogEntityChangeAsync(
+                "Product",
+                product.Id.ToString(),
+                "DELETE",
+                ActionType.Delete,
+                "Product",
+                oldValues,
+                newValues,
+                $"Product '{product.Name}' deleted (soft delete)",
+                requestId
+            );
 
             logger.LogInformation("Product deleted (soft): {ProductName} with ID {ProductId}", product.Name, product.Id);
 

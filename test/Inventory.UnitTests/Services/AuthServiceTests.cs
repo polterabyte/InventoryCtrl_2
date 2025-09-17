@@ -8,30 +8,62 @@ using Inventory.API.Models;
 using Microsoft.Extensions.Configuration;
 using Xunit;
 using Inventory.API.Services;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 
 namespace Inventory.UnitTests.Services;
 
-public class AuthServiceTests
+public class AuthServiceTests : IDisposable
 {
     private readonly Mock<UserManager<User>> _userManagerMock;
     private readonly Mock<IConfiguration> _configMock;
     private readonly Mock<ILogger<AuthController>> _loggerMock;
     private readonly Mock<IPortConfigurationService> _portServiceMock;
     private readonly AuthController _authController;
+    private readonly AppDbContext _context;
+    private readonly string _testDatabaseName;
 
     public AuthServiceTests()
     {
+        // Create unique database name for this test
+        _testDatabaseName = $"inventory_unit_test_{Guid.NewGuid():N}_{DateTime.UtcNow:yyyyMMddHHmmss}";
+        
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(_testDatabaseName)
+            .Options;
+
+        _context = new AppDbContext(options);
+        _context.Database.EnsureCreated();
+
         _userManagerMock = new Mock<UserManager<User>>(
             Mock.Of<IUserStore<User>>(), null!, null!, null!, null!, null!, null!, null!, null!);
         _configMock = new Mock<IConfiguration>();
         _loggerMock = new Mock<ILogger<AuthController>>();
         _portServiceMock = new Mock<IPortConfigurationService>();
 
+        var mockRefreshTokenService = new Mock<RefreshTokenService>(Mock.Of<ILogger<RefreshTokenService>>());
+        var mockAuditService = new Mock<AuditService>(_context, Mock.Of<IHttpContextAccessor>(), Mock.Of<ILogger<AuditService>>());
+
         _authController = new AuthController(
             _userManagerMock.Object,
             _configMock.Object,
             _loggerMock.Object,
-            _portServiceMock.Object);
+            _portServiceMock.Object,
+            mockRefreshTokenService.Object,
+            mockAuditService.Object);
+    }
+
+    public void Dispose()
+    {
+        try
+        {
+            _context.Database.EnsureDeleted();
+        }
+        catch
+        {
+            // Ignore cleanup errors
+        }
+        _context.Dispose();
     }
 
     [Fact]

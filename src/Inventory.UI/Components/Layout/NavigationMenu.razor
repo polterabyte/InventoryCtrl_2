@@ -32,9 +32,24 @@
                     </div>
                 }
                 
-                @* Debug logs link for super users *@
+                @* Admin links *@
                 <AuthorizeView>
                     <Authorized Context="authContext">
+                        @if (authContext.User.IsInRole("Admin"))
+                        {
+                            <div class="nav-item px-3">
+                                <NavLink class="nav-link" href="admin/reference-data">
+                                    <span class="bi bi-gear" aria-hidden="true"></span>
+                                    Управление справочниками
+                                </NavLink>
+                            </div>
+                            <div class="nav-item px-3">
+                                <NavLink class="nav-link" href="admin/audit-logs">
+                                    <span class="bi bi-clipboard-list" aria-hidden="true"></span>
+                                    Audit Logs
+                                </NavLink>
+                            </div>
+                        }
                         @if (authContext.User.IsInRole("SuperUser") || authContext.User.IsInRole("Admin"))
                         {
                             <div class="nav-item px-3">

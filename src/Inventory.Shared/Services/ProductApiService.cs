@@ -18,15 +18,15 @@ public class ProductApiService(HttpClient httpClient, ILogger<ProductApiService>
             return await _retryService.ExecuteWithRetryAsync(
                 async () =>
                 {
-                    var response = await GetAsync<List<ProductDto>>(BaseUrl);
-                    return response.Data ?? new List<ProductDto>();
+                    var response = await GetPagedAsync<ProductDto>(BaseUrl);
+                    return response.Data?.Items ?? new List<ProductDto>();
                 },
                 "GetAllProducts"
             );
         }
         
-        var response = await GetAsync<List<ProductDto>>(BaseUrl);
-        return response.Data ?? new List<ProductDto>();
+        var response = await GetPagedAsync<ProductDto>(BaseUrl);
+        return response.Data?.Items ?? new List<ProductDto>();
     }
 
     public async Task<ProductDto?> GetProductByIdAsync(int id)
@@ -73,20 +73,20 @@ public class ProductApiService(HttpClient httpClient, ILogger<ProductApiService>
     public async Task<List<ProductDto>> GetProductsByCategoryAsync(int categoryId)
     {
         var endpoint = ApiEndpoints.ProductsByCategory.Replace("{categoryId}", categoryId.ToString());
-        var response = await GetAsync<List<ProductDto>>(endpoint);
-        return response.Data ?? new List<ProductDto>();
+        var response = await GetPagedAsync<ProductDto>(endpoint);
+        return response.Data?.Items ?? new List<ProductDto>();
     }
 
     public async Task<List<ProductDto>> GetLowStockProductsAsync()
     {
-        var response = await GetAsync<List<ProductDto>>(ApiEndpoints.LowStockProducts);
-        return response.Data ?? new List<ProductDto>();
+        var response = await GetPagedAsync<ProductDto>(ApiEndpoints.LowStockProducts);
+        return response.Data?.Items ?? new List<ProductDto>();
     }
 
     public async Task<List<ProductDto>> SearchProductsAsync(string searchTerm)
     {
         var endpoint = $"{ApiEndpoints.SearchProducts}?term={Uri.EscapeDataString(searchTerm)}";
-        var response = await GetAsync<List<ProductDto>>(endpoint);
-        return response.Data ?? new List<ProductDto>();
+        var response = await GetPagedAsync<ProductDto>(endpoint);
+        return response.Data?.Items ?? new List<ProductDto>();
     }
 }

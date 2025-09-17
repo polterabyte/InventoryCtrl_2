@@ -8,6 +8,8 @@ using Inventory.API.Models;
 using Microsoft.Extensions.Configuration;
 using Inventory.API.Services;
 using Xunit;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 
 namespace Inventory.UnitTests.Services;
 
@@ -37,11 +39,23 @@ public class SimpleAuthServiceTests
         var mockPortService = new Mock<IPortConfigurationService>();
 
         // Act
+        var testDatabaseName = $"inventory_unit_test_{Guid.NewGuid():N}_{DateTime.UtcNow:yyyyMMddHHmmss}";
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(testDatabaseName)
+            .Options;
+        var context = new AppDbContext(options);
+        context.Database.EnsureCreated();
+
+        var mockRefreshTokenService = new Mock<RefreshTokenService>(Mock.Of<ILogger<RefreshTokenService>>());
+        var mockAuditService = new Mock<AuditService>(context, Mock.Of<IHttpContextAccessor>(), Mock.Of<ILogger<AuditService>>());
+
         var authController = new AuthController(
             _userManagerMock.Object,
             _configMock.Object,
             _loggerMock.Object,
-            mockPortService.Object);
+            mockPortService.Object,
+            mockRefreshTokenService.Object,
+            mockAuditService.Object);
 
         // Assert
         authController.Should().NotBeNull();

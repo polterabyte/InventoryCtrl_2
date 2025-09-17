@@ -22,9 +22,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--color-bg-secondary);
+    background-color: var(--color-bg-tertiary);
     margin-right: 1rem;
     font-size: 1.2rem;
+    color: var(--color-text-primary);
 }
 
 .activity-content {
@@ -59,13 +60,14 @@
     padding: 0.25rem 0.5rem;
 }
 
-/* Dark theme support */
+/* Dark theme support (Enhanced) */
 [data-bs-theme="dark"] .activity-item {
-    border-bottom-color: var(--color-border);
+    border-bottom-color: var(--color-border-light);
 }
 
 [data-bs-theme="dark"] .activity-icon {
-    background-color: var(--color-bg-primary);
+    background-color: var(--color-bg-tertiary);
+    color: var(--color-text-primary);
 }
 
 /* Responsive design */

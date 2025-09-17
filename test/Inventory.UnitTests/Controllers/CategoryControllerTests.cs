@@ -23,7 +23,7 @@ public class CategoryControllerTests : IDisposable
         var testDatabaseName = $"inventory_unit_test_{Guid.NewGuid():N}_{DateTime.UtcNow:yyyyMMddHHmmss}";
         
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql($"Host=localhost;Database={testDatabaseName};Username=postgres;Password=postgres")
+            .UseInMemoryDatabase(testDatabaseName)
             .Options;
 
         _context = new AppDbContext(options);

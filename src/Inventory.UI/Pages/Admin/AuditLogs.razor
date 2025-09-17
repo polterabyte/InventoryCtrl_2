@@ -1,0 +1,570 @@
+@page "/admin/audit-logs"
+@using Inventory.Shared.DTOs
+@using Inventory.Shared.Services
+@using Inventory.Shared.Constants
+@using Inventory.Shared.Interfaces
+@using Microsoft.AspNetCore.Components.Web
+@inject IAuditService AuditService
+@inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
+
+<PageTitle>Audit Logs - Inventory Control</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-clipboard-list me-2"></i>Audit Logs</h2>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-outline-primary" @onclick="RefreshLogs">
+                        <i class="fas fa-sync-alt me-1"></i>Refresh
+                    </button>
+                    <button class="btn btn-outline-success" @onclick="ExportLogs">
+                        <i class="fas fa-download me-1"></i>Export
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Filters</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Action Type</label>
+                            <select class="form-select" @bind="filters.ActionType" @bind:after="OnFilterChange">
+                                <option value="">All Actions</option>
+                                <option value="Create">Create</option>
+                                <option value="Read">Read</option>
+                                <option value="Update">Update</option>
+                                <option value="Delete">Delete</option>
+                                <option value="Login">Login</option>
+                                <option value="Logout">Logout</option>
+                                <option value="Refresh">Refresh</option>
+                                <option value="Export">Export</option>
+                                <option value="Import">Import</option>
+                                <option value="Search">Search</option>
+                                <option value="Request">Request</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Entity Type</label>
+                            <input type="text" class="form-control" @bind="filters.EntityType" @bind:after="OnFilterChange" placeholder="e.g., Product, User" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">User</label>
+                            <input type="text" class="form-control" @bind="filters.UserName" @bind:after="OnFilterChange" placeholder="Username" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Request ID</label>
+                            <input type="text" class="form-control" @bind="filters.RequestId" @bind:after="OnFilterChange" placeholder="Request ID" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Date From</label>
+                            <input type="datetime-local" class="form-control" @bind="filters.DateFrom" @bind:after="OnFilterChange" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Date To</label>
+                            <input type="datetime-local" class="form-control" @bind="filters.DateTo" @bind:after="OnFilterChange" />
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex gap-2 mt-4">
+                                <button class="btn btn-primary" @onclick="ApplyFilters">
+                                    <i class="fas fa-search me-1"></i>Apply Filters
+                                </button>
+                                <button class="btn btn-outline-secondary" @onclick="ClearFilters">
+                                    <i class="fas fa-times me-1"></i>Clear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-primary">@totalLogs</h5>
+                            <p class="card-text">Total Logs</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-success">@successfulRequests</h5>
+                            <p class="card-text">Successful</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-danger">@failedRequests</h5>
+                            <p class="card-text">Failed</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-info">@averageResponseTime ms</h5>
+                            <p class="card-text">Avg Response</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Audit Logs Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>Audit Logs</h5>
+                </div>
+                <div class="card-body p-0">
+                    @if (isLoading)
+                    {
+                        <div class="text-center p-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading audit logs...</p>
+                        </div>
+                    }
+                    else if (auditLogs?.Any() == true)
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Timestamp</th>
+                                        <th>Action</th>
+                                        <th>Entity</th>
+                                        <th>User</th>
+                                        <th>IP Address</th>
+                                        <th>Status</th>
+                                        <th>Response Time</th>
+                                        <th>Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var log in auditLogs)
+                                    {
+                                        <tr class="@GetRowClass(log)">
+                                            <td>
+                                                <small class="text-muted">@log.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</small>
+                                            </td>
+                                            <td>
+                                                <span class="badge @GetActionBadgeClass(log.ActionType.ToString())">
+                                                    @log.ActionType.ToString()
+                                                </span>
+                                            </td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(log.EntityType))
+                                                {
+                                                    <span class="badge bg-secondary">@log.EntityType</span>
+                                                }
+                                                @if (!string.IsNullOrEmpty(log.EntityId))
+                                                {
+                                                    <small class="text-muted">ID: @log.EntityId</small>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(log.Username))
+                                                {
+                                                    <span class="fw-bold">@log.Username</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">Anonymous</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">@log.IpAddress</small>
+                                            </td>
+                                            <td>
+                                                @if (log.IsSuccess)
+                                                {
+                                                    <span class="badge bg-success">Success</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-danger">Failed</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (log.ResponseTime > 0)
+                                                {
+                                                    <span class="text-muted">@log.ResponseTime ms</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">-</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-info" @onclick="() => ShowLogDetails(log)">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        @if (totalPages > 1)
+                        {
+                            <div class="card-footer">
+                                <nav aria-label="Audit logs pagination">
+                                    <ul class="pagination justify-content-center mb-0">
+                                        <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                                            <button class="page-link" @onclick="() => ChangePage(1)" disabled="@(currentPage == 1)">
+                                                <i class="fas fa-angle-double-left"></i>
+                                            </button>
+                                        </li>
+                                        <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                                            <button class="page-link" @onclick="() => ChangePage(currentPage - 1)" disabled="@(currentPage == 1)">
+                                                <i class="fas fa-angle-left"></i>
+                                            </button>
+                                        </li>
+                                        
+                                        @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(totalPages, currentPage + 2); i++)
+                                        {
+                                            <li class="page-item @(i == currentPage ? "active" : "")">
+                                                <button class="page-link" @onclick="() => ChangePage(i)">@i</button>
+                                            </li>
+                                        }
+                                        
+                                        <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                                            <button class="page-link" @onclick="() => ChangePage(currentPage + 1)" disabled="@(currentPage == totalPages)">
+                                                <i class="fas fa-angle-right"></i>
+                                            </button>
+                                        </li>
+                                        <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                                            <button class="page-link" @onclick="() => ChangePage(totalPages)" disabled="@(currentPage == totalPages)">
+                                                <i class="fas fa-angle-double-right"></i>
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center p-4">
+                            <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No audit logs found</h5>
+                            <p class="text-muted">Try adjusting your filters or check back later.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Log Details Modal -->
+@if (selectedLog != null)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-info-circle me-2"></i>Audit Log Details
+                    </h5>
+                    <button type="button" class="btn-close" @onclick="CloseLogDetails"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Basic Information</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>Timestamp:</strong></td>
+                                    <td>@selectedLog.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Action Type:</strong></td>
+                                    <td><span class="badge @GetActionBadgeClass(selectedLog.ActionType.ToString())">@selectedLog.ActionType.ToString()</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Entity Type:</strong></td>
+                                    <td>@(selectedLog.EntityType ?? "N/A")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Entity ID:</strong></td>
+                                    <td>@(selectedLog.EntityId ?? "N/A")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>User:</strong></td>
+                                    <td>@(selectedLog.Username ?? "Anonymous")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>IP Address:</strong></td>
+                                    <td>@selectedLog.IpAddress</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>User Agent:</strong></td>
+                                    <td><small class="text-muted">@selectedLog.UserAgent</small></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Request Details</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>Method:</strong></td>
+                                    <td><span class="badge bg-primary">@selectedLog.HttpMethod</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>URL:</strong></td>
+                                    <td><code>@selectedLog.Endpoint</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Status Code:</strong></td>
+                                    <td><span class="badge @GetStatusCodeBadgeClass(selectedLog.StatusCode ?? 0)">@selectedLog.StatusCode</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Response Time:</strong></td>
+                                    <td>@(selectedLog.ResponseTime.ToString()) ms</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Success:</strong></td>
+                                    <td>
+                                        @if (selectedLog.IsSuccess)
+                                        {
+                                            <span class="badge bg-success">Yes</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">No</span>
+                                        }
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Request ID:</strong></td>
+                                    <td><code>@(selectedLog.RequestId ?? "N/A")</code></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    @if (!string.IsNullOrEmpty(selectedLog.Changes))
+                    {
+                        <div class="mt-3">
+                            <h6>Changes</h6>
+                            <pre class="bg-light p-3 rounded"><code>@selectedLog.Changes</code></pre>
+                        </div>
+                    }
+                    
+                    @if (!string.IsNullOrEmpty(selectedLog.ErrorMessage))
+                    {
+                        <div class="mt-3">
+                            <h6>Error Message</h6>
+                            <div class="alert alert-danger">
+                                <code>@selectedLog.ErrorMessage</code>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseLogDetails">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    private List<AuditLogDto>? auditLogs;
+    private bool isLoading = true;
+    private int currentPage = 1;
+    private int pageSize = 20;
+    private int totalPages = 1;
+    private int totalLogs = 0;
+    private int successfulRequests = 0;
+    private int failedRequests = 0;
+    private double averageResponseTime = 0;
+    private AuditLogDto? selectedLog;
+
+    private AuditLogFilters filters = new()
+    {
+        DateFrom = DateTime.UtcNow.AddDays(-7),
+        DateTo = DateTime.UtcNow
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAuditLogs();
+    }
+
+    private async Task LoadAuditLogs()
+    {
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
+
+            var result = await AuditService.GetAuditLogsAsync(
+                actionType: filters.ActionType,
+                entityType: filters.EntityType,
+                userName: filters.UserName,
+                requestId: filters.RequestId,
+                dateFrom: filters.DateFrom,
+                dateTo: filters.DateTo,
+                page: currentPage,
+                pageSize: pageSize
+            );
+
+            if (result.Success && result.Data != null)
+            {
+                auditLogs = result.Data.Logs?.ToList();
+                totalPages = result.Data.TotalPages;
+                totalLogs = result.Data.TotalCount;
+                
+                // Calculate statistics
+                if (auditLogs?.Any() == true)
+                {
+                    successfulRequests = auditLogs.Count(x => x.IsSuccess);
+                    failedRequests = auditLogs.Count(x => !x.IsSuccess);
+                    averageResponseTime = auditLogs.Where(x => x.ResponseTime > 0).Average(x => x.ResponseTime);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", "Error loading audit logs:", ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnFilterChange()
+    {
+        currentPage = 1;
+        await LoadAuditLogs();
+    }
+
+    private async Task ApplyFilters()
+    {
+        currentPage = 1;
+        await LoadAuditLogs();
+    }
+
+    private async Task ClearFilters()
+    {
+        filters = new AuditLogFilters
+        {
+            DateFrom = DateTime.UtcNow.AddDays(-7),
+            DateTo = DateTime.UtcNow
+        };
+        currentPage = 1;
+        await LoadAuditLogs();
+    }
+
+    private async Task RefreshLogs()
+    {
+        await LoadAuditLogs();
+    }
+
+    private async Task ChangePage(int page)
+    {
+        if (page >= 1 && page <= totalPages)
+        {
+            currentPage = page;
+            await LoadAuditLogs();
+        }
+    }
+
+    private async Task ExportLogs()
+    {
+        try
+        {
+            var result = await AuditService.ExportAuditLogsAsync(
+                actionType: filters.ActionType,
+                entityType: filters.EntityType,
+                userName: filters.UserName,
+                requestId: filters.RequestId,
+                dateFrom: filters.DateFrom,
+                dateTo: filters.DateTo
+            );
+
+            if (result.Success && result.Data != null)
+            {
+                var fileName = $"audit-logs-{DateTime.UtcNow:yyyy-MM-dd-HH-mm-ss}.csv";
+                await JSRuntime.InvokeVoidAsync("downloadFile", fileName, result.Data);
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", "Error exporting audit logs:", ex.Message);
+        }
+    }
+
+    private void ShowLogDetails(AuditLogDto log)
+    {
+        selectedLog = log;
+    }
+
+    private void CloseLogDetails()
+    {
+        selectedLog = null;
+    }
+
+    private string GetRowClass(AuditLogDto log)
+    {
+        if (!log.IsSuccess)
+            return "table-danger";
+        if (log.ResponseTime > 5000) // Slow requests
+            return "table-warning";
+        return "";
+    }
+
+    private string GetActionBadgeClass(string actionType)
+    {
+        return actionType switch
+        {
+            "Create" => "bg-success",
+            "Update" => "bg-warning",
+            "Delete" => "bg-danger",
+            "Login" => "bg-info",
+            "Logout" => "bg-secondary",
+            "Read" => "bg-primary",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetStatusCodeBadgeClass(int statusCode)
+    {
+        return statusCode switch
+        {
+            >= 200 and < 300 => "bg-success",
+            >= 300 and < 400 => "bg-info",
+            >= 400 and < 500 => "bg-warning",
+            >= 500 => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    public class AuditLogFilters
+    {
+        public string? ActionType { get; set; }
+        public string? EntityType { get; set; }
+        public string? UserName { get; set; }
+        public string? RequestId { get; set; }
+        public DateTime? DateFrom { get; set; }
+        public DateTime? DateTo { get; set; }
+    }
+}

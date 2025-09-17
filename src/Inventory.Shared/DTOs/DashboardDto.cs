@@ -46,7 +46,7 @@ public class LowStockProductDto
     public int MaxStock { get; set; }
     public string CategoryName { get; set; } = string.Empty;
     public string ManufacturerName { get; set; } = string.Empty;
-    public string Unit { get; set; } = string.Empty;
+    public string UnitOfMeasureSymbol { get; set; } = string.Empty;
 }
 
 public class RecentActivityDto

@@ -1,0 +1,255 @@
+@using Inventory.Shared.Services
+@inject INotificationApiService NotificationApiService
+@inject IJSRuntime JSRuntime
+
+<div class="notification-bell position-relative">
+    <button class="btn btn-outline-secondary position-relative" @onclick="ToggleNotificationCenter">
+        <i class="fas fa-bell"></i>
+        @if (unreadCount > 0)
+        {
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                @unreadCount
+                <span class="visually-hidden">unread notifications</span>
+            </span>
+        }
+    </button>
+
+    @if (showNotificationCenter)
+    {
+        <div class="notification-dropdown">
+            <div class="notification-header">
+                <h6 class="mb-0">Notifications</h6>
+                @if (unreadCount > 0)
+                {
+                    <button class="btn btn-sm btn-outline-primary" @onclick="MarkAllAsRead">
+                        Mark All Read
+                    </button>
+                }
+            </div>
+            
+            <div class="notification-list">
+                @if (notifications.Any())
+                {
+                    @foreach (var notification in notifications.Take(5))
+                    {
+                        <div class="notification-item @(notification.IsRead ? "read" : "unread")" @onclick="() => MarkAsRead(notification.Id)">
+                            <div class="notification-content">
+                                <div class="notification-title">
+                                    @notification.Title
+                                    @if (!notification.IsRead)
+                                    {
+                                        <span class="unread-dot"></span>
+                                    }
+                                </div>
+                                <div class="notification-message">@notification.Message</div>
+                                <div class="notification-time">
+                                    @GetRelativeTime(notification.CreatedAt)
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    
+                    @if (notifications.Count > 5)
+                    {
+                        <div class="text-center">
+                            <a href="/notifications" class="btn btn-sm btn-outline-secondary">
+                                View All (@notifications.Count)
+                            </a>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center text-muted py-3">
+                        <i class="fas fa-bell-slash"></i>
+                        <p class="mb-0">No notifications</p>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .notification-bell {
+        display: inline-block;
+    }
+
+    .notification-dropdown {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        width: 350px;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 1000;
+        margin-top: 0.5rem;
+    }
+
+    .notification-header {
+        padding: 1rem;
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f8f9fa;
+        border-radius: 8px 8px 0 0;
+    }
+
+    .notification-list {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .notification-item {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #f1f3f4;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .notification-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .notification-item.unread {
+        background-color: #e3f2fd;
+        border-left: 3px solid #2196f3;
+    }
+
+    .notification-title {
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .unread-dot {
+        width: 6px;
+        height: 6px;
+        background-color: #2196f3;
+        border-radius: 50%;
+    }
+
+    .notification-message {
+        color: #6c757d;
+        font-size: 0.85rem;
+        margin-bottom: 0.25rem;
+        line-height: 1.3;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .notification-time {
+        font-size: 0.75rem;
+        color: #adb5bd;
+    }
+
+    .badge {
+        font-size: 0.7rem;
+        padding: 0.25em 0.5em;
+    }
+</style>
+
+@code {
+    private bool showNotificationCenter = false;
+    private List<NotificationDto> notifications = new();
+    private int unreadCount = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadNotifications();
+    }
+
+    private async Task LoadNotifications()
+    {
+        try
+        {
+            var response = await NotificationApiService.GetUserNotificationsAsync(1, 10);
+            if (response.Success && response.Data != null)
+            {
+                notifications = response.Data;
+                unreadCount = notifications.Count(n => !n.IsRead);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log error but don't break the UI
+            Console.WriteLine($"Error loading notifications: {ex.Message}");
+        }
+    }
+
+    private async Task ToggleNotificationCenter()
+    {
+        showNotificationCenter = !showNotificationCenter;
+        if (showNotificationCenter)
+        {
+            await LoadNotifications();
+        }
+    }
+
+    private async Task MarkAsRead(int notificationId)
+    {
+        try
+        {
+            var response = await NotificationApiService.MarkAsReadAsync(notificationId);
+            if (response.Success)
+            {
+                var notification = notifications.FirstOrDefault(n => n.Id == notificationId);
+                if (notification != null)
+                {
+                    notification.IsRead = true;
+                    unreadCount = notifications.Count(n => !n.IsRead);
+                    StateHasChanged();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error marking notification as read: {ex.Message}");
+        }
+    }
+
+    private async Task MarkAllAsRead()
+    {
+        try
+        {
+            var response = await NotificationApiService.MarkAllAsReadAsync();
+            if (response.Success)
+            {
+                foreach (var notification in notifications)
+                {
+                    notification.IsRead = true;
+                }
+                unreadCount = 0;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error marking all notifications as read: {ex.Message}");
+        }
+    }
+
+    private string GetRelativeTime(DateTime dateTime)
+    {
+        var timeSpan = DateTime.UtcNow - dateTime;
+        
+        if (timeSpan.TotalMinutes < 1)
+            return "Just now";
+        if (timeSpan.TotalMinutes < 60)
+            return $"{(int)timeSpan.TotalMinutes}m ago";
+        if (timeSpan.TotalHours < 24)
+            return $"{(int)timeSpan.TotalHours}h ago";
+        if (timeSpan.TotalDays < 7)
+            return $"{(int)timeSpan.TotalDays}d ago";
+        
+        return dateTime.ToString("MMM dd");
+    }
+}

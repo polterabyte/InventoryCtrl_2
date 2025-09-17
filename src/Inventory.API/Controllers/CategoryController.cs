@@ -23,6 +23,14 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
     {
         try
         {
+            // Log user information for debugging
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userName = User.FindFirst(ClaimTypes.Name)?.Value;
+            var userRoles = User.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToList();
+            
+            logger.LogInformation("GetCategories called by user: {UserId}, Name: {UserName}, Roles: {Roles}", 
+                userId, userName, string.Join(", ", userRoles));
+
             var query = context.Categories
                 .Include(c => c.ParentCategory)
                 .AsQueryable();
@@ -46,8 +54,9 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
             else
             {
                 // By default, show only active categories for non-admin users
-                var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-                if (userRole != "Admin")
+                var isAdmin = userRoles.Contains("Admin") || userRoles.Contains("SuperUser");
+                
+                if (!isAdmin)
                 {
                     query = query.Where(c => c.IsActive);
                 }
@@ -55,6 +64,8 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
 
             // Get total count
             var totalCount = await query.CountAsync();
+            
+            logger.LogInformation("Found {TotalCount} categories after filtering", totalCount);
 
             // Apply pagination
             var categories = await query
@@ -73,6 +84,8 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
                     UpdatedAt = c.UpdatedAt
                 })
                 .ToListAsync();
+                
+            logger.LogInformation("Returning {CategoryCount} categories for page {Page}", categories.Count, page);
 
             var pagedResponse = new PagedResponse<CategoryDto>
             {

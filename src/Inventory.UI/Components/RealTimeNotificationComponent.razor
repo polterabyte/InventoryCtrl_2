@@ -1,0 +1,227 @@
+@using Microsoft.JSInterop
+@using Inventory.Shared.DTOs
+@using System.Text.Json
+@using Microsoft.Extensions.Logging
+@using Blazored.LocalStorage
+@inject IJSRuntime JSRuntime
+@inject ILogger<RealTimeNotificationComponent> Logger
+@inject ILocalStorageService LocalStorage
+
+<div class="real-time-notifications">
+    @if (IsConnected)
+    {
+        <div class="connection-status connected">
+            <i class="fas fa-circle text-success"></i>
+            <span>Real-time notifications active</span>
+        </div>
+    }
+    else if (IsReconnecting)
+    {
+        <div class="connection-status reconnecting">
+            <i class="fas fa-circle text-warning"></i>
+            <span>Reconnecting...</span>
+        </div>
+    }
+    else
+    {
+        <div class="connection-status disconnected">
+            <i class="fas fa-circle text-danger"></i>
+            <span>Real-time notifications offline</span>
+        </div>
+    }
+
+    @if (ShowNotifications)
+    {
+        <div class="notifications-container">
+            @foreach (var notification in Notifications.Take(MaxVisibleNotifications))
+            {
+                <div class="notification-item @GetNotificationClass(notification.Type)" 
+                     data-notification-id="@notification.Id">
+                    <div class="notification-content">
+                        <div class="notification-header">
+                            <h6 class="notification-title">@notification.Title</h6>
+                            <button class="btn-close" @onclick="() => DismissNotification(notification.Id)"></button>
+                        </div>
+                        <p class="notification-message">@notification.Message</p>
+                        @if (!string.IsNullOrEmpty(notification.ActionUrl) && !string.IsNullOrEmpty(notification.ActionText))
+                        {
+                            <a href="@notification.ActionUrl" class="btn btn-sm btn-outline-primary notification-action">
+                                @notification.ActionText
+                            </a>
+                        }
+                    </div>
+                    <div class="notification-meta">
+                        <small class="text-muted">@notification.CreatedAt.ToString("HH:mm")</small>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public bool ShowNotifications { get; set; } = true;
+    [Parameter] public int MaxVisibleNotifications { get; set; } = 5;
+    [Parameter] public int AutoDismissDelay { get; set; } = 5000; // 5 seconds
+    [Parameter] public EventCallback<NotificationDto> OnNotificationReceived { get; set; }
+    [Parameter] public EventCallback<string> OnConnectionStateChanged { get; set; }
+
+    private List<NotificationDto> Notifications { get; set; } = new();
+    private bool IsConnected { get; set; } = false;
+    private bool IsReconnecting { get; set; } = false;
+    private string ConnectionState { get; set; } = "Disconnected";
+    private DotNetObjectReference<RealTimeNotificationComponent>? dotNetRef;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            dotNetRef = DotNetObjectReference.Create(this);
+            await InitializeSignalR();
+        }
+    }
+
+    private async Task InitializeSignalR()
+    {
+        try
+        {
+            // Get API base URL from JavaScript
+            var apiBaseUrl = await JSRuntime.InvokeAsync<string>("getApiBaseUrl");
+            
+            // Get access token from Blazor LocalStorage
+            var accessToken = await LocalStorage.GetItemAsStringAsync("authToken");
+
+            if (string.IsNullOrEmpty(apiBaseUrl) || string.IsNullOrEmpty(accessToken))
+            {
+                Logger.LogWarning("API base URL or access token not available for SignalR connection. ApiBaseUrl: {ApiBaseUrl}, HasToken: {HasToken}", 
+                    apiBaseUrl, !string.IsNullOrEmpty(accessToken));
+                return;
+            }
+
+            // Initialize SignalR connection
+            var success = await JSRuntime.InvokeAsync<bool>("initializeSignalRConnection", apiBaseUrl, accessToken, dotNetRef);
+            
+            if (success)
+            {
+                Logger.LogInformation("SignalR connection initialized successfully");
+            }
+            else
+            {
+                Logger.LogError("Failed to initialize SignalR connection");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error initializing SignalR connection");
+        }
+    }
+
+    [JSInvokable]
+    public void OnNotificationReceivedJS(NotificationDto notification)
+    {
+        try
+        {
+            Notifications.Insert(0, notification);
+            
+            // Keep only the maximum number of notifications
+            if (Notifications.Count > MaxVisibleNotifications * 2)
+            {
+                Notifications = Notifications.Take(MaxVisibleNotifications * 2).ToList();
+            }
+
+            // Auto-dismiss after delay
+            if (AutoDismissDelay > 0)
+            {
+                _ = Task.Delay(AutoDismissDelay).ContinueWith(_ => 
+                {
+                    InvokeAsync(() => DismissNotification(notification.Id));
+                });
+            }
+
+            // Notify parent component
+            OnNotificationReceived.InvokeAsync(notification);
+            
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error handling received notification");
+        }
+    }
+
+    [JSInvokable]
+    public void OnConnectionStateChangedJS(string state, string? error = null)
+    {
+        try
+        {
+            ConnectionState = state;
+            IsConnected = state == "Connected";
+            IsReconnecting = state == "Reconnecting";
+            
+            OnConnectionStateChanged.InvokeAsync(state);
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error handling connection state change");
+        }
+    }
+
+    private void DismissNotification(int notificationId)
+    {
+        Notifications.RemoveAll(n => n.Id == notificationId);
+        StateHasChanged();
+    }
+
+    private string GetNotificationClass(string type)
+    {
+        return type?.ToUpper() switch
+        {
+            "SUCCESS" => "notification-success",
+            "WARNING" => "notification-warning",
+            "ERROR" => "notification-error",
+            "INFO" => "notification-info",
+            _ => "notification-info"
+        };
+    }
+
+    public async Task SubscribeToNotificationType(string notificationType)
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("subscribeToNotificationType", notificationType);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error subscribing to notification type: {NotificationType}", notificationType);
+        }
+    }
+
+    public async Task UnsubscribeFromNotificationType(string notificationType)
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("unsubscribeFromNotificationType", notificationType);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error unsubscribing from notification type: {NotificationType}", notificationType);
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("disconnectSignalR");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error disconnecting SignalR");
+        }
+        finally
+        {
+            dotNetRef?.Dispose();
+        }
+    }
+}

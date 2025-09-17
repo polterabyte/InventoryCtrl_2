@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Inventory.Shared.Models;
 
 namespace Inventory.API.Models
 {
@@ -45,11 +46,98 @@ namespace Inventory.API.Models
                   .OnDelete(DeleteBehavior.Restrict);
         });
 
+        // Configure UnitOfMeasure
+        modelBuilder.Entity<UnitOfMeasure>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Symbol).IsRequired().HasMaxLength(10);
+            entity.Property(e => e.Description).HasMaxLength(200);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            
+            // Unique constraint on Symbol
+            entity.HasIndex(e => e.Symbol).IsUnique();
+        });
+
         // Configure Product-ProductTag many-to-many relationship
         modelBuilder.Entity<Product>()
             .HasMany(p => p.ProductTags)
             .WithMany(pt => pt.Products)
             .UsingEntity(j => j.ToTable("ProductProductTags"));
+
+        // Configure Notification
+        modelBuilder.Entity<DbNotification>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Message).IsRequired().HasMaxLength(1000);
+            entity.Property(e => e.Type).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Category).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.ActionUrl).HasMaxLength(100);
+            entity.Property(e => e.ActionText).HasMaxLength(50);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            
+            // Configure relationships
+            entity.HasOne(e => e.User)
+                  .WithMany()
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+                  
+            entity.HasOne(e => e.Product)
+                  .WithMany()
+                  .HasForeignKey(e => e.ProductId)
+                  .OnDelete(DeleteBehavior.SetNull);
+                  
+            entity.HasOne(e => e.Transaction)
+                  .WithMany()
+                  .HasForeignKey(e => e.TransactionId)
+                  .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // Configure NotificationRule
+        modelBuilder.Entity<NotificationRule>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.EventType).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.NotificationType).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Category).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Condition).IsRequired();
+            entity.Property(e => e.Template).IsRequired();
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        // Configure NotificationPreference
+        modelBuilder.Entity<NotificationPreference>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.UserId).IsRequired().HasMaxLength(450);
+            entity.Property(e => e.EventType).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            
+            // Configure relationship with User
+            entity.HasOne(e => e.User)
+                  .WithMany()
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+                  
+            // Unique constraint on UserId + EventType
+            entity.HasIndex(e => new { e.UserId, e.EventType }).IsUnique();
+        });
+
+        // Configure NotificationTemplate
+        modelBuilder.Entity<NotificationTemplate>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.EventType).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.SubjectTemplate).IsRequired();
+            entity.Property(e => e.BodyTemplate).IsRequired();
+            entity.Property(e => e.NotificationType).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Category).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
     }
            public DbSet<Product> Products { get; set; } = null!;
            public DbSet<Category> Categories { get; set; } = null!;
@@ -61,6 +149,12 @@ namespace Inventory.API.Models
            public DbSet<ProductModel> ProductModels { get; set; } = null!;
            public DbSet<ProductGroup> ProductGroups { get; set; } = null!;
            public DbSet<ProductTag> ProductTags { get; set; } = null!;
+           public DbSet<UnitOfMeasure> UnitOfMeasures { get; set; } = null!;
            public DbSet<AuditLog> AuditLogs { get; set; } = null!;
+           public DbSet<DbNotification> Notifications { get; set; } = null!;
+           public DbSet<NotificationRule> NotificationRules { get; set; } = null!;
+           public DbSet<NotificationPreference> NotificationPreferences { get; set; } = null!;
+           public DbSet<NotificationTemplate> NotificationTemplates { get; set; } = null!;
+           public DbSet<SignalRConnection> SignalRConnections { get; set; } = null!;
     }
 }

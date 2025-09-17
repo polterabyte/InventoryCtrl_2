@@ -5,6 +5,7 @@ using Inventory.Shared.DTOs;
 using Inventory.Shared.Interfaces;
 using Moq;
 using Xunit;
+#pragma warning disable CS8620 // Argument of type cannot be used for parameter due to differences in the nullability of reference types
 
 namespace Inventory.ComponentTests.Components.Dashboard;
 

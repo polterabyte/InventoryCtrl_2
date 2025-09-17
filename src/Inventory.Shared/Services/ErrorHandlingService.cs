@@ -3,13 +3,13 @@ using Microsoft.Extensions.Logging;
 
 namespace Inventory.Shared.Services;
 
-public class ErrorHandlingService(ILogger<ErrorHandlingService> logger, IRetryService retryService, INotificationService notificationService) : IErrorHandlingService
+public class ErrorHandlingService(ILogger<ErrorHandlingService> logger, IRetryService retryService, IUINotificationService notificationService) : IErrorHandlingService
 {
     private readonly ILogger<ErrorHandlingService> _logger = logger;
     private readonly IRetryService _retryService = retryService;
-    private readonly INotificationService _notificationService = notificationService;
+    private readonly IUINotificationService _notificationService = notificationService;
 
-    public async Task HandleErrorAsync(Exception exception, string? context = null, object? additionalData = null)
+    public Task HandleErrorAsync(Exception exception, string? context = null, object? additionalData = null)
     {
         var errorContext = new ErrorContext(context ?? "Unknown", null);
         
@@ -20,6 +20,8 @@ public class ErrorHandlingService(ILogger<ErrorHandlingService> logger, IRetrySe
             "Operation Failed",
             GetUserFriendlyMessage(exception)
         );
+        
+        return Task.CompletedTask;
     }
 
     public async Task<bool> TryExecuteAsync<T>(Func<Task<T>> operation, string operationName, object? contextData = null)

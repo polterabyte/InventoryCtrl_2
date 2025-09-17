@@ -11,8 +11,12 @@ public class CategoryApiService(HttpClient httpClient, ILogger<CategoryApiServic
 
     public async Task<List<CategoryDto>> GetAllCategoriesAsync()
     {
-        var response = await GetAsync<List<CategoryDto>>(BaseUrl);
-        return response.Data ?? new List<CategoryDto>();
+        logger.LogInformation("GetAllCategoriesAsync called, requesting from: {BaseUrl}", BaseUrl);
+        // Request all categories by setting a large page size
+        var response = await GetPagedAsync<CategoryDto>($"{BaseUrl}?page=1&pageSize=1000");
+        var categories = response.Data?.Items ?? new List<CategoryDto>();
+        logger.LogInformation("GetAllCategoriesAsync returned {Count} categories", categories.Count);
+        return categories;
     }
 
     public async Task<CategoryDto?> GetCategoryByIdAsync(int id)

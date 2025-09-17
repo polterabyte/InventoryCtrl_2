@@ -8,7 +8,7 @@ using Serilog;
 namespace Inventory.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/ProductModel")]
 [Authorize]
 public class ProductModelController(AppDbContext context, ILogger<ProductModelController> logger) : ControllerBase
 {
@@ -139,10 +139,16 @@ public class ProductModelController(AppDbContext context, ILogger<ProductModelCo
         {
             if (!ModelState.IsValid)
             {
+                var errors = ModelState
+                    .Where(x => x.Value?.Errors.Count > 0)
+                    .SelectMany(x => x.Value?.Errors.Select(e => e.ErrorMessage) ?? new string[0])
+                    .ToList();
+
                 return BadRequest(new ApiResponse<ProductModelDto>
                 {
                     Success = false,
-                    ErrorMessage = "Invalid model data",
+                    ErrorMessage = "Validation failed",
+                    Errors = errors
                 });
             }
 
@@ -206,10 +212,16 @@ public class ProductModelController(AppDbContext context, ILogger<ProductModelCo
         {
             if (!ModelState.IsValid)
             {
+                var errors = ModelState
+                    .Where(x => x.Value?.Errors.Count > 0)
+                    .SelectMany(x => x.Value?.Errors.Select(e => e.ErrorMessage) ?? new string[0])
+                    .ToList();
+
                 return BadRequest(new ApiResponse<ProductModelDto>
                 {
                     Success = false,
-                    ErrorMessage = "Invalid model data",
+                    ErrorMessage = "Validation failed",
+                    Errors = errors
                 });
             }
 

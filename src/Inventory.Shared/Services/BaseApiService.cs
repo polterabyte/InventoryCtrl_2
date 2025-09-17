@@ -20,9 +20,9 @@ public abstract class BaseApiService(HttpClient httpClient, string baseUrl, ILog
             
             if (response.IsSuccessStatusCode)
             {
-                var data = await response.Content.ReadFromJsonAsync<T>();
+                var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<T>>();
                 Logger.LogDebug("GET request successful for {Endpoint}", endpoint);
-                return new ApiResponse<T> { Success = true, Data = data };
+                return apiResponse ?? new ApiResponse<T> { Success = false, ErrorMessage = "Failed to deserialize response" };
             }
             else
             {
@@ -36,6 +36,34 @@ public abstract class BaseApiService(HttpClient httpClient, string baseUrl, ILog
         {
             Logger.LogError(ex, "Exception occurred during GET request to {Endpoint}", endpoint);
             return new ApiResponse<T> { Success = false, ErrorMessage = ex.Message };
+        }
+    }
+
+    protected async Task<PagedApiResponse<T>> GetPagedAsync<T>(string endpoint)
+    {
+        try
+        {
+            Logger.LogDebug("Making GET request to {Endpoint}", endpoint);
+            var response = await HttpClient.GetAsync(endpoint);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var apiResponse = await response.Content.ReadFromJsonAsync<PagedApiResponse<T>>();
+                Logger.LogDebug("GET request successful for {Endpoint}", endpoint);
+                return apiResponse ?? new PagedApiResponse<T> { Success = false, ErrorMessage = "Failed to deserialize response" };
+            }
+            else
+            {
+                var errorMessage = await response.Content.ReadAsStringAsync();
+                Logger.LogWarning("GET request failed for {Endpoint}. Status: {StatusCode}, Error: {Error}", 
+                    endpoint, response.StatusCode, errorMessage);
+                return new PagedApiResponse<T> { Success = false, ErrorMessage = errorMessage };
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Exception occurred during GET request to {Endpoint}", endpoint);
+            return new PagedApiResponse<T> { Success = false, ErrorMessage = ex.Message };
         }
     }
 

@@ -4,18 +4,18 @@
 
 /* CSS Variables - Design Tokens */
 :root {
-  /* Colors - Primary Palette */
-  --color-primary: #1b6ec2;
-  --color-primary-dark: #1861ac;
-  --color-primary-light: #258cfb;
-  --color-primary-hover: #0d47a1;
+  /* Colors - Primary Palette (Ultra Muted) */
+  --color-primary: #6b7280;
+  --color-primary-dark: #4b5563;
+  --color-primary-light: #9ca3af;
+  --color-primary-hover: #374151;
   
-  /* Colors - Secondary Palette */
-  --color-secondary: #6c757d;
-  --color-secondary-dark: #5a6268;
-  --color-secondary-light: #adb5bd;
+  /* Colors - Secondary Palette (Soft Gray) */
+  --color-secondary: #6b7280;
+  --color-secondary-dark: #4b5563;
+  --color-secondary-light: #9ca3af;
   
-  /* Colors - Success/Error/Warning/Info */
+  /* Colors - Success/Error/Warning/Info (Ultra Muted) */
   --color-success: #10b981;
   --color-success-dark: #059669;
   --color-error: #ef4444;
@@ -25,35 +25,37 @@
   --color-info: #3b82f6;
   --color-info-dark: #2563eb;
   
-  /* Colors - Neutral Palette */
-  --color-white: #ffffff;
-  --color-gray-50: #f9fafb;
-  --color-gray-100: #f3f4f6;
-  --color-gray-200: #e5e7eb;
-  --color-gray-300: #d1d5db;
-  --color-gray-400: #9ca3af;
-  --color-gray-500: #6b7280;
-  --color-gray-600: #4b5563;
-  --color-gray-700: #374151;
-  --color-gray-800: #1f2937;
-  --color-gray-900: #111827;
+  /* Colors - Neutral Palette (Ultra Muted) */
+  --color-white: #e0e0e0;
+  --color-gray-50: #2d2d2d;
+  --color-gray-100: #3a3a3a;
+  --color-gray-200: #4a4a4a;
+  --color-gray-300: #5a5a5a;
+  --color-gray-400: #6a6a6a;
+  --color-gray-500: #7a7a7a;
+  --color-gray-600: #8a8a8a;
+  --color-gray-700: #9a9a9a;
+  --color-gray-800: #1a1a1a;
+  --color-gray-900: #0a0a0a;
   
-  /* Colors - Text */
-  --color-text-primary: #1f2937;
-  --color-text-secondary: #6b7280;
-  --color-text-muted: #9ca3af;
-  --color-text-inverse: #ffffff;
+  /* Colors - Text (Ultra Calm Dark Theme) */
+  --color-text-primary: #e0e0e0;
+  --color-text-secondary: #b0b0b0;
+  --color-text-muted: #808080;
+  --color-text-inverse: #1a1a1a;
   
-  /* Colors - Background */
-  --color-bg-primary: #ffffff;
-  --color-bg-secondary: #f9fafb;
-  --color-bg-tertiary: #f3f4f6;
-  --color-bg-sidebar: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
+  /* Colors - Background (Ultra Calm Dark Theme) */
+  --color-bg-primary: #1a1a1a;
+  --color-bg-secondary: #2d2d2d;
+  --color-bg-tertiary: #3a3a3a;
+  --color-bg-sidebar: linear-gradient(180deg, #2d2d2d 0%, #3a3a3a 70%);
+  --color-bg-card: #2d2d2d;
+  --color-bg-card-hover: #3a3a3a;
   
-  /* Colors - Borders */
-  --color-border-light: #e5e7eb;
-  --color-border-medium: #d1d5db;
-  --color-border-dark: #9ca3af;
+  /* Colors - Borders (Ultra Calm Dark Theme) */
+  --color-border-light: #4a4a4a;
+  --color-border-medium: #5a5a5a;
+  --color-border-dark: #6a6a6a;
   
   /* Typography */
   --font-family-primary: 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -497,4 +499,5 @@ a:hover, .btn-link:hover {
 @import url('./components/forms.css');
 @import url('./components/notifications.css');
 @import url('./components/layout.css');
+@import url('./components/reference-data-widget.css');
 @import url('./components/navigation.css');

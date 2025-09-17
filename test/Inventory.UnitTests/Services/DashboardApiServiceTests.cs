@@ -154,7 +154,7 @@ public class DashboardApiServiceTests
                 MaxStock = 100,
                 CategoryName = "Test Category",
                 ManufacturerName = "Test Manufacturer",
-                Unit = "pcs"
+                UnitOfMeasureSymbol = "pcs"
             }
         };
 

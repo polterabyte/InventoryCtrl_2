@@ -8,6 +8,7 @@ using Inventory.API.Controllers;
 using Inventory.API.Models;
 using Inventory.Shared.DTOs;
 using Xunit;
+#pragma warning disable CS8602 // Dereference of a possibly null reference
 using FluentAssertions;
 using InventoryTransactionDto = Inventory.Shared.DTOs.InventoryTransactionDto;
 using CreateInventoryTransactionDto = Inventory.Shared.DTOs.CreateInventoryTransactionDto;
@@ -31,7 +32,7 @@ public class TransactionControllerTests : IDisposable
         _testUserId = Guid.NewGuid().ToString();
         
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql($"Host=localhost;Database={_testDatabaseName};Username=postgres;Password=postgres")
+            .UseInMemoryDatabase(_testDatabaseName)
             .Options;
 
         _context = new AppDbContext(options);

@@ -385,6 +385,180 @@ Authorization: Bearer <jwt-token>
 #### DELETE /api/warehouses/{id}
 Удаление склада (только Admin).
 
+### Unit of Measures
+
+#### GET /api/unitofmeasure
+Получение списка единиц измерения с пагинацией и фильтрацией.
+
+**Query Parameters:**
+- `page` (int) — номер страницы (по умолчанию: 1)
+- `pageSize` (int) — размер страницы (по умолчанию: 10)
+- `search` (string) — поисковый запрос по названию, символу или описанию
+- `isActive` (bool) — фильтр по активности
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "id": 1,
+        "name": "Pieces",
+        "symbol": "pcs",
+        "description": "Individual items",
+        "isActive": true,
+        "createdAt": "2024-01-15T09:00:00Z",
+        "updatedAt": "2024-01-15T09:00:00Z"
+      }
+    ],
+    "totalCount": 10,
+    "pageNumber": 1,
+    "pageSize": 10,
+    "totalPages": 1
+  }
+}
+```
+
+#### GET /api/unitofmeasure/{id}
+Получение единицы измерения по ID.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "name": "Pieces",
+    "symbol": "pcs",
+    "description": "Individual items",
+    "isActive": true,
+    "createdAt": "2024-01-15T09:00:00Z",
+    "updatedAt": "2024-01-15T09:00:00Z"
+  }
+}
+```
+
+#### GET /api/unitofmeasure/all
+Получение всех единиц измерения (для выпадающих списков).
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "name": "Pieces",
+      "symbol": "pcs",
+      "description": "Individual items",
+      "isActive": true,
+      "createdAt": "2024-01-15T09:00:00Z",
+      "updatedAt": "2024-01-15T09:00:00Z"
+    }
+  ]
+}
+```
+
+#### POST /api/unitofmeasure
+Создание новой единицы измерения (только Admin).
+
+**Request:**
+```json
+{
+  "name": "Kilograms",
+  "symbol": "kg",
+  "description": "Weight measurement unit"
+}
+```
+
+#### PUT /api/unitofmeasure/{id}
+Обновление единицы измерения (только Admin).
+
+**Request:**
+```json
+{
+  "name": "Kilograms",
+  "symbol": "kg",
+  "description": "Weight measurement unit",
+  "isActive": true
+}
+```
+
+#### DELETE /api/unitofmeasure/{id}
+Удаление единицы измерения (только Admin, soft delete).
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Unit of measure deleted successfully"
+  }
+}
+```
+
+### Reference Data (Generic)
+
+#### GET /api/referencedata
+Базовый endpoint для работы со справочными данными (generic controller).
+
+**Query Parameters:**
+- `page` (int) — номер страницы
+- `pageSize` (int) — размер страницы
+- `search` (string) — поисковый запрос
+- `isActive` (bool) — фильтр по активности
+
+#### GET /api/referencedata/all
+Получение всех элементов справочных данных.
+
+#### GET /api/referencedata/{id}
+Получение элемента справочных данных по ID.
+
+#### POST /api/referencedata
+Создание нового элемента справочных данных (только Admin).
+
+#### PUT /api/referencedata/{id}
+Обновление элемента справочных данных (только Admin).
+
+#### DELETE /api/referencedata/{id}
+Удаление элемента справочных данных (только Admin).
+
+#### GET /api/referencedata/exists
+Проверка существования элемента по идентификатору.
+
+**Query Parameters:**
+- `identifier` (string) — идентификатор для проверки
+
+#### GET /api/referencedata/count
+Получение количества элементов.
+
+**Query Parameters:**
+- `isActive` (bool) — фильтр по активности
+
+### Admin Reference Data Management
+
+#### GET /admin/reference-data
+Страница администратора для управления всеми справочниками.
+
+**Доступ:** Только для роли Admin
+
+**Функции:**
+- Управление категориями (с иерархией)
+- Управление производителями
+- Управление единицами измерения
+- Управление группами товаров
+- Управление моделями товаров
+- Управление складами
+
+**Особенности:**
+- Табы для переключения между типами справочников
+- Поиск и фильтрация
+- Пагинация
+- Создание, редактирование, удаление
+- Проверка связей перед удалением
+- Soft delete для некоторых справочников
+
 ### Transactions
 
 #### GET /api/transactions
@@ -428,6 +602,44 @@ Authorization: Bearer <jwt-token>
   "data": { /* данные */ },
   "errorMessage": null,
   "timestamp": "2024-01-15T10:30:00Z"
+}
+```
+
+### UnitOfMeasureDto
+DTO для единиц измерения.
+
+```json
+{
+  "id": 1,
+  "name": "Pieces",
+  "symbol": "pcs",
+  "description": "Individual items",
+  "isActive": true,
+  "createdAt": "2024-01-15T09:00:00Z",
+  "updatedAt": "2024-01-15T09:00:00Z"
+}
+```
+
+### CreateUnitOfMeasureDto
+DTO для создания единицы измерения.
+
+```json
+{
+  "name": "Kilograms",
+  "symbol": "kg",
+  "description": "Weight measurement unit"
+}
+```
+
+### UpdateUnitOfMeasureDto
+DTO для обновления единицы измерения.
+
+```json
+{
+  "name": "Kilograms",
+  "symbol": "kg",
+  "description": "Weight measurement unit",
+  "isActive": true
 }
 ```
 

@@ -85,6 +85,7 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> CreateManufacturer([FromBody] CreateManufacturerDto request)
     {
         try
@@ -149,6 +150,7 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UpdateManufacturer(int id, [FromBody] UpdateManufacturerDto request)
     {
         try
@@ -219,6 +221,7 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteManufacturer(int id)
     {
         try

@@ -1,0 +1,241 @@
+{
+  "version": "1.0.0",
+  "tags": {
+    "master": {
+      "name": "master",
+      "description": "Main development tasks",
+      "createdAt": "2025-01-17T00:00:00Z",
+      "tasks": [
+        {
+          "id": 1,
+          "title": "Implement JWT Refresh Token System",
+          "description": "Add refresh token mechanism for extended sessions, automatic token renewal, secure token storage and rotation, and session management improvements",
+          "status": "done",
+          "priority": "high",
+          "dependencies": [],
+          "details": "✅ COMPLETED: JWT refresh token system fully implemented\n- RefreshTokenService with generation and validation\n- Automatic token renewal via /refresh endpoint\n- Secure token storage and rotation\n- Session management improvements\n- Token cleanup for expired tokens\n- Configurable token expiration times",
+          "testStrategy": "Test token refresh flow, expiration handling, security scenarios, and session management",
+          "subtasks": []
+        },
+        {
+          "id": 2,
+          "title": "Enhanced Audit System",
+          "description": "Implement comprehensive audit logging for all user actions with detailed change tracking, audit trail for compliance, and user activity monitoring",
+          "status": "done",
+          "priority": "high",
+          "dependencies": [],
+          "details": "✅ COMPLETED: Enhanced audit system fully implemented\n- AuditService with comprehensive logging\n- Detailed change tracking with oldValues/newValues\n- AuditController with search and filtering\n- AuditMiddleware for automatic logging\n- User activity monitoring\n- Audit data retention and cleanup",
+          "testStrategy": "Test audit logging accuracy, performance impact, search functionality, and compliance requirements",
+          "subtasks": []
+        },
+        {
+          "id": 3,
+          "title": "Rate Limiting & Security Enhancements",
+          "description": "Implement API rate limiting, enhanced input validation, CORS policy improvements, and security headers",
+          "status": "done",
+          "priority": "high",
+          "dependencies": [],
+          "details": "✅ COMPLETED: Security enhancements fully implemented\n- Rate limiting with AuthPolicy and ApiPolicy\n- FluentValidation for all DTOs\n- CORS with dynamic port configuration\n- Input validation for all endpoints\n- Request size limits via rate limiting\n- IP-based and role-based rate limiting",
+          "testStrategy": "Test rate limiting effectiveness, security header compliance, input validation, and CORS policies",
+          "subtasks": []
+        },
+        {
+          "id": 4,
+          "title": "Report Generation System",
+          "description": "Create dynamic report generation with filters, export capabilities (Excel, PDF, CSV), scheduled reports, and custom templates",
+          "status": "pending",
+          "priority": "high",
+          "dependencies": [1, 2],
+          "details": "Build comprehensive reporting system:\n- Dynamic report creation with filters\n- Export capabilities (Excel, PDF, CSV)\n- Scheduled report generation\n- Custom report templates\n- Report scheduling and automation\n- Report sharing and distribution",
+          "testStrategy": "Test report generation accuracy, export formats, scheduling, and performance with large datasets",
+          "subtasks": []
+        },
+        {
+          "id": 5,
+          "title": "Business Intelligence Dashboard",
+          "description": "Develop interactive charts and graphs with Chart.js integration, trend analysis, forecasting, and business metrics",
+          "status": "pending",
+          "priority": "high",
+          "dependencies": [4],
+          "details": "Create advanced analytics dashboard:\n- Interactive charts and graphs (Chart.js integration)\n- Trend analysis and forecasting\n- Inventory turnover analysis\n- Cost analysis and profitability metrics\n- Real-time data visualization\n- Customizable dashboard layouts",
+          "testStrategy": "Test chart accuracy, performance with large datasets, real-time updates, and user interaction",
+          "subtasks": []
+        },
+        {
+          "id": 6,
+          "title": "Smart Notifications System",
+          "description": "Implement email/SMS notifications for low stock, automated reorder alerts, expiration warnings, and user-configurable preferences",
+          "status": "pending",
+          "priority": "high",
+          "dependencies": [2],
+          "details": "Build intelligent notification system:\n- Email/SMS notifications for low stock\n- Automated reorder point alerts\n- Expiration date warnings\n- User-configurable notification preferences\n- Notification scheduling and frequency control\n- Multi-channel notification delivery",
+          "testStrategy": "Test notification delivery, accuracy of alerts, user preferences, and multi-channel functionality",
+          "subtasks": []
+        },
+        {
+          "id": 7,
+          "title": "Redis Caching & Performance Optimization",
+          "description": "Integrate Redis for caching, optimize database queries, implement lazy loading, and improve connection pooling",
+          "status": "pending",
+          "priority": "medium",
+          "dependencies": [1, 2, 3],
+          "details": "Implement performance optimizations:\n- Redis integration for caching\n- Database query optimization\n- Lazy loading implementation\n- Connection pooling improvements\n- Cache invalidation strategies\n- Performance monitoring and metrics",
+          "testStrategy": "Test cache performance, query optimization results, load testing, and monitoring accuracy",
+          "subtasks": []
+        },
+        {
+          "id": 8,
+          "title": "CQRS Implementation",
+          "description": "Implement Command Query Responsibility Segregation with MediatR integration, event sourcing capabilities, and improved separation of concerns",
+          "status": "pending",
+          "priority": "medium",
+          "dependencies": [7],
+          "details": "Implement CQRS pattern:\n- Command Query Responsibility Segregation\n- MediatR integration for command handling\n- Event sourcing capabilities\n- Improved separation of concerns\n- Command and query handlers\n- Event store implementation",
+          "testStrategy": "Test command/query separation, event sourcing accuracy, MediatR integration, and performance impact",
+          "subtasks": []
+        },
+        {
+          "id": 9,
+          "title": "Background Processing with Hangfire",
+          "description": "Integrate Hangfire for background jobs, automated data synchronization, report generation scheduling, and batch processing",
+          "status": "pending",
+          "priority": "medium",
+          "dependencies": [4, 7],
+          "details": "Implement background processing:\n- Hangfire integration for background jobs\n- Automated data synchronization\n- Report generation scheduling\n- Batch processing capabilities\n- Job monitoring and management\n- Error handling and retry policies",
+          "testStrategy": "Test job execution, scheduling accuracy, error handling, monitoring, and performance under load",
+          "subtasks": []
+        },
+        {
+          "id": 10,
+          "title": "Mobile Application (.NET MAUI)",
+          "description": "Develop iOS and Android native applications with offline functionality, mobile-optimized UI, and push notifications",
+          "status": "pending",
+          "priority": "medium",
+          "dependencies": [1, 2, 3, 7],
+          "details": "Create mobile application:\n- iOS and Android native applications\n- Offline functionality with sync\n- Mobile-optimized UI components\n- Push notifications\n- Native device integration\n- Offline data management",
+          "testStrategy": "Test mobile app functionality, offline sync, UI responsiveness, push notifications, and cross-platform compatibility",
+          "subtasks": []
+        }
+      ]
+    },
+    "development": {
+      "name": "development",
+      "description": "Development tasks for inventory system enhancements",
+      "createdAt": "2025-01-17T00:00:00Z",
+      "tasks": [
+        {
+          "id": 1,
+          "title": "Implement JWT Refresh Token System",
+          "description": "Add refresh token mechanism for extended sessions, automatic token renewal, secure token storage and rotation, and session management improvements",
+          "status": "done",
+          "priority": "high",
+          "dependencies": [],
+          "details": "✅ COMPLETED: JWT refresh token system fully implemented\n- RefreshTokenService with generation and validation\n- Automatic token renewal via /refresh endpoint\n- Secure token storage and rotation\n- Session management improvements\n- Token cleanup for expired tokens\n- Configurable token expiration times",
+          "testStrategy": "Test token refresh flow, expiration handling, security scenarios, and session management",
+          "subtasks": []
+        },
+        {
+          "id": 2,
+          "title": "Enhanced Audit System",
+          "description": "Implement comprehensive audit logging for all user actions with detailed change tracking, audit trail for compliance, and user activity monitoring",
+          "status": "done",
+          "priority": "high",
+          "dependencies": [],
+          "details": "✅ COMPLETED: Enhanced audit system fully implemented\n- AuditService with comprehensive logging\n- Detailed change tracking with oldValues/newValues\n- AuditController with search and filtering\n- AuditMiddleware for automatic logging\n- User activity monitoring\n- Audit data retention and cleanup",
+          "testStrategy": "Test audit logging accuracy, performance impact, search functionality, and compliance requirements",
+          "subtasks": []
+        },
+        {
+          "id": 3,
+          "title": "Rate Limiting & Security Enhancements",
+          "description": "Implement API rate limiting, enhanced input validation, CORS policy improvements, and security headers",
+          "status": "done",
+          "priority": "high",
+          "dependencies": [],
+          "details": "✅ COMPLETED: Security enhancements fully implemented\n- Rate limiting with AuthPolicy and ApiPolicy\n- FluentValidation for all DTOs\n- CORS with dynamic port configuration\n- Input validation for all endpoints\n- Request size limits via rate limiting\n- IP-based and role-based rate limiting",
+          "testStrategy": "Test rate limiting effectiveness, security header compliance, input validation, and CORS policies",
+          "subtasks": []
+        },
+        {
+          "id": 4,
+          "title": "Report Generation System",
+          "description": "Create dynamic report generation with filters, export capabilities (Excel, PDF, CSV), scheduled reports, and custom templates",
+          "status": "pending",
+          "priority": "high",
+          "dependencies": [1, 2],
+          "details": "Build comprehensive reporting system:\n- Dynamic report creation with filters\n- Export capabilities (Excel, PDF, CSV)\n- Scheduled report generation\n- Custom report templates\n- Report scheduling and automation\n- Report sharing and distribution",
+          "testStrategy": "Test report generation accuracy, export formats, scheduling, and performance with large datasets",
+          "subtasks": []
+        },
+        {
+          "id": 5,
+          "title": "Business Intelligence Dashboard",
+          "description": "Develop interactive charts and graphs with Chart.js integration, trend analysis, forecasting, and business metrics",
+          "status": "pending",
+          "priority": "high",
+          "dependencies": [4],
+          "details": "Create advanced analytics dashboard:\n- Interactive charts and graphs (Chart.js integration)\n- Trend analysis and forecasting\n- Inventory turnover analysis\n- Cost analysis and profitability metrics\n- Real-time data visualization\n- Customizable dashboard layouts",
+          "testStrategy": "Test chart accuracy, performance with large datasets, real-time updates, and user interaction",
+          "subtasks": []
+        },
+        {
+          "id": 6,
+          "title": "Smart Notifications System",
+          "description": "Implement email/SMS notifications for low stock, automated reorder alerts, expiration warnings, and user-configurable preferences",
+          "status": "pending",
+          "priority": "high",
+          "dependencies": [2],
+          "details": "Build intelligent notification system:\n- Email/SMS notifications for low stock\n- Automated reorder point alerts\n- Expiration date warnings\n- User-configurable notification preferences\n- Notification scheduling and frequency control\n- Multi-channel notification delivery",
+          "testStrategy": "Test notification delivery, accuracy of alerts, user preferences, and multi-channel functionality",
+          "subtasks": []
+        },
+        {
+          "id": 7,
+          "title": "Redis Caching & Performance Optimization",
+          "description": "Integrate Redis for caching, optimize database queries, implement lazy loading, and improve connection pooling",
+          "status": "pending",
+          "priority": "medium",
+          "dependencies": [1, 2, 3],
+          "details": "Implement performance optimizations:\n- Redis integration for caching\n- Database query optimization\n- Lazy loading implementation\n- Connection pooling improvements\n- Cache invalidation strategies\n- Performance monitoring and metrics",
+          "testStrategy": "Test cache performance, query optimization results, load testing, and monitoring accuracy",
+          "subtasks": []
+        },
+        {
+          "id": 8,
+          "title": "CQRS Implementation",
+          "description": "Implement Command Query Responsibility Segregation with MediatR integration, event sourcing capabilities, and improved separation of concerns",
+          "status": "pending",
+          "priority": "medium",
+          "dependencies": [7],
+          "details": "Implement CQRS pattern:\n- Command Query Responsibility Segregation\n- MediatR integration for command handling\n- Event sourcing capabilities\n- Improved separation of concerns\n- Command and query handlers\n- Event store implementation",
+          "testStrategy": "Test command/query separation, event sourcing accuracy, MediatR integration, and performance impact",
+          "subtasks": []
+        },
+        {
+          "id": 9,
+          "title": "Background Processing with Hangfire",
+          "description": "Integrate Hangfire for background jobs, automated data synchronization, report generation scheduling, and batch processing",
+          "status": "pending",
+          "priority": "medium",
+          "dependencies": [4, 7],
+          "details": "Implement background processing:\n- Hangfire integration for background jobs\n- Automated data synchronization\n- Report generation scheduling\n- Batch processing capabilities\n- Job monitoring and management\n- Error handling and retry policies",
+          "testStrategy": "Test job execution, scheduling accuracy, error handling, monitoring, and performance under load",
+          "subtasks": []
+        },
+        {
+          "id": 10,
+          "title": "Mobile Application (.NET MAUI)",
+          "description": "Develop iOS and Android native applications with offline functionality, mobile-optimized UI, and push notifications",
+          "status": "pending",
+          "priority": "medium",
+          "dependencies": [1, 2, 3, 7],
+          "details": "Create mobile application:\n- iOS and Android native applications\n- Offline functionality with sync\n- Mobile-optimized UI components\n- Push notifications\n- Native device integration\n- Offline data management",
+          "testStrategy": "Test mobile app functionality, offline sync, UI responsiveness, push notifications, and cross-platform compatibility",
+          "subtasks": []
+        }
+      ]
+    }
+  },
+  "currentTag": "master",
+  "lastSwitched": "2025-01-17T00:00:00Z"
+}

@@ -27,7 +27,7 @@ public class WarehouseController(AppDbContext context, ILogger<WarehouseControll
             // Apply filters
             if (!string.IsNullOrEmpty(search))
             {
-                query = query.Where(w => w.Name.Contains(search) || w.Location.Contains(search));
+                query = query.Where(w => w.Name.Contains(search) || w.Address.Contains(search));
             }
 
             if (isActive.HasValue)
@@ -56,7 +56,9 @@ public class WarehouseController(AppDbContext context, ILogger<WarehouseControll
                 {
                     Id = w.Id,
                     Name = w.Name,
-                    Location = w.Location,
+                    Description = w.Description,
+                    Address = w.Address,
+                    ContactInfo = w.ContactInfo,
                     IsActive = w.IsActive,
                     CreatedAt = w.CreatedAt,
                     UpdatedAt = w.UpdatedAt
@@ -109,7 +111,9 @@ public class WarehouseController(AppDbContext context, ILogger<WarehouseControll
             {
                 Id = warehouse.Id,
                 Name = warehouse.Name,
-                Location = warehouse.Location,
+                Description = warehouse.Description,
+                Address = warehouse.Address,
+                ContactInfo = warehouse.ContactInfo,
                 IsActive = warehouse.IsActive,
                 CreatedAt = warehouse.CreatedAt,
                 UpdatedAt = warehouse.UpdatedAt
@@ -164,7 +168,9 @@ public class WarehouseController(AppDbContext context, ILogger<WarehouseControll
             var warehouse = new Warehouse
             {
                 Name = request.Name,
-                Location = request.Location,
+                Description = request.Description,
+                Address = request.Address,
+                ContactInfo = request.ContactInfo,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
             };
@@ -178,7 +184,9 @@ public class WarehouseController(AppDbContext context, ILogger<WarehouseControll
             {
                 Id = warehouse.Id,
                 Name = warehouse.Name,
-                Location = warehouse.Location,
+                Description = warehouse.Description,
+                Address = warehouse.Address,
+                ContactInfo = warehouse.ContactInfo,
                 IsActive = warehouse.IsActive,
                 CreatedAt = warehouse.CreatedAt,
                 UpdatedAt = warehouse.UpdatedAt
@@ -241,7 +249,9 @@ public class WarehouseController(AppDbContext context, ILogger<WarehouseControll
             }
 
             warehouse.Name = request.Name;
-            warehouse.Location = request.Location;
+            warehouse.Description = request.Description;
+            warehouse.Address = request.Address;
+            warehouse.ContactInfo = request.ContactInfo;
             warehouse.IsActive = request.IsActive;
             warehouse.UpdatedAt = DateTime.UtcNow;
 
@@ -253,7 +263,9 @@ public class WarehouseController(AppDbContext context, ILogger<WarehouseControll
             {
                 Id = warehouse.Id,
                 Name = warehouse.Name,
-                Location = warehouse.Location,
+                Description = warehouse.Description,
+                Address = warehouse.Address,
+                ContactInfo = warehouse.ContactInfo,
                 IsActive = warehouse.IsActive,
                 CreatedAt = warehouse.CreatedAt,
                 UpdatedAt = warehouse.UpdatedAt

@@ -23,7 +23,7 @@ public class ProductCardTests : ComponentTestBase
             SKU = "TEST-001",
             Description = "Test Description",
             Quantity = 100,
-            Unit = "pcs",
+                UnitOfMeasureSymbol = "pcs",
             CategoryName = "Test Category",
             ManufacturerName = "Test Manufacturer"
         };
@@ -49,7 +49,7 @@ public class ProductCardTests : ComponentTestBase
             SKU = "LOW-001",
             Quantity = 5,
             MinStock = 10,
-            Unit = "pcs"
+                UnitOfMeasureSymbol = "pcs"
         };
 
         // Act

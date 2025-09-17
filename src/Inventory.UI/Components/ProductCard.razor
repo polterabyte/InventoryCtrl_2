@@ -19,7 +19,7 @@
                 <div class="text-end">
                     <div class="mb-2">
                         <span class="badge @GetStockBadgeClass() fs-6">
-                            @Product.Quantity @Product.Unit
+                            @Product.Quantity @Product.UnitOfMeasureSymbol
                         </span>
                     </div>
                     @if (Product.MinStock > 0 || Product.MaxStock > 0)

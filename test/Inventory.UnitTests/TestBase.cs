@@ -1,10 +1,28 @@
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 using Moq;
+using Inventory.API.Models;
 
 namespace Inventory.UnitTests;
 
-public abstract class TestBase
+public abstract class TestBase : IDisposable
 {
+    protected AppDbContext Context { get; private set; }
+    private readonly string _testDatabaseName;
+
+    protected TestBase()
+    {
+        // Create unique database name for this test
+        _testDatabaseName = $"inventory_unit_test_{Guid.NewGuid():N}_{DateTime.UtcNow:yyyyMMddHHmmss}";
+        
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(_testDatabaseName)
+            .Options;
+
+        Context = new AppDbContext(options);
+        Context.Database.EnsureCreated();
+    }
+
     protected Mock<ILogger<T>> CreateMockLogger<T>() where T : class
     {
         return new Mock<ILogger<T>>();
@@ -34,5 +52,10 @@ public abstract class TestBase
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             times);
+    }
+
+    public void Dispose()
+    {
+        Context?.Dispose();
     }
 }

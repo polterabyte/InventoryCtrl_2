@@ -6,6 +6,7 @@ using Moq;
 using System.Security.Claims;
 using Inventory.API.Controllers;
 using Inventory.API.Models;
+using Inventory.API.Services;
 using Inventory.Shared.DTOs;
 using Xunit;
 using FluentAssertions;
@@ -25,7 +26,7 @@ public class ProductControllerPaginationTests : IDisposable
         _testDatabaseName = $"inventory_unit_test_{Guid.NewGuid():N}_{DateTime.UtcNow:yyyyMMddHHmmss}";
         
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql($"Host=localhost;Database={_testDatabaseName};Username=postgres;Password=postgres")
+            .UseInMemoryDatabase(_testDatabaseName)
             .Options;
 
         _context = new AppDbContext(options);
@@ -34,7 +35,8 @@ public class ProductControllerPaginationTests : IDisposable
         _context.Database.EnsureCreated();
         
         _mockLogger = new Mock<ILogger<ProductController>>();
-        _controller = new ProductController(_context, _mockLogger.Object);
+        var mockAuditService = new Mock<AuditService>(_context, Mock.Of<IHttpContextAccessor>(), Mock.Of<ILogger<AuditService>>());
+        _controller = new ProductController(_context, _mockLogger.Object, mockAuditService.Object);
         
         // Setup authentication context
         var claims = new List<Claim>
@@ -89,7 +91,7 @@ public class ProductControllerPaginationTests : IDisposable
                 SKU = "DELL-XPS13-001",
                 Description = "High-performance laptop",
                 Quantity = 10,
-                Unit = "pcs",
+                UnitOfMeasureId = 1,
                 IsActive = true,
                 CategoryId = category1.Id,
                 ManufacturerId = manufacturer1.Id,
@@ -105,7 +107,7 @@ public class ProductControllerPaginationTests : IDisposable
                 SKU = "APPLE-MBP16-001",
                 Description = "Professional laptop",
                 Quantity = 5,
-                Unit = "pcs",
+                UnitOfMeasureId = 1,
                 IsActive = true,
                 CategoryId = category1.Id,
                 ManufacturerId = manufacturer2.Id,
@@ -121,7 +123,7 @@ public class ProductControllerPaginationTests : IDisposable
                 SKU = "APPLE-IPAD-001",
                 Description = "Professional tablet",
                 Quantity = 15,
-                Unit = "pcs",
+                UnitOfMeasureId = 1,
                 IsActive = false, // Inactive product
                 CategoryId = category1.Id,
                 ManufacturerId = manufacturer2.Id,

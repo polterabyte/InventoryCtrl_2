@@ -29,9 +29,9 @@
   transform: translateY(-1px);
 }
 
-/* Button Variants */
+/* Button Variants (Ultra Calm) */
 .btn-primary {
-  color: var(--color-white);
+  color: var(--color-text-primary);
   background-color: var(--color-primary);
   border-color: var(--color-primary);
 }
@@ -42,7 +42,7 @@
 }
 
 .btn-secondary {
-  color: var(--color-white);
+  color: var(--color-text-primary);
   background-color: var(--color-secondary);
   border-color: var(--color-secondary);
 }
@@ -59,8 +59,69 @@
 }
 
 .btn-outline:hover:not(:disabled) {
-  color: var(--color-white);
+  color: var(--color-text-primary);
   background-color: var(--color-primary);
+}
+
+/* Outline Button Variants */
+.btn-outline-primary {
+  color: var(--color-primary);
+  background-color: transparent;
+  border-color: var(--color-primary);
+}
+
+.btn-outline-primary:hover:not(:disabled) {
+  color: var(--color-text-primary);
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.btn-outline-success {
+  color: var(--color-success);
+  background-color: transparent;
+  border-color: var(--color-success);
+}
+
+.btn-outline-success:hover:not(:disabled) {
+  color: var(--color-text-primary);
+  background-color: var(--color-success);
+  border-color: var(--color-success);
+}
+
+.btn-outline-warning {
+  color: var(--color-warning);
+  background-color: transparent;
+  border-color: var(--color-warning);
+}
+
+.btn-outline-warning:hover:not(:disabled) {
+  color: var(--color-text-primary);
+  background-color: var(--color-warning);
+  border-color: var(--color-warning);
+}
+
+.btn-outline-danger {
+  color: var(--color-error);
+  background-color: transparent;
+  border-color: var(--color-error);
+}
+
+.btn-outline-danger:hover:not(:disabled) {
+  color: var(--color-text-primary);
+  background-color: var(--color-error);
+  border-color: var(--color-error);
+}
+
+.btn-outline-info {
+  color: var(--color-info);
+  background-color: transparent;
+  border-color: var(--color-info);
+}
+
+.btn-outline-info:hover:not(:disabled) {
+  color: var(--color-text-primary);
+  background-color: var(--color-info);
+  border-color: var(--color-info);
 }
 
 /* Button Sizes */
@@ -74,9 +135,9 @@
   font-size: var(--font-size-lg);
 }
 
-/* Button States */
+/* Button States (Ultra Calm) */
 .btn-success {
-  color: var(--color-white);
+  color: var(--color-text-primary);
   background-color: var(--color-success);
   border-color: var(--color-success);
 }
@@ -87,7 +148,7 @@
 }
 
 .btn-error {
-  color: var(--color-white);
+  color: var(--color-text-primary);
   background-color: var(--color-error);
   border-color: var(--color-error);
 }
@@ -98,7 +159,7 @@
 }
 
 .btn-warning {
-  color: var(--color-white);
+  color: var(--color-text-primary);
   background-color: var(--color-warning);
   border-color: var(--color-warning);
 }
@@ -109,7 +170,7 @@
 }
 
 .btn-info {
-  color: var(--color-white);
+  color: var(--color-text-primary);
   background-color: var(--color-info);
   border-color: var(--color-info);
 }

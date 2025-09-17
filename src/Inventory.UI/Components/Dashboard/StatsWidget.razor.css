@@ -1,11 +1,14 @@
 .stats-widget {
     transition: all 0.3s ease;
     border-left: 4px solid;
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border-light);
 }
 
 .stats-widget:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    background-color: var(--color-bg-card-hover);
 }
 
 .stats-value {
@@ -13,6 +16,7 @@
     font-weight: 700;
     line-height: 1;
     margin-bottom: 0.25rem;
+    color: var(--color-text-primary);
 }
 
 .stats-label {
@@ -47,10 +51,14 @@
     color: var(--color-info);
 }
 
-/* Dark theme support */
+/* Dark theme support (Enhanced) */
 [data-bs-theme="dark"] .stats-widget {
-    background-color: var(--color-bg-secondary);
-    border-color: var(--color-border);
+    background-color: var(--color-bg-card);
+    border-color: var(--color-border-light);
+}
+
+[data-bs-theme="dark"] .stats-widget:hover {
+    background-color: var(--color-bg-card-hover);
 }
 
 [data-bs-theme="dark"] .stats-label {

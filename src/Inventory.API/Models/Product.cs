@@ -7,7 +7,8 @@ public class Product
     public string SKU { get; set; } = string.Empty;
     public string? Description { get; set; }
     public int Quantity { get; set; }
-    public string Unit { get; set; } = string.Empty;
+    public int UnitOfMeasureId { get; set; }
+    public UnitOfMeasure UnitOfMeasure { get; set; } = null!;
     public bool IsActive { get; set; } = true;
     public int CategoryId { get; set; }
     public Category Category { get; set; } = null!;

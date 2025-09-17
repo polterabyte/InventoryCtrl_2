@@ -21,6 +21,9 @@ public static class DbInitializer
 
         // Создание суперпользователя
         await CreateSuperUserAsync(userManager);
+        
+        // Seed notification data
+        await NotificationSeeder.SeedAsync(db);
     }
 
     private static async Task CreateRolesAsync(RoleManager<IdentityRole> roleManager)
@@ -66,7 +69,8 @@ public static class DbInitializer
             {
                 await userManager.AddToRoleAsync(superUser, superUserRole);
                 await userManager.AddToRoleAsync(superUser, adminRole);
-                Log.Information("Superuser created: {Email}", superUserEmail);
+                Log.Information("Superuser created: {Email} with username: {Username} and password: {Password}", 
+                    superUserEmail, superUser.UserName, superUserPassword);
             }
             else
             {
@@ -92,7 +96,8 @@ public static class DbInitializer
                         string.Join(", ", updateResult.Errors.Select(e => e.Description)));
                 }
             }
-            Log.Information("Superuser already exists: {Email}", superUserEmail);
+            Log.Information("Superuser already exists: {Email} with username: {Username}", 
+                superUserEmail, superUser.UserName);
         }
     }
 }

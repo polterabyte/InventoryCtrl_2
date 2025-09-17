@@ -1,4 +1,5 @@
 using Inventory.API.Services;
+using Inventory.Shared.Interfaces;
 
 namespace Inventory.API.Extensions;
 
@@ -22,6 +23,20 @@ public static class ServiceCollectionExtensions
                       .AllowCredentials(); // Required for Blazor WASM authentication
             });
         });
+        return services;
+    }
+    
+    public static IServiceCollection AddAuditServices(this IServiceCollection services)
+    {
+        services.AddScoped<AuditService>();
+        services.AddHttpContextAccessor();
+        return services;
+    }
+    
+    public static IServiceCollection AddNotificationServices(this IServiceCollection services)
+    {
+        services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<INotificationRuleEngine, NotificationRuleEngine>();
         return services;
     }
 }

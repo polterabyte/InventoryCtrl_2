@@ -6,6 +6,7 @@
 @inject IManufacturerService ManufacturerService
 @inject IProductModelService ProductModelService
 @inject IProductGroupService ProductGroupService
+@inject IUnitOfMeasureApiService UnitOfMeasureService
 
 <h3>@Title</h3>
 
@@ -91,7 +92,16 @@
         <div class="col-md-6">
             <div class="mb-3">
                 <label class="form-label">Единица измерения:</label>
-                <InputText class="form-control" @bind-Value="productModel.Unit" placeholder="шт, кг, м, л..." />
+                <InputSelect class="form-select" @bind-Value="productModel.UnitOfMeasureId">
+                    <option value="">Выберите единицу измерения</option>
+                    @if (unitOfMeasures != null)
+                    {
+                        @foreach (var unit in unitOfMeasures)
+                        {
+                            <option value="@unit.Id">@unit.Name (@unit.Symbol)</option>
+                        }
+                    }
+                </InputSelect>
             </div>
         </div>
         <div class="col-md-6">
@@ -152,6 +162,7 @@
     private List<ManufacturerDto> manufacturers = new();
     private List<ProductModelDto> productModels = new();
     private List<ProductGroupDto> productGroups = new();
+    private List<UnitOfMeasureDto> unitOfMeasures = new();
     private string? errorMessage;
     private bool isLoading = false;
 
@@ -175,6 +186,8 @@
             manufacturers = await ManufacturerService.GetAllManufacturersAsync();
             productModels = await ProductModelService.GetAllProductModelsAsync();
             productGroups = await ProductGroupService.GetAllProductGroupsAsync();
+            var unitOfMeasuresResponse = await UnitOfMeasureService.GetAllAsync();
+            unitOfMeasures = unitOfMeasuresResponse.Data ?? new List<UnitOfMeasureDto>();
         }
         catch (Exception ex)
         {

@@ -1,23 +1,29 @@
-/* Quick Actions Styling */
+/* Quick Actions Styling (Ultra Calm Theme) */
 .quick-action-btn {
     transition: all 0.3s ease;
     border: 2px solid;
     min-height: 120px;
+    background-color: var(--color-bg-card);
+    color: var(--color-text-primary);
+    border-color: var(--color-border-light);
 }
 
 .quick-action-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    background-color: var(--color-bg-card-hover);
 }
 
 .quick-action-btn:disabled {
-    opacity: 0.6;
+    opacity: 0.4;
     cursor: not-allowed;
+    background-color: var(--color-bg-tertiary);
 }
 
 .quick-action-btn:disabled:hover {
     transform: none;
     box-shadow: none;
+    background-color: var(--color-bg-tertiary);
 }
 
 /* Stats Widgets Animation */
@@ -42,25 +48,35 @@
 .stats-widget:nth-child(3) { animation-delay: 0.3s; }
 .stats-widget:nth-child(4) { animation-delay: 0.4s; }
 
-/* Dashboard Cards */
+/* Dashboard Cards (Calm Theme) */
 .dashboard-card {
     transition: all 0.3s ease;
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border-light);
 }
 
 .dashboard-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    background-color: var(--color-bg-card-hover);
 }
 
-/* Dark theme support */
+/* Dark theme support (Ultra Calm) */
 [data-bs-theme="dark"] .quick-action-btn {
-    background-color: var(--color-bg-secondary);
-    border-color: var(--color-border);
+    background-color: var(--color-bg-card);
+    border-color: var(--color-border-light);
+    color: var(--color-text-primary);
 }
 
 [data-bs-theme="dark"] .quick-action-btn:hover {
-    background-color: var(--color-bg-primary);
+    background-color: var(--color-bg-card-hover);
     border-color: var(--color-primary);
+}
+
+[data-bs-theme="dark"] .quick-action-btn:disabled {
+    background-color: var(--color-bg-tertiary);
+    opacity: 0.4;
+    color: var(--color-text-muted);
 }
 
 /* Responsive design */

@@ -5,6 +5,7 @@ using FluentAssertions;
 using Inventory.Shared.DTOs;
 using Inventory.API.Models;
 using Xunit;
+#pragma warning disable CS8602 // Dereference of a possibly null reference
 
 namespace Inventory.IntegrationTests.Controllers;
 

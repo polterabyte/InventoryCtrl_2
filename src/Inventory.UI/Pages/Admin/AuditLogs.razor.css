@@ -1,0 +1,342 @@
+/* Audit Logs Page Styles */
+
+.audit-logs-container {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+.audit-logs-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+}
+
+.audit-logs-header h1 {
+    font-weight: 300;
+    margin: 0;
+}
+
+.audit-logs-header .btn {
+    border-color: rgba(255, 255, 255, 0.3);
+    color: white;
+}
+
+.audit-logs-header .btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: white;
+}
+
+/* Filter Card */
+.filter-card {
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+.filter-card .card-header {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    border-radius: 8px 8px 0 0;
+    border: none;
+}
+
+/* Statistics Cards */
+.stats-card {
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    transition: transform 0.2s ease-in-out;
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+}
+
+.stats-card .card-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.stats-card .card-text {
+    color: #6c757d;
+    font-weight: 500;
+    margin: 0;
+}
+
+/* Audit Logs Table */
+.audit-logs-table {
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.audit-logs-table .table {
+    margin-bottom: 0;
+}
+
+.audit-logs-table .table thead th {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    color: #495057;
+    padding: 1rem;
+}
+
+.audit-logs-table .table tbody td {
+    padding: 0.75rem 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.audit-logs-table .table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* Badge Styles */
+.badge {
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+}
+
+.badge.bg-success {
+    background-color: #28a745 !important;
+}
+
+.badge.bg-danger {
+    background-color: #dc3545 !important;
+}
+
+.badge.bg-warning {
+    background-color: #ffc107 !important;
+    color: #212529;
+}
+
+.badge.bg-info {
+    background-color: #17a2b8 !important;
+}
+
+.badge.bg-primary {
+    background-color: #007bff !important;
+}
+
+.badge.bg-secondary {
+    background-color: #6c757d !important;
+}
+
+/* Action Badges */
+.action-badge {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Status Indicators */
+.status-success {
+    color: #28a745;
+}
+
+.status-danger {
+    color: #dc3545;
+}
+
+.status-warning {
+    color: #ffc107;
+}
+
+/* Modal Styles */
+.modal-content {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px 8px 0 0;
+    border: none;
+}
+
+.modal-header .btn-close {
+    filter: invert(1);
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-body h6 {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.modal-body .table {
+    margin-bottom: 0;
+}
+
+.modal-body .table td {
+    border: none;
+    padding: 0.5rem 0;
+}
+
+.modal-body .table td:first-child {
+    width: 30%;
+    font-weight: 500;
+    color: #6c757d;
+}
+
+/* Code Blocks */
+pre code {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    padding: 1rem;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    color: #495057;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* Pagination */
+.pagination .page-link {
+    border: none;
+    color: #6c757d;
+    padding: 0.5rem 0.75rem;
+    margin: 0 0.125rem;
+    border-radius: 4px;
+    transition: all 0.2s ease-in-out;
+}
+
+.pagination .page-link:hover {
+    background-color: #e9ecef;
+    color: #495057;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #007bff;
+    color: white;
+}
+
+.pagination .page-item.disabled .page-link {
+    color: #adb5bd;
+    cursor: not-allowed;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+}
+
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+    border-width: 0.3em;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state h5 {
+    margin-bottom: 0.5rem;
+    color: #495057;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .audit-logs-header {
+        padding: 1rem 0;
+    }
+    
+    .audit-logs-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .stats-card .card-title {
+        font-size: 1.5rem;
+    }
+    
+    .audit-logs-table .table {
+        font-size: 0.875rem;
+    }
+    
+    .audit-logs-table .table thead th,
+    .audit-logs-table .table tbody td {
+        padding: 0.5rem;
+    }
+    
+    .modal-body {
+        padding: 1rem;
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .audit-logs-container {
+        background-color: #1a1a1a;
+    }
+    
+    .filter-card,
+    .audit-logs-table {
+        background-color: #2d2d2d;
+        color: #ffffff;
+    }
+    
+    .filter-card .card-header {
+        background: linear-gradient(135deg, #8e44ad 0%, #e74c3c 100%);
+    }
+    
+    .audit-logs-table .table thead th {
+        background-color: #3d3d3d;
+        color: #ffffff;
+    }
+    
+    .audit-logs-table .table tbody tr:hover {
+        background-color: #3d3d3d;
+    }
+    
+    .modal-content {
+        background-color: #2d2d2d;
+        color: #ffffff;
+    }
+    
+    .modal-body h6 {
+        color: #ffffff;
+        border-bottom-color: #4d4d4d;
+    }
+    
+    .modal-body .table td:first-child {
+        color: #adb5bd;
+    }
+    
+    pre code {
+        background-color: #3d3d3d;
+        border-color: #4d4d4d;
+        color: #ffffff;
+    }
+}

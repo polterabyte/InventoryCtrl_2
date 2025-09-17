@@ -447,6 +447,19 @@ public abstract class IntegrationTestBase : IClassFixture<WebApplicationFactory<
         Context.Warehouses.AddRange(mainWarehouse, secondaryWarehouse);
         await Context.SaveChangesAsync();
 
+        // Create test unit of measures
+        var unitOfMeasure = new UnitOfMeasure
+        {
+            Name = "Pieces",
+            Symbol = "pcs",
+            Description = "Individual items",
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        Context.UnitOfMeasures.Add(unitOfMeasure);
+        await Context.SaveChangesAsync();
+
         // Create test products
         var iphoneProduct = new Product
         {
@@ -454,7 +467,7 @@ public abstract class IntegrationTestBase : IClassFixture<WebApplicationFactory<
             SKU = "IPHONE15-001",
             Description = "Latest iPhone model",
             Quantity = 50,
-            Unit = "pcs",
+                UnitOfMeasureId = unitOfMeasure.Id,
             IsActive = true,
             CategoryId = smartphonesCategory.Id,
             ManufacturerId = appleManufacturer.Id,
@@ -472,7 +485,7 @@ public abstract class IntegrationTestBase : IClassFixture<WebApplicationFactory<
             SKU = "GALAXYS24-001", 
             Description = "Latest Samsung Galaxy model",
             Quantity = 30,
-            Unit = "pcs",
+                UnitOfMeasureId = unitOfMeasure.Id,
             IsActive = true,
             CategoryId = smartphonesCategory.Id,
             ManufacturerId = samsungManufacturer.Id,

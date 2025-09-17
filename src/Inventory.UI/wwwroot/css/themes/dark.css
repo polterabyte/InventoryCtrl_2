@@ -1,27 +1,29 @@
 /* ========================================
-   DARK THEME
+   DARK THEME (Enhanced Calm Palette)
    ======================================== */
 
 :root[data-theme="dark"] {
-  /* Dark theme variables */
-  --color-text-primary: #f9fafb;
-  --color-text-secondary: #d1d5db;
-  --color-text-muted: #9ca3af;
+  /* Ultra calm dark theme */
+  --color-text-primary: #e0e0e0;
+  --color-text-secondary: #b0b0b0;
+  --color-text-muted: #808080;
   
-  --color-bg-primary: #1f2937;
-  --color-bg-secondary: #111827;
-  --color-bg-tertiary: #374151;
+  --color-bg-primary: #1a1a1a;
+  --color-bg-secondary: #2d2d2d;
+  --color-bg-tertiary: #3a3a3a;
+  --color-bg-card: #2d2d2d;
+  --color-bg-card-hover: #3a3a3a;
   
-  --color-border-light: #374151;
-  --color-border-medium: #4b5563;
-  --color-border-dark: #6b7280;
+  --color-border-light: #4a4a4a;
+  --color-border-medium: #5a5a5a;
+  --color-border-dark: #6a6a6a;
   
-  /* Adjust sidebar gradient for dark theme */
-  --color-bg-sidebar: linear-gradient(180deg, #1e3a8a 0%, #581c87 70%);
+  /* Ultra calm sidebar gradient */
+  --color-bg-sidebar: linear-gradient(180deg, #2d2d2d 0%, #3a3a3a 70%);
   
-  /* Adjust shadows for dark theme */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+  /* Enhanced shadows for depth */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.6);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.7), 0 2px 4px -1px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.7), 0 4px 6px -2px rgba(0, 0, 0, 0.6);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 10px 10px -5px rgba(0, 0, 0, 0.6);
 }
