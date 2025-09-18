@@ -80,51 +80,30 @@
         if (firstRender)
         {
             dotNetRef = DotNetObjectReference.Create(this);
-            // Wait for JavaScript services to be available
-            await WaitForJavaScriptServices();
+            // Add delay to ensure JavaScript functions are loaded
+            await Task.Delay(100);
             await InitializeSignalR();
         }
-    }
-
-    private async Task WaitForJavaScriptServices()
-    {
-        var maxAttempts = 10;
-        var attempt = 0;
-        
-        while (attempt < maxAttempts)
-        {
-            try
-            {
-                // Check if all required functions are available
-                var isGetApiBaseUrlAvailable = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.getApiBaseUrl === 'function'");
-                var isSignalRServiceAvailable = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.signalRNotificationService === 'object'");
-                var isInitializeFunctionAvailable = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.initializeSignalRConnection === 'function'");
-                
-                if (isGetApiBaseUrlAvailable && isSignalRServiceAvailable && isInitializeFunctionAvailable)
-                {
-                    Logger.LogInformation("All JavaScript services are available");
-                    return;
-                }
-                
-                Logger.LogInformation("Waiting for JavaScript services... Attempt {Attempt}/{MaxAttempts}", attempt + 1, maxAttempts);
-                await Task.Delay(200); // Wait 200ms before next attempt
-                attempt++;
-            }
-            catch (Exception ex)
-            {
-                Logger.LogWarning(ex, "Error checking JavaScript services availability");
-                await Task.Delay(200);
-                attempt++;
-            }
-        }
-        
-        Logger.LogWarning("JavaScript services not available after {MaxAttempts} attempts", maxAttempts);
     }
 
     private async Task InitializeSignalR()
     {
         try
         {
+            // Check if JavaScript functions are available
+            var isFunctionAvailable = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.getApiBaseUrl === 'function'");
+            if (!isFunctionAvailable)
+            {
+                Logger.LogWarning("getApiBaseUrl function not available, retrying in 500ms...");
+                await Task.Delay(500);
+                isFunctionAvailable = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.getApiBaseUrl === 'function'");
+                if (!isFunctionAvailable)
+                {
+                    Logger.LogError("getApiBaseUrl function still not available after retry");
+                    return;
+                }
+            }
+
             // Get API base URL from JavaScript
             var apiBaseUrl = await JSRuntime.InvokeAsync<string>("getApiBaseUrl");
             

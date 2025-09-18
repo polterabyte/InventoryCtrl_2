@@ -1,3 +1,111 @@
+# Fix SignalR Service Error
+Write-Host "Fixing SignalR service error..." -ForegroundColor Green
+
+# Update api-config.js to add better error handling
+Write-Host "Updating api-config.js with better error handling..." -ForegroundColor Yellow
+$apiConfigContent = @"
+// API Configuration for SignalR
+console.log('Loading API configuration...');
+
+// Define getApiBaseUrl function immediately
+window.getApiBaseUrl = function() {
+    const origin = window.location.origin;
+    const port = window.location.port;
+    
+    // Use HTTPS for API connection
+    if (origin.startsWith('https://')) {
+        // If web client is HTTPS, use HTTPS for API
+        if (port) {
+            return origin.replace(port, '7000'); // Use HTTPS port 7000
+        } else {
+            return origin + ':7000';
+        }
+    } else {
+        // If web client is HTTP, use HTTP for API
+        if (port) {
+            return origin.replace(port, '5000'); // Use HTTP port 5000
+        } else {
+            return origin + ':5000';
+        }
+    }
+};
+
+// Define other SignalR functions
+window.initializeSignalRConnection = async function(apiBaseUrl, accessToken, dotNetRef) {
+    try {
+        console.log('Initializing SignalR connection...', { apiBaseUrl, hasToken: !!accessToken });
+        
+        // Check if signalRNotificationService is available
+        if (!window.signalRNotificationService) {
+            console.error('signalRNotificationService is not available');
+            return false;
+        }
+        
+        const success = await window.signalRNotificationService.initialize(apiBaseUrl, accessToken);
+        
+        if (success) {
+            // Set up event handlers
+            window.signalRNotificationService.on('notificationReceived', (notification) => {
+                dotNetRef.invokeMethodAsync('OnNotificationReceivedJS', notification);
+            });
+
+            window.signalRNotificationService.on('connectionStateChanged', (data) => {
+                dotNetRef.invokeMethodAsync('OnConnectionStateChangedJS', data.state, data.error);
+            });
+
+            // Subscribe to common notification types
+            await window.signalRNotificationService.subscribeToNotifications('STOCK');
+            await window.signalRNotificationService.subscribeToNotifications('TRANSACTION');
+            await window.signalRNotificationService.subscribeToNotifications('SYSTEM');
+        }
+        
+        return success;
+    } catch (error) {
+        console.error('Error initializing SignalR connection:', error);
+        return false;
+    }
+};
+
+window.subscribeToNotificationType = async function(notificationType) {
+    try {
+        if (window.signalRNotificationService) {
+            await window.signalRNotificationService.subscribeToNotifications(notificationType);
+        }
+    } catch (error) {
+        console.error('Error subscribing to notification type:', error);
+    }
+};
+
+window.unsubscribeFromNotificationType = async function(notificationType) {
+    try {
+        if (window.signalRNotificationService) {
+            await window.signalRNotificationService.unsubscribeFromNotifications(notificationType);
+        }
+    } catch (error) {
+        console.error('Error unsubscribing from notification type:', error);
+    }
+};
+
+window.disconnectSignalR = async function() {
+    try {
+        if (window.signalRNotificationService) {
+            await window.signalRNotificationService.disconnect();
+        }
+    } catch (error) {
+        console.error('Error disconnecting SignalR:', error);
+    }
+};
+
+console.log('API configuration loaded successfully');
+console.log('getApiBaseUrl function available:', typeof window.getApiBaseUrl === 'function');
+"@
+
+Set-Content "src\Inventory.UI\wwwroot\js\api-config.js" $apiConfigContent
+Set-Content "src\Inventory.Web.Client\wwwroot\js\api-config.js" $apiConfigContent
+
+# Update RealTimeNotificationComponent to wait for services
+Write-Host "Updating RealTimeNotificationComponent..." -ForegroundColor Yellow
+$componentContent = @"
 @using Microsoft.JSInterop
 @using Inventory.Shared.DTOs
 @using System.Text.Json
@@ -307,3 +415,16 @@
         }
     }
 }
+"@
+
+Set-Content "src\Inventory.UI\Components\RealTimeNotificationComponent.razor" $componentContent
+
+Write-Host "Fixed SignalR service error!" -ForegroundColor Green
+Write-Host ""
+Write-Host "Changes made:" -ForegroundColor Cyan
+Write-Host "1. Added check for signalRNotificationService availability" -ForegroundColor White
+Write-Host "2. Added WaitForJavaScriptServices() method" -ForegroundColor White
+Write-Host "3. Better error handling in all JavaScript functions" -ForegroundColor White
+Write-Host "4. Improved logging for debugging" -ForegroundColor White
+Write-Host ""
+Write-Host "This should fix the 'Cannot read properties of undefined' error" -ForegroundColor Green

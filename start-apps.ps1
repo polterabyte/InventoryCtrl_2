@@ -178,3 +178,4 @@ finally {
     
     Write-Host "All applications stopped" -ForegroundColor Green
 }
+

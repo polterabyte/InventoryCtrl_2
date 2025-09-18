@@ -80,45 +80,8 @@
         if (firstRender)
         {
             dotNetRef = DotNetObjectReference.Create(this);
-            // Wait for JavaScript services to be available
-            await WaitForJavaScriptServices();
             await InitializeSignalR();
         }
-    }
-
-    private async Task WaitForJavaScriptServices()
-    {
-        var maxAttempts = 10;
-        var attempt = 0;
-        
-        while (attempt < maxAttempts)
-        {
-            try
-            {
-                // Check if all required functions are available
-                var isGetApiBaseUrlAvailable = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.getApiBaseUrl === 'function'");
-                var isSignalRServiceAvailable = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.signalRNotificationService === 'object'");
-                var isInitializeFunctionAvailable = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.initializeSignalRConnection === 'function'");
-                
-                if (isGetApiBaseUrlAvailable && isSignalRServiceAvailable && isInitializeFunctionAvailable)
-                {
-                    Logger.LogInformation("All JavaScript services are available");
-                    return;
-                }
-                
-                Logger.LogInformation("Waiting for JavaScript services... Attempt {Attempt}/{MaxAttempts}", attempt + 1, maxAttempts);
-                await Task.Delay(200); // Wait 200ms before next attempt
-                attempt++;
-            }
-            catch (Exception ex)
-            {
-                Logger.LogWarning(ex, "Error checking JavaScript services availability");
-                await Task.Delay(200);
-                attempt++;
-            }
-        }
-        
-        Logger.LogWarning("JavaScript services not available after {MaxAttempts} attempts", maxAttempts);
     }
 
     private async Task InitializeSignalR()

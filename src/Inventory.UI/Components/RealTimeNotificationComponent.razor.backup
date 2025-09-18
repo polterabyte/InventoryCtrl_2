@@ -3,11 +3,9 @@
 @using System.Text.Json
 @using Microsoft.Extensions.Logging
 @using Blazored.LocalStorage
-@using Microsoft.AspNetCore.Components.Authorization
 @inject IJSRuntime JSRuntime
 @inject ILogger<RealTimeNotificationComponent> Logger
 @inject ILocalStorageService LocalStorage
-@inject AuthenticationStateProvider AuthStateProvider
 
 <div class="real-time-notifications">
     @if (IsConnected)
@@ -80,45 +78,8 @@
         if (firstRender)
         {
             dotNetRef = DotNetObjectReference.Create(this);
-            // Wait for JavaScript services to be available
-            await WaitForJavaScriptServices();
             await InitializeSignalR();
         }
-    }
-
-    private async Task WaitForJavaScriptServices()
-    {
-        var maxAttempts = 10;
-        var attempt = 0;
-        
-        while (attempt < maxAttempts)
-        {
-            try
-            {
-                // Check if all required functions are available
-                var isGetApiBaseUrlAvailable = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.getApiBaseUrl === 'function'");
-                var isSignalRServiceAvailable = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.signalRNotificationService === 'object'");
-                var isInitializeFunctionAvailable = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.initializeSignalRConnection === 'function'");
-                
-                if (isGetApiBaseUrlAvailable && isSignalRServiceAvailable && isInitializeFunctionAvailable)
-                {
-                    Logger.LogInformation("All JavaScript services are available");
-                    return;
-                }
-                
-                Logger.LogInformation("Waiting for JavaScript services... Attempt {Attempt}/{MaxAttempts}", attempt + 1, maxAttempts);
-                await Task.Delay(200); // Wait 200ms before next attempt
-                attempt++;
-            }
-            catch (Exception ex)
-            {
-                Logger.LogWarning(ex, "Error checking JavaScript services availability");
-                await Task.Delay(200);
-                attempt++;
-            }
-        }
-        
-        Logger.LogWarning("JavaScript services not available after {MaxAttempts} attempts", maxAttempts);
     }
 
     private async Task InitializeSignalR()
@@ -128,7 +89,7 @@
             // Get API base URL from JavaScript
             var apiBaseUrl = await JSRuntime.InvokeAsync<string>("getApiBaseUrl");
             
-            // Get access token from LocalStorage (same key as CustomAuthenticationStateProvider uses)
+            // Get access token from Blazor LocalStorage
             accessToken = await LocalStorage.GetItemAsStringAsync("authToken");
 
             if (string.IsNullOrEmpty(apiBaseUrl) || string.IsNullOrEmpty(accessToken))
@@ -154,46 +115,6 @@
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error initializing SignalR connection");
-        }
-    }
-
-    // Listen for authentication state changes to reconnect SignalR
-    protected override async Task OnInitializedAsync()
-    {
-        AuthStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
-    }
-
-    private async void OnAuthenticationStateChanged(Task<AuthenticationState> authStateTask)
-    {
-        var authState = await authStateTask;
-        var isAuthenticated = authState.User.Identity?.IsAuthenticated == true;
-        
-        if (isAuthenticated)
-        {
-            // User logged in, try to initialize SignalR
-            await InitializeSignalR();
-        }
-        else
-        {
-            // User logged out, disconnect SignalR
-            await DisconnectSignalR();
-        }
-        
-        StateHasChanged();
-    }
-
-    private async Task DisconnectSignalR()
-    {
-        try
-        {
-            await JSRuntime.InvokeVoidAsync("disconnectSignalR");
-            IsConnected = false;
-            ConnectionState = "Disconnected";
-            accessToken = null;
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error disconnecting SignalR");
         }
     }
 
@@ -294,7 +215,6 @@
     {
         try
         {
-            AuthStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
             await JSRuntime.InvokeVoidAsync("disconnectSignalR");
         }
         catch (Exception ex)
