@@ -27,8 +27,12 @@ class SignalRNotificationService {
     // Initialize SignalR connection
     async initialize(apiBaseUrl, accessToken) {
         try {
+            // Always disconnect first to ensure clean state
             if (this.connection) {
+                console.log('Disconnecting existing SignalR connection...');
                 await this.disconnect();
+                // Wait a bit to ensure clean disconnection
+                await new Promise(resolve => setTimeout(resolve, 100));
             }
 
             // Load SignalR library first
@@ -110,13 +114,22 @@ class SignalRNotificationService {
     async disconnect() {
         try {
             if (this.connection) {
-                await this.connection.stop();
+                console.log('Disconnecting SignalR connection...');
+                // Check if connection is in a state that can be stopped
+                if (this.connection.state === signalR.HubConnectionState.Connected || 
+                    this.connection.state === signalR.HubConnectionState.Connecting) {
+                    await this.connection.stop();
+                }
                 this.connection = null;
                 this.connectionState = 'Disconnected';
                 this.emit('connectionStateChanged', { state: 'Disconnected' });
+                console.log('SignalR connection disconnected successfully');
             }
         } catch (error) {
             console.error('Error disconnecting SignalR:', error);
+            // Force cleanup even if stop() fails
+            this.connection = null;
+            this.connectionState = 'Disconnected';
         }
     }
 
@@ -142,6 +155,16 @@ class SignalRNotificationService {
         } catch (error) {
             console.error(`Error unsubscribing from ${notificationType} notifications:`, error);
         }
+    }
+
+    // Check if connected
+    isConnected() {
+        return this.connection && this.connectionState === 'Connected';
+    }
+
+    // Get connection state
+    getConnectionState() {
+        return this.connectionState;
     }
 
     // Event handling

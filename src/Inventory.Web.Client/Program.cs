@@ -70,4 +70,7 @@ builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 // Register audit services
 builder.Services.AddScoped<IAuditService, AuditApiService>();
 
+// Register SignalR service
+builder.Services.AddScoped<SignalRService>();
+
 await builder.Build().RunAsync();

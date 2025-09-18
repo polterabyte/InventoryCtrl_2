@@ -20,7 +20,7 @@ public class SignalRConnection
     [StringLength(50)]
     public string? UserRole { get; set; }
     
-    [StringLength(100)]
+    [StringLength(500)]
     public string? UserAgent { get; set; }
     
     [StringLength(45)]

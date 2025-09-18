@@ -1,0 +1,124 @@
+@namespace Inventory.Web.Client.Components
+@using Inventory.Web.Client.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.JSInterop
+@inject SignalRService SignalRService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ILogger<SignalRInitializer> Logger
+@inject IJSRuntime JSRuntime
+
+@implements IAsyncDisposable
+
+<div style="display: none;">
+    @* Hidden component for SignalR initialization *@
+</div>
+
+@code {
+    private bool _isInitialized = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_isInitialized)
+        {
+            await InitializeSignalR();
+        }
+    }
+
+    private async Task InitializeSignalR()
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                // Get the access token from localStorage
+                var token = await GetAccessTokenAsync();
+                
+                if (!string.IsNullOrEmpty(token))
+                {
+                    // Check if token is expired
+                    if (await IsTokenExpiredAsync(token))
+                    {
+                        Logger.LogWarning("Access token is expired, skipping SignalR initialization");
+                        return;
+                    }
+
+                    Logger.LogInformation("Initializing SignalR for authenticated user");
+                    var success = await SignalRService.InitializeAsync(token);
+                    
+                    if (success)
+                    {
+                        Logger.LogInformation("SignalR initialized successfully");
+                        _isInitialized = true;
+                    }
+                    else
+                    {
+                        Logger.LogWarning("Failed to initialize SignalR");
+                    }
+                }
+                else
+                {
+                    Logger.LogWarning("No access token found for SignalR initialization");
+                }
+            }
+            else
+            {
+                Logger.LogInformation("User not authenticated, skipping SignalR initialization");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error initializing SignalR");
+        }
+    }
+
+    private async Task<string?> GetAccessTokenAsync()
+    {
+        try
+        {
+            // Try to get token from localStorage using JavaScript
+            var token = await JSRuntime.InvokeAsync<string?>("localStorage.getItem", "authToken");
+            return token;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error getting access token from localStorage");
+            return null;
+        }
+    }
+
+    private async Task<bool> IsTokenExpiredAsync(string token)
+    {
+        try
+        {
+            // Use JavaScript to decode JWT and check expiration
+            var isExpired = await JSRuntime.InvokeAsync<bool>("isJwtTokenExpired", token);
+            return isExpired;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error checking token expiration");
+            // If we can't check, assume it's valid to avoid blocking SignalR
+            return false;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            if (_isInitialized)
+            {
+                await SignalRService.DisconnectAsync();
+                Logger.LogInformation("SignalR service disconnected on component disposal");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error disposing SignalR service");
+        }
+    }
+}

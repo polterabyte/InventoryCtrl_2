@@ -31,6 +31,39 @@
     <script src="https://unpkg.com/@microsoft/signalr@latest/dist/browser/signalr.min.js"></script>
     <script src="_content/Inventory.Shared/js/api-config.js"></script>
     <script src="_content/Inventory.Shared/js/signalr-notifications.js"></script>
+    
+    <script>
+        // JWT Token validation function
+        window.isJwtTokenExpired = function(token) {
+            try {
+                if (!token) return true;
+                
+                // Split the token into parts
+                const parts = token.split('.');
+                if (parts.length !== 3) return true;
+                
+                // Decode the payload (second part)
+                const payload = parts[1];
+                // Add padding if needed
+                const paddedPayload = payload + '='.repeat((4 - payload.length % 4) % 4);
+                const decodedPayload = atob(paddedPayload);
+                const payloadObj = JSON.parse(decodedPayload);
+                
+                // Check if token has expiration claim
+                if (!payloadObj.exp) return true;
+                
+                // Get current time in seconds
+                const currentTime = Math.floor(Date.now() / 1000);
+                
+                // Check if token is expired (with 5 minute buffer)
+                const bufferTime = 5 * 60; // 5 minutes in seconds
+                return payloadObj.exp < (currentTime + bufferTime);
+            } catch (error) {
+                console.error('Error checking JWT token expiration:', error);
+                return true; // If we can't parse, assume expired
+            }
+        };
+    </script>
 </body>
 
 </html>
