@@ -210,7 +210,7 @@ public class WarehouseControllerTests : IDisposable
         var request = new CreateWarehouseDto 
         { 
             Name = "New Warehouse", 
-            Location = "New Location" 
+            Address = "New Location" 
         };
 
         // Act
@@ -225,7 +225,7 @@ public class WarehouseControllerTests : IDisposable
         response!.Success.Should().BeTrue();
         response.Data.Should().NotBeNull();
         response.Data!.Name.Should().Be("New Warehouse");
-        response.Data.Location.Should().Be("New Location");
+        response.Data.Address.Should().Be("New Location");
         response.Data.IsActive.Should().BeTrue();
         
         // Verify warehouse was created in database
@@ -241,7 +241,7 @@ public class WarehouseControllerTests : IDisposable
         var request = new CreateWarehouseDto 
         { 
             Name = "Main Warehouse", // Duplicate name
-            Location = "New Location" 
+            Address = "New Location" 
         };
 
         // Act
@@ -263,7 +263,7 @@ public class WarehouseControllerTests : IDisposable
         // Arrange
         await CleanupDatabaseAsync();
         _controller.ModelState.AddModelError("Name", "Name is required");
-        var request = new CreateWarehouseDto { Name = "", Location = "Test Location" };
+        var request = new CreateWarehouseDto { Name = "", Address = "Test Location" };
 
         // Act
         var result = await _controller.CreateWarehouse(request);
@@ -287,7 +287,7 @@ public class WarehouseControllerTests : IDisposable
         var request = new UpdateWarehouseDto 
         { 
             Name = "Updated Warehouse", 
-            Location = "Updated Location",
+            Address = "Updated Location",
             IsActive = true
         };
 
@@ -303,12 +303,12 @@ public class WarehouseControllerTests : IDisposable
         response!.Success.Should().BeTrue();
         response.Data.Should().NotBeNull();
         response.Data!.Name.Should().Be("Updated Warehouse");
-        response.Data.Location.Should().Be("Updated Location");
+        response.Data.Address.Should().Be("Updated Location");
         
         // Verify warehouse was updated in database
         var updatedWarehouse = await _context.Warehouses.FindAsync(warehouse.Id);
         updatedWarehouse!.Name.Should().Be("Updated Warehouse");
-        updatedWarehouse.Location.Should().Be("Updated Location");
+        updatedWarehouse.Address.Should().Be("Updated Location");
     }
 
     [Fact]
@@ -319,7 +319,7 @@ public class WarehouseControllerTests : IDisposable
         var request = new UpdateWarehouseDto 
         { 
             Name = "Updated Name", 
-            Location = "Updated Location",
+            Address = "Updated Location",
             IsActive = true
         };
 
@@ -345,7 +345,7 @@ public class WarehouseControllerTests : IDisposable
         var request = new UpdateWarehouseDto 
         { 
             Name = warehouses[1].Name, // Duplicate name
-            Location = "Updated Location",
+            Address = "Updated Location",
             IsActive = true
         };
 
@@ -478,14 +478,14 @@ public class WarehouseControllerTests : IDisposable
             new() 
             { 
                 Name = "Main Warehouse", 
-                Location = "Main Street 1", 
+                Address = "Main Street 1", 
                 IsActive = true, 
                 CreatedAt = DateTime.UtcNow 
             },
             new() 
             { 
                 Name = "Secondary Warehouse", 
-                Location = "Secondary Street 2", 
+                Address = "Secondary Street 2", 
                 IsActive = true, 
                 CreatedAt = DateTime.UtcNow 
             }

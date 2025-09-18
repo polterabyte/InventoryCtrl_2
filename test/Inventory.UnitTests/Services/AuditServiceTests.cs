@@ -115,11 +115,17 @@ public class AuditServiceTests : TestBase
         await SeedAuditLogs();
 
         // Act
-        var (logs, totalCount) = await _auditService.GetAuditLogsAsync(
+        var result = await _auditService.GetAuditLogsAsync(
             entityName: "Product",
             action: "CREATE",
+            userId: null,
+            startDate: null,
+            endDate: null,
+            severity: null,
             page: 1,
             pageSize: 10);
+        var logs = result.Logs;
+        var totalCount = result.TotalCount;
 
         // Assert
         Assert.Equal(2, totalCount);

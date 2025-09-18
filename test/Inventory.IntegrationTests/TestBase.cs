@@ -433,14 +433,14 @@ public abstract class IntegrationTestBase : IClassFixture<WebApplicationFactory<
         var mainWarehouse = new Warehouse
         {
             Name = "Main Warehouse",
-            Location = "Building A",
+            Address = "Building A",
             IsActive = true
         };
 
         var secondaryWarehouse = new Warehouse
         {
             Name = "Secondary Warehouse", 
-            Location = "Building B",
+            Address = "Building B",
             IsActive = true
         };
 

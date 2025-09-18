@@ -26,10 +26,21 @@
     }
     else
     {
-        <div class="connection-status disconnected">
-            <i class="fas fa-circle text-danger"></i>
-            <span>@(string.IsNullOrEmpty(accessToken) ? "Sign in to enable notifications" : "Real-time notifications offline")</span>
-        </div>
+        @if (ShowSignInBanner && string.IsNullOrEmpty(accessToken))
+        {
+            <div class="connection-status disconnected sign-in-banner">
+                <i class="fas fa-circle text-danger"></i>
+                <span>Sign in to enable notifications</span>
+                <button class="btn-close ms-auto" @onclick="DismissSignInBanner" title="Dismiss"></button>
+            </div>
+        }
+        else if (!string.IsNullOrEmpty(accessToken))
+        {
+            <div class="connection-status disconnected">
+                <i class="fas fa-circle text-danger"></i>
+                <span>Real-time notifications offline</span>
+            </div>
+        }
     }
 
     @if (ShowNotifications)
@@ -74,15 +85,21 @@
     private string ConnectionState { get; set; } = "Disconnected";
     private string? accessToken { get; set; }
     private DotNetObjectReference<RealTimeNotificationComponent>? dotNetRef;
+    private bool ShowSignInBanner { get; set; } = true;
+    private Timer? signInBannerTimer;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
+            Logger.LogInformation("RealTimeNotificationComponent first render");
             dotNetRef = DotNetObjectReference.Create(this);
             // Wait for JavaScript services to be available
             await WaitForJavaScriptServices();
             await InitializeSignalR();
+            
+            // Check authentication state and manage banner
+            await CheckAuthenticationStateAndManageBanner();
         }
     }
 
@@ -135,6 +152,14 @@
             {
                 Logger.LogWarning("API base URL or access token not available for SignalR connection. ApiBaseUrl: {ApiBaseUrl}, HasToken: {HasToken}", 
                     apiBaseUrl, !string.IsNullOrEmpty(accessToken));
+                
+                // If no token, ensure banner is shown
+                if (string.IsNullOrEmpty(accessToken))
+                {
+                    ShowSignInBanner = true;
+                    StartSignInBannerTimer();
+                }
+                
                 StateHasChanged(); // Update UI to show appropriate message
                 return;
             }
@@ -160,7 +185,11 @@
     // Listen for authentication state changes to reconnect SignalR
     protected override async Task OnInitializedAsync()
     {
+        Logger.LogInformation("RealTimeNotificationComponent initialized");
         AuthStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
+        
+        // Initial check of authentication state
+        await CheckAuthenticationStateAndManageBanner();
     }
 
     private async void OnAuthenticationStateChanged(Task<AuthenticationState> authStateTask)
@@ -170,13 +199,17 @@
         
         if (isAuthenticated)
         {
-            // User logged in, try to initialize SignalR
+            // User logged in, hide sign-in banner and try to initialize SignalR
+            ShowSignInBanner = false;
+            StopSignInBannerTimer();
             await InitializeSignalR();
         }
         else
         {
-            // User logged out, disconnect SignalR
+            // User logged out, disconnect SignalR and show sign-in banner
             await DisconnectSignalR();
+            ShowSignInBanner = true;
+            StartSignInBannerTimer();
         }
         
         StateHasChanged();
@@ -254,6 +287,73 @@
         StateHasChanged();
     }
 
+    private void DismissSignInBanner()
+    {
+        Logger.LogInformation("Sign-in banner dismissed by user");
+        ShowSignInBanner = false;
+        StopSignInBannerTimer();
+        StateHasChanged();
+    }
+
+    private void StartSignInBannerTimer()
+    {
+        StopSignInBannerTimer();
+        Logger.LogInformation("Starting sign-in banner auto-dismiss timer (10 seconds)");
+        signInBannerTimer = new Timer(async _ =>
+        {
+            await InvokeAsync(() =>
+            {
+                Logger.LogInformation("Sign-in banner auto-dismissed after 10 seconds");
+                ShowSignInBanner = false;
+                StateHasChanged();
+            });
+        }, null, TimeSpan.FromSeconds(10), Timeout.InfiniteTimeSpan);
+    }
+
+    private void StopSignInBannerTimer()
+    {
+        signInBannerTimer?.Dispose();
+        signInBannerTimer = null;
+    }
+
+    private async Task CheckAuthenticationStateAndManageBanner()
+    {
+        try
+        {
+            // Get current authentication state
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var isAuthenticated = authState.User.Identity?.IsAuthenticated == true;
+            
+            Logger.LogInformation("Authentication state check: IsAuthenticated={IsAuthenticated}, UserName={UserName}", 
+                isAuthenticated, authState.User.Identity?.Name);
+            
+            if (isAuthenticated)
+            {
+                // User is authenticated, hide banner
+                Logger.LogInformation("User is authenticated, hiding sign-in banner");
+                ShowSignInBanner = false;
+                StopSignInBannerTimer();
+            }
+            else
+            {
+                // User is not authenticated, show banner with timer
+                Logger.LogInformation("User is not authenticated, showing sign-in banner");
+                ShowSignInBanner = true;
+                StartSignInBannerTimer();
+            }
+            
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error checking authentication state");
+            // Default to showing banner if there's an error
+            ShowSignInBanner = true;
+            StartSignInBannerTimer();
+            StateHasChanged();
+        }
+    }
+
     private string GetNotificationClass(string type)
     {
         return type?.ToUpper() switch
@@ -295,6 +395,7 @@
         try
         {
             AuthStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
+            StopSignInBannerTimer();
             await JSRuntime.InvokeVoidAsync("disconnectSignalR");
         }
         catch (Exception ex)

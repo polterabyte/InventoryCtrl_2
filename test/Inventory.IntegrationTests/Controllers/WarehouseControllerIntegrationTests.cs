@@ -167,7 +167,7 @@ public class WarehouseControllerIntegrationTests : IntegrationTestBase
         var request = new CreateWarehouseDto 
         { 
             Name = "New Warehouse", 
-            Location = "New Location" 
+            Address = "New Location" 
         };
 
         // Act
@@ -179,7 +179,7 @@ public class WarehouseControllerIntegrationTests : IntegrationTestBase
         result!.Success.Should().BeTrue();
         result.Data.Should().NotBeNull();
         result.Data!.Name.Should().Be("New Warehouse");
-        result.Data.Location.Should().Be("New Location");
+        result.Data.Address.Should().Be("New Location");
         result.Data.IsActive.Should().BeTrue();
         
         // Verify warehouse was created in database
@@ -199,7 +199,7 @@ public class WarehouseControllerIntegrationTests : IntegrationTestBase
         var request = new CreateWarehouseDto 
         { 
             Name = "Main Warehouse", // Duplicate name
-            Location = "New Location" 
+            Address = "New Location" 
         };
 
         // Act
@@ -225,7 +225,7 @@ public class WarehouseControllerIntegrationTests : IntegrationTestBase
         var request = new UpdateWarehouseDto 
         { 
             Name = "Updated Warehouse", 
-            Location = "Updated Location",
+            Address = "Updated Location",
             IsActive = true
         };
 
@@ -238,13 +238,13 @@ public class WarehouseControllerIntegrationTests : IntegrationTestBase
         result!.Success.Should().BeTrue();
         result.Data.Should().NotBeNull();
         result.Data!.Name.Should().Be("Updated Warehouse");
-        result.Data.Location.Should().Be("Updated Location");
+        result.Data.Address.Should().Be("Updated Location");
         
         // Verify warehouse was updated in database
         Context.ChangeTracker.Clear(); // Clear EF Core change tracker
         var updatedWarehouse = await Context.Warehouses.FindAsync(warehouse.Id);
         updatedWarehouse!.Name.Should().Be("Updated Warehouse");
-        updatedWarehouse.Location.Should().Be("Updated Location");
+        updatedWarehouse.Address.Should().Be("Updated Location");
     }
 
     [Fact]
@@ -258,7 +258,7 @@ public class WarehouseControllerIntegrationTests : IntegrationTestBase
         var request = new UpdateWarehouseDto 
         { 
             Name = "Updated Name", 
-            Location = "Updated Location",
+            Address = "Updated Location",
             IsActive = true
         };
 
@@ -395,14 +395,14 @@ public class WarehouseControllerIntegrationTests : IntegrationTestBase
             new() 
             { 
                 Name = "Main Warehouse", 
-                Location = "Main Street 1", 
+                Address = "Main Street 1", 
                 IsActive = true, 
                 CreatedAt = DateTime.UtcNow 
             },
             new() 
             { 
                 Name = "Secondary Warehouse", 
-                Location = "Secondary Street 2", 
+                Address = "Secondary Street 2", 
                 IsActive = true, 
                 CreatedAt = DateTime.UtcNow 
             }
