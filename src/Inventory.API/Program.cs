@@ -14,6 +14,7 @@ using System.Threading.RateLimiting;
 using FluentValidation;
 using Inventory.API.Validators;
 using Inventory.API.Hubs;
+using Microsoft.AspNetCore.Components.WebAssembly.Server;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -309,6 +310,12 @@ if (app.Environment.IsDevelopment())
     }
 }
 
+// Enable static files serving for Blazor WebAssembly
+app.UseStaticFiles();
+
+// Enable Blazor WebAssembly files serving
+app.UseBlazorFrameworkFiles();
+
 // Skip HTTPS redirection in testing environment
 if (!app.Environment.IsEnvironment("Testing"))
 {
@@ -334,6 +341,9 @@ app.MapControllers();
 
 // Map SignalR hubs
 app.MapHub<NotificationHub>("/notificationHub");
+
+// Map Blazor WebAssembly fallback
+app.MapFallbackToFile("index.html");
 
 // Configure ports and log information
 var portConfigService = app.Services.GetRequiredService<IPortConfigurationService>();

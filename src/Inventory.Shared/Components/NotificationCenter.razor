@@ -1,5 +1,6 @@
 @using Inventory.Shared.Models
 @using Inventory.Shared.Services
+@using Microsoft.JSInterop
 @inject INotificationService NotificationService
 @inject IJSRuntime JSRuntime
 
@@ -161,23 +162,9 @@
     private async Task LoadNotifications()
     {
         // This would typically call the API to get notifications
-        // For now, we'll use the UI notification service state
-        var state = NotificationService.GetState();
-        notifications = state.Notifications.Select(n => new NotificationDto
-        {
-            Id = int.Parse(n.Id),
-            Title = n.Title,
-            Message = n.Message,
-            Type = n.Type.ToString(),
-            Category = "UI",
-            IsRead = false,
-            IsArchived = false,
-            CreatedAt = n.CreatedAt,
-            ActionUrl = null,
-            ActionText = null
-        }).ToList();
-        
-        unreadCount = notifications.Count(n => !n.IsRead);
+        // For now, we'll use empty list
+        notifications = new List<NotificationDto>();
+        unreadCount = 0;
     }
 
     private async Task MarkAsRead(int notificationId)
