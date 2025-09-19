@@ -302,12 +302,12 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    
-    // Initialize database (skip in testing environment)
-    if (!app.Environment.IsEnvironment("Testing"))
-    {
-        await Inventory.API.Models.DbInitializer.InitializeAsync(app.Services);
-    }
+}
+
+// Initialize database (skip in testing environment)
+if (!app.Environment.IsEnvironment("Testing"))
+{
+    await Inventory.API.Models.DbInitializer.InitializeAsync(app.Services);
 }
 
 // Enable static files serving for Blazor WebAssembly

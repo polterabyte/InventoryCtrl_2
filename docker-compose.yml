@@ -32,6 +32,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Production}
       - ASPNETCORE_URLS=${ASPNETCORE_URLS:-http://+:80}
+      - SERVER_IP=${SERVER_IP:-192.168.139.96}
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=${POSTGRES_DB:-inventorydb};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}
       - Jwt__Key=${JWT_KEY:-ThisIsAVeryLongSecretKeyThatIsAtLeast32CharactersLongForJWT}
       - Jwt__Issuer=${JWT_ISSUER:-InventoryServer}
@@ -96,6 +97,7 @@ services:
       - inventory-network
     restart: unless-stopped
     environment:
+      - SERVER_IP=${SERVER_IP:-192.168.139.96}
       - DOMAIN=${DOMAIN:-warehouse.cuby}
       - STAGING_DOMAIN=${STAGING_DOMAIN:-staging.warehouse.cuby}
       - TEST_DOMAIN=${TEST_DOMAIN:-test.warehouse.cuby}

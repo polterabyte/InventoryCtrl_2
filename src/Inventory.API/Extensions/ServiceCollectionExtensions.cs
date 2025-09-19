@@ -11,11 +11,21 @@ public static class ServiceCollectionExtensions
         {
             options.AddPolicy("AllowConfiguredOrigins", policy =>
             {
+                // Get server IP from environment or use default
+                var serverIp = Environment.GetEnvironmentVariable("SERVER_IP") ?? "192.168.139.96";
+                
                 policy.WithOrigins(
+                        // IP address origins
+                        $"https://{serverIp}",
+                        $"http://{serverIp}",
+                        // Localhost origins
                         "https://localhost:5001",  // Blazor WebAssembly client
                         "https://localhost:7001",  // Alternative client port
                         "http://localhost:5001",   // HTTP fallback
-                        "http://localhost:7001"    // HTTP fallback
+                        "http://localhost:7001",   // HTTP fallback
+                        // Additional mobile/development origins
+                        "http://10.0.2.2:8080",
+                        "capacitor://localhost"
                       )
                       .AllowAnyHeader()
                       .AllowAnyMethod()
