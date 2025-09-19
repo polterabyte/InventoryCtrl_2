@@ -89,7 +89,7 @@ public class ApiUrlService : IApiUrlService
         if (!string.IsNullOrEmpty(envConfig?.ApiUrl))
         {
             _logger.LogDebug("Using configured API URL: {ApiUrl}", envConfig.ApiUrl);
-            return envConfig.ApiUrl;
+            return EnsureAbsoluteUrl(envConfig.ApiUrl);
         }
 
         // 2. Fallback: динамическое определение для development
@@ -99,13 +99,16 @@ public class ApiUrlService : IApiUrlService
             if (!string.IsNullOrEmpty(dynamicUrl))
             {
                 _logger.LogDebug("Using dynamic API URL: {ApiUrl}", dynamicUrl);
-                return dynamicUrl;
+                return EnsureAbsoluteUrl(dynamicUrl);
             }
         }
 
-        // 3. Fallback: относительный путь
-        _logger.LogWarning("Using fallback relative API URL");
-        return _apiConfig.BaseUrl ?? "/api";
+        // 3. Fallback: попробовать построить абсолютный URL
+        var fallbackUrl = _apiConfig.BaseUrl ?? "/api";
+        var absoluteUrl = await EnsureAbsoluteUrlAsync(fallbackUrl);
+        
+        _logger.LogWarning("Using fallback API URL: {ApiUrl}", absoluteUrl);
+        return absoluteUrl;
     }
 
     private async Task<string> DetermineSignalRUrlAsync()
@@ -125,10 +128,22 @@ public class ApiUrlService : IApiUrlService
     private EnvironmentConfig? GetEnvironmentConfig()
     {
         var envName = _environment.Environment;
+        _logger.LogDebug("Current environment: {Environment}", envName);
+        
         if (_apiConfig.Environments.TryGetValue(envName, out var config))
         {
+            _logger.LogDebug("Found environment config for: {Environment}", envName);
             return config;
         }
+        
+        // Fallback: попробовать Development если текущее окружение не найдено
+        if (envName != "Development" && _apiConfig.Environments.TryGetValue("Development", out var devConfig))
+        {
+            _logger.LogWarning("Environment {Environment} not found, falling back to Development config", envName);
+            return devConfig;
+        }
+        
+        _logger.LogWarning("No environment config found for: {Environment}", envName);
         return null;
     }
 
@@ -158,7 +173,7 @@ public class ApiUrlService : IApiUrlService
     {
         try
         {
-            return await _jsRuntime.InvokeAsync<string>("eval", "window.location.origin");
+            return await _jsRuntime.InvokeAsync<string>("eval", new object[] { "window.location.origin" });
         }
         catch (Exception ex)
         {
@@ -171,7 +186,7 @@ public class ApiUrlService : IApiUrlService
     {
         try
         {
-            return await _jsRuntime.InvokeAsync<string>("eval", "window.location.port");
+            return await _jsRuntime.InvokeAsync<string>("eval", new object[] { "window.location.port" });
         }
         catch (Exception ex)
         {
@@ -188,6 +203,68 @@ public class ApiUrlService : IApiUrlService
             "5000" => _apiConfig.Fallback.DefaultPorts.Http.ToString(),  // HTTP development
             _ => _apiConfig.Fallback.DefaultPorts.Https.ToString()       // Default to HTTPS
         };
+    }
+
+    private string EnsureAbsoluteUrl(string url)
+    {
+        if (Uri.IsWellFormedUriString(url, UriKind.Absolute))
+        {
+            return url;
+        }
+
+        // Если URL уже абсолютный, возвращаем как есть
+        if (url.StartsWith("http://") || url.StartsWith("https://"))
+        {
+            return url;
+        }
+
+        // Если URL относительный, пытаемся построить абсолютный
+        if (url.StartsWith("/"))
+        {
+            // В Blazor WebAssembly мы не можем использовать HttpClient.BaseAddress
+            // Поэтому используем текущий origin
+            return url; // Вернем относительный URL, он будет обработан в WebBaseApiService
+        }
+
+        // Если URL не начинается с /, добавляем его
+        return "/" + url.TrimStart('/');
+    }
+
+    private async Task<string> EnsureAbsoluteUrlAsync(string url)
+    {
+        if (Uri.IsWellFormedUriString(url, UriKind.Absolute))
+        {
+            return url;
+        }
+
+        // Если URL уже абсолютный, возвращаем как есть
+        if (url.StartsWith("http://") || url.StartsWith("https://"))
+        {
+            return url;
+        }
+
+        // Если URL относительный, пытаемся построить абсолютный
+        if (url.StartsWith("/"))
+        {
+            try
+            {
+                var origin = await GetCurrentOriginAsync();
+                if (!string.IsNullOrEmpty(origin))
+                {
+                    return origin.TrimEnd('/') + url;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to get current origin for URL construction");
+            }
+            
+            // Если не удалось получить origin, возвращаем относительный URL
+            return url;
+        }
+
+        // Если URL не начинается с /, добавляем его
+        return "/" + url.TrimStart('/');
     }
 }
 

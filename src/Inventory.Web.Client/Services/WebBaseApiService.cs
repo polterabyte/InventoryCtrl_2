@@ -31,6 +31,22 @@ public abstract class WebBaseApiService(
             var apiUrl = await GetApiUrlAsync();
             var fullUrl = $"{apiUrl.TrimEnd('/')}{endpoint}";
             
+            // Валидация и исправление URL
+            if (!Uri.IsWellFormedUriString(fullUrl, UriKind.Absolute))
+            {
+                // Если URL относительный, делаем его абсолютным
+                if (fullUrl.StartsWith("/"))
+                {
+                    var baseAddress = HttpClient.BaseAddress?.ToString() ?? "http://localhost";
+                    var baseUri = new Uri(baseAddress);
+                    fullUrl = new Uri(baseUri, fullUrl).ToString();
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Invalid URL format: {fullUrl}");
+                }
+            }
+            
             Logger.LogDebug("Making GET request to {FullUrl}", fullUrl);
             var response = await HttpClient.GetAsync(fullUrl);
             
@@ -56,6 +72,22 @@ public abstract class WebBaseApiService(
         {
             var apiUrl = await GetApiUrlAsync();
             var fullUrl = $"{apiUrl.TrimEnd('/')}{endpoint}";
+            
+            // Валидация и исправление URL
+            if (!Uri.IsWellFormedUriString(fullUrl, UriKind.Absolute))
+            {
+                // Если URL относительный, делаем его абсолютным
+                if (fullUrl.StartsWith("/"))
+                {
+                    var baseAddress = HttpClient.BaseAddress?.ToString() ?? "http://localhost";
+                    var baseUri = new Uri(baseAddress);
+                    fullUrl = new Uri(baseUri, fullUrl).ToString();
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Invalid URL format: {fullUrl}");
+                }
+            }
             
             Logger.LogDebug("Making GET request to {FullUrl}", fullUrl);
             var response = await HttpClient.GetAsync(fullUrl);
@@ -83,6 +115,22 @@ public abstract class WebBaseApiService(
             var apiUrl = await GetApiUrlAsync();
             var fullUrl = $"{apiUrl.TrimEnd('/')}{endpoint}";
             
+            // Валидация и исправление URL
+            if (!Uri.IsWellFormedUriString(fullUrl, UriKind.Absolute))
+            {
+                // Если URL относительный, делаем его абсолютным
+                if (fullUrl.StartsWith("/"))
+                {
+                    var baseAddress = HttpClient.BaseAddress?.ToString() ?? "http://localhost";
+                    var baseUri = new Uri(baseAddress);
+                    fullUrl = new Uri(baseUri, fullUrl).ToString();
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Invalid URL format: {fullUrl}");
+                }
+            }
+            
             Logger.LogDebug("Making POST request to {FullUrl}", fullUrl);
             var response = await HttpClient.PostAsJsonAsync(fullUrl, data);
             
@@ -109,6 +157,22 @@ public abstract class WebBaseApiService(
             var apiUrl = await GetApiUrlAsync();
             var fullUrl = $"{apiUrl.TrimEnd('/')}{endpoint}";
             
+            // Валидация и исправление URL
+            if (!Uri.IsWellFormedUriString(fullUrl, UriKind.Absolute))
+            {
+                // Если URL относительный, делаем его абсолютным
+                if (fullUrl.StartsWith("/"))
+                {
+                    var baseAddress = HttpClient.BaseAddress?.ToString() ?? "http://localhost";
+                    var baseUri = new Uri(baseAddress);
+                    fullUrl = new Uri(baseUri, fullUrl).ToString();
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Invalid URL format: {fullUrl}");
+                }
+            }
+            
             Logger.LogDebug("Making PUT request to {FullUrl}", fullUrl);
             var response = await HttpClient.PutAsJsonAsync(fullUrl, data);
             
@@ -134,6 +198,22 @@ public abstract class WebBaseApiService(
         {
             var apiUrl = await GetApiUrlAsync();
             var fullUrl = $"{apiUrl.TrimEnd('/')}{endpoint}";
+            
+            // Валидация и исправление URL
+            if (!Uri.IsWellFormedUriString(fullUrl, UriKind.Absolute))
+            {
+                // Если URL относительный, делаем его абсолютным
+                if (fullUrl.StartsWith("/"))
+                {
+                    var baseAddress = HttpClient.BaseAddress?.ToString() ?? "http://localhost";
+                    var baseUri = new Uri(baseAddress);
+                    fullUrl = new Uri(baseUri, fullUrl).ToString();
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Invalid URL format: {fullUrl}");
+                }
+            }
             
             Logger.LogDebug("Making DELETE request to {FullUrl}", fullUrl);
             var response = await HttpClient.DeleteAsync(fullUrl);
