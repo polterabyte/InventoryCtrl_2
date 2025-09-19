@@ -6,34 +6,30 @@ using Microsoft.JSInterop;
 
 namespace Inventory.Web.Client.Services;
 
-public abstract class WebBaseApiService(HttpClient httpClient, IJSRuntime jsRuntime, ILogger logger)
+public abstract class WebBaseApiService(
+    HttpClient httpClient, 
+    IApiUrlService apiUrlService, 
+    IResilientApiService resilientApiService,
+    ILogger logger)
 {
     protected readonly HttpClient HttpClient = httpClient;
-    protected readonly IJSRuntime JSRuntime = jsRuntime;
+    protected readonly IApiUrlService ApiUrlService = apiUrlService;
+    protected readonly IResilientApiService ResilientApiService = resilientApiService;
     protected readonly ILogger Logger = logger;
 
     protected async Task<string> GetApiUrlAsync()
     {
-        try
-        {
-            var apiUrl = await JSRuntime.InvokeAsync<string>("getApiBaseUrl");
-            Logger.LogDebug("Using API URL: {ApiUrl}", apiUrl);
-            return apiUrl;
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Failed to get API URL from JavaScript, using fallback");
-            // Fallback to relative path
-            return "/api";
-        }
+        var apiUrl = await ApiUrlService.GetApiBaseUrlAsync();
+        Logger.LogDebug("Using API URL: {ApiUrl}", apiUrl);
+        return apiUrl;
     }
 
     protected async Task<ApiResponse<T>> GetAsync<T>(string endpoint)
     {
-        try
+        return await ResilientApiService.GetWithRetryAsync(async () =>
         {
             var apiUrl = await GetApiUrlAsync();
-            var fullUrl = $"{apiUrl}{endpoint}";
+            var fullUrl = $"{apiUrl.TrimEnd('/')}{endpoint}";
             
             Logger.LogDebug("Making GET request to {FullUrl}", fullUrl);
             var response = await HttpClient.GetAsync(fullUrl);
@@ -51,20 +47,15 @@ public abstract class WebBaseApiService(HttpClient httpClient, IJSRuntime jsRunt
                     fullUrl, response.StatusCode, errorMessage);
                 return new ApiResponse<T> { Success = false, ErrorMessage = errorMessage };
             }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Exception occurred during GET request to {Endpoint}", endpoint);
-            return new ApiResponse<T> { Success = false, ErrorMessage = ex.Message };
-        }
+        }, endpoint);
     }
 
     protected async Task<PagedApiResponse<T>> GetPagedAsync<T>(string endpoint)
     {
-        try
+        return await ResilientApiService.GetWithRetryAsync(async () =>
         {
             var apiUrl = await GetApiUrlAsync();
-            var fullUrl = $"{apiUrl}{endpoint}";
+            var fullUrl = $"{apiUrl.TrimEnd('/')}{endpoint}";
             
             Logger.LogDebug("Making GET request to {FullUrl}", fullUrl);
             var response = await HttpClient.GetAsync(fullUrl);
@@ -82,20 +73,15 @@ public abstract class WebBaseApiService(HttpClient httpClient, IJSRuntime jsRunt
                     fullUrl, response.StatusCode, errorMessage);
                 return new PagedApiResponse<T> { Success = false, ErrorMessage = errorMessage };
             }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Exception occurred during GET request to {Endpoint}", endpoint);
-            return new PagedApiResponse<T> { Success = false, ErrorMessage = ex.Message };
-        }
+        }, endpoint);
     }
 
     protected async Task<ApiResponse<T>> PostAsync<T>(string endpoint, object data)
     {
-        try
+        return await ResilientApiService.PostWithRetryAsync(async () =>
         {
             var apiUrl = await GetApiUrlAsync();
-            var fullUrl = $"{apiUrl}{endpoint}";
+            var fullUrl = $"{apiUrl.TrimEnd('/')}{endpoint}";
             
             Logger.LogDebug("Making POST request to {FullUrl}", fullUrl);
             var response = await HttpClient.PostAsJsonAsync(fullUrl, data);
@@ -113,20 +99,15 @@ public abstract class WebBaseApiService(HttpClient httpClient, IJSRuntime jsRunt
                     fullUrl, response.StatusCode, errorMessage);
                 return new ApiResponse<T> { Success = false, ErrorMessage = errorMessage };
             }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Exception occurred during POST request to {Endpoint}", endpoint);
-            return new ApiResponse<T> { Success = false, ErrorMessage = ex.Message };
-        }
+        }, endpoint);
     }
 
     protected async Task<ApiResponse<T>> PutAsync<T>(string endpoint, object data)
     {
-        try
+        return await ResilientApiService.PutWithRetryAsync(async () =>
         {
             var apiUrl = await GetApiUrlAsync();
-            var fullUrl = $"{apiUrl}{endpoint}";
+            var fullUrl = $"{apiUrl.TrimEnd('/')}{endpoint}";
             
             Logger.LogDebug("Making PUT request to {FullUrl}", fullUrl);
             var response = await HttpClient.PutAsJsonAsync(fullUrl, data);
@@ -144,20 +125,15 @@ public abstract class WebBaseApiService(HttpClient httpClient, IJSRuntime jsRunt
                     fullUrl, response.StatusCode, errorMessage);
                 return new ApiResponse<T> { Success = false, ErrorMessage = errorMessage };
             }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Exception occurred during PUT request to {Endpoint}", endpoint);
-            return new ApiResponse<T> { Success = false, ErrorMessage = ex.Message };
-        }
+        }, endpoint);
     }
 
     protected async Task<ApiResponse<bool>> DeleteAsync(string endpoint)
     {
-        try
+        return await ResilientApiService.ExecuteWithRetryAsync(async () =>
         {
             var apiUrl = await GetApiUrlAsync();
-            var fullUrl = $"{apiUrl}{endpoint}";
+            var fullUrl = $"{apiUrl.TrimEnd('/')}{endpoint}";
             
             Logger.LogDebug("Making DELETE request to {FullUrl}", fullUrl);
             var response = await HttpClient.DeleteAsync(fullUrl);
@@ -173,11 +149,6 @@ public abstract class WebBaseApiService(HttpClient httpClient, IJSRuntime jsRunt
             }
             
             return new ApiResponse<bool> { Success = response.IsSuccessStatusCode, Data = response.IsSuccessStatusCode };
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Exception occurred during DELETE request to {Endpoint}", endpoint);
-            return new ApiResponse<bool> { Success = false, ErrorMessage = ex.Message };
-        }
+        }, $"DELETE {endpoint}");
     }
 }

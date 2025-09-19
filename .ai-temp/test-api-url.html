@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API URL Test</title>
+</head>
+<body>
+    <h1>API URL Configuration Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        // Copy the getApiBaseUrl function from the actual file
+        window.getApiBaseUrl = function() {
+            const origin = window.location.origin;
+            const port = window.location.port;
+            
+            // Always use HTTPS for API connection (more secure and required for SignalR)
+            let baseUrl;
+            if (origin.startsWith('https://')) {
+                // If web client is HTTPS, use HTTPS for API
+                if (port) {
+                    baseUrl = origin.replace(port, '7000'); // Use HTTPS port 7000
+                } else {
+                    baseUrl = origin + ':7000';
+                }
+            } else {
+                // Even if web client is HTTP, use HTTPS for API (localhost development)
+                baseUrl = 'https://localhost:7000';
+            }
+            
+            // Add /api to the base URL since endpoints already include /api
+            return baseUrl + '/api';
+        };
+        
+        // Test the function
+        function testApiUrl() {
+            const results = document.getElementById('results');
+            const apiUrl = window.getApiBaseUrl();
+            
+            results.innerHTML = `
+                <h2>Test Results:</h2>
+                <p><strong>Current location:</strong> ${window.location.href}</p>
+                <p><strong>API Base URL:</strong> ${apiUrl}</p>
+                <p><strong>Login URL would be:</strong> ${apiUrl}/auth/login</p>
+                <p><strong>Expected:</strong> https://localhost:7000/api/auth/login</p>
+                <p><strong>Match:</strong> ${apiUrl === 'https://localhost:7000/api' ? '✅ YES' : '❌ NO'}</p>
+            `;
+        }
+        
+        // Run test when page loads
+        window.onload = testApiUrl;
+    </script>
+</body>
+</html>

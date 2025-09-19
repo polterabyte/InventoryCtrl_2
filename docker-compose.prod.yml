@@ -94,6 +94,7 @@ services:
       - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - ./nginx/ssl:/etc/nginx/ssl:ro
     depends_on:
       - inventory-api
@@ -101,6 +102,10 @@ services:
     networks:
       - inventory-network
     restart: unless-stopped
+    environment:
+      - DOMAIN=${DOMAIN:-warehouse.cuby}
+      - STAGING_DOMAIN=${STAGING_DOMAIN:-staging.warehouse.cuby}
+      - TEST_DOMAIN=${TEST_DOMAIN:-test.warehouse.cuby}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 30s

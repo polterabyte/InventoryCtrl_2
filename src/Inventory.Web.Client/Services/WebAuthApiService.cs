@@ -8,8 +8,8 @@ namespace Inventory.Web.Client.Services;
 
 public class WebAuthApiService : WebBaseApiService, IAuthService
 {
-    public WebAuthApiService(HttpClient httpClient, IJSRuntime jsRuntime, ILogger<WebAuthApiService> logger) 
-        : base(httpClient, jsRuntime, logger)
+    public WebAuthApiService(HttpClient httpClient, IApiUrlService apiUrlService, ILogger<WebAuthApiService> logger) 
+        : base(httpClient, apiUrlService, logger)
     {
     }
 

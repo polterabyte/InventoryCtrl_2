@@ -37,6 +37,11 @@ COPY src/Inventory.Web.Client/nginx.conf /etc/nginx/nginx.conf
 # Expose port 80
 EXPOSE 80
 
+# Domain configuration
+ENV DOMAIN=warehouse.cuby
+ENV STAGING_DOMAIN=staging.warehouse.cuby
+ENV TEST_DOMAIN=test.warehouse.cuby
+
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD curl -f http://localhost/ || exit 1

@@ -1,9 +1,10 @@
 @namespace Inventory.Web.Client.Components
 @using Inventory.Web.Client.Services
+@using Inventory.Shared.Interfaces
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.Web
 @using Microsoft.JSInterop
-@inject SignalRService SignalRService
+@inject ISignalRService SignalRService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject ILogger<SignalRInitializer> Logger
 @inject IJSRuntime JSRuntime
@@ -47,7 +48,9 @@
                     }
 
                     Logger.LogInformation("Initializing SignalR for authenticated user");
-                    var success = await SignalRService.InitializeAsync(token);
+                    // Create a dummy DotNetObjectReference for global SignalR initialization
+                    var dotNetRef = DotNetObjectReference.Create(this);
+                    var success = await SignalRService.InitializeConnectionAsync(token, dotNetRef);
                     
                     if (success)
                     {

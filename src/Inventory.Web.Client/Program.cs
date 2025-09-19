@@ -11,10 +11,25 @@ using Inventory.Shared.Services;
 using Microsoft.Extensions.Logging;
 using Inventory.Web.Client.Services;
 using Microsoft.AspNetCore.Components;
+using Inventory.Web.Client.Configuration;
+using Microsoft.Extensions.Configuration;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
+
+// Configure API settings
+builder.Services.Configure<ApiConfiguration>(
+    builder.Configuration.GetSection(ApiConfiguration.SectionName));
+
+// Register API URL service
+builder.Services.AddScoped<IApiUrlService, ApiUrlService>();
+
+// Register health check service
+builder.Services.AddScoped<IApiHealthService, ApiHealthService>();
+
+// Register resilient API service
+builder.Services.AddScoped<IResilientApiService, ResilientApiService>();
 
 // Configure API HTTP client - will be configured dynamically via JavaScript
 builder.Services.AddScoped<HttpClient>(sp =>
@@ -65,6 +80,6 @@ builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 builder.Services.AddScoped<IAuditService, AuditApiService>();
 
 // Register SignalR service
-builder.Services.AddScoped<SignalRService>();
+builder.Services.AddScoped<ISignalRService, SignalRService>();
 
 await builder.Build().RunAsync();

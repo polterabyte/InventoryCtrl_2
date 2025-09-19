@@ -1,62 +1,70 @@
 using Microsoft.JSInterop;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
+using Inventory.Shared.Interfaces;
 
 namespace Inventory.Web.Client.Services;
 
-public class SignalRService
+public class SignalRService : ISignalRService
 {
     private readonly IJSRuntime _jsRuntime;
+    private readonly IApiUrlService _apiUrlService;
     private readonly ILogger<SignalRService> _logger;
-    private readonly HttpClient _httpClient;
-    private bool _isInitialized = false;
 
-    public SignalRService(IJSRuntime jsRuntime, ILogger<SignalRService> logger, HttpClient httpClient)
+    public SignalRService(IJSRuntime jsRuntime, IApiUrlService apiUrlService, ILogger<SignalRService> logger)
     {
         _jsRuntime = jsRuntime;
+        _apiUrlService = apiUrlService;
         _logger = logger;
-        _httpClient = httpClient;
     }
 
-    public async Task<bool> InitializeAsync(string accessToken)
+    public async Task<bool> InitializeConnectionAsync<T>(string accessToken, DotNetObjectReference<T> dotNetRef) where T : class
     {
         try
         {
-            if (_isInitialized)
-            {
-                _logger.LogInformation("SignalR service already initialized");
-                return true;
-            }
-
-            // Get the API base URL from the HttpClient
-            var apiBaseUrl = _httpClient.BaseAddress?.ToString().TrimEnd('/');
-            if (string.IsNullOrEmpty(apiBaseUrl))
-            {
-                _logger.LogError("API base URL is not configured");
-                return false;
-            }
-
-            _logger.LogInformation("Initializing SignalR service with API URL: {ApiUrl}", apiBaseUrl);
-
-            // Call the JavaScript SignalR service
-            var result = await _jsRuntime.InvokeAsync<bool>("signalRNotificationService.initialize", apiBaseUrl, accessToken);
+            var signalRUrl = await _apiUrlService.GetSignalRUrlAsync();
+            _logger.LogDebug("Initializing SignalR connection with SignalR URL: {SignalRUrl}", signalRUrl);
             
-            if (result)
+            var success = await _jsRuntime.InvokeAsync<bool>("initializeSignalRConnection", signalRUrl, accessToken, dotNetRef);
+            
+            if (success)
             {
-                _isInitialized = true;
-                _logger.LogInformation("SignalR service initialized successfully");
+                _logger.LogInformation("SignalR connection initialized successfully");
             }
             else
             {
-                _logger.LogError("Failed to initialize SignalR service");
+                _logger.LogError("Failed to initialize SignalR connection");
             }
-
-            return result;
+            
+            return success;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error initializing SignalR service");
+            _logger.LogError(ex, "Error initializing SignalR connection");
             return false;
+        }
+    }
+
+    public async Task SubscribeToNotificationTypeAsync(string notificationType)
+    {
+        try
+        {
+            await _jsRuntime.InvokeVoidAsync("subscribeToNotificationType", notificationType);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error subscribing to notification type: {NotificationType}", notificationType);
+        }
+    }
+
+    public async Task UnsubscribeFromNotificationTypeAsync(string notificationType)
+    {
+        try
+        {
+            await _jsRuntime.InvokeVoidAsync("unsubscribeFromNotificationType", notificationType);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error unsubscribing from notification type: {NotificationType}", notificationType);
         }
     }
 
@@ -64,80 +72,11 @@ public class SignalRService
     {
         try
         {
-            if (_isInitialized)
-            {
-                await _jsRuntime.InvokeVoidAsync("signalRNotificationService.disconnect");
-                _isInitialized = false;
-                _logger.LogInformation("SignalR service disconnected");
-            }
+            await _jsRuntime.InvokeVoidAsync("disconnectSignalR");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error disconnecting SignalR service");
-        }
-    }
-
-    public async Task SubscribeToNotificationsAsync(string notificationType)
-    {
-        try
-        {
-            if (_isInitialized)
-            {
-                await _jsRuntime.InvokeVoidAsync("signalRNotificationService.subscribeToNotifications", notificationType);
-                _logger.LogInformation("Subscribed to {NotificationType} notifications", notificationType);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error subscribing to {NotificationType} notifications", notificationType);
-        }
-    }
-
-    public async Task UnsubscribeFromNotificationsAsync(string notificationType)
-    {
-        try
-        {
-            if (_isInitialized)
-            {
-                await _jsRuntime.InvokeVoidAsync("signalRNotificationService.unsubscribeFromNotifications", notificationType);
-                _logger.LogInformation("Unsubscribed from {NotificationType} notifications", notificationType);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error unsubscribing from {NotificationType} notifications", notificationType);
-        }
-    }
-
-    public async Task<bool> IsConnectedAsync()
-    {
-        try
-        {
-            if (!_isInitialized)
-                return false;
-
-            return await _jsRuntime.InvokeAsync<bool>("signalRNotificationService.isConnected");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error checking SignalR connection status");
-            return false;
-        }
-    }
-
-    public async Task<string> GetConnectionStateAsync()
-    {
-        try
-        {
-            if (!_isInitialized)
-                return "NotInitialized";
-
-            return await _jsRuntime.InvokeAsync<string>("signalRNotificationService.getConnectionState");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting SignalR connection state");
-            return "Error";
+            _logger.LogError(ex, "Error disconnecting SignalR");
         }
     }
 }
