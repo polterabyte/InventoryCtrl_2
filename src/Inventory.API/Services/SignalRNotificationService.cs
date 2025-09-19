@@ -159,31 +159,33 @@ public class SignalRNotificationService : ISignalRNotificationService
         }
     }
 
-    public async Task<int> GetConnectedUsersCountAsync()
+    public Task<int> GetConnectedUsersCountAsync()
     {
         try
         {
             // This is a simplified implementation
             // In a real scenario, you might want to track connections in a more sophisticated way
-            return NotificationHub.GetAllConnections().Count();
+            var count = NotificationHub.GetAllConnections().Count();
+            return Task.FromResult(count);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get connected users count");
-            return 0;
+            return Task.FromResult(0);
         }
     }
 
-    public async Task<bool> IsUserConnectedAsync(string userId)
+    public Task<bool> IsUserConnectedAsync(string userId)
     {
         try
         {
-            return NotificationHub.GetConnectionsForUser(userId).Any();
+            var isConnected = NotificationHub.GetConnectionsForUser(userId).Any();
+            return Task.FromResult(isConnected);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to check if user {UserId} is connected", userId);
-            return false;
+            return Task.FromResult(false);
         }
     }
 }

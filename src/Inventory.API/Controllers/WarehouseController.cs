@@ -169,8 +169,8 @@ public class WarehouseController(AppDbContext context, ILogger<WarehouseControll
             {
                 Name = request.Name,
                 Description = request.Description,
-                Address = request.Address,
-                ContactInfo = request.ContactInfo,
+                Address = request.Address ?? string.Empty,
+                ContactInfo = request.ContactInfo ?? string.Empty,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
             };
@@ -250,8 +250,8 @@ public class WarehouseController(AppDbContext context, ILogger<WarehouseControll
 
             warehouse.Name = request.Name;
             warehouse.Description = request.Description;
-            warehouse.Address = request.Address;
-            warehouse.ContactInfo = request.ContactInfo;
+            warehouse.Address = request.Address ?? string.Empty;
+            warehouse.ContactInfo = request.ContactInfo ?? string.Empty;
             warehouse.IsActive = request.IsActive;
             warehouse.UpdatedAt = DateTime.UtcNow;
 

@@ -154,8 +154,8 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// CORS with port configuration
-builder.Services.AddCorsWithPorts();
+// CORS configuration
+builder.Services.AddCorsConfiguration();
 
 // Add custom services
 builder.Services.AddScoped<ILoggingService, LoggingService>();
