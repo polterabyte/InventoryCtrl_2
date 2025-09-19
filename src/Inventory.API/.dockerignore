@@ -1,0 +1,22 @@
+# Build artifacts
+bin/
+obj/
+
+# Logs
+logs/
+*.log
+
+# Test results
+TestResults/
+
+# IDE files
+.vs/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp

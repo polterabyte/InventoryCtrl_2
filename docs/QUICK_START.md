@@ -25,7 +25,7 @@
 ## 🔧 Ручной запуск
 
 ### 1. Установка требований
-- **.NET 9.0 SDK** — скачать с [dotnet.microsoft.com](https://dotnet.microsoft.com/download)
+- **.NET 8.0 SDK** — скачать с [dotnet.microsoft.com](https://dotnet.microsoft.com/download)
 - **PostgreSQL** — установить и запустить сервис
 
 ### 2. Настройка базы данных

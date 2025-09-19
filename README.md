@@ -1,11 +1,11 @@
 # Inventory Control System v2
 
-![.NET](https://img.shields.io/badge/.NET-9.0-blue)
+![.NET](https://img.shields.io/badge/.NET-8.0-blue)
 ![Blazor](https://img.shields.io/badge/Blazor-WebAssembly-purple)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-blue)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-Современная система управления инвентарем, построенная на ASP.NET Core 9.0 и Blazor WebAssembly с поддержкой реального времени через SignalR.
+Современная система управления инвентарем, построенная на ASP.NET Core 8.0 и Blazor WebAssembly с поддержкой реального времени через SignalR.
 
 ## 🚀 Основные возможности
 
@@ -47,7 +47,7 @@ InventoryCtrl_2/
 ### Технологический стек
 
 **Backend:**
-- ASP.NET Core 9.0
+- ASP.NET Core 8.0
 - Entity Framework Core с PostgreSQL
 - ASP.NET Core Identity + JWT
 - SignalR для уведомлений
@@ -94,7 +94,7 @@ InventoryCtrl_2/
 ### Ручной запуск
 
 1. **Установка требований:**
-   - .NET 9.0 SDK
+   - .NET 8.0 SDK
    - PostgreSQL 14+
 
 2. **Настройка базы данных:**
@@ -123,6 +123,27 @@ InventoryCtrl_2/
 - **API документация**: https://localhost:7000/swagger
 - **Тестовый пользователь**: admin / Admin123!
 
+## 🐳 Docker развертывание
+
+### Быстрый запуск с Docker
+```powershell
+# Полное развертывание с Docker
+.\quick-deploy.ps1
+
+# Очистка и перезапуск
+.\quick-deploy.ps1 -Clean
+
+# Production развертывание с SSL
+.\quick-deploy.ps1 -Environment production -GenerateSSL
+```
+
+**Docker URLs:**
+- **Web приложение**: http://localhost
+- **API**: http://localhost:5000
+- **API Swagger**: http://localhost:5000/swagger
+
+Подробная документация: [DOCKER_QUICK_START.md](DOCKER_QUICK_START.md)
+
 ## 🧪 Тестирование
 
 ```powershell
@@ -145,9 +166,11 @@ InventoryCtrl_2/
 - **[Быстрый старт](docs/QUICK_START.md)** — детальное руководство по запуску
 - **[Разработка](docs/DEVELOPMENT.md)** — руководство для разработчиков
 - **[Тестирование](docs/TESTING.md)** — стратегия и практики тестирования
+- **[Устранение неполадок](docs/TROUBLESHOOTING.md)** — решение распространенных проблем
 - **[Уведомления](docs/NOTIFICATION_SYSTEM.md)** — система уведомлений в реальном времени
 - **[Roadmap](docs/DEVELOPMENT_ROADMAP.md)** — план развития системы уведомлений
 - **[GitHub Issues](docs/GITHUB_ISSUES.md)** — детальные задачи для разработки
+- **[Changelog](CHANGELOG.md)** — история изменений проекта
 
 ## 🔧 Конфигурация
 
@@ -210,4 +233,4 @@ InventoryCtrl_2/
 
 ---
 
-**Создано с ❤️ на .NET 9.0 и Blazor WebAssembly**
+**Создано с ❤️ на .NET 8.0 и Blazor WebAssembly**
