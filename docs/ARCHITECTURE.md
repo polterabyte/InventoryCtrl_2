@@ -253,7 +253,7 @@ public class NotificationHub : Hub
 ### Dependency Injection
 ```csharp
 // Регистрация сервисов через Extension Methods
-builder.Services.AddPortConfiguration();
+builder.Services.AddCorsConfiguration();
 builder.Services.AddCorsWithPorts();
 builder.Services.AddAuditServices();
 builder.Services.AddNotificationServices();

@@ -45,7 +45,7 @@ test/Inventory.UnitTests/
 - **AuditService Tests** — тестирование системы аудита
 - **NotificationService Tests** — тестирование системы уведомлений
 - **AuthService Tests** — тестирование JWT и refresh токенов
-- **PortConfigurationService Tests** — тестирование конфигурации портов
+- **WebBaseApiService Tests** — тестирование Web-специфичных API сервисов
 
 ### Integration Tests (29+ тестов)
 **Назначение**: Тестирование API endpoints с реальной PostgreSQL БД

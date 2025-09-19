@@ -59,7 +59,7 @@ public class WebAuthApiService : WebBaseApiService, IAuthService
 
     public async Task<AuthResult> RefreshTokenAsync(string refreshToken)
     {
-        var request = new RefreshTokenRequest { RefreshToken = refreshToken };
+        var request = new RefreshRequest { Username = "", RefreshToken = refreshToken };
         var response = await PostAsync<LoginResult>(ApiEndpoints.Refresh, request);
         
         if (response.Success && response.Data != null && !string.IsNullOrEmpty(response.Data.Token))
@@ -80,9 +80,35 @@ public class WebAuthApiService : WebBaseApiService, IAuthService
         };
     }
 
-    public async Task<bool> LogoutAsync()
+    public async Task<bool> LogoutAsync(string token)
     {
         var response = await PostAsync<object>(ApiEndpoints.Logout, new { });
         return response.Success;
+    }
+
+    public async Task<bool> ValidateTokenAsync(string token)
+    {
+        try
+        {
+            var response = await GetAsync<object>(ApiEndpoints.ValidateToken);
+            return response.Success;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public async Task<UserInfo?> GetUserInfoAsync(string token)
+    {
+        try
+        {
+            var response = await GetAsync<UserInfo>(ApiEndpoints.UserInfo);
+            return response.Success ? response.Data : null;
+        }
+        catch
+        {
+            return null;
+        }
     }
 }

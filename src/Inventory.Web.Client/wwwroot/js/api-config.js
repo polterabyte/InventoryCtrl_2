@@ -4,40 +4,20 @@ console.log('Loading API configuration...');
 // Define getApiBaseUrl function immediately
 window.getApiBaseUrl = function() {
     const origin = window.location.origin;
-    const hostname = window.location.hostname;
     const port = window.location.port;
-    const protocol = window.location.protocol;
     
-    console.log('🔧 API Config Debug:', { 
-        origin, 
-        hostname, 
-        port, 
-        protocol,
-        fullUrl: window.location.href 
-    });
-    
-    let apiUrl;
-    
-    // Check if we're running through nginx proxy (no port in URL or port 80/443)
-    const isNginxProxy = !port || port === '80' || port === '443';
-    
-    if (isNginxProxy) {
-        // Use relative path through nginx proxy
-        apiUrl = origin + '/api';
-        console.log('🔄 Using nginx proxy API:', apiUrl);
-    } else if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        // For localhost development, use localhost:5000
-        apiUrl = 'http://localhost:5000';
-        console.log('🏠 Using localhost API:', apiUrl);
+    // Always use HTTPS for API connection (more secure and required for SignalR)
+    if (origin.startsWith('https://')) {
+        // If web client is HTTPS, use HTTPS for API
+        if (port) {
+            return origin.replace(port, '7000'); // Use HTTPS port 7000
+        } else {
+            return origin + ':7000';
+        }
     } else {
-        // For external IPs, always use the same origin with /api
-        // This ensures external access works through nginx
-        apiUrl = origin + '/api';
-        console.log('🌐 Using external nginx proxy API:', apiUrl);
+        // Even if web client is HTTP, use HTTPS for API (localhost development)
+        return 'https://localhost:7000';
     }
-    
-    console.log('✅ Final API URL:', apiUrl);
-    return apiUrl;
 };
 
 // Define other SignalR functions

@@ -75,7 +75,7 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // Add port configuration service
-builder.Services.AddPortConfiguration();
+builder.Services.AddCorsConfiguration();
 
 // Database
 builder.Services.AddDbContext<Inventory.API.Models.AppDbContext>(options =>
@@ -329,7 +329,7 @@ app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseMiddleware<AuditMiddleware>();
 
 // Configure CORS with port configuration
-app.ConfigureCorsWithPorts();
+app.ConfigureCors();
 
 // Add rate limiting
 app.UseRateLimiter();

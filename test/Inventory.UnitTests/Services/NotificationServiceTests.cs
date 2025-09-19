@@ -25,7 +25,7 @@ public class NotificationServiceTests : IDisposable
         _context = new AppDbContext(options);
         _loggerMock = new Mock<ILogger<NotificationService>>();
         // _ruleEngineMock = new Mock<INotificationRuleEngine>(); // Commented out - interface not found
-        _service = new NotificationService(_context, _loggerMock.Object, null, null); // Pass null for rule engine and signalR service
+        _service = new NotificationService(_context, _loggerMock.Object, null!, null!); // Pass null for rule engine and signalR service
     }
 
     [Fact]

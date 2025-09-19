@@ -17,7 +17,7 @@ namespace Inventory.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class AuthController(UserManager<Inventory.API.Models.User> userManager, IConfiguration config, ILogger<AuthController> logger, IPortConfigurationService portService, RefreshTokenService refreshTokenService, AuditService auditService) : ControllerBase
+    public class AuthController(UserManager<Inventory.API.Models.User> userManager, IConfiguration config, ILogger<AuthController> logger, RefreshTokenService refreshTokenService, AuditService auditService) : ControllerBase
     {
         private readonly IConfiguration _config = config;
         private readonly ILogger<AuthController> _logger = logger;
@@ -324,34 +324,6 @@ namespace Inventory.API.Controllers
             });
         }
 
-        [HttpGet("config/ports")]
-        public IActionResult GetPortConfiguration()
-        {
-            try
-            {
-                var config = portService.LoadPortConfiguration();
-                return Ok(new
-                {
-                    api = new
-                    {
-                        http = config.ApiHttp,
-                        https = config.ApiHttps,
-                        urls = $"https://localhost:{config.ApiHttps};http://localhost:{config.ApiHttp}"
-                    },
-                    web = new
-                    {
-                        http = config.WebHttp,
-                        https = config.WebHttps,
-                        urls = $"https://localhost:{config.WebHttps};http://localhost:{config.WebHttp}"
-                    }
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to get port configuration");
-                return StatusCode(500, "Failed to get port configuration");
-            }
-        }
 
         private string GetClientIpAddress()
         {

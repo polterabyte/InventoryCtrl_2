@@ -9,6 +9,8 @@ public static class ApiEndpoints
     public const string Register = $"{BaseUrl}/auth/register";
     public const string Refresh = $"{BaseUrl}/auth/refresh";
     public const string Logout = $"{BaseUrl}/auth/logout";
+    public const string ValidateToken = $"{BaseUrl}/auth/validate";
+    public const string UserInfo = $"{BaseUrl}/auth/userinfo";
     
     // Product endpoints
     public const string Products = $"{BaseUrl}/products";

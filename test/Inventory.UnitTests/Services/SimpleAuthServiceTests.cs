@@ -36,9 +36,6 @@ public class SimpleAuthServiceTests
     public void AuthController_ShouldBeCreated()
     {
         // Arrange
-        var mockPortService = new Mock<IPortConfigurationService>();
-
-        // Act
         var testDatabaseName = $"inventory_unit_test_{Guid.NewGuid():N}_{DateTime.UtcNow:yyyyMMddHHmmss}";
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(testDatabaseName)
@@ -53,7 +50,6 @@ public class SimpleAuthServiceTests
             _userManagerMock.Object,
             _configMock.Object,
             _loggerMock.Object,
-            mockPortService.Object,
             mockRefreshTokenService.Object,
             mockAuditService.Object);
 
