@@ -18,8 +18,8 @@ $global:ClientProcess = $null
 
 Write-Host " Запуск полного комплекса Inventory Control System v2" -ForegroundColor Green
 Write-Host "=======================================================" -ForegroundColor Green
-Write-Host " API Server: https://localhost:$($APIPort + 1) | http://localhost:$APIPort" -ForegroundColor Cyan
-Write-Host " Web Client: https://localhost:$($ClientPort + 1) | http://localhost:$ClientPort" -ForegroundColor Cyan
+Write-Host " API Server: https://localhost:7000 | http://localhost:$APIPort" -ForegroundColor Cyan
+Write-Host " Web Client: https://localhost:7001 | http://localhost:$ClientPort" -ForegroundColor Cyan
 Write-Host ""
 
 # Функция очистки процессов при завершении
@@ -114,11 +114,11 @@ function Start-ClientApp {
         if ($OpenBrowser) {
             Write-Host " Открытие браузера..." -ForegroundColor Green
             try {
-                Start-Process "https://localhost:$($ClientPort + 1)"
+                Start-Process "https://localhost:7001"
                 Write-Host " Браузер открыт" -ForegroundColor Green
             } catch {
                 Write-Host " Не удалось открыть браузер автоматически" -ForegroundColor Yellow
-                Write-Host "   Откройте вручную: https://localhost:$($ClientPort + 1)" -ForegroundColor Cyan
+                Write-Host "   Откройте вручную: https://localhost:7001" -ForegroundColor Cyan
             }
         }
         
@@ -192,8 +192,8 @@ try {
     }
     Write-Host ""
     Write-Host " Для остановки всех процессов нажмите Ctrl+C" -ForegroundColor Red
-    Write-Host " Web Client: https://localhost:$($ClientPort + 1)" -ForegroundColor Cyan
-    Write-Host " API Server: https://localhost:$($APIPort + 1)" -ForegroundColor Cyan
+    Write-Host " Web Client: https://localhost:7001" -ForegroundColor Cyan
+    Write-Host " API Server: https://localhost:7000" -ForegroundColor Cyan
     Write-Host ""
     
     # Ожидание завершения

@@ -1,0 +1,181 @@
+/* ========================================
+   BUTTON COMPONENTS
+   ======================================== */
+
+/* Base Button */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-2) var(--spacing-4);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: 1;
+  text-align: center;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  user-select: none;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+/* Button Variants (Ultra Calm) */
+.btn-primary {
+  color: var(--color-text-primary);
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+}
+
+.btn-secondary {
+  color: var(--color-text-primary);
+  background-color: var(--color-secondary);
+  border-color: var(--color-secondary);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--color-secondary-dark);
+  border-color: var(--color-secondary-dark);
+}
+
+.btn-outline {
+  color: var(--color-primary);
+  background-color: transparent;
+  border-color: var(--color-primary);
+}
+
+.btn-outline:hover:not(:disabled) {
+  color: var(--color-text-primary);
+  background-color: var(--color-primary);
+}
+
+/* Outline Button Variants */
+.btn-outline-primary {
+  color: var(--color-primary);
+  background-color: transparent;
+  border-color: var(--color-primary);
+}
+
+.btn-outline-primary:hover:not(:disabled) {
+  color: var(--color-text-primary);
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.btn-outline-success {
+  color: var(--color-success);
+  background-color: transparent;
+  border-color: var(--color-success);
+}
+
+.btn-outline-success:hover:not(:disabled) {
+  color: var(--color-text-primary);
+  background-color: var(--color-success);
+  border-color: var(--color-success);
+}
+
+.btn-outline-warning {
+  color: var(--color-warning);
+  background-color: transparent;
+  border-color: var(--color-warning);
+}
+
+.btn-outline-warning:hover:not(:disabled) {
+  color: var(--color-text-primary);
+  background-color: var(--color-warning);
+  border-color: var(--color-warning);
+}
+
+.btn-outline-danger {
+  color: var(--color-error);
+  background-color: transparent;
+  border-color: var(--color-error);
+}
+
+.btn-outline-danger:hover:not(:disabled) {
+  color: var(--color-text-primary);
+  background-color: var(--color-error);
+  border-color: var(--color-error);
+}
+
+.btn-outline-info {
+  color: var(--color-info);
+  background-color: transparent;
+  border-color: var(--color-info);
+}
+
+.btn-outline-info:hover:not(:disabled) {
+  color: var(--color-text-primary);
+  background-color: var(--color-info);
+  border-color: var(--color-info);
+}
+
+/* Button Sizes */
+.btn-sm {
+  padding: var(--spacing-1) var(--spacing-3);
+  font-size: var(--font-size-xs);
+}
+
+.btn-lg {
+  padding: var(--spacing-3) var(--spacing-6);
+  font-size: var(--font-size-lg);
+}
+
+/* Button States (Ultra Calm) */
+.btn-success {
+  color: var(--color-text-primary);
+  background-color: var(--color-success);
+  border-color: var(--color-success);
+}
+
+.btn-success:hover:not(:disabled) {
+  background-color: var(--color-success-dark);
+  border-color: var(--color-success-dark);
+}
+
+.btn-error {
+  color: var(--color-text-primary);
+  background-color: var(--color-error);
+  border-color: var(--color-error);
+}
+
+.btn-error:hover:not(:disabled) {
+  background-color: var(--color-error-dark);
+  border-color: var(--color-error-dark);
+}
+
+.btn-warning {
+  color: var(--color-text-primary);
+  background-color: var(--color-warning);
+  border-color: var(--color-warning);
+}
+
+.btn-warning:hover:not(:disabled) {
+  background-color: var(--color-warning-dark);
+  border-color: var(--color-warning-dark);
+}
+
+.btn-info {
+  color: var(--color-text-primary);
+  background-color: var(--color-info);
+  border-color: var(--color-info);
+}
+
+.btn-info:hover:not(:disabled) {
+  background-color: var(--color-info-dark);
+  border-color: var(--color-info-dark);
+}

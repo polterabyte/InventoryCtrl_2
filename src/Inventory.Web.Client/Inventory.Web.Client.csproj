@@ -19,5 +19,14 @@
     <ProjectReference Include="..\Inventory.UI\Inventory.UI.csproj" />
   </ItemGroup>
 
+  <!-- Автоматическое копирование статических ресурсов из Inventory.UI -->
+  <Target Name="CopyStaticAssets" BeforeTargets="Build">
+    <ItemGroup>
+      <UIStaticFiles Include="..\Inventory.UI\wwwroot\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(UIStaticFiles)" 
+          DestinationFiles="@(UIStaticFiles->'wwwroot\%(RecursiveDir)%(Filename)%(Extension)')" 
+          SkipUnchangedFiles="true" />
+  </Target>
 
 </Project>

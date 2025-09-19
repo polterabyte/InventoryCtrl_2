@@ -55,6 +55,31 @@ docker container prune -f
 
 ## 🔧 .NET проблемы
 
+### Проблема: DirectoryNotFoundException для wwwroot в Inventory.Shared
+**Симптомы:**
+```
+Unhandled exception. System.IO.DirectoryNotFoundException: C:\rec\prg\repo\InventoryCtrl_2\src\Inventory.Shared\wwwroot\
+   at Microsoft.Extensions.FileProviders.PhysicalFileProvider..ctor(String root, ExclusionFilters filters)
+   at Microsoft.AspNetCore.Hosting.StaticWebAssets.StaticWebAssetsLoader.<>c.<UseStaticWebAssetsCore>b__1_0(String contentRoot)
+```
+
+**Причина:**
+- Проект `Inventory.Shared` использует SDK `Microsoft.NET.Sdk.Razor`
+- Этот SDK автоматически генерирует Static Web Assets из папки `wwwroot`
+- ASP.NET Core ожидает найти эту папку при запуске
+
+**Решение:**
+```powershell
+# Создать пустую папку wwwroot в Inventory.Shared
+mkdir "src\Inventory.Shared\wwwroot"
+```
+
+**Альтернативные решения:**
+1. **Изменить SDK** в `Inventory.Shared.csproj` с `Microsoft.NET.Sdk.Razor` на `Microsoft.NET.Sdk` (если не нужны Razor компоненты)
+2. **Настроить исключение** Static Web Assets в `.csproj` файле
+
+**Примечание:** Пустая папка `wwwroot` в `Inventory.Shared` - это стандартная практика для проектов с Razor SDK. Все статические файлы должны находиться в `Inventory.UI/wwwroot/`.
+
 ### Проблема: Ошибки восстановления пакетов
 **Симптомы:**
 ```
@@ -142,14 +167,53 @@ psql -h localhost -U postgres -d postgres
 ### Проблема: Ошибки подключения к БД
 **Симптомы:**
 ```
-Connection refused to database
+Npgsql.NpgsqlException (0x80004005): Failed to connect to 127.0.0.1:5432
+ ---> System.Net.Sockets.SocketException (10061): Подключение не установлено, т.к. конечный компьютер отверг запрос на подключение.
 ```
 
 **Решение:**
-1. Проверьте строку подключения в `appsettings.json`
-2. Убедитесь, что PostgreSQL запущен
-3. Проверьте настройки firewall
-4. Проверьте правильность пароля
+1. **Запустить PostgreSQL через Docker:**
+   ```powershell
+   # Запустить базу данных
+   docker-compose up -d postgres
+   
+   # Или полный запуск системы
+   .\quick-deploy.ps1
+   ```
+
+2. **Проверить статус PostgreSQL:**
+   ```powershell
+   # Проверить контейнеры
+   docker ps | findstr postgres
+   
+   # Проверить логи
+   docker-compose logs postgres
+   ```
+
+3. **Проверить строку подключения** в `appsettings.json`:
+   ```json
+   "ConnectionStrings": {
+     "DefaultConnection": "Host=localhost;Port=5432;Database=inventorydb;Username=postgres;Password=postgres"
+   }
+   ```
+
+4. **Проверить порт 5432:**
+   ```powershell
+   # Проверить занятые порты
+   netstat -ano | findstr :5432
+   
+   # Проверить подключение
+   Test-NetConnection localhost -Port 5432
+   ```
+
+5. **Если PostgreSQL установлен локально:**
+   ```powershell
+   # Проверить службу
+   Get-Service postgresql*
+   
+   # Запустить службу
+   Start-Service postgresql-x64-14
+   ```
 
 ## 🌐 Сетевые проблемы
 
