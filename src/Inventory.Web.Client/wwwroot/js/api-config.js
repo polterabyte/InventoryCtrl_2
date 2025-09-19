@@ -1,20 +1,23 @@
 // API Configuration for SignalR
 console.log('Loading API configuration...');
 
-// Simplified API URL function - now delegates to C# service
+// Define getApiBaseUrl function immediately
 window.getApiBaseUrl = function() {
-    // This function is now primarily used as a fallback
-    // The main logic is handled by ApiUrlService in C#
     const origin = window.location.origin;
     const port = window.location.port;
     
-    // Simple fallback logic for development
-    if (origin.includes('localhost')) {
-        return origin.replace(port || '5001', '7000');
+    // Always use HTTPS for API connection (more secure and required for SignalR)
+    if (origin.startsWith('https://')) {
+        // If web client is HTTPS, use HTTPS for API
+        if (port) {
+            return origin.replace(port, '7000'); // Use HTTPS port 7000
+        } else {
+            return origin + ':7000';
+        }
+    } else {
+        // Even if web client is HTTP, use HTTPS for API (localhost development)
+        return 'https://localhost:7000';
     }
-    
-    // For production, return relative path (will be handled by C# service)
-    return '/api';
 };
 
 // Define other SignalR functions

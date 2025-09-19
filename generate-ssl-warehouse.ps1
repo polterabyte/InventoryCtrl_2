@@ -51,7 +51,7 @@ if ($UseLetsEncrypt) {
 openssl req -x509 -newkey rsa:4096 -keyout $keyFile -out $certFile -days 365 -nodes -subj "/C=US/ST=State/L=City/O=Organization/OU=OrgUnit/CN=$domain"
 "@
         
-        Write-Host "Run this command to generate certificate for $domain:" -ForegroundColor Cyan
+        Write-Host "Run this command to generate certificate for ${domain}:" -ForegroundColor Cyan
         Write-Host $opensslCmd -ForegroundColor White
         
         # Note: This would need to be run manually or with proper OpenSSL installation
