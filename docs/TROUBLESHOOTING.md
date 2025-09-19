@@ -2,6 +2,84 @@
 
 Руководство по решению распространенных проблем при работе с Inventory Control System.
 
+## 🌐 Nginx проблемы
+
+### Проблема: nginx контейнер не запускается
+**Симптомы:**
+```
+nginx: [emerg] "proxy_pass" cannot have URI part in location given by regular expression, or inside named location, or inside "if" statement, or inside "limit_except" block
+```
+
+**Решение:**
+1. Проверьте конфигурацию nginx в `nginx/conf.d/locations.conf`
+2. Убедитесь, что в именованных локациях `@fallback` нет URI части в `proxy_pass`
+3. Исправьте: `proxy_pass http://inventory_web/;` → `proxy_pass http://inventory_web;`
+
+### Проблема: Deprecated http2 директива
+**Симптомы:**
+```
+nginx: [warn] the "listen ... http2" directive is deprecated, use the "http2" directive instead
+```
+
+**Решение:**
+Замените в `nginx/nginx.conf`:
+```nginx
+listen 443 ssl http2;
+```
+на:
+```nginx
+listen 443 ssl;
+http2 on;
+```
+
+### Проблема: Отсутствуют SSL сертификаты
+**Симптомы:**
+```
+nginx: [emerg] cannot load certificate "/etc/nginx/ssl/warehouse.cuby.crt": BIO_new_file() failed
+```
+
+**Решение:**
+1. Сгенерируйте SSL сертификаты:
+   ```powershell
+   .\generate-ssl-warehouse.ps1
+   ```
+2. Или создайте вручную через Docker:
+   ```powershell
+   docker run --rm -v "${PWD}/nginx/ssl:/ssl" alpine/openssl req -x509 -newkey rsa:4096 -keyout /ssl/warehouse.cuby.key -out /ssl/warehouse.cuby.crt -days 365 -nodes -subj "/C=US/ST=State/L=City/O=Organization/OU=OrgUnit/CN=warehouse.cuby"
+   ```
+
+### Проблема: Неправильные имена upstream серверов
+**Симптомы:**
+```
+nginx: [error] host not found in upstream "inventory-api" in /etc/nginx/nginx.conf
+```
+
+**Решение:**
+Обновите имена upstream серверов в `nginx/nginx.conf`:
+```nginx
+upstream inventory_api {
+    server inventory-api-staging:80;  # Вместо inventory-api:80
+}
+
+upstream inventory_web {
+    server inventory-web-staging:80;  # Вместо inventory-web:80
+}
+```
+
+### Проблема: Нельзя подключиться с внешних компьютеров
+**Симптомы:**
+- Приложение работает только на localhost
+- Внешние подключения не проходят
+
+**Решение:**
+1. Добавьте IP адрес в конфигурацию nginx
+2. Создайте SSL сертификат для IP адреса
+3. Настройте брандмауэр Windows:
+   ```powershell
+   New-NetFirewallRule -DisplayName "Allow HTTP" -Direction Inbound -Protocol TCP -LocalPort 80 -Action Allow
+   New-NetFirewallRule -DisplayName "Allow HTTPS" -Direction Inbound -Protocol TCP -LocalPort 443 -Action Allow
+   ```
+
 ## 🐳 Docker проблемы
 
 ### Проблема: Docker Desktop не запускается
