@@ -1,181 +1,217 @@
-# Inventory Control Application Launcher
-# Starts API server, then Web client
-# Supports both full launch with checks and quick launch without checks
+﻿# Скрипт последовательного запуска API и Client приложений
+# Inventory Control System v2 - Complete Application Suite
 
 param(
-    [switch]$Quick,
-    [switch]$Help
+    [switch]$Verbose,
+    [switch]$OpenBrowser = $true,
+    [switch]$SkipAPI,
+    [switch]$SkipClient,
+    [int]$APIPort = 5000,
+    [int]$ClientPort = 5001
 )
 
-# Set UTF-8 encoding for proper text display
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-$OutputEncoding = [System.Text.Encoding]::UTF8
+$ErrorActionPreference = "Stop"
 
-if ($Help) {
-    Write-Host "Usage: .\start-apps.ps1 [-Quick] [-Help]" -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host "Parameters:" -ForegroundColor Yellow
-    Write-Host "  -Quick    Quick launch without port checks" -ForegroundColor Gray
-    Write-Host "  -Help     Show this help message" -ForegroundColor Gray
-    Write-Host ""
-    Write-Host "Examples:" -ForegroundColor Yellow
-    Write-Host "  .\start-apps.ps1           # Full launch with port checks" -ForegroundColor Gray
-    Write-Host "  .\start-apps.ps1 -Quick    # Quick launch without checks" -ForegroundColor Gray
-    exit 0
-}
+# Глобальные переменные для процессов
+$global:APIProcess = $null
+$global:ClientProcess = $null
 
-if ($Quick) {
-    Write-Host "=== Быстрый запуск Inventory Control ===" -ForegroundColor Green
-} else {
-    Write-Host "=== Inventory Control Application Launcher ===" -ForegroundColor Green
-}
+Write-Host " Запуск полного комплекса Inventory Control System v2" -ForegroundColor Green
+Write-Host "=======================================================" -ForegroundColor Green
+Write-Host " API Server: https://localhost:$($APIPort + 1) | http://localhost:$APIPort" -ForegroundColor Cyan
+Write-Host " Web Client: https://localhost:$($ClientPort + 1) | http://localhost:$ClientPort" -ForegroundColor Cyan
 Write-Host ""
 
-# Check if we're in the project root directory
-if (-not (Test-Path "InventoryCtrl_2.sln")) {
-    Write-Host "Error: Run script from project root directory (where InventoryCtrl_2.sln is located)" -ForegroundColor Red
-    exit 1
-}
-
-# Load port configuration
-$portConfig = Get-Content "ports.json" -Raw | ConvertFrom-Json
-$apiPorts = @{
-    Http = $portConfig.api.http
-    Https = $portConfig.api.https
-    Urls = $portConfig.api.urls
-}
-$webPorts = @{
-    Http = $portConfig.web.http
-    Https = $portConfig.web.https
-    Urls = $portConfig.web.urls
-}
-
-# Function to check port availability
-function Test-Port {
-    param([int]$Port)
-    try {
-        $connection = New-Object System.Net.Sockets.TcpClient
-        $connection.Connect("localhost", $Port)
-        $connection.Close()
-        return $true
-    }
-    catch {
-        return $false
-    }
-}
-
-# Function to wait for server startup
-function Wait-ForServer {
-    param([int]$Port, [string]$ServiceName)
-    Write-Host "Waiting for $ServiceName to start on port $Port..." -ForegroundColor Yellow
-    $timeout = 15
-    $elapsed = 0
+# Функция очистки процессов при завершении
+function Cleanup-Processes {
+    Write-Host " Остановка всех процессов..." -ForegroundColor Yellow
     
-    while ($elapsed -lt $timeout) {
-        if (Test-Port $Port) {
-            Write-Host "$ServiceName successfully started on port $Port" -ForegroundColor Green
-            return $true
+    if ($global:ClientProcess -and !$global:ClientProcess.HasExited) {
+        Write-Host "   Остановка Client процесса (PID: $($global:ClientProcess.Id))" -ForegroundColor Yellow
+        Stop-Process -Id $global:ClientProcess.Id -Force -ErrorAction SilentlyContinue
+    }
+    
+    if ($global:APIProcess -and !$global:APIProcess.HasExited) {
+        Write-Host "   Остановка API процесса (PID: $($global:APIProcess.Id))" -ForegroundColor Yellow
+        Stop-Process -Id $global:APIProcess.Id -Force -ErrorAction SilentlyContinue
+    }
+    
+    Write-Host " Все процессы остановлены" -ForegroundColor Green
+}
+
+# Обработчик Ctrl+C
+$null = Register-EngineEvent -SourceIdentifier PowerShell.Exiting -Action { Cleanup-Processes }
+
+# Функция проверки готовности API
+function Test-APIReady {
+    param([int]$Port, [int]$TimeoutSeconds = 30)
+    
+    $endTime = (Get-Date).AddSeconds($TimeoutSeconds)
+    $apiUrl = "http://localhost:$Port"
+    
+    Write-Host " Ожидание готовности API на порту $Port..." -ForegroundColor Yellow
+    
+    while ((Get-Date) -lt $endTime) {
+        try {
+            $response = Invoke-WebRequest -Uri $apiUrl -Method GET -TimeoutSec 2 -ErrorAction SilentlyContinue
+            if ($response.StatusCode -eq 200) {
+                Write-Host " API готов к работе" -ForegroundColor Green
+                return $true
+            }
+        } catch {
+            # Игнорируем ошибки и продолжаем проверку
         }
-        Start-Sleep -Seconds 2
-        $elapsed += 2
+        
+        Start-Sleep -Seconds 1
         Write-Host "." -NoNewline -ForegroundColor Yellow
     }
     
     Write-Host ""
-    Write-Host "Timeout waiting for $ServiceName to start" -ForegroundColor Red
+    Write-Host " API не отвечает в течение $TimeoutSeconds секунд" -ForegroundColor Red
     return $false
 }
 
-try {
-    if ($Quick) {
-        # Quick launch without port checks
-        Write-Host "Запуск API сервера..." -ForegroundColor Cyan
-        $apiProcess = Start-Process -FilePath "dotnet" -ArgumentList "run", "--project", "src/Inventory.API/Inventory.API.csproj" -PassThru -WindowStyle Normal
-        
-        # Small pause
-        Start-Sleep -Seconds 3
-        
-        Write-Host "Запуск Web клиента..." -ForegroundColor Cyan
-        $webProcess = Start-Process -FilePath "dotnet" -ArgumentList "run", "--project", "src/Inventory.Web.Client/Inventory.Web.Client.csproj" -PassThru -WindowStyle Normal
-        
-        Write-Host ""
-        Write-Host "Приложения запущены!" -ForegroundColor Green
-        Write-Host "API:  https://localhost:$($apiPorts.Https)" -ForegroundColor White
-        Write-Host "Web:  https://localhost:$($webPorts.Https)" -ForegroundColor White
-        Write-Host ""
-        Write-Host "Закройте окна приложений для остановки" -ForegroundColor Yellow
-        Start-Process "http://localhost:$($webPorts.Http)"
-    } else {
-        # Full launch with port checks
-        Write-Host "1. Starting API server..." -ForegroundColor Cyan
-        Write-Host "   Ports: https://localhost:$($apiPorts.Https), http://localhost:$($apiPorts.Http)" -ForegroundColor Gray
-        
-        $apiProcess = Start-Process -FilePath "dotnet" -ArgumentList "run", "--project", "src/Inventory.API/Inventory.API.csproj" -PassThru -WindowStyle Normal
-        
-        # Wait for API server to start (check HTTP port)
-        if (-not (Wait-ForServer -Port $apiPorts.Http -ServiceName "API Server")) {
-            Write-Host "Failed to start API server" -ForegroundColor Red
-            $apiProcess.Kill()
-            exit 1
-        }
-        
-        Write-Host ""
-        
-        # Step 2: Start Web client
-        Write-Host "2. Starting Web client..." -ForegroundColor Cyan
-        Write-Host "   Ports: https://localhost:$($webPorts.Https), http://localhost:$($webPorts.Http)" -ForegroundColor Gray
-        
-        $webProcess = Start-Process -FilePath "dotnet" -ArgumentList "run", "--project", "src/Inventory.Web.Client/Inventory.Web.Client.csproj" -PassThru -WindowStyle Normal
-        
-        # Wait for Web client to start (check HTTP port)
-        if (-not (Wait-ForServer -Port $webPorts.Http -ServiceName "Web Client")) {
-            Write-Host "Failed to start Web client" -ForegroundColor Red
-            $webProcess.Kill()
-            $apiProcess.Kill()
-            exit 1
-        }
-        
-        Write-Host ""
-        Write-Host "=== Applications successfully started! ===" -ForegroundColor Green
-        Write-Host "API Server:  https://localhost:$($apiPorts.Https)" -ForegroundColor White
-        Write-Host "Web Client:  https://localhost:$($webPorts.Https)" -ForegroundColor White
-        Write-Host ""
-        Write-Host "Press Ctrl+C to stop all applications" -ForegroundColor Yellow
-        Start-Process "http://localhost:$($webPorts.Http)"
-        
-        # Wait for completion
-        try {
-            Wait-Process -Id $apiProcess.Id, $webProcess.Id
-        }
-        catch {
-            Write-Host "Applications stopped" -ForegroundColor Yellow
-        }
-    }
-}
-catch {
-    Write-Host "Error starting applications: $($_.Exception.Message)" -ForegroundColor Red
+# Функция запуска API
+function Start-APIServer {
+    Write-Host " Запуск API сервера..." -ForegroundColor Yellow
     
-    # Stop processes in case of error
-    if ($apiProcess -and !$apiProcess.HasExited) {
-        $apiProcess.Kill()
+    try {
+        $apiArgs = @("run")
+        if ($Verbose) { $apiArgs += "--verbosity", "detailed" }
+        
+        $global:APIProcess = Start-Process -FilePath "dotnet" -ArgumentList $apiArgs -WorkingDirectory "src/Inventory.API" -NoNewWindow -PassThru
+        
+        Write-Host " API сервер запущен (PID: $($global:APIProcess.Id))" -ForegroundColor Green
+        
+        # Ожидание готовности API
+        if (Test-APIReady -Port $APIPort) {
+            return $true
+        } else {
+            throw "API не готов к работе"
+        }
+    } catch {
+        Write-Host " Ошибка запуска API: $_" -ForegroundColor Red
+        return $false
     }
-    if ($webProcess -and !$webProcess.HasExited) {
-        $webProcess.Kill()
-    }
-    
-    exit 1
-}
-finally {
-    # Cleanup processes
-    if ($apiProcess -and !$apiProcess.HasExited) {
-        Write-Host "Stopping API server..." -ForegroundColor Yellow
-        $apiProcess.Kill()
-    }
-    if ($webProcess -and !$webProcess.HasExited) {
-        Write-Host "Stopping Web client..." -ForegroundColor Yellow
-        $webProcess.Kill()
-    }
-    
-    Write-Host "All applications stopped" -ForegroundColor Green
 }
 
+# Функция запуска Client
+function Start-ClientApp {
+    Write-Host " Запуск Web Client приложения..." -ForegroundColor Yellow
+    
+    try {
+        $clientArgs = @("run")
+        if ($Verbose) { $clientArgs += "--verbosity", "detailed" }
+        
+        $global:ClientProcess = Start-Process -FilePath "dotnet" -ArgumentList $clientArgs -WorkingDirectory "src/Inventory.Web.Client" -NoNewWindow -PassThru
+        
+        Write-Host " Web Client запущен (PID: $($global:ClientProcess.Id))" -ForegroundColor Green
+        
+        # Ожидание запуска Client
+        Start-Sleep -Seconds 3
+        
+        # Открытие браузера
+        if ($OpenBrowser) {
+            Write-Host " Открытие браузера..." -ForegroundColor Green
+            try {
+                Start-Process "https://localhost:$($ClientPort + 1)"
+                Write-Host " Браузер открыт" -ForegroundColor Green
+            } catch {
+                Write-Host " Не удалось открыть браузер автоматически" -ForegroundColor Yellow
+                Write-Host "   Откройте вручную: https://localhost:$($ClientPort + 1)" -ForegroundColor Cyan
+            }
+        }
+        
+        return $true
+    } catch {
+        Write-Host " Ошибка запуска Client: $_" -ForegroundColor Red
+        return $false
+    }
+}
+
+# Основная логика
+try {
+    # Проверка .NET SDK
+    Write-Host " Проверка .NET SDK..." -ForegroundColor Yellow
+    try {
+        $dotnetVersion = dotnet --version
+        Write-Host " .NET SDK версия: $dotnetVersion" -ForegroundColor Green
+    } catch {
+        Write-Host " .NET SDK не найден. Установите .NET 9.0 SDK" -ForegroundColor Red
+        exit 1
+    }
+    
+    # Проверка директорий проектов
+    if (-not (Test-Path "src/Inventory.API")) {
+        Write-Host " Директория API не найдена: src/Inventory.API" -ForegroundColor Red
+        exit 1
+    }
+    
+    if (-not (Test-Path "src/Inventory.Web.Client")) {
+        Write-Host " Директория Client не найдена: src/Inventory.Web.Client" -ForegroundColor Red
+        exit 1
+    }
+    
+    Write-Host " Все директории найдены" -ForegroundColor Green
+    Write-Host ""
+    
+    # Запуск API (если не пропущен)
+    if (-not $SkipAPI) {
+        if (-not (Start-APIServer)) {
+            Write-Host " Не удалось запустить API сервер" -ForegroundColor Red
+            Cleanup-Processes
+            exit 1
+        }
+        Write-Host ""
+    } else {
+        Write-Host " Пропуск запуска API сервера" -ForegroundColor Yellow
+        Write-Host ""
+    }
+    
+    # Запуск Client (если не пропущен)
+    if (-not $SkipClient) {
+        if (-not (Start-ClientApp)) {
+            Write-Host " Не удалось запустить Client приложение" -ForegroundColor Red
+            Cleanup-Processes
+            exit 1
+        }
+        Write-Host ""
+    } else {
+        Write-Host " Пропуск запуска Client приложения" -ForegroundColor Yellow
+        Write-Host ""
+    }
+    
+    # Информация о запущенных процессах
+    Write-Host " Все приложения запущены успешно!" -ForegroundColor Green
+    Write-Host "=================================" -ForegroundColor Green
+    if ($global:APIProcess) {
+        Write-Host " API Server (PID: $($global:APIProcess.Id))" -ForegroundColor Cyan
+    }
+    if ($global:ClientProcess) {
+        Write-Host " Web Client (PID: $($global:ClientProcess.Id))" -ForegroundColor Cyan
+    }
+    Write-Host ""
+    Write-Host " Для остановки всех процессов нажмите Ctrl+C" -ForegroundColor Red
+    Write-Host " Web Client: https://localhost:$($ClientPort + 1)" -ForegroundColor Cyan
+    Write-Host " API Server: https://localhost:$($APIPort + 1)" -ForegroundColor Cyan
+    Write-Host ""
+    
+    # Ожидание завершения
+    try {
+        if ($global:APIProcess) {
+            $global:APIProcess.WaitForExit()
+        }
+        if ($global:ClientProcess) {
+            $global:ClientProcess.WaitForExit()
+        }
+    } catch {
+        # Обработка прерывания
+    }
+    
+} catch {
+    Write-Host " Критическая ошибка: $_" -ForegroundColor Red
+    Cleanup-Processes
+    exit 1
+} finally {
+    Cleanup-Processes
+}
