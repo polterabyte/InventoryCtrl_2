@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SignalR Connection Test</title>
+    <script src="https://unpkg.com/@microsoft/signalr@latest/dist/browser/signalr.min.js"></script>
+</head>
+<body>
+    <h1>SignalR Connection Test</h1>
+    <div id="status">Initializing...</div>
+    <div id="logs"></div>
+
+    <script>
+        function log(message) {
+            const logs = document.getElementById('logs');
+            const time = new Date().toLocaleTimeString();
+            logs.innerHTML += `<div>[${time}] ${message}</div>`;
+            console.log(message);
+        }
+
+        async function testSignalRConnection() {
+            const status = document.getElementById('status');
+            status.textContent = 'Testing...';
+            
+            try {
+                // Test API endpoint first
+                log('Testing API endpoint...');
+                const apiUrl = 'http://localhost:5000';
+                const response = await fetch(`${apiUrl}/health`);
+                if (response.ok) {
+                    log('✅ API endpoint is accessible');
+                } else {
+                    log('❌ API endpoint returned: ' + response.status);
+                }
+
+                // Test SignalR connection
+                log('Testing SignalR connection...');
+                const connection = new signalR.HubConnectionBuilder()
+                    .withUrl(`${apiUrl}/notificationHub`, {
+                        skipNegotiation: true,
+                        transport: signalR.HttpTransportType.WebSockets
+                    })
+                    .configureLogging(signalR.LogLevel.Information)
+                    .build();
+
+                connection.onclose((error) => {
+                    log('SignalR connection closed: ' + (error?.message || 'No error'));
+                });
+
+                await connection.start();
+                log('✅ SignalR connection established successfully');
+                status.textContent = '✅ SignalR connection successful';
+                
+                await connection.stop();
+                log('SignalR connection stopped');
+                
+            } catch (error) {
+                log('❌ SignalR connection failed: ' + error.message);
+                status.textContent = '❌ SignalR connection failed';
+            }
+        }
+
+        // Start test when page loads
+        window.addEventListener('load', testSignalRConnection);
+    </script>
+</body>
+</html>

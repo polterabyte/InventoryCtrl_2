@@ -16,17 +16,11 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-// Add port configuration service first
-builder.Services.AddScoped<PortConfigurationService>();
-
-// Configure API HTTP client using port configuration service
-builder.Services.AddScoped(sp =>
+// Configure API HTTP client - will be configured dynamically via JavaScript
+builder.Services.AddScoped<HttpClient>(sp =>
 {
-    var portService = sp.GetRequiredService<PortConfigurationService>();
-    var apiUrl = portService.GetApiUrl();
-    var httpClient = new HttpClient { BaseAddress = new Uri(apiUrl) };
-    
-    // Configure for CORS with credentials
+    // Create HttpClient without BaseAddress - URLs will be constructed in services
+    var httpClient = new HttpClient();
     httpClient.DefaultRequestHeaders.Add("X-Requested-With", "XMLHttpRequest");
     
     return httpClient;
@@ -44,8 +38,8 @@ builder.Services.AddBlazoredLocalStorage();
 builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Information);
 //builder.Logging.AddConsole(); -- not work in browser
 
-// Register Shared services
-builder.Services.AddScoped<IAuthService, AuthApiService>();
+// Register Web-specific services
+builder.Services.AddScoped<IAuthService, WebAuthApiService>();
 builder.Services.AddScoped<IProductService, ProductApiService>();
 builder.Services.AddScoped<IUnitOfMeasureApiService, UnitOfMeasureApiService>();
 builder.Services.AddScoped<ICategoryService, CategoryApiService>();

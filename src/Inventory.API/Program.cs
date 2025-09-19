@@ -316,8 +316,8 @@ app.UseStaticFiles();
 // Enable Blazor WebAssembly files serving
 app.UseBlazorFrameworkFiles();
 
-// Skip HTTPS redirection in testing environment
-if (!app.Environment.IsEnvironment("Testing"))
+// Skip HTTPS redirection in testing environment or container
+if (!app.Environment.IsEnvironment("Testing") && Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") != "true")
 {
     app.UseHttpsRedirection();
 }
@@ -345,24 +345,10 @@ app.MapHub<NotificationHub>("/notificationHub");
 // Map Blazor WebAssembly fallback
 app.MapFallbackToFile("index.html");
 
-// Configure ports and log information
-var portConfigService = app.Services.GetRequiredService<IPortConfigurationService>();
-var portConfig = portConfigService.LoadPortConfiguration();
+// Log startup information
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
-
-// Configure Kestrel to listen on configured ports
-app.Urls.Clear();
-app.Urls.Add($"http://localhost:{portConfig.ApiHttp}");
-app.Urls.Add($"https://localhost:{portConfig.ApiHttps}");
-
-// Log port information on startup
 logger.LogInformation("🚀 Inventory Control API starting...");
-logger.LogInformation("📡 API HTTP Port: {HttpPort}", portConfig.ApiHttp);
-logger.LogInformation("🔒 API HTTPS Port: {HttpsPort}", portConfig.ApiHttps);
-logger.LogInformation("🌐 Web HTTP Port: {WebHttpPort}", portConfig.WebHttp);
-logger.LogInformation("🔐 Web HTTPS Port: {WebHttpsPort}", portConfig.WebHttps);
-logger.LogInformation("🔗 API URLs: http://localhost:{HttpPort} | https://localhost:{HttpsPort}", portConfig.ApiHttp, portConfig.ApiHttps);
-logger.LogInformation("🔗 Web URLs: http://localhost:{WebHttpPort} | https://localhost:{WebHttpsPort}", portConfig.WebHttp, portConfig.WebHttps);
+logger.LogInformation("🔗 API running on configured ports");
 
 app.Run();
 
