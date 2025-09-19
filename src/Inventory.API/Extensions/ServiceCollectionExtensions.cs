@@ -11,9 +11,15 @@ public static class ServiceCollectionExtensions
         {
             options.AddPolicy("AllowConfiguredOrigins", policy =>
             {
-                policy.AllowAnyHeader()
+                policy.WithOrigins(
+                        "https://localhost:5001",  // Blazor WebAssembly client
+                        "https://localhost:7001",  // Alternative client port
+                        "http://localhost:5001",   // HTTP fallback
+                        "http://localhost:7001"    // HTTP fallback
+                      )
+                      .AllowAnyHeader()
                       .AllowAnyMethod()
-                      .AllowCredentials(); // Required for Blazor WASM authentication
+                      .AllowCredentials(); // Required for Blazor WASM authentication with JWT
             });
         });
         return services;
@@ -38,12 +44,7 @@ public static class WebApplicationExtensions
 {
     public static WebApplication ConfigureCors(this WebApplication app)
     {
-        app.UseCors(builder =>
-        {
-            builder.AllowAnyOrigin()
-                   .AllowAnyHeader()
-                   .AllowAnyMethod();
-        });
+        app.UseCors("AllowConfiguredOrigins");
         
         return app;
     }

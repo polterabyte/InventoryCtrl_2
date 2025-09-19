@@ -31,6 +31,7 @@ namespace Inventory.API.Controllers
         /// <response code="400">Invalid request data</response>
         /// <response code="401">Invalid credentials</response>
         [HttpPost("login")]
+        [AllowAnonymous]
         [EnableRateLimiting("AuthPolicy")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
@@ -251,6 +252,7 @@ namespace Inventory.API.Controllers
         /// <response code="201">User created successfully</response>
         /// <response code="400">Invalid request data or user already exists</response>
         [HttpPost("register")]
+        [AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
             _logger.LogInformation("New user registration attempt: {Username}, Email: {Email}", 

@@ -154,13 +154,20 @@ public class ApiUrlService : IApiUrlService
             var origin = await GetCurrentOriginAsync();
             if (string.IsNullOrEmpty(origin))
             {
+                _logger.LogWarning("Failed to get current origin");
                 return null;
             }
 
             var port = await GetCurrentPortAsync();
             var apiPort = DetermineApiPort(port);
             
-            return $"{origin.Replace($":{port}", $":{apiPort}")}/api";
+            _logger.LogDebug("Dynamic URL construction - Origin: {Origin}, ClientPort: {ClientPort}, ApiPort: {ApiPort}", 
+                origin, port ?? "null", apiPort);
+            
+            var dynamicUrl = $"{origin.Replace($":{port}", $":{apiPort}")}/api";
+            _logger.LogDebug("Constructed dynamic URL: {DynamicUrl}", dynamicUrl);
+            
+            return dynamicUrl;
         }
         catch (Exception ex)
         {
@@ -201,6 +208,7 @@ public class ApiUrlService : IApiUrlService
         {
             "5001" => _apiConfig.Fallback.DefaultPorts.Https.ToString(), // HTTPS development
             "5000" => _apiConfig.Fallback.DefaultPorts.Http.ToString(),  // HTTP development
+            "" or null => _apiConfig.Fallback.DefaultPorts.Https.ToString(), // Default HTTPS port (443)
             _ => _apiConfig.Fallback.DefaultPorts.Https.ToString()       // Default to HTTPS
         };
     }
