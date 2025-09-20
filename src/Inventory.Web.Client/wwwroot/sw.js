@@ -1,6 +1,6 @@
 // Service Worker for Push Notifications
 const CACHE_NAME = 'inventory-push-v1';
-const VAPID_PUBLIC_KEY = 'YOUR_VAPID_PUBLIC_KEY_HERE'; // This will be replaced with actual key
+const VAPID_PUBLIC_KEY = ''; // This will be replaced with actual key
 
 // Install event
 self.addEventListener('install', (event) => {
@@ -146,3 +146,5 @@ self.addEventListener('error', (event) => {
 self.addEventListener('unhandledrejection', (event) => {
     console.error('Service Worker unhandled rejection:', event.reason);
 });
+
+

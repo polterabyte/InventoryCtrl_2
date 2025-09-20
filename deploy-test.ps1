@@ -5,6 +5,21 @@ param(
 
 Write-Host "Starting test deployment for test.warehouse.cuby..." -ForegroundColor Green
 
+# Check if VAPID keys are configured (optional for test environment)
+$envTestPath = "env.test"
+if (Test-Path $envTestPath) {
+    $envContent = Get-Content $envTestPath -Raw
+    if ($envContent -match "VAPID_PUBLIC_KEY=$" -or $envContent -match "VAPID_PRIVATE_KEY=$") {
+        Write-Host "VAPID keys not configured. Generating them for testing..." -ForegroundColor Yellow
+        & ".\scripts\generate-vapid-production.ps1" -Environment "test"
+    } else {
+        Write-Host "VAPID keys are already configured" -ForegroundColor Green
+    }
+} else {
+    Write-Host "env.test file not found. Creating it with VAPID keys for testing..." -ForegroundColor Yellow
+    & ".\scripts\generate-vapid-production.ps1" -Environment "test"
+}
+
 # Load environment variables
 if (Test-Path "env.test") {
     Get-Content "env.test" | ForEach-Object {

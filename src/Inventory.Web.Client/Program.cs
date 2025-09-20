@@ -23,7 +23,7 @@ builder.Services.Configure<ApiConfiguration>(
     builder.Configuration.GetSection(ApiConfiguration.SectionName));
 
 // Register API URL service
-builder.Services.AddScoped<IApiUrlService, ApiUrlService>();
+builder.Services.AddScoped<Inventory.Web.Client.Services.IApiUrlService, Inventory.Web.Client.Services.ApiUrlService>();
 
 // Register health check service
 builder.Services.AddScoped<IApiHealthService, ApiHealthService>();

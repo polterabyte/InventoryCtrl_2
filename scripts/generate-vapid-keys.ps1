@@ -115,6 +115,42 @@ if (Test-Path $pushJsPath) {
     Write-Host "Push Notifications JavaScript not found at $pushJsPath" -ForegroundColor Yellow
 }
 
+# Update environment files
+Write-Host "Updating environment files..." -ForegroundColor Yellow
+
+# Update env.production
+$envProdPath = "env.production"
+if (Test-Path $envProdPath) {
+    Write-Host "Updating env.production..." -ForegroundColor Yellow
+    $envProdContent = Get-Content $envProdPath -Raw
+    $envProdContent = $envProdContent -replace "VAPID_PUBLIC_KEY=.*$", "VAPID_PUBLIC_KEY=$($keys.publicKey)"
+    $envProdContent = $envProdContent -replace "VAPID_PRIVATE_KEY=.*$", "VAPID_PRIVATE_KEY=$($keys.privateKey)"
+    Set-Content $envProdPath $envProdContent
+    Write-Host "env.production updated successfully!" -ForegroundColor Green
+}
+
+# Update env.staging
+$envStagingPath = "env.staging"
+if (Test-Path $envStagingPath) {
+    Write-Host "Updating env.staging..." -ForegroundColor Yellow
+    $envStagingContent = Get-Content $envStagingPath -Raw
+    $envStagingContent = $envStagingContent -replace "VAPID_PUBLIC_KEY=.*$", "VAPID_PUBLIC_KEY=$($keys.publicKey)"
+    $envStagingContent = $envStagingContent -replace "VAPID_PRIVATE_KEY=.*$", "VAPID_PRIVATE_KEY=$($keys.privateKey)"
+    Set-Content $envStagingPath $envStagingContent
+    Write-Host "env.staging updated successfully!" -ForegroundColor Green
+}
+
+# Update env.test
+$envTestPath = "env.test"
+if (Test-Path $envTestPath) {
+    Write-Host "Updating env.test..." -ForegroundColor Yellow
+    $envTestContent = Get-Content $envTestPath -Raw
+    $envTestContent = $envTestContent -replace "VAPID_PUBLIC_KEY=.*$", "VAPID_PUBLIC_KEY=$($keys.publicKey)"
+    $envTestContent = $envTestContent -replace "VAPID_PRIVATE_KEY=.*$", "VAPID_PRIVATE_KEY=$($keys.privateKey)"
+    Set-Content $envTestPath $envTestContent
+    Write-Host "env.test updated successfully!" -ForegroundColor Green
+}
+
 Write-Host "`nVAPID keys generation completed!" -ForegroundColor Green
 Write-Host "`nIMPORTANT SECURITY NOTES:" -ForegroundColor Red
 Write-Host "1. Keep the private key secure and never commit it to version control" -ForegroundColor Yellow
@@ -123,4 +159,5 @@ Write-Host "3. The public key can be safely shared with clients" -ForegroundColo
 Write-Host "`nNext steps:" -ForegroundColor Cyan
 Write-Host "1. Run database migration to add PushSubscriptions table" -ForegroundColor White
 Write-Host "2. Test push notifications in development" -ForegroundColor White
-Write-Host "3. Configure production environment variables" -ForegroundColor White
+Write-Host "3. Deploy with Docker using updated environment files" -ForegroundColor White
+Write-Host "4. Verify VAPID configuration in production" -ForegroundColor White

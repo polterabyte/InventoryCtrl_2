@@ -43,6 +43,9 @@ services:
       - Jwt__Audience=${JWT_AUDIENCE:-InventoryClient}
       - Jwt__ExpireMinutes=${JWT_EXPIRE_MINUTES:-15}
       - Jwt__RefreshTokenExpireDays=${JWT_REFRESH_EXPIRE_DAYS:-7}
+      - Vapid__Subject=${VAPID_SUBJECT:-mailto:admin@inventorycontrol.com}
+      - Vapid__PublicKey=${VAPID_PUBLIC_KEY}
+      - Vapid__PrivateKey=${VAPID_PRIVATE_KEY}
     depends_on:
       postgres:
         condition: service_healthy

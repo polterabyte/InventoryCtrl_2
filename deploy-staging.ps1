@@ -5,6 +5,21 @@ param(
 
 Write-Host "Starting staging deployment for staging.warehouse.cuby..." -ForegroundColor Green
 
+# Check if VAPID keys are configured
+$envStagingPath = "env.staging"
+if (Test-Path $envStagingPath) {
+    $envContent = Get-Content $envStagingPath -Raw
+    if ($envContent -match "VAPID_PUBLIC_KEY=$" -or $envContent -match "VAPID_PRIVATE_KEY=$") {
+        Write-Host "VAPID keys not configured. Generating them..." -ForegroundColor Yellow
+        & ".\scripts\generate-vapid-production.ps1" -Environment "staging"
+    } else {
+        Write-Host "VAPID keys are already configured" -ForegroundColor Green
+    }
+} else {
+    Write-Warning "env.staging file not found. Creating it with VAPID keys..."
+    & ".\scripts\generate-vapid-production.ps1" -Environment "staging"
+}
+
 # Load environment variables
 if (Test-Path "env.staging") {
     Get-Content "env.staging" | ForEach-Object {
