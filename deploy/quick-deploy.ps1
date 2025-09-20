@@ -29,12 +29,12 @@ try {
     # Generate SSL certificates if requested
     if ($GenerateSSL) {
         Write-Host "🔐 Generating SSL certificates..." -ForegroundColor Yellow
-        & .\scripts\generate-ssl.ps1
+        & ..\scripts\generate-ssl.ps1
     }
 
     # Build and run
     Write-Host "🔨 Building and starting services..." -ForegroundColor Yellow
-    & .\docker-run.ps1 -Environment $Environment -Build
+    & ..\docker-run.ps1 -Environment $Environment -Build
 
     # Wait for services to be ready
     Write-Host "⏳ Waiting for services to start..." -ForegroundColor Yellow
@@ -97,6 +97,6 @@ try {
     Write-Host "   1. Check if Docker is running" -ForegroundColor White
     Write-Host "   2. Check if ports 80, 5000, 5432 are available" -ForegroundColor White
     Write-Host "   3. Check logs: docker-compose logs" -ForegroundColor White
-    Write-Host "   4. Try cleaning up: .\quick-deploy.ps1 -Clean" -ForegroundColor White
+    Write-Host "   4. Try cleaning up: .\deploy\quick-deploy.ps1 -Clean" -ForegroundColor White
     exit 1
 }

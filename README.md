@@ -137,13 +137,13 @@ InventoryCtrl_2/
 ### Быстрый запуск с Docker
 ```powershell
 # Полное развертывание с Docker
-.\quick-deploy.ps1
+.\deploy\quick-deploy.ps1
 
 # Очистка и перезапуск
-.\quick-deploy.ps1 -Clean
+.\deploy\quick-deploy.ps1 -Clean
 
 # Production развертывание с SSL
-.\quick-deploy.ps1 -Environment production -GenerateSSL
+.\deploy\quick-deploy.ps1 -Environment production -GenerateSSL
 ```
 
 **Docker URLs:**
@@ -151,7 +151,7 @@ InventoryCtrl_2/
 - **API**: http://localhost:5000
 - **API Swagger**: http://localhost:5000/swagger
 
-Подробная документация: [DOCKER_QUICK_START.md](DOCKER_QUICK_START.md)
+Подробная документация: [docs/DEPLOYMENT_SCRIPTS.md](docs/DEPLOYMENT_SCRIPTS.md)
 
 ## 🧪 Тестирование
 
@@ -184,15 +184,16 @@ InventoryCtrl_2/
 ## 🔧 Конфигурация
 
 ### Порты приложения
-Конфигурация портов централизована в `ports.json`:
-```json
-{
-  "ApiHttp": 5000,
-  "ApiHttps": 7000,
-  "WebHttp": 5001,
-  "WebHttps": 7001
-}
-```
+Порты настраиваются в файлах конфигурации:
+
+**Development режим:**
+- **API HTTP**: `http://localhost:5000`
+- **API HTTPS**: `https://localhost:7000`
+- **PostgreSQL**: `localhost:5432`
+
+**Production режим (Docker):**
+- **Web приложение**: `http://localhost` (порт 80)
+- **HTTPS**: `https://localhost` (порт 443)
 
 ### Управление пакетами
 Все версии пакетов управляются через `Directory.Packages.props` для обеспечения совместимости.

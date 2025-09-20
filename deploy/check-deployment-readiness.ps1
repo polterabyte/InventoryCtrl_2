@@ -155,7 +155,7 @@ try {
 Write-Host "`n" + "="*50 -ForegroundColor Gray
 if ($allChecksPassed) {
     Write-Host "🎉 Система готова к развертыванию!" -ForegroundColor Green
-    Write-Host "Можно запускать: .\deploy-$Environment.ps1" -ForegroundColor Cyan
+    Write-Host "Можно запускать: .\deploy\deploy-$Environment.ps1" -ForegroundColor Cyan
 } else {
     Write-Host "❌ Система НЕ готова к развертыванию" -ForegroundColor Red
     Write-Host "Исправьте ошибки выше и запустите проверку снова" -ForegroundColor Yellow

@@ -549,58 +549,44 @@ builder.Services.AddScoped<IDebugLogsService, DebugLogsService>();
 ## ⚙️ Port Configuration
 
 ### Обзор
-Все конфигурации портов централизованы в файле `ports.json` в корне проекта. Это устраняет конфликты портов и упрощает изменение портов во всех компонентах.
+Конфигурации портов настраиваются в соответствующих файлах для каждого режима работы.
 
-### Структура файла конфигурации
+### Настройка портов
 
-#### ports.json
+#### Development режим
+Порты настраиваются в `src/Inventory.API/Properties/launchSettings.json`:
+
 ```json
 {
-  "api": {
-    "http": 5000,
-    "https": 7000,
-    "urls": "https://localhost:7000;http://localhost:5000"
-  },
-  "web": {
-    "http": 5001,
-    "https": 7001,
-    "urls": "https://localhost:7001;http://localhost:5001"
-  },
-  "database": {
-    "port": 5432
-  },
-  "cors": {
-    "allowedOrigins": [
-      "http://localhost:5000",
-      "https://localhost:7000",
-      "http://localhost:5001",
-      "https://localhost:7001",
-      "http://10.0.2.2:8080",
-      "capacitor://localhost",
-      "https://yourmobileapp.com"
-    ]
-  },
-  "launchUrls": {
-    "api": "https://localhost:7000",
-    "web": "https://localhost:7001"
+  "profiles": {
+    "http": {
+      "applicationUrl": "http://localhost:5000"
+    },
+    "https": {
+      "applicationUrl": "https://localhost:7000;http://localhost:5000"
+    }
   }
 }
 ```
 
+#### Production режим (Docker)
+Порты настраиваются в `docker-compose.yml`:
+- **Nginx**: 80 (HTTP), 443 (HTTPS)
+- **API**: доступен через nginx reverse proxy
+- **PostgreSQL**: 5432 (только в development)
+
 ### Назначение портов
 - **API Server**: 
-  - HTTP: 5000
-  - HTTPS: 7000
+  - Development HTTP: 5000
+  - Development HTTPS: 7000
+  - Production: через nginx (80/443)
 - **Web Client**: 
-  - HTTP: 5001
-  - HTTPS: 7001
+  - Production: через nginx (80/443)
 - **Database**: 
-  - Port: 5432 (PostgreSQL)
+  - Port: 5432 (PostgreSQL, только development)
 
-### Использование
-
-#### Изменение портов
-Чтобы изменить порты, просто отредактируйте файл `ports.json` и обновите нужные значения. Все скрипты и конфигурации автоматически будут использовать новые порты.
+### Изменение портов
+Чтобы изменить порты в development режиме, отредактируйте `launchSettings.json`. Для production режима измените конфигурацию в `docker-compose.yml`.
 
 #### Скрипты
 Единый скрипт запуска с несколькими режимами:
@@ -811,7 +797,7 @@ public class AuditLog(
 - **Input Validation** — валидация через FluentValidation
 
 ### Developer Experience
-- **Centralized Configuration** — управление через ports.json
+- **Centralized Configuration** — управление через launchSettings.json и docker-compose
 - **Package Version Management** — централизованные версии пакетов
 - **Comprehensive Testing** — unit, integration, component тесты
 - **Auto-generated Documentation** — Swagger/OpenAPI

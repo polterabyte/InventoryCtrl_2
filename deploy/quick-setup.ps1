@@ -164,8 +164,8 @@ Write-Host "="*60 -ForegroundColor Gray
 Write-Host "`n📋 Следующие шаги:" -ForegroundColor Yellow
 Write-Host "1. Настройте DNS записи для $Domain" -ForegroundColor White
 Write-Host "2. Сгенерируйте SSL сертификаты: .\generate-ssl-warehouse.ps1" -ForegroundColor White
-Write-Host "3. Проверьте готовность: .\check-deployment-readiness.ps1" -ForegroundColor White
-Write-Host "4. Разверните приложение: .\deploy-$Environment.ps1" -ForegroundColor White
+Write-Host "3. Проверьте готовность: .\deploy\check-deployment-readiness.ps1" -ForegroundColor White
+Write-Host "4. Разверните приложение: .\deploy\deploy-$Environment.ps1" -ForegroundColor White
 
 Write-Host "`n🔧 Дополнительные настройки:" -ForegroundColor Yellow
 Write-Host "• Настройте firewall для портов 80 и 443" -ForegroundColor White

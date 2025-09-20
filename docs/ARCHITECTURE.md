@@ -146,7 +146,7 @@ InventoryCtrl_2/
 
 ### Централизованное управление
 - **Directory.Packages.props** — управление версиями пакетов
-- **ports.json** — централизованная конфигурация портов
+- **launchSettings.json** — конфигурация портов для development
 - **global.json** — версия .NET SDK
 
 ### Безопасность
@@ -395,7 +395,7 @@ public class AuditMiddleware
 - **Connection tracking** — мониторинг всех подключений
 
 ### Developer Experience
-- **Centralized configuration** — управление через ports.json
+- **Centralized configuration** — управление через launchSettings.json и docker-compose
 - **Package version management** — централизованные версии пакетов
 - **Comprehensive testing** — unit, integration, component тесты
 - **Auto-generated documentation** — Swagger/OpenAPI
