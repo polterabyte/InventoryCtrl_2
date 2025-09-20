@@ -1,7 +1,7 @@
 # Generate SSL certificates for development
 param(
     [string]$Domain = "localhost",
-    [string]$OutputPath = "nginx/ssl"
+    [string]$OutputPath = "deploy/nginx/ssl"
 )
 
 Write-Host "🔐 Generating SSL certificates for development..." -ForegroundColor Green

@@ -9,6 +9,7 @@
 @inject ILogger<RealTimeNotificationComponent> Logger
 @inject ILocalStorageService LocalStorage
 @inject AuthenticationStateProvider AuthStateProvider
+@inject ISignalRService SignalRService
 
 <div class="real-time-notifications">
     @if (IsConnected)
@@ -79,7 +80,6 @@
     [Parameter] public int AutoDismissDelay { get; set; } = 5000; // 5 seconds
     [Parameter] public EventCallback<NotificationDto> OnNotificationReceived { get; set; }
     [Parameter] public EventCallback<string> OnConnectionStateChanged { get; set; }
-    [Parameter] public ISignalRService? SignalRService { get; set; }
 
     private List<NotificationDto> Notifications { get; set; } = new();
     private bool IsConnected { get; set; } = false;
@@ -159,12 +159,6 @@
             }
 
             // Initialize SignalR connection using SignalRService
-            if (SignalRService == null)
-            {
-                Logger.LogWarning("SignalRService is not provided, cannot initialize SignalR connection");
-                return;
-            }
-            
             var success = await SignalRService.InitializeConnectionAsync(accessToken, dotNetRef!);
             
             if (success)
@@ -219,10 +213,7 @@
     {
         try
         {
-            if (SignalRService != null)
-            {
-                await SignalRService.DisconnectAsync();
-            }
+            await SignalRService.DisconnectAsync();
             IsConnected = false;
             ConnectionState = "Disconnected";
             accessToken = null;
@@ -373,10 +364,7 @@
     {
         try
         {
-            if (SignalRService != null)
-            {
-                await SignalRService.SubscribeToNotificationTypeAsync(notificationType);
-            }
+            await SignalRService.SubscribeToNotificationTypeAsync(notificationType);
         }
         catch (Exception ex)
         {
@@ -388,10 +376,7 @@
     {
         try
         {
-            if (SignalRService != null)
-            {
-                await SignalRService.UnsubscribeFromNotificationTypeAsync(notificationType);
-            }
+            await SignalRService.UnsubscribeFromNotificationTypeAsync(notificationType);
         }
         catch (Exception ex)
         {
@@ -405,10 +390,7 @@
         {
             AuthStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
             StopSignInBannerTimer();
-            if (SignalRService != null)
-            {
-                await SignalRService.DisconnectAsync();
-            }
+            await SignalRService.DisconnectAsync();
         }
         catch (Exception ex)
         {

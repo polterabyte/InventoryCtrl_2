@@ -7,9 +7,9 @@ param(
 Write-Host "Generating SSL certificates for warehouse.cuby domains..." -ForegroundColor Green
 
 # Create SSL directory if it doesn't exist
-if (!(Test-Path "nginx/ssl")) {
-    New-Item -ItemType Directory -Path "nginx/ssl" -Force
-    Write-Host "Created nginx/ssl directory" -ForegroundColor Yellow
+if (!(Test-Path "deploy/nginx/ssl")) {
+    New-Item -ItemType Directory -Path "deploy/nginx/ssl" -Force
+    Write-Host "Created deploy/nginx/ssl directory" -ForegroundColor Yellow
 }
 
 if ($UseLetsEncrypt) {
@@ -43,8 +43,8 @@ if ($UseLetsEncrypt) {
         Write-Host "Generating self-signed certificate for $domain..." -ForegroundColor Yellow
         
         # Generate private key
-        $keyFile = "nginx/ssl/$domain.key"
-        $certFile = "nginx/ssl/$domain.crt"
+        $keyFile = "deploy/nginx/ssl/$domain.key"
+        $certFile = "deploy/nginx/ssl/$domain.crt"
         
         # Create OpenSSL command for self-signed certificate
         $opensslCmd = @"

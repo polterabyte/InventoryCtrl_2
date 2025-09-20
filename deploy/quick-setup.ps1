@@ -10,7 +10,7 @@ Write-Host "🚀 Быстрая настройка для развертыван
 # 1. Создание необходимых директорий
 Write-Host "`n1. Создание директорий..." -ForegroundColor Cyan
 $directories = @(
-    "nginx/ssl",
+    "deploy/nginx/ssl",
     "logs",
     "backups"
 )
@@ -27,12 +27,12 @@ foreach ($dir in $directories) {
 # 2. Создание .env файла если не существует
 Write-Host "`n2. Настройка переменных окружения..." -ForegroundColor Cyan
 if (!(Test-Path ".env")) {
-    if (Test-Path "env.$Environment") {
-        Copy-Item "env.$Environment" ".env"
-        Write-Host "   ✅ Создан .env файл из env.$Environment" -ForegroundColor Green
+    if (Test-Path "deploy/env.$Environment") {
+        Copy-Item "deploy/env.$Environment" ".env"
+        Write-Host "   ✅ Создан .env файл из deploy/env.$Environment" -ForegroundColor Green
     } else {
-        Write-Host "   ❌ Файл env.$Environment не найден" -ForegroundColor Red
-        Write-Host "   Создайте файл env.$Environment с необходимыми переменными" -ForegroundColor Yellow
+        Write-Host "   ❌ Файл deploy/env.$Environment не найден" -ForegroundColor Red
+        Write-Host "   Создайте файл deploy/env.$Environment с необходимыми переменными" -ForegroundColor Yellow
     }
 } else {
     Write-Host "   ✅ .env файл уже существует" -ForegroundColor Green
@@ -43,8 +43,8 @@ Write-Host "`n3. Генерация SSL сертификатов..." -Foreground
 $domains = @("warehouse.cuby", "staging.warehouse.cuby", "test.warehouse.cuby")
 
 foreach ($domain in $domains) {
-    $certFile = "nginx/ssl/$domain.crt"
-    $keyFile = "nginx/ssl/$domain.key"
+    $certFile = "deploy/nginx/ssl/$domain.crt"
+    $keyFile = "deploy/nginx/ssl/$domain.key"
     
     if (!(Test-Path $certFile) -or !(Test-Path $keyFile)) {
         Write-Host "   ⚠️  Сертификат для $domain не найден" -ForegroundColor Yellow
@@ -112,8 +112,8 @@ After=docker.service
 Type=oneshot
 RemainAfterExit=yes
 WorkingDirectory=$PWD
-ExecStart=/usr/local/bin/docker-compose -f docker-compose.prod.yml up -d
-ExecStop=/usr/local/bin/docker-compose -f docker-compose.prod.yml down
+ExecStart=/usr/local/bin/docker-compose -f docker-compose.production.yml up -d
+ExecStop=/usr/local/bin/docker-compose -f docker-compose.production.yml down
 TimeoutStartSec=0
 
 [Install]
@@ -141,7 +141,7 @@ mkdir -p `$BACKUP_DIR
 docker exec inventory-postgres-prod pg_dump -U postgres inventorydb > `$BACKUP_DIR/db_`$DATE.sql
 
 # Бэкап конфигураций
-tar -czf `$BACKUP_DIR/config_`$DATE.tar.gz nginx/ *.yml *.env
+tar -czf `$BACKUP_DIR/config_`$DATE.tar.gz deploy/nginx/ *.yml *.env
 
 # Удалить старые бэкапы (старше 30 дней)
 find `$BACKUP_DIR -name "*.sql" -mtime +30 -delete

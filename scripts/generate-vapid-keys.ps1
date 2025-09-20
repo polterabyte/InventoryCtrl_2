@@ -119,7 +119,7 @@ if (Test-Path $pushJsPath) {
 Write-Host "Updating environment files..." -ForegroundColor Yellow
 
 # Update env.production
-$envProdPath = "env.production"
+$envProdPath = "deploy/env.production"
 if (Test-Path $envProdPath) {
     Write-Host "Updating env.production..." -ForegroundColor Yellow
     $envProdContent = Get-Content $envProdPath -Raw
@@ -130,7 +130,7 @@ if (Test-Path $envProdPath) {
 }
 
 # Update env.staging
-$envStagingPath = "env.staging"
+$envStagingPath = "deploy/env.staging"
 if (Test-Path $envStagingPath) {
     Write-Host "Updating env.staging..." -ForegroundColor Yellow
     $envStagingContent = Get-Content $envStagingPath -Raw
@@ -141,7 +141,7 @@ if (Test-Path $envStagingPath) {
 }
 
 # Update env.test
-$envTestPath = "env.test"
+$envTestPath = "deploy/env.test"
 if (Test-Path $envTestPath) {
     Write-Host "Updating env.test..." -ForegroundColor Yellow
     $envTestContent = Get-Content $envTestPath -Raw

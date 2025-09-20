@@ -42,7 +42,7 @@ function Get-DefaultFileNames {
     }
     
     # Generate standardized file names
-    $envFile = "env.$Env"
+    $envFile = "deploy/env.$Env"
     $composeFile = "docker-compose.$Env.yml"
     
     return @{
@@ -91,7 +91,7 @@ if (-not (Test-Path $ComposeFile)) {
 
 if ($DryRun) {
     Write-Host "Dry run mode - would execute:" -ForegroundColor Yellow
-    Write-Host "  ..\deploy.ps1 -Environment $Environment -EnvFile `"$EnvFile`" -ComposeFile `"$ComposeFile`" -Domain `"$Domain`" -BaseDomain `"$BaseDomain`"" -ForegroundColor White
+    Write-Host "  .\deploy\deploy.ps1 -Environment $Environment -EnvFile `"$EnvFile`" -ComposeFile `"$ComposeFile`" -Domain `"$Domain`" -BaseDomain `"$BaseDomain`"" -ForegroundColor White
     if ($SkipVapidCheck) {
         Write-Host "    -SkipVapidCheck" -ForegroundColor White
     }
@@ -114,4 +114,4 @@ $params = @{
 
 if ($SkipVapidCheck) { $params.SkipVapidCheck = $true }
 
-& "..\deploy.ps1" @params
+& ".\deploy.ps1" @params

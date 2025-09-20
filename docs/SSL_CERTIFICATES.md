@@ -9,7 +9,7 @@
 ## 📁 Структура сертификатов
 
 ```
-nginx/ssl/
+deploy/nginx/ssl/
 ├── warehouse.cuby.crt          # Production сертификат
 ├── warehouse.cuby.key          # Production приватный ключ
 ├── staging.warehouse.cuby.crt  # Staging сертификат
@@ -38,17 +38,17 @@ nginx/ssl/
 
 ### 1. Создание сертификата для домена
 ```powershell
-docker run --rm -v "${PWD}/nginx/ssl:/ssl" alpine/openssl req -x509 -newkey rsa:4096 -keyout /ssl/domain.key -out /ssl/domain.crt -days 365 -nodes -subj "/C=US/ST=State/L=City/O=Organization/OU=OrgUnit/CN=domain.com"
+docker run --rm -v "${PWD}/deploy/nginx/ssl:/ssl" alpine/openssl req -x509 -newkey rsa:4096 -keyout /ssl/domain.key -out /ssl/domain.crt -days 365 -nodes -subj "/C=US/ST=State/L=City/O=Organization/OU=OrgUnit/CN=domain.com"
 ```
 
 ### 2. Создание сертификата для localhost
 ```powershell
-docker run --rm -v "${PWD}/nginx/ssl:/ssl" alpine/openssl req -x509 -newkey rsa:4096 -keyout /ssl/localhost.key -out /ssl/localhost.crt -days 365 -nodes -subj "/C=US/ST=State/L=City/O=Organization/OU=OrgUnit/CN=localhost" -addext "subjectAltName=DNS:localhost,DNS:127.0.0.1,IP:127.0.0.1"
+docker run --rm -v "${PWD}/deploy/nginx/ssl:/ssl" alpine/openssl req -x509 -newkey rsa:4096 -keyout /ssl/localhost.key -out /ssl/localhost.crt -days 365 -nodes -subj "/C=US/ST=State/L=City/O=Organization/OU=OrgUnit/CN=localhost" -addext "subjectAltName=DNS:localhost,DNS:127.0.0.1,IP:127.0.0.1"
 ```
 
 ### 3. Создание сертификата для IP адреса
 ```powershell
-docker run --rm -v "${PWD}/nginx/ssl:/ssl" alpine/openssl req -x509 -newkey rsa:4096 -keyout /ssl/192.168.139.96.key -out /ssl/192.168.139.96.crt -days 365 -nodes -subj "/C=US/ST=State/L=City/O=Organization/OU=OrgUnit/CN=192.168.139.96" -addext "subjectAltName=DNS:localhost,DNS:192.168.139.96,IP:192.168.139.96,IP:127.0.0.1"
+docker run --rm -v "${PWD}/deploy/nginx/ssl:/ssl" alpine/openssl req -x509 -newkey rsa:4096 -keyout /ssl/192.168.139.96.key -out /ssl/192.168.139.96.crt -days 365 -nodes -subj "/C=US/ST=State/L=City/O=Organization/OU=OrgUnit/CN=192.168.139.96" -addext "subjectAltName=DNS:localhost,DNS:192.168.139.96,IP:192.168.139.96,IP:127.0.0.1"
 ```
 
 ## 🌐 Настройка nginx
@@ -60,8 +60,8 @@ server {
     http2 on;
     server_name localhost 127.0.0.1;
 
-    ssl_certificate /etc/nginx/ssl/localhost.crt;
-    ssl_certificate_key /etc/nginx/ssl/localhost.key;
+    ssl_certificate /etc/deploy/nginx/ssl/localhost.crt;
+    ssl_certificate_key /etc/deploy/nginx/ssl/localhost.key;
     
     # Остальная конфигурация...
 }
@@ -74,8 +74,8 @@ server {
     http2 on;
     server_name 192.168.139.96;
 
-    ssl_certificate /etc/nginx/ssl/192.168.139.96.crt;
-    ssl_certificate_key /etc/nginx/ssl/192.168.139.96.key;
+    ssl_certificate /etc/deploy/nginx/ssl/192.168.139.96.crt;
+    ssl_certificate_key /etc/deploy/nginx/ssl/192.168.139.96.key;
     
     # Остальная конфигурация...
 }
@@ -118,17 +118,17 @@ sudo crontab -e
 
 ### Проверка содержимого
 ```bash
-openssl x509 -in nginx/ssl/warehouse.cuby.crt -text -noout
+openssl x509 -in deploy/deploy/nginx/ssl/warehouse.cuby.crt -text -noout
 ```
 
 ### Проверка срока действия
 ```bash
-openssl x509 -in nginx/ssl/warehouse.cuby.crt -dates -noout
+openssl x509 -in deploy/deploy/nginx/ssl/warehouse.cuby.crt -dates -noout
 ```
 
 ### Проверка приватного ключа
 ```bash
-openssl rsa -in nginx/ssl/warehouse.cuby.key -check
+openssl rsa -in deploy/deploy/nginx/ssl/warehouse.cuby.key -check
 ```
 
 ## 🔄 Обновление сертификатов

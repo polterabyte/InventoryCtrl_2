@@ -11,7 +11,7 @@ nginx: [emerg] "proxy_pass" cannot have URI part in location given by regular ex
 ```
 
 **Решение:**
-1. Проверьте конфигурацию nginx в `nginx/conf.d/locations.conf`
+1. Проверьте конфигурацию nginx в `deploy/nginx/conf.d/locations.conf`
 2. Убедитесь, что в именованных локациях `@fallback` нет URI части в `proxy_pass`
 3. Исправьте: `proxy_pass http://inventory_web/;` → `proxy_pass http://inventory_web;`
 
@@ -22,7 +22,7 @@ nginx: [warn] the "listen ... http2" directive is deprecated, use the "http2" di
 ```
 
 **Решение:**
-Замените в `nginx/nginx.conf`:
+Замените в `deploy/nginx/nginx.conf`:
 ```nginx
 listen 443 ssl http2;
 ```
@@ -45,7 +45,7 @@ nginx: [emerg] cannot load certificate "/etc/nginx/ssl/warehouse.cuby.crt": BIO_
    ```
 2. Или создайте вручную через Docker:
    ```powershell
-   docker run --rm -v "${PWD}/nginx/ssl:/ssl" alpine/openssl req -x509 -newkey rsa:4096 -keyout /ssl/warehouse.cuby.key -out /ssl/warehouse.cuby.crt -days 365 -nodes -subj "/C=US/ST=State/L=City/O=Organization/OU=OrgUnit/CN=warehouse.cuby"
+   docker run --rm -v "${PWD}/deploy/nginx/ssl:/ssl" alpine/openssl req -x509 -newkey rsa:4096 -keyout /ssl/warehouse.cuby.key -out /ssl/warehouse.cuby.crt -days 365 -nodes -subj "/C=US/ST=State/L=City/O=Organization/OU=OrgUnit/CN=warehouse.cuby"
    ```
 
 ### Проблема: Неправильные имена upstream серверов
@@ -55,7 +55,7 @@ nginx: [error] host not found in upstream "inventory-api" in /etc/nginx/nginx.co
 ```
 
 **Решение:**
-Обновите имена upstream серверов в `nginx/nginx.conf`:
+Обновите имена upstream серверов в `deploy/nginx/nginx.conf`:
 ```nginx
 upstream inventory_api {
     server inventory-api-staging:80;  # Вместо inventory-api:80
@@ -128,7 +128,7 @@ docker-compose down
 docker container prune -f
 
 # Запустить заново
-.\quick-deploy.ps1
+.\deploy\quick-deploy.ps1
 ```
 
 ## 🔧 .NET проблемы
@@ -256,7 +256,7 @@ Npgsql.NpgsqlException (0x80004005): Failed to connect to 127.0.0.1:5432
    docker-compose up -d postgres
    
    # Или полный запуск системы
-   .\quick-deploy.ps1
+   .\deploy\quick-deploy.ps1
    ```
 
 2. **Проверить статус PostgreSQL:**
@@ -373,7 +373,7 @@ $report | ConvertTo-Json -Depth 3 | Out-File "system-report.json"
 # Полная очистка и перезапуск
 docker-compose down -v --remove-orphans
 docker system prune -a
-.\quick-deploy.ps1 -Clean
+.\deploy\quick-deploy.ps1 -Clean
 
 # Проверка конфигурации
 Get-Content src/Inventory.API/appsettings.json | ConvertFrom-Json

@@ -6,13 +6,13 @@ The deployment system has been refactored to eliminate code duplication and prov
 
 ## Scripts
 
-### 1. Universal Deployment Script (`deploy.ps1`)
+### 1. Universal Deployment Script (`deploy/deploy.ps1`)
 
 The main deployment script that handles all environments with flexible configuration.
 
 **Usage:**
 ```powershell
-.\deploy.ps1 -Environment <environment> [options]
+.\deploy\deploy.ps1 -Environment <environment> [options]
 ```
 
 **Parameters:**
@@ -30,16 +30,16 @@ The main deployment script that handles all environments with flexible configura
 **Examples:**
 ```powershell
 # Basic usage
-.\deploy.ps1 -Environment staging
+.\deploy\deploy.ps1 -Environment staging
 
 # Custom configuration
-.\deploy.ps1 -Environment staging -EnvFile "custom.env" -ComposeFile "custom-compose.yml"
+.\deploy\deploy.ps1 -Environment staging -EnvFile "custom.env" -ComposeFile "custom-compose.yml"
 
 # Custom domain
-.\deploy.ps1 -Environment production -Domain "myapp.example.com" -BaseDomain "example.com"
+.\deploy\deploy.ps1 -Environment production -Domain "myapp.example.com" -BaseDomain "example.com"
 
 # Skip VAPID check and custom timeout
-.\deploy.ps1 -Environment test -SkipVapidCheck -HealthCheckTimeout 60
+.\deploy\deploy.ps1 -Environment test -SkipVapidCheck -HealthCheckTimeout 60
 ```
 
 ### 2. Environment-Specific Scripts
@@ -135,14 +135,14 @@ Each environment follows a standardized naming pattern:
 
 | Environment | Domain | Env File | Compose File |
 |-------------|--------|----------|--------------|
-| staging | staging.warehouse.cuby | env.staging | docker-compose.staging.yml |
-| production | warehouse.cuby | env.production | docker-compose.production.yml |
-| test | test.warehouse.cuby | env.test | docker-compose.test.yml |
+| staging | staging.warehouse.cuby | deploy/env.staging | docker-compose.staging.yml |
+| production | warehouse.cuby | deploy/env.production | docker-compose.production.yml |
+| test | test.warehouse.cuby | deploy/env.test | docker-compose.test.yml |
 
 ### Standardized Naming Convention
 
 All environment files follow a consistent pattern:
-- **Environment files**: `env.{environment}`
+- **Environment files**: `deploy/env.{environment}`
 - **Docker Compose files**: `docker-compose.{environment}.yml`
 - **Domains**: `{environment}.{base-domain}` (except production which uses just `{base-domain}`)
 
@@ -182,7 +182,7 @@ The universal deployment script follows this process:
 
 - Existing individual scripts (`deploy-staging.ps1`, `deploy-production.ps1`, `deploy-test.ps1`) are now wrappers
 - They maintain backward compatibility
-- The universal script (`deploy.ps1`) can be used directly
+- The universal script (`deploy/deploy.ps1`) can be used directly
 - All existing functionality is preserved
 
 ## Troubleshooting

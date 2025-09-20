@@ -41,7 +41,7 @@ For Docker deployments, VAPID keys are configured via environment variables:
 
 All Docker Compose files include VAPID environment variables:
 
-**Production (`docker-compose.prod.yml`):**
+**Production (`docker-compose.production.yml`):**
 ```yaml
 environment:
   - Vapid__Subject=${VAPID_SUBJECT:-mailto:admin@inventorycontrol.com}
@@ -69,9 +69,9 @@ environment:
 
 VAPID configuration is defined in environment files:
 
-- `env.production` - Production environment
-- `env.staging` - Staging environment  
-- `env.test` - Test environment
+- `deploy/env.production` - Production environment
+- `deploy/env.staging` - Staging environment  
+- `deploy/env.test` - Test environment
 
 Example configuration:
 ```bash
@@ -238,8 +238,8 @@ To verify VAPID configuration:
 - `scripts/generate-vapid-keys.ps1`
 - `scripts/generate-vapid-production.ps1`
 - `deploy-production.ps1`
-- `env.production`
-- `env.staging`
-- `env.test`
+- `deploy/env.production`
+- `deploy/env.staging`
+- `deploy/env.test`
 - `docker-compose.yml`
-- `docker-compose.prod.yml`
+- `docker-compose.production.yml`

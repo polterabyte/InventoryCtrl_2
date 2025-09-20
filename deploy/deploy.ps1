@@ -38,7 +38,7 @@ function Get-StandardizedFileNames {
     }
     
     # Generate standardized file names
-    $envFile = "env.$Environment"
+    $envFile = "deploy/env.$Environment"
     $composeFile = "docker-compose.$Environment.yml"
     
     return @{
@@ -106,19 +106,58 @@ function Test-AndGenerateVapidKeys {
     }
 }
 
+# Function to determine health check URL
+function Get-HealthCheckUrl {
+    param(
+        [string]$Environment,
+        [string]$Domain
+    )
+    
+    # For staging environment, try multiple approaches
+    if ($Environment -eq "staging") {
+        # Try domain first (if DNS is configured)
+        try {
+            $testUrl = "https://$Domain/health"
+            $response = Invoke-WebRequest -Uri $testUrl -Method Get -TimeoutSec 5 -ErrorAction Stop
+            Write-Host "Using domain URL: $testUrl" -ForegroundColor Green
+            return $testUrl
+        } catch {
+            Write-Host "Domain $Domain not resolvable, trying localhost..." -ForegroundColor Yellow
+        }
+        
+        # Try localhost with HTTP (nginx allows this for staging)
+        try {
+            $testUrl = "http://localhost/health"
+            $response = Invoke-WebRequest -Uri $testUrl -Method Get -TimeoutSec 5 -ErrorAction Stop
+            Write-Host "Using localhost URL: $testUrl" -ForegroundColor Green
+            return $testUrl
+        } catch {
+            Write-Host "Localhost not accessible, using IP fallback..." -ForegroundColor Yellow
+        }
+        
+        # Fallback to IP (should be last resort)
+        $ipUrl = "http://192.168.139.96/health"
+        Write-Host "Using IP fallback URL: $ipUrl" -ForegroundColor Yellow
+        return $ipUrl
+    } else {
+        # For production and test, use domain
+        return "https://$Domain/health"
+    }
+}
+
 # Function to check service health
 function Test-ServiceHealth {
     param(
         [string]$HealthUrl
     )
     
-    Write-Host "Checking service health..." -ForegroundColor Yellow
-    $apiHealth = Invoke-RestMethod -Uri $HealthUrl -Method Get -ErrorAction SilentlyContinue
-    if ($apiHealth) {
+    Write-Host "Checking service health at: $HealthUrl" -ForegroundColor Yellow
+    try {
+        $apiHealth = Invoke-RestMethod -Uri $HealthUrl -Method Get -ErrorAction Stop
         Write-Host "✅ API is healthy" -ForegroundColor Green
         return $true
-    } else {
-        Write-Host "❌ API health check failed" -ForegroundColor Red
+    } catch {
+        Write-Host "❌ API health check failed: $($_.Exception.Message)" -ForegroundColor Red
         return $false
     }
 }
@@ -174,7 +213,7 @@ try {
     Start-Sleep -Seconds $HealthCheckTimeout
 
     # Check health
-    $healthUrl = "https://$($config.Domain)/health"
+    $healthUrl = Get-HealthCheckUrl -Environment $Environment -Domain $config.Domain
     $isHealthy = Test-ServiceHealth -HealthUrl $healthUrl
 
     # Show running containers

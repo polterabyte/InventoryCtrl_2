@@ -23,4 +23,4 @@ if ($BaseDomain) { $params.BaseDomain = $BaseDomain }
 if ($SkipVapidCheck) { $params.SkipVapidCheck = $true }
 if ($HealthCheckTimeout) { $params.HealthCheckTimeout = $HealthCheckTimeout }
 
-& "..\deploy.ps1" @params
+& ".\deploy\deploy.ps1" @params

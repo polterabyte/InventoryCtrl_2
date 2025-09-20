@@ -70,26 +70,23 @@ InventoryCtrl_2/
 
 ### Автоматический запуск (рекомендуется)
 ```powershell
-# Полный запуск с проверками
-.\start-apps.ps1
+# Быстрый запуск через deploy
+.\deploy\quick-deploy.ps1
 
-# Быстрый запуск без проверок
-.\start-apps.ps1 -Quick
+# Полный развертывание
+.\deploy\deploy-all.ps1
 
-# Только API сервер
-.\start-apps.ps1 -ApiOnly
-
-# Только Web Client
-.\start-apps.ps1 -ClientOnly
+# Остановка всех сервисов
+docker-compose down
 ```
 
-**Доступные скрипты:**
-- `start-apps.ps1` - Основной скрипт (рекомендуется)
-- `start-api.ps1` - Только API сервер
-- `start-client.ps1` - Только Web Client
-- `start-quick.ps1` - Быстрый запуск
+**Deploy скрипты:**
+- `deploy\quick-deploy.ps1` - Быстрый запуск (рекомендуется)
+- `deploy\deploy-all.ps1` - Полное развертывание
+- `deploy\deploy-production.ps1` - Production развертывание
+- `deploy\deploy-staging.ps1` - Staging развертывание
 
-Подробная документация: [STARTUP_SCRIPTS.md](STARTUP_SCRIPTS.md)
+Подробная документация: [docs/DEPLOYMENT_SCRIPTS.md](docs/DEPLOYMENT_SCRIPTS.md)
 
 ### Ручной запуск
 

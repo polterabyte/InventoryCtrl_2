@@ -44,10 +44,10 @@ Write-Host "Private Key: $($keys.privateKey)" -ForegroundColor Cyan
 
 # Update environment file based on parameter
 $envFile = switch ($Environment.ToLower()) {
-    "production" { "env.production" }
-    "staging" { "env.staging" }
-    "test" { "env.test" }
-    default { "env.production" }
+    "production" { "deploy/env.production" }
+    "staging" { "deploy/env.staging" }
+    "test" { "deploy/env.test" }
+    default { "deploy/env.production" }
 }
 
 if (Test-Path $envFile) {
@@ -96,7 +96,7 @@ Write-Host "1. Keep the private key secure and never commit it to version contro
 Write-Host "2. The private key is now stored in $envFile" -ForegroundColor Yellow
 Write-Host "3. The public key can be safely shared with clients" -ForegroundColor Yellow
 Write-Host "`nNext steps:" -ForegroundColor Cyan
-Write-Host "1. Deploy with Docker using: docker-compose -f docker-compose.prod.yml up -d" -ForegroundColor White
+Write-Host "1. Deploy with Docker using: docker-compose -f docker-compose.production.yml up -d" -ForegroundColor White
 Write-Host "2. Verify VAPID configuration in production" -ForegroundColor White
 Write-Host "3. Test push notifications functionality" -ForegroundColor White
 

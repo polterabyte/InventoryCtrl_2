@@ -39,7 +39,7 @@ function Deploy-Environment {
         
         if ($SkipVapid) { $params.SkipVapidCheck = $true }
         
-        & "..\deploy.ps1" @params
+        & ".\deploy.ps1" @params
         if ($LASTEXITCODE -ne 0) {
             Write-Error "Failed to deploy $EnvName environment"
             return $false
