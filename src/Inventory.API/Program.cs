@@ -15,6 +15,7 @@ using FluentValidation;
 using Inventory.API.Validators;
 using Inventory.API.Hubs;
 using Microsoft.AspNetCore.Components.WebAssembly.Server;
+using Inventory.API.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -183,6 +184,10 @@ builder.Services.AddSignalR(options =>
 
 // Add SignalR notification service
 builder.Services.AddScoped<ISignalRNotificationService, SignalRNotificationService>();
+
+// Add Push Notifications
+builder.Services.Configure<VapidConfiguration>(builder.Configuration.GetSection("Vapid"));
+builder.Services.AddScoped<IPushNotificationService, PushNotificationService>();
 
 // Add notification rule engine
 builder.Services.AddScoped<Inventory.Shared.Interfaces.INotificationRuleEngine, Inventory.API.Services.NotificationRuleEngine>();

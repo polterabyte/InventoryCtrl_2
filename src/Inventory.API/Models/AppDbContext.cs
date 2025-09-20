@@ -138,6 +138,29 @@ namespace Inventory.API.Models
             entity.Property(e => e.Category).IsRequired().HasMaxLength(50);
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
         });
+
+        // Configure PushSubscription
+        modelBuilder.Entity<PushSubscription>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.UserId).IsRequired().HasMaxLength(450);
+            entity.Property(e => e.Endpoint).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.P256dh).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Auth).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.UserAgent).HasMaxLength(100);
+            entity.Property(e => e.IpAddress).HasMaxLength(45);
+
+            // Configure relationship with User
+            entity.HasOne(e => e.User)
+                  .WithMany()
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            // Unique constraint on UserId + Endpoint
+            entity.HasIndex(e => new { e.UserId, e.Endpoint }).IsUnique();
+        });
     }
            public DbSet<Product> Products { get; set; } = null!;
            public DbSet<Category> Categories { get; set; } = null!;
@@ -156,5 +179,6 @@ namespace Inventory.API.Models
            public DbSet<NotificationPreference> NotificationPreferences { get; set; } = null!;
            public DbSet<NotificationTemplate> NotificationTemplates { get; set; } = null!;
            public DbSet<SignalRConnection> SignalRConnections { get; set; } = null!;
+           public DbSet<PushSubscription> PushSubscriptions { get; set; } = null!;
     }
 }

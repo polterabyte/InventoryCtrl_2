@@ -1,0 +1,360 @@
+@using Microsoft.JSInterop
+@using Microsoft.Extensions.Logging
+@using Blazored.LocalStorage
+@using Microsoft.AspNetCore.Components.Authorization
+@using Inventory.Shared.Interfaces
+@using Inventory.Shared.Models
+@inject IJSRuntime JSRuntime
+@inject ILogger<PushNotificationComponent> Logger
+@inject ILocalStorageService LocalStorage
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IApiUrlService ApiUrlService
+
+<div class="push-notification-settings">
+    @if (!IsSupported)
+    {
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            Push notifications are not supported in this browser.
+        </div>
+    }
+    else if (!IsAuthenticated)
+    {
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            Please sign in to manage push notification settings.
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bell"></i>
+                    Push Notifications
+                </h5>
+            </div>
+            <div class="card-body">
+                @if (IsLoading)
+                {
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading push notification settings...</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label class="form-label">Notification Status</label>
+                                <div class="d-flex align-items-center">
+                                    @if (IsSubscribed)
+                                    {
+                                        <span class="badge bg-success me-2">
+                                            <i class="fas fa-check"></i>
+                                            Enabled
+                                        </span>
+                                        <small class="text-muted">You will receive push notifications</small>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary me-2">
+                                            <i class="fas fa-times"></i>
+                                            Disabled
+                                        </span>
+                                        <small class="text-muted">You will not receive push notifications</small>
+                                    }
+                                </div>
+                            </div>
+
+                            @if (SubscriptionInfo != null)
+                            {
+                                <div class="mb-3">
+                                    <label class="form-label">Subscription Details</label>
+                                    <div class="small text-muted">
+                                        <div>Subscribed: @SubscriptionInfo.SubscribedAt</div>
+                                        <div>Endpoint: @GetShortEndpoint(SubscriptionInfo.Endpoint)</div>
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="mb-3">
+                                <label class="form-label">Permission Status</label>
+                                <div class="d-flex align-items-center">
+                                    @if (PermissionState == "granted")
+                                    {
+                                        <span class="badge bg-success me-2">
+                                            <i class="fas fa-check"></i>
+                                            Granted
+                                        </span>
+                                    }
+                                    else if (PermissionState == "denied")
+                                    {
+                                        <span class="badge bg-danger me-2">
+                                            <i class="fas fa-times"></i>
+                                            Denied
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning me-2">
+                                            <i class="fas fa-question"></i>
+                                            @PermissionState
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-grid gap-2">
+                                @if (IsSubscribed)
+                                {
+                                    <button class="btn btn-outline-danger" 
+                                            @onclick="UnsubscribeFromPushNotifications"
+                                            disabled="@IsLoading">
+                                        <i class="fas fa-bell-slash"></i>
+                                        Disable Notifications
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-primary" 
+                                            @onclick="SubscribeToPushNotifications"
+                                            disabled="@IsLoading">
+                                        <i class="fas fa-bell"></i>
+                                        Enable Notifications
+                                    </button>
+                                }
+
+                                <button class="btn btn-outline-secondary" 
+                                        @onclick="TestNotification"
+                                        disabled="@IsLoading || !IsSubscribed">
+                                    <i class="fas fa-vial"></i>
+                                    Test Notification
+                                </button>
+
+                                <button class="btn btn-outline-info" 
+                                        @onclick="RefreshStatus"
+                                        disabled="@IsLoading">
+                                    <i class="fas fa-sync-alt"></i>
+                                    Refresh Status
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public bool ShowSettings { get; set; } = true;
+    [Parameter] public EventCallback<bool> OnSubscriptionChanged { get; set; }
+
+    private bool IsSupported { get; set; } = false;
+    private bool IsAuthenticated { get; set; } = false;
+    private bool IsLoading { get; set; } = true;
+    private bool IsSubscribed { get; set; } = false;
+    private string PermissionState { get; set; } = "default";
+    private PushSubscriptionInfo? SubscriptionInfo { get; set; }
+    private string? VapidPublicKey { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Logger.LogInformation("PushNotificationComponent initialized");
+        
+        // Check authentication state
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        IsAuthenticated = authState.User.Identity?.IsAuthenticated == true;
+        
+        if (IsAuthenticated)
+        {
+            await InitializePushNotifications();
+        }
+        
+        IsLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task InitializePushNotifications()
+    {
+        try
+        {
+            // Check if push notifications are supported
+            IsSupported = await JSRuntime.InvokeAsync<bool>("isPushNotificationSupported");
+            
+            if (!IsSupported)
+            {
+                Logger.LogWarning("Push notifications are not supported in this browser");
+                return;
+            }
+
+            // Get VAPID public key (this should come from server configuration)
+            // For now, we'll use a placeholder - in production this should come from API
+            VapidPublicKey = "YOUR_VAPID_PUBLIC_KEY_HERE"; // TODO: Get from server
+
+            // Initialize push notification client
+            await JSRuntime.InvokeVoidAsync("initializePushNotifications", VapidPublicKey);
+
+            // Check current status
+            await RefreshStatus();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error initializing push notifications");
+        }
+    }
+
+    private async Task SubscribeToPushNotifications()
+    {
+        try
+        {
+            IsLoading = true;
+            StateHasChanged();
+
+            // Get API base URL and access token
+            var apiBaseUrl = await ApiUrlService.GetApiBaseUrlAsync();
+            var accessToken = await LocalStorage.GetItemAsStringAsync("authToken");
+
+            if (string.IsNullOrEmpty(accessToken))
+            {
+                Logger.LogWarning("No access token available for push notification subscription");
+                return;
+            }
+
+            // Subscribe to push notifications
+            var success = await JSRuntime.InvokeAsync<bool>("subscribeToPushNotifications", apiBaseUrl, accessToken);
+            
+            if (success)
+            {
+                Logger.LogInformation("Successfully subscribed to push notifications");
+                await RefreshStatus();
+                await OnSubscriptionChanged.InvokeAsync(true);
+            }
+            else
+            {
+                Logger.LogError("Failed to subscribe to push notifications");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error subscribing to push notifications");
+        }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task UnsubscribeFromPushNotifications()
+    {
+        try
+        {
+            IsLoading = true;
+            StateHasChanged();
+
+            // Get API base URL and access token
+            var apiBaseUrl = await ApiUrlService.GetApiBaseUrlAsync();
+            var accessToken = await LocalStorage.GetItemAsStringAsync("authToken");
+
+            if (string.IsNullOrEmpty(accessToken))
+            {
+                Logger.LogWarning("No access token available for push notification unsubscription");
+                return;
+            }
+
+            // Unsubscribe from push notifications
+            var success = await JSRuntime.InvokeAsync<bool>("unsubscribeFromPushNotifications", apiBaseUrl, accessToken);
+            
+            if (success)
+            {
+                Logger.LogInformation("Successfully unsubscribed from push notifications");
+                await RefreshStatus();
+                await OnSubscriptionChanged.InvokeAsync(false);
+            }
+            else
+            {
+                Logger.LogError("Failed to unsubscribe from push notifications");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error unsubscribing from push notifications");
+        }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task TestNotification()
+    {
+        try
+        {
+            var success = await JSRuntime.InvokeAsync<bool>("testPushNotification");
+            
+            if (success)
+            {
+                Logger.LogInformation("Test notification sent");
+            }
+            else
+            {
+                Logger.LogError("Failed to send test notification");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error sending test notification");
+        }
+    }
+
+    private async Task RefreshStatus()
+    {
+        try
+        {
+            if (!IsSupported) return;
+
+            // Check permission state
+            PermissionState = await JSRuntime.InvokeAsync<string>("getPushNotificationPermission");
+            
+            // Check subscription status
+            IsSubscribed = await JSRuntime.InvokeAsync<bool>("isPushNotificationSubscribed");
+            
+            // Get subscription info
+            if (IsSubscribed)
+            {
+                SubscriptionInfo = await JSRuntime.InvokeAsync<PushSubscriptionInfo>("getPushSubscriptionInfo");
+            }
+            else
+            {
+                SubscriptionInfo = null;
+            }
+
+            Logger.LogInformation("Push notification status refreshed - Subscribed: {IsSubscribed}, Permission: {PermissionState}", 
+                IsSubscribed, PermissionState);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error refreshing push notification status");
+        }
+    }
+
+    private string GetShortEndpoint(string endpoint)
+    {
+        if (string.IsNullOrEmpty(endpoint)) return "";
+        
+        if (endpoint.Length > 50)
+        {
+            return endpoint.Substring(0, 47) + "...";
+        }
+        
+        return endpoint;
+    }
+}
+
