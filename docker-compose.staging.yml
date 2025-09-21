@@ -43,6 +43,8 @@ services:
       - Vapid__Subject=${VAPID_SUBJECT:-mailto:admin@staging.warehouse.cuby}
       - Vapid__PublicKey=${VAPID_PUBLIC_KEY}
       - Vapid__PrivateKey=${VAPID_PRIVATE_KEY}
+      - ApiUrl=${ApiUrl:-http://localhost}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
     depends_on:
       postgres:
         condition: service_healthy
