@@ -60,6 +60,13 @@ public static class ApiEndpoints
     public const string Warehouses = "/Warehouse";
     public const string WarehouseById = $"{Warehouses}/{{id}}";
     
+    // Location endpoints
+    public const string Locations = "/Location";
+    public const string LocationById = $"{Locations}/{{id}}";
+    public const string LocationByParentId = $"{Locations}/parent/{{parentId}}";
+    public const string RootLocations = $"{Locations}/root";
+    public const string AllLocations = $"{Locations}/all";
+    
     // Transaction endpoints
     public const string Transactions = "/transactions";
     public const string TransactionById = $"{Transactions}/{{id}}";

@@ -221,6 +221,15 @@ builder.Services.AddScoped<Inventory.Shared.Interfaces.INotificationRuleEngine, 
 
 // Add reference data services
 builder.Services.AddScoped<IReferenceDataService<UnitOfMeasureDto, CreateUnitOfMeasureDto, UpdateUnitOfMeasureDto>, UnitOfMeasureService>();
+builder.Services.AddScoped<ILocationService, LocationApiService>();
+
+// Add HttpClient for LocationApiService
+builder.Services.AddHttpClient<ILocationService, LocationApiService>(client =>
+{
+    var apiUrl = builder.Configuration["ApiUrl"] ?? "https://localhost:7001";
+    client.BaseAddress = new Uri(apiUrl);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
 
 // Add FluentValidation
 builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();

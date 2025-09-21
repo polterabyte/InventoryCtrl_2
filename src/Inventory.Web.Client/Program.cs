@@ -62,6 +62,7 @@ builder.Services.AddScoped<IManufacturerService, WebManufacturerApiService>();
 builder.Services.AddScoped<IProductGroupService, WebProductGroupApiService>();
 builder.Services.AddScoped<IProductModelService, WebProductModelApiService>();
 builder.Services.AddScoped<IWarehouseService, WebWarehouseApiService>();
+builder.Services.AddScoped<ILocationService, WebLocationApiService>();
 builder.Services.AddScoped<IDashboardService, WebDashboardApiService>();
 
 // Register logging and error handling services
