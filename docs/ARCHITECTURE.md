@@ -25,7 +25,8 @@ InventoryCtrl_2/
 │   │   ├── Services/          # Client services
 │   │   └── Program.cs         # Client configuration
 │   │
-│   ├── Inventory.UI/           # Razor Class Library
+│   ├── Inventory.UI/           # Razor Class Library (UI Components)
+│   ├── Inventory.Web.Assets/   # Razor Class Library (Shared static assets: JS/CSS)
 │   │   ├── Components/        # Reusable Razor components
 │   │   ├── Layout/            # Layout components
 │   │   ├── Pages/             # Page components
@@ -134,7 +135,7 @@ InventoryCtrl_2/
 - **Blazored.LocalStorage** — локальное хранение данных
 - **Bootstrap** — CSS фреймворк для UI
 - **Microsoft.AspNetCore.Components.Authorization** — авторизация
-- **SignalR Client** — real-time уведомления
+- **Microsoft.AspNetCore.SignalR.Client** — C# клиент для SignalR (вместо JS-клиента)
 
 ### Shared
 - **.NET 8.0 Standard Library** — общие компоненты
@@ -246,7 +247,7 @@ public class NotificationHub : Hub
 - **Services** — API клиенты
 - **DTOs** — контракты данных
 - **UI Components** — переиспользуемые компоненты
-- **SignalR Client** — общий клиент для real-time коммуникации
+- **SignalR Client (C#)** — общий клиент для real-time коммуникации
 
 ## 🔍 Паттерны проектирования
 

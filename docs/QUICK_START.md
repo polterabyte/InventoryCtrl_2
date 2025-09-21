@@ -31,14 +31,20 @@ docker-compose down
 - **.NET 8.0 SDK** — скачать с [dotnet.microsoft.com](https://dotnet.microsoft.com/download)
 - **PostgreSQL** — установить и запустить сервис
 
-### 2. Настройка базы данных
-Отредактируйте `src/Inventory.API/appsettings.json`:
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Port=5432;Database=InventoryDb;Username=postgres;Password=your_password;"
-  }
-}
+### 2. Настройка базы данных и переменных окружения
+Не изменяйте секреты в исходниках. Используйте ENV/User Secrets:
+
+```powershell
+# User Secrets (локальная разработка)
+cd src/Inventory.API
+dotnet user-secrets init
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=InventoryDb;Username=postgres;Password=CHANGE_ME"
+dotnet user-secrets set "Jwt:Key" "CHANGE_ME_SUPER_SECRET"
+dotnet user-secrets set "CORS_ALLOWED_ORIGINS" "https://localhost"
+dotnet user-secrets set "ADMIN_EMAIL" "admin@localhost"
+dotnet user-secrets set "ADMIN_USERNAME" "admin"
+dotnet user-secrets set "ADMIN_PASSWORD" "CHANGE_ME"
+dotnet user-secrets set "ApiUrl" "https://localhost:7000"
 ```
 
 ### 3. Запуск приложения
@@ -61,13 +67,15 @@ dotnet run
 - HTTPS: https://localhost:7001
 - HTTP: http://localhost:5001
 
-## 🌐 Доступ к приложению
+## 🌐 Доступ к приложению и конфигурация клиента
 
 После запуска откройте браузер:
 
 - **Web приложение**: https://localhost:7001
 - **API документация**: https://localhost:7000/swagger
 - **API Health Check**: https://localhost:7000/health
+
+Клиент (WASM) читает `appsettings.{Environment}.json` из `wwwroot` и использует секцию `ApiSettings` с относительными путями (`/api`, `/notificationHub`). Файлы `appsettings*.json` копируются в `wwwroot` при сборке/публикации (см. `Inventory.Web.Client.csproj`).
 
 ## 👤 Тестовые данные
 
@@ -112,17 +120,7 @@ taskkill /PID <PID> /F
 ```
 
 ### CORS ошибки
-Проверьте настройки CORS в `src/Inventory.API/appsettings.json`:
-```json
-{
-  "Cors": {
-    "AllowedOrigins": [
-      "https://localhost:7001",
-      "http://localhost:5001"
-    ]
-  }
-}
-```
+Используйте переменную окружения `CORS_ALLOWED_ORIGINS` (запятая‑разделённый список Origin). Конфигурация читается в `AddCorsConfiguration` из ENV.
 
 ### База данных недоступна
 ```powershell

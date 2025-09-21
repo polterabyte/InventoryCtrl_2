@@ -151,6 +151,18 @@ This standardization makes it easy to:
 - Understand file purposes at a glance
 - Maintain consistency across the project
 
+### Required Environment Variables
+
+В `.env` для деплоя задаются ключевые переменные (пример — см. `deploy/env.example`):
+
+- `ConnectionStrings__DefaultConnection` — строка подключения PostgreSQL
+- `Jwt__Key` — секрет JWT (обязателен вне Development)
+- `CORS_ALLOWED_ORIGINS` — список разрешённых Origin (через запятую)
+- `ADMIN_EMAIL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD` — первичный админ
+- `ApiUrl` — базовый URL API (используется сервером для сервисов, напр. `LocationApiService`)
+
+Также docker-compose передаёт `ApiUrl` и `CORS_ALLOWED_ORIGINS` в контейнер `inventory-api`.
+
 ## Deployment Process
 
 The universal deployment script follows this process:

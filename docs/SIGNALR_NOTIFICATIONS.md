@@ -37,10 +37,10 @@ The system now supports real-time notifications that are instantly delivered to 
 
 ### Frontend Components
 
-1. **SignalR JavaScript Client** (`src/Inventory.UI/wwwroot/js/signalr-notifications.js`)
-   - JavaScript class for managing SignalR connections
-   - Handles connection state, reconnection, and event management
-   - Supports subscribing to different notification types
+1. **C# SignalR Client (Blazor WASM)** (`src/Inventory.Web.Client/Services/SignalRService.cs`)
+   - Использует `Microsoft.AspNetCore.SignalR.Client`
+   - Управляет состоянием подключения, автопереподключением и подписками
+   - Интегрирован с Blazor без JS interop
 
 2. **RealTimeNotificationComponent** (`src/Inventory.UI/Components/RealTimeNotificationComponent.razor`)
    - Blazor component for displaying real-time notifications
@@ -72,11 +72,11 @@ app.MapHub<NotificationHub>("/notificationHub");
 
 ### Frontend Configuration
 
-The SignalR client is automatically initialized when the `RealTimeNotificationComponent` is loaded. It requires:
+SignalR клиент инициализируется в C# через `SignalRService` при загрузке приложения/компонента. Требуется:
 
-- API base URL (automatically detected)
-- Access token (from localStorage or sessionStorage)
-- JWT authentication
+- URL хаба формируется из секции клиента `ApiSettings` (`/api`, `/notificationHub`) и `window.location.origin`
+- JWT access token (из LocalStorage/AuthenticationStateProvider)
+- CORS на сервере должен включать фронтовые origin через `CORS_ALLOWED_ORIGINS`
 
 ## Usage
 
@@ -139,18 +139,22 @@ You can customize the notification component:
 
 #### JavaScript API
 
-```javascript
-// Subscribe to notification types
-await window.signalRNotificationService.subscribeToNotifications('STOCK');
+JS‑клиент удалён. Взаимодействие осуществляется через C# сервис `SignalRService`:
 
-// Unsubscribe from notification types
-await window.signalRNotificationService.unsubscribeFromNotifications('STOCK');
+```csharp
+@inject SignalRService SignalR
 
-// Check connection state
-const state = window.signalRNotificationService.getConnectionState();
+protected override async Task OnInitializedAsync()
+{
+    await SignalR.ConnectAsync();
+    await SignalR.SubscribeAsync("STOCK");
+}
 
-// Disconnect
-await window.signalRNotificationService.disconnect();
+// Состояние подключения
+var state = SignalR.ConnectionState;
+
+// Отключение
+await SignalR.DisconnectAsync();
 ```
 
 ## Notification Types
@@ -237,7 +241,7 @@ builder.Services.AddSignalR(options =>
 });
 ```
 
-Check browser console for SignalR connection logs and errors.
+Check browser console and client logs (ILogger in `SignalRService`) for SignalR connection details and errors.
 
 ## Future Enhancements
 
