@@ -164,10 +164,13 @@ public class ApiUrlService : IApiUrlService
         try
         {
             var origin = await GetCurrentOriginAsync();
-            if (string.IsNullOrEmpty(origin))
+            if (string.IsNullOrEmpty(origin) || origin.StartsWith("file", StringComparison.OrdinalIgnoreCase))
             {
-                _logger.LogWarning("Failed to get current origin");
-                return null;
+                // Fallback to localhost when running from file:// or origin unavailable
+                var defaultOrigin = $"http://localhost:{_apiConfig.Fallback.DefaultPorts.Http}";
+                var fallback = $"{defaultOrigin}/api";
+                _logger.LogWarning("Origin unavailable or file protocol detected. Using fallback dynamic API URL: {ApiUrl}", fallback);
+                return fallback;
             }
 
             var port = await GetCurrentPortAsync();
@@ -257,18 +260,21 @@ public class ApiUrlService : IApiUrlService
             try
             {
                 var origin = await GetCurrentOriginAsync();
-                if (!string.IsNullOrEmpty(origin))
+                if (!string.IsNullOrEmpty(origin) && !origin.StartsWith("file", StringComparison.OrdinalIgnoreCase))
                 {
                     return origin.TrimEnd('/') + url;
                 }
+                
+                // Fallback for file:// or missing origin
+                var defaultOrigin = $"http://localhost:{_apiConfig.Fallback.DefaultPorts.Http}";
+                return defaultOrigin.TrimEnd('/') + url;
             }
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Failed to get current origin for URL construction");
+                var defaultOrigin = $"http://localhost:{_apiConfig.Fallback.DefaultPorts.Http}";
+                return defaultOrigin.TrimEnd('/') + url;
             }
-            
-            // Если не удалось получить origin, возвращаем относительный URL
-            return url;
         }
 
         // Если URL не начинается с /, добавляем его

@@ -6,6 +6,7 @@
 @inject IWarehouseService WarehouseService
 @inject IUINotificationService NotificationService
 @inject IJSRuntime JSRuntime
+@inject ILocationService LocationService
 
 <AuthorizeView Roles="Admin">
     <Authorized>
@@ -61,7 +62,7 @@
                                 <tr>
                                     <th>Name</th>
                                     <th>Description</th>
-                                    <th>Address</th>
+                                    <th>Location</th>
                                     <th>Contact Info</th>
                                     <th>Status</th>
                                     <th>Created</th>
@@ -74,7 +75,7 @@
                                     <tr>
                                         <td><strong>@item.Name</strong></td>
                                         <td>@(item.Description ?? "-")</td>
-                                        <td>@item.Address</td>
+                                        <td>@(item.LocationName ?? "-")</td>
                                         <td>@(item.ContactInfo ?? "-")</td>
                                         <td>
                                             @if (item.IsActive)
@@ -161,9 +162,18 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label">Address *</label>
-                                        <InputText class="form-control" @bind-Value="currentItem.Address" />
-                                        <ValidationMessage For="@(() => currentItem.Address)" />
+                                        <label class="form-label">Location</label>
+                                        <select class="form-select" @bind="currentItem.LocationId">
+                                            <option value="">Select location...</option>
+                                            @if (locations?.Any() == true)
+                                            {
+                                                @foreach (var loc in locations)
+                                                {
+                                                    <option value="@loc.Id">@loc.Name</option>
+                                                }
+                                            }
+                                        </select>
+                                        <ValidationMessage For="@(() => currentItem.LocationId)" />
                                     </div>
                                 </div>
                             </div>
@@ -212,6 +222,7 @@
 
 @code {
     private List<WarehouseDto> data = new();
+    private List<LocationDto> locations = new();
     private bool isLoading = false;
     private bool showModal = false;
     private bool isEditing = false;
@@ -230,6 +241,7 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
+        await LoadLocations();
     }
 
     private async Task LoadData()
@@ -247,7 +259,7 @@
                 filteredWarehouses = filteredWarehouses.Where(w => 
                     w.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
                     (w.Description?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                    w.Location.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+                    (w.LocationName?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false));
             }
             
             if (!string.IsNullOrEmpty(isActiveFilter))
@@ -316,7 +328,7 @@
         {
             Name = item.Name,
             Description = item.Description,
-            Address = item.Address,
+            LocationId = item.LocationId,
             ContactInfo = item.ContactInfo
         };
         isActive = item.IsActive;
@@ -342,9 +354,8 @@
                 var updateDto = new UpdateWarehouseDto
                 {
                     Name = currentItem.Name,
-                    Location = currentItem.Location,
+                    LocationId = currentItem.LocationId,
                     Description = currentItem.Description,
-                    Address = currentItem.Address,
                     ContactInfo = currentItem.ContactInfo,
                     IsActive = isActive
                 };
@@ -407,6 +418,19 @@
             {
                 NotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
             }
+        }
+    }
+
+    private async Task LoadLocations()
+    {
+        try
+        {
+            var fetched = await LocationService.GetAllLocationsAsync();
+            locations = fetched.ToList();
+        }
+        catch
+        {
+            locations = new();
         }
     }
 }

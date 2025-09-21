@@ -164,10 +164,14 @@ public class WarehouseControllerIntegrationTests : IntegrationTestBase
         await InitializeAsync();
         await SetAuthHeaderAsync();
         
+        // Create a location for the new warehouse
+        var newLoc = new Location { Name = "New Location", IsActive = true, CreatedAt = DateTime.UtcNow };
+        Context.Locations.Add(newLoc);
+        await Context.SaveChangesAsync();
         var request = new CreateWarehouseDto 
         { 
             Name = "New Warehouse", 
-            Address = "New Location" 
+            LocationId = newLoc.Id 
         };
 
         // Act
@@ -179,7 +183,7 @@ public class WarehouseControllerIntegrationTests : IntegrationTestBase
         result!.Success.Should().BeTrue();
         result.Data.Should().NotBeNull();
         result.Data!.Name.Should().Be("New Warehouse");
-        result.Data.Address.Should().Be("New Location");
+        result.Data.LocationId.Should().Be(newLoc.Id);
         result.Data.IsActive.Should().BeTrue();
         
         // Verify warehouse was created in database
@@ -196,10 +200,13 @@ public class WarehouseControllerIntegrationTests : IntegrationTestBase
         await SeedTestDataAsync();
         await SetAuthHeaderAsync();
         
+        var dupLoc = new Location { Name = "New Location", IsActive = true, CreatedAt = DateTime.UtcNow };
+        Context.Locations.Add(dupLoc);
+        await Context.SaveChangesAsync();
         var request = new CreateWarehouseDto 
         { 
             Name = "Main Warehouse", // Duplicate name
-            Address = "New Location" 
+            LocationId = dupLoc.Id 
         };
 
         // Act
@@ -222,10 +229,13 @@ public class WarehouseControllerIntegrationTests : IntegrationTestBase
         await SetAuthHeaderAsync();
         
         var warehouse = Context.Warehouses.First();
+        var updLoc = new Location { Name = "Updated Location", IsActive = true, CreatedAt = DateTime.UtcNow };
+        Context.Locations.Add(updLoc);
+        await Context.SaveChangesAsync();
         var request = new UpdateWarehouseDto 
         { 
             Name = "Updated Warehouse", 
-            Address = "Updated Location",
+            LocationId = updLoc.Id,
             IsActive = true
         };
 
@@ -238,13 +248,13 @@ public class WarehouseControllerIntegrationTests : IntegrationTestBase
         result!.Success.Should().BeTrue();
         result.Data.Should().NotBeNull();
         result.Data!.Name.Should().Be("Updated Warehouse");
-        result.Data.Address.Should().Be("Updated Location");
+        result.Data.LocationId.Should().Be(updLoc.Id);
         
         // Verify warehouse was updated in database
         Context.ChangeTracker.Clear(); // Clear EF Core change tracker
         var updatedWarehouse = await Context.Warehouses.FindAsync(warehouse.Id);
         updatedWarehouse!.Name.Should().Be("Updated Warehouse");
-        updatedWarehouse.Address.Should().Be("Updated Location");
+        updatedWarehouse.LocationId.Should().Be(updLoc.Id);
     }
 
     [Fact]
@@ -255,10 +265,13 @@ public class WarehouseControllerIntegrationTests : IntegrationTestBase
         await InitializeAsync();
         await SetAuthHeaderAsync();
         
+        var updLoc2 = new Location { Name = "Updated Location", IsActive = true, CreatedAt = DateTime.UtcNow };
+        Context.Locations.Add(updLoc2);
+        await Context.SaveChangesAsync();
         var request = new UpdateWarehouseDto 
         { 
             Name = "Updated Name", 
-            Address = "Updated Location",
+            LocationId = updLoc2.Id,
             IsActive = true
         };
 
@@ -390,19 +403,24 @@ public class WarehouseControllerIntegrationTests : IntegrationTestBase
 
     private new async Task SeedTestDataAsync()
     {
+        var loc1 = new Location { Name = "Main Street 1", IsActive = true, CreatedAt = DateTime.UtcNow };
+        var loc2 = new Location { Name = "Secondary Street 2", IsActive = true, CreatedAt = DateTime.UtcNow };
+        Context.Locations.AddRange(loc1, loc2);
+        await Context.SaveChangesAsync();
+
         var warehouses = new List<Warehouse>
         {
             new() 
             { 
                 Name = "Main Warehouse", 
-                Address = "Main Street 1", 
+                LocationId = loc1.Id, 
                 IsActive = true, 
                 CreatedAt = DateTime.UtcNow 
             },
             new() 
             { 
                 Name = "Secondary Warehouse", 
-                Address = "Secondary Street 2", 
+                LocationId = loc2.Id, 
                 IsActive = true, 
                 CreatedAt = DateTime.UtcNow 
             }

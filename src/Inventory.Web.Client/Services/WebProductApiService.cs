@@ -3,28 +3,23 @@ using Inventory.Shared.DTOs;
 using Inventory.Shared.Interfaces;
 using Microsoft.Extensions.Logging;
 
-namespace Inventory.Shared.Services;
+namespace Inventory.Web.Client.Services;
 
-public class ProductApiService(HttpClient httpClient, ILogger<ProductApiService> logger, IRetryService? retryService = null, INotificationService? notificationService = null) 
-    : BaseApiService(httpClient, "", logger), IProductService
+public class WebProductApiService : WebBaseApiService, IProductService
 {
-    private readonly IRetryService? _retryService = retryService;
-    private readonly INotificationService? _notificationService = notificationService;
+    public WebProductApiService(
+        HttpClient httpClient,
+        IUrlBuilderService urlBuilderService,
+        IResilientApiService resilientApiService,
+        IApiErrorHandler errorHandler,
+        IRequestValidator requestValidator,
+        ILogger<WebProductApiService> logger)
+        : base(httpClient, urlBuilderService, resilientApiService, errorHandler, requestValidator, logger)
+    {
+    }
 
     public async Task<List<ProductDto>> GetAllProductsAsync()
     {
-        if (_retryService != null)
-        {
-            return await _retryService.ExecuteWithRetryAsync(
-                async () =>
-                {
-                    var response = await GetPagedAsync<ProductDto>(ApiEndpoints.Products);
-                    return response.Data?.Items ?? new List<ProductDto>();
-                },
-                "GetAllProducts"
-            );
-        }
-        
         var response = await GetPagedAsync<ProductDto>(ApiEndpoints.Products);
         return response.Data?.Items ?? new List<ProductDto>();
     }
@@ -90,3 +85,5 @@ public class ProductApiService(HttpClient httpClient, ILogger<ProductApiService>
         return response.Data?.Items ?? new List<ProductDto>();
     }
 }
+
+

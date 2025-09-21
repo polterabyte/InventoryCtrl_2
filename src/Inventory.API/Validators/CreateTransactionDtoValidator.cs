@@ -26,8 +26,8 @@ public class CreateTransactionDtoValidator : AbstractValidator<CreateInventoryTr
         RuleFor(x => x.Type)
             .NotEmpty()
             .WithMessage("Transaction type is required")
-            .Must(type => type == "Income" || type == "Outcome" || type == "Install")
-            .WithMessage("Transaction type must be Income, Outcome, or Install");
+            .Must(type => type == "Pending" || type == "Income" || type == "Outcome" || type == "Install")
+            .WithMessage("Transaction type must be Pending, Income, Outcome, or Install");
 
         RuleFor(x => x.Description)
             .MaximumLength(500)

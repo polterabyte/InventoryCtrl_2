@@ -15,7 +15,7 @@ public class WarehouseTests
         // Assert
         warehouse.Should().NotBeNull();
         warehouse.Name.Should().Be(string.Empty);
-        warehouse.Address.Should().Be(string.Empty);
+        warehouse.LocationId.Should().BeNull();
         warehouse.IsActive.Should().BeTrue();
         warehouse.Transactions.Should().NotBeNull();
         warehouse.Transactions.Should().BeEmpty();
@@ -34,7 +34,7 @@ public class WarehouseTests
         {
             Id = 1,
             Name = "Main Warehouse",
-            Address = "123 Main Street, City, State",
+            LocationId = 10,
             IsActive = true,
             CreatedAt = now,
             UpdatedAt = now
@@ -43,7 +43,7 @@ public class WarehouseTests
         // Assert
         warehouse.Id.Should().Be(1);
         warehouse.Name.Should().Be("Main Warehouse");
-        warehouse.Address.Should().Be("123 Main Street, City, State");
+        warehouse.LocationId.Should().Be(10);
         warehouse.IsActive.Should().BeTrue();
         warehouse.CreatedAt.Should().Be(now);
         warehouse.UpdatedAt.Should().Be(now);
@@ -110,13 +110,13 @@ public class WarehouseTests
     }
 
     [Fact]
-    public void Warehouse_CanHaveEmptyLocation()
+    public void Warehouse_CanHaveNullLocation()
     {
         // Act
-        var warehouse = new Warehouse { Address = string.Empty };
+        var warehouse = new Warehouse { LocationId = null };
 
         // Assert
-        warehouse.Address.Should().Be(string.Empty);
+        warehouse.LocationId.Should().BeNull();
     }
 
     [Fact]
@@ -170,17 +170,16 @@ public class WarehouseTests
     }
 
     [Fact]
-    public void Warehouse_CanHaveLongAddress()
+    public void Warehouse_CanHaveLargeLocationId()
     {
         // Arrange
-        var longLocation = new string('B', 1000);
+        var largeId = int.MaxValue;
 
         // Act
-        var warehouse = new Warehouse { Address = longLocation };
+        var warehouse = new Warehouse { LocationId = largeId };
 
         // Assert
-        warehouse.Address.Should().Be(longLocation);
-        warehouse.Address.Should().HaveLength(1000);
+        warehouse.LocationId.Should().Be(largeId);
     }
 
     [Fact]
@@ -197,15 +196,12 @@ public class WarehouseTests
     }
 
     [Fact]
-    public void Warehouse_CanHaveSpecialCharactersInAddress()
+    public void Warehouse_CanHaveNoLocation()
     {
-        // Arrange
-        var specialLocation = "123 Main St. #456, Suite 789, City, ST 12345-6789";
-
         // Act
-        var warehouse = new Warehouse { Address = specialLocation };
+        var warehouse = new Warehouse();
 
         // Assert
-        warehouse.Address.Should().Be(specialLocation);
+        warehouse.LocationId.Should().BeNull();
     }
 }

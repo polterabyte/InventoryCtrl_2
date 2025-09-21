@@ -22,12 +22,12 @@ public class WarehouseController(AppDbContext context, ILogger<WarehouseControll
     {
         try
         {
-            var query = context.Warehouses.AsQueryable();
+            var query = context.Warehouses.Include(w => w.Location).AsQueryable();
 
             // Apply filters
             if (!string.IsNullOrEmpty(search))
             {
-                query = query.Where(w => w.Name.Contains(search) || w.Address.Contains(search));
+                query = query.Where(w => w.Name.Contains(search) || (w.Location != null && w.Location.Name.Contains(search)));
             }
 
             if (isActive.HasValue)
@@ -57,7 +57,8 @@ public class WarehouseController(AppDbContext context, ILogger<WarehouseControll
                     Id = w.Id,
                     Name = w.Name,
                     Description = w.Description,
-                    Address = w.Address,
+                    LocationId = w.LocationId,
+                    LocationName = w.Location != null ? w.Location.Name : null,
                     ContactInfo = w.ContactInfo,
                     IsActive = w.IsActive,
                     CreatedAt = w.CreatedAt,
@@ -96,6 +97,7 @@ public class WarehouseController(AppDbContext context, ILogger<WarehouseControll
         try
         {
             var warehouse = await context.Warehouses
+                .Include(w => w.Location)
                 .FirstOrDefaultAsync(w => w.Id == id && w.IsActive);
 
             if (warehouse == null)
@@ -112,7 +114,8 @@ public class WarehouseController(AppDbContext context, ILogger<WarehouseControll
                 Id = warehouse.Id,
                 Name = warehouse.Name,
                 Description = warehouse.Description,
-                Address = warehouse.Address,
+                LocationId = warehouse.LocationId,
+                LocationName = warehouse.Location != null ? warehouse.Location.Name : null,
                 ContactInfo = warehouse.ContactInfo,
                 IsActive = warehouse.IsActive,
                 CreatedAt = warehouse.CreatedAt,
@@ -169,7 +172,7 @@ public class WarehouseController(AppDbContext context, ILogger<WarehouseControll
             {
                 Name = request.Name,
                 Description = request.Description,
-                Address = request.Address ?? string.Empty,
+                LocationId = request.LocationId,
                 ContactInfo = request.ContactInfo ?? string.Empty,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
@@ -185,7 +188,8 @@ public class WarehouseController(AppDbContext context, ILogger<WarehouseControll
                 Id = warehouse.Id,
                 Name = warehouse.Name,
                 Description = warehouse.Description,
-                Address = warehouse.Address,
+                LocationId = warehouse.LocationId,
+                LocationName = (await context.Locations.FindAsync(warehouse.LocationId))?.Name,
                 ContactInfo = warehouse.ContactInfo,
                 IsActive = warehouse.IsActive,
                 CreatedAt = warehouse.CreatedAt,
@@ -250,7 +254,7 @@ public class WarehouseController(AppDbContext context, ILogger<WarehouseControll
 
             warehouse.Name = request.Name;
             warehouse.Description = request.Description;
-            warehouse.Address = request.Address ?? string.Empty;
+            warehouse.LocationId = request.LocationId;
             warehouse.ContactInfo = request.ContactInfo ?? string.Empty;
             warehouse.IsActive = request.IsActive;
             warehouse.UpdatedAt = DateTime.UtcNow;
@@ -264,7 +268,8 @@ public class WarehouseController(AppDbContext context, ILogger<WarehouseControll
                 Id = warehouse.Id,
                 Name = warehouse.Name,
                 Description = warehouse.Description,
-                Address = warehouse.Address,
+                LocationId = warehouse.LocationId,
+                LocationName = (await context.Locations.FindAsync(warehouse.LocationId))?.Name,
                 ContactInfo = warehouse.ContactInfo,
                 IsActive = warehouse.IsActive,
                 CreatedAt = warehouse.CreatedAt,

@@ -17,6 +17,9 @@ public static class DbInitializer
         // Применение миграций
         await db.Database.MigrateAsync();
 
+        // Обновление/создание SQL VIEW'ов (идемпотентно)
+        await SqlViewInitializer.EnsureViewsAsync(db);
+
         // Создание ролей
         await CreateRolesAsync(roleManager);
 

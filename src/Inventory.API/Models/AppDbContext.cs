@@ -139,6 +139,43 @@ namespace Inventory.API.Models
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
         });
 
+        // Keyless view mappings
+        modelBuilder.Entity<ProductPendingView>(entity =>
+        {
+            entity.HasNoKey();
+            entity.ToView("vw_product_pending");
+            entity.Property(e => e.ProductId).HasColumnName("product_id");
+            entity.Property(e => e.ProductName).HasColumnName("product_name");
+            entity.Property(e => e.SKU).HasColumnName("sku");
+            entity.Property(e => e.PendingQty).HasColumnName("pending_qty");
+            entity.Property(e => e.FirstPendingDate).HasColumnName("first_pending_date");
+            entity.Property(e => e.LastPendingDate).HasColumnName("last_pending_date");
+        });
+
+        modelBuilder.Entity<ProductOnHandView>(entity =>
+        {
+            entity.HasNoKey();
+            entity.ToView("vw_product_on_hand");
+            entity.Property(e => e.ProductId).HasColumnName("product_id");
+            entity.Property(e => e.ProductName).HasColumnName("product_name");
+            entity.Property(e => e.SKU).HasColumnName("sku");
+            entity.Property(e => e.OnHandQty).HasColumnName("on_hand_qty");
+        });
+
+        modelBuilder.Entity<ProductInstalledView>(entity =>
+        {
+            entity.HasNoKey();
+            entity.ToView("vw_product_installed");
+            entity.Property(e => e.ProductId).HasColumnName("product_id");
+            entity.Property(e => e.ProductName).HasColumnName("product_name");
+            entity.Property(e => e.SKU).HasColumnName("sku");
+            entity.Property(e => e.LocationId).HasColumnName("location_id");
+            entity.Property(e => e.LocationName).HasColumnName("location_name");
+            entity.Property(e => e.InstalledQty).HasColumnName("installed_qty");
+            entity.Property(e => e.FirstInstallDate).HasColumnName("first_install_date");
+            entity.Property(e => e.LastInstallDate).HasColumnName("last_install_date");
+        });
+
         // PushSubscription removed with VAPID/Web Push
     }
            public DbSet<Product> Products { get; set; } = null!;
@@ -157,6 +194,10 @@ namespace Inventory.API.Models
            public DbSet<NotificationRule> NotificationRules { get; set; } = null!;
            public DbSet<NotificationPreference> NotificationPreferences { get; set; } = null!;
            public DbSet<NotificationTemplate> NotificationTemplates { get; set; } = null!;
+           // Views
+           public DbSet<ProductPendingView> ProductPending { get; set; } = null!;
+           public DbSet<ProductOnHandView> ProductOnHand { get; set; } = null!;
+           public DbSet<ProductInstalledView> ProductInstalled { get; set; } = null!;
            public DbSet<SignalRConnection> SignalRConnections { get; set; } = null!;
            // public DbSet<PushSubscription> PushSubscriptions { get; set; } = null!;
     }

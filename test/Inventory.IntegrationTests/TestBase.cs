@@ -430,17 +430,23 @@ public abstract class IntegrationTestBase : IClassFixture<WebApplicationFactory<
         await Context.SaveChangesAsync();
 
         // Create test warehouses
+        // Create locations for warehouses
+        var locationA = new Location { Name = "Building A", IsActive = true, CreatedAt = DateTime.UtcNow };
+        var locationB = new Location { Name = "Building B", IsActive = true, CreatedAt = DateTime.UtcNow };
+        Context.Locations.AddRange(locationA, locationB);
+        await Context.SaveChangesAsync();
+
         var mainWarehouse = new Warehouse
         {
             Name = "Main Warehouse",
-            Address = "Building A",
+            LocationId = locationA.Id,
             IsActive = true
         };
 
         var secondaryWarehouse = new Warehouse
         {
             Name = "Secondary Warehouse", 
-            Address = "Building B",
+            LocationId = locationB.Id,
             IsActive = true
         };
 

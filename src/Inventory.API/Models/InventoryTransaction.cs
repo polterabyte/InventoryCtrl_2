@@ -2,9 +2,10 @@ namespace Inventory.API.Models;
 
 public enum TransactionType
 {
-    Income,
-    Outcome,
-    Install
+    Income = 0,
+    Outcome = 1,
+    Install = 2,
+    Pending = 3
 }
 
 public class InventoryTransaction

@@ -528,7 +528,10 @@ public class TransactionControllerTests : IDisposable
         // Create test data
         var category = new Category { Name = "Test Category", IsActive = true, CreatedAt = DateTime.UtcNow };
         var manufacturer = new Manufacturer { Name = "Test Manufacturer", CreatedAt = DateTime.UtcNow };
-        var warehouse = new Warehouse { Name = "Test Warehouse", Address = "Test Location", IsActive = true, CreatedAt = DateTime.UtcNow };
+        var loc = new Location { Name = "Test Location", IsActive = true, CreatedAt = DateTime.UtcNow };
+        _context.Locations.Add(loc);
+        await _context.SaveChangesAsync();
+        var warehouse = new Warehouse { Name = "Test Warehouse", LocationId = loc.Id, IsActive = true, CreatedAt = DateTime.UtcNow };
         var user = new User { Id = _testUserId, UserName = "testuser", Email = "test@example.com", Role = "Admin" };
         var productGroup = new ProductGroup { Name = "Test Product Group", IsActive = true, CreatedAt = DateTime.UtcNow };
         
@@ -593,7 +596,10 @@ public class TransactionControllerTests : IDisposable
         // Create test data without transactions
         var category = new Category { Name = "Test Category", IsActive = true, CreatedAt = DateTime.UtcNow };
         var manufacturer = new Manufacturer { Name = "Test Manufacturer", CreatedAt = DateTime.UtcNow };
-        var warehouse = new Warehouse { Name = "Test Warehouse", Address = "Test Location", IsActive = true, CreatedAt = DateTime.UtcNow };
+        var loc = new Location { Name = "Test Location", IsActive = true, CreatedAt = DateTime.UtcNow };
+        _context.Locations.Add(loc);
+        await _context.SaveChangesAsync();
+        var warehouse = new Warehouse { Name = "Test Warehouse", LocationId = loc.Id, IsActive = true, CreatedAt = DateTime.UtcNow };
         var user = new User { Id = _testUserId, UserName = "testuser", Email = "test@example.com", Role = "Admin" };
         var productGroup = new ProductGroup { Name = "Test Product Group", IsActive = true, CreatedAt = DateTime.UtcNow };
         
