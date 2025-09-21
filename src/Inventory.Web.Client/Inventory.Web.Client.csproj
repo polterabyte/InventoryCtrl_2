@@ -36,7 +36,7 @@
       <CopyToPublishDirectory>Always</CopyToPublishDirectory>
       <Link>wwwroot\appsettings.json</Link>
     </None>
-    <None Include="appsettings.Development.json">
+    <None Include="appsettings.Development.json" Condition="Exists('appsettings.Development.json')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>Always</CopyToPublishDirectory>
       <Link>wwwroot\appsettings.Development.json</Link>
