@@ -29,4 +29,28 @@
           SkipUnchangedFiles="true" />
   </Target>
 
+  <!-- Copy appsettings*.json to wwwroot so WASM can fetch them at runtime -->
+  <ItemGroup>
+    <None Include="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+      <Link>wwwroot\appsettings.json</Link>
+    </None>
+    <None Include="appsettings.Development.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+      <Link>wwwroot\appsettings.Development.json</Link>
+    </None>
+    <None Include="appsettings.Staging.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+      <Link>wwwroot\appsettings.Staging.json</Link>
+    </None>
+    <None Include="appsettings.Production.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+      <Link>wwwroot\appsettings.Production.json</Link>
+    </None>
+  </ItemGroup>
+
 </Project>
