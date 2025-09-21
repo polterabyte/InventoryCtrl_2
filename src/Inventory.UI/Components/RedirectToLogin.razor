@@ -1,6 +1,9 @@
 @using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Authorization
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
+@inject ILocalStorageService LocalStorage
+@inject AuthenticationStateProvider AuthStateProvider
 
 <div class="container-fluid">
     <div class="row justify-content-center">
@@ -18,10 +21,56 @@
 </div>
 
 @code {
+    private bool isRedirecting = false;
+
     protected override async Task OnInitializedAsync()
     {
-        // Add a small delay to prevent flash of content and show loading message
-        await Task.Delay(500);
-        Navigation.NavigateTo("/login", true);
+        if (!isRedirecting)
+        {
+            await PerformRedirect();
+        }
+    }
+
+    private async Task PerformRedirect()
+    {
+        isRedirecting = true;
+        StateHasChanged();
+
+        try
+        {
+            // Проверяем, есть ли сохраненный URL для возврата
+            var returnUrl = await LocalStorage.GetItemAsStringAsync("returnUrl");
+            
+            // Если нет сохраненного URL, сохраняем текущий
+            if (string.IsNullOrEmpty(returnUrl))
+            {
+                var currentUrl = Navigation.ToBaseRelativePath(Navigation.Uri);
+                if (!string.IsNullOrEmpty(currentUrl) && currentUrl != "login")
+                {
+                    await LocalStorage.SetItemAsStringAsync("returnUrl", currentUrl);
+                }
+            }
+
+            // Очищаем токен аутентификации, если он есть
+            await LocalStorage.RemoveItemAsync("authToken");
+            
+            // Уведомляем о изменении состояния аутентификации
+            if (AuthStateProvider is ICustomAuthenticationStateProvider customProvider)
+            {
+                await customProvider.MarkUserAsLoggedOutAsync();
+            }
+
+            // Небольшая задержка для показа сообщения
+            await Task.Delay(800);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Redirect error: {ex.Message}");
+        }
+        finally
+        {
+            // Перенаправляем на страницу входа
+            Navigation.NavigateTo("/login", true);
+        }
     }
 }

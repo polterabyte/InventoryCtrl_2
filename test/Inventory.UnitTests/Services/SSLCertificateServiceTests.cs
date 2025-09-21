@@ -195,7 +195,7 @@ namespace Inventory.UnitTests.Services
         [InlineData(30)]
         [InlineData(60)]
         [InlineData(90)]
-        public async Task GetCertificatesExpiringSoonAsync_ShouldReturnEmptyList_WhenNoCertificates(int days)
+        public async Task GetCertificatesExpiringSoonAsync_ShouldReturnEmptyList_WhenNoCertificates_WithDays(int days)
         {
             // Act
             var result = await _sslService.GetCertificatesExpiringSoonAsync(days);
@@ -290,17 +290,14 @@ namespace Inventory.UnitTests.Services
             Assert.Equal(DateTime.MinValue, dto.ValidatedAt);
         }
 
-        protected override void Dispose(bool disposing)
+        protected new void Dispose()
         {
-            if (disposing)
+            // Clean up test directory
+            if (Directory.Exists("test-ssl"))
             {
-                // Clean up test directory
-                if (Directory.Exists("test-ssl"))
-                {
-                    Directory.Delete("test-ssl", true);
-                }
+                Directory.Delete("test-ssl", true);
             }
-            base.Dispose(disposing);
+            base.Dispose();
         }
     }
 }

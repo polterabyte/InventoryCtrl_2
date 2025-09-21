@@ -1,0 +1,110 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components
+@inject IAuthenticationService AuthenticationService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+
+@code {
+    private bool isInitialized = false;
+    private CancellationTokenSource _cancellationTokenSource = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!isInitialized)
+        {
+            isInitialized = true;
+            await SetupTokenExpirationHandling();
+        }
+    }
+
+    private async Task SetupTokenExpirationHandling()
+    {
+        try
+        {
+            // Проверяем токен при инициализации
+            var isTokenValid = await AuthenticationService.IsTokenValidAsync();
+            if (!isTokenValid)
+            {
+                await HandleTokenExpiration();
+                return;
+            }
+
+            // Настраиваем периодическую проверку токена
+            _ = Task.Run(async () =>
+            {
+                while (!_cancellationTokenSource.Token.IsCancellationRequested)
+                {
+                    try
+                    {
+                        await Task.Delay(TimeSpan.FromMinutes(1), _cancellationTokenSource.Token); // Проверяем каждую минуту
+                        
+                        var isValid = await AuthenticationService.IsTokenValidAsync();
+                        if (!isValid)
+                        {
+                            await InvokeAsync(async () =>
+                            {
+                                await HandleTokenExpiration();
+                            });
+                            break;
+                        }
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // Нормальная отмена, выходим из цикла
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Token validation error: {ex.Message}");
+                    }
+                }
+            }, _cancellationTokenSource.Token);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Token expiration handler setup failed: {ex.Message}");
+        }
+    }
+
+    private async Task HandleTokenExpiration()
+    {
+        try
+        {
+            // Сохраняем текущий URL
+            var currentUrl = Navigation.ToBaseRelativePath(Navigation.Uri);
+            if (!string.IsNullOrEmpty(currentUrl) && currentUrl != "login")
+            {
+                await AuthenticationService.SetReturnUrlAsync(currentUrl);
+            }
+
+            // Очищаем аутентификацию
+            await AuthenticationService.ClearAuthenticationAsync();
+
+            // Показываем уведомление пользователю
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("showToast", "Сессия истекла. Пожалуйста, войдите в систему снова.", "warning");
+            }
+            catch (Exception jsEx)
+            {
+                Console.WriteLine($"Error showing toast notification: {jsEx.Message}");
+            }
+
+            // Перенаправляем на страницу входа
+            Navigation.NavigateTo("/login", true);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error handling token expiration: {ex.Message}");
+            // В случае ошибки просто перенаправляем на страницу входа
+            Navigation.NavigateTo("/login", true);
+        }
+    }
+
+    public void Dispose()
+    {
+        _cancellationTokenSource?.Cancel();
+        _cancellationTokenSource?.Dispose();
+    }
+}

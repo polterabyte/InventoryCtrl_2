@@ -6,6 +6,7 @@ using Inventory.API.Models;
 using Inventory.Shared.DTOs;
 using Serilog;
 using System.Security.Claims;
+using System.Text;
 
 namespace Inventory.API.Controllers;
 
@@ -308,6 +309,77 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
             {
                 Success = false,
                 ErrorMessage = "Failed to delete user"
+            });
+        }
+    }
+
+    [HttpGet("export")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> ExportUsers(
+        [FromQuery] string? search = null,
+        [FromQuery] string? role = null)
+    {
+        try
+        {
+            var query = userManager.Users.AsQueryable();
+
+            // Apply search filter
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(u => u.UserName!.Contains(search) || u.Email!.Contains(search));
+            }
+
+            // Apply role filter
+            if (!string.IsNullOrEmpty(role))
+            {
+                var usersInRole = await userManager.GetUsersInRoleAsync(role);
+                var userIds = usersInRole.Select(u => u.Id);
+                query = query.Where(u => userIds.Contains(u.Id));
+            }
+
+            var users = await query
+                .OrderBy(u => u.UserName)
+                .Select(u => new UserDto
+                {
+                    Id = u.Id,
+                    UserName = u.UserName!,
+                    Email = u.Email!,
+                    Role = u.Role,
+                    EmailConfirmed = u.EmailConfirmed,
+                    CreatedAt = u.CreatedAt,
+                    UpdatedAt = u.UpdatedAt
+                })
+                .ToListAsync();
+
+            // Get roles for each user
+            foreach (var user in users)
+            {
+                var userEntity = await userManager.FindByIdAsync(user.Id);
+                if (userEntity != null)
+                {
+                    user.Roles = (await userManager.GetRolesAsync(userEntity)).ToList();
+                }
+            }
+
+            // Generate CSV content
+            var csv = new StringBuilder();
+            csv.AppendLine("Username,Email,Role,EmailConfirmed,CreatedAt,UpdatedAt");
+            
+            foreach (var user in users)
+            {
+                csv.AppendLine($"{user.UserName},{user.Email},{user.Role},{user.EmailConfirmed},{user.CreatedAt:yyyy-MM-dd HH:mm:ss},{user.UpdatedAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? ""}");
+            }
+
+            var bytes = Encoding.UTF8.GetBytes(csv.ToString());
+            return File(bytes, "text/csv", $"users-export-{DateTime.UtcNow:yyyy-MM-dd-HH-mm-ss}.csv");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error exporting users");
+            return StatusCode(500, new ApiResponse<object>
+            {
+                Success = false,
+                ErrorMessage = "Failed to export users"
             });
         }
     }

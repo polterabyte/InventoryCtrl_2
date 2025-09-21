@@ -77,6 +77,12 @@ builder.Services.AddScoped<IDebugLogsService, DebugLogsService>();
 // Register authorization services
 builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 
+// Register authentication service
+builder.Services.AddScoped<Inventory.UI.Services.IAuthenticationService, Inventory.UI.Services.AuthenticationService>();
+
+// Register user management service
+builder.Services.AddScoped<Inventory.UI.Services.IUserManagementService, Inventory.UI.Services.UserManagementService>();
+
 // Register audit services
 builder.Services.AddScoped<IAuditService, AuditApiService>();
 

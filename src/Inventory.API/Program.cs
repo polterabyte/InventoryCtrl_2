@@ -366,6 +366,9 @@ if (!app.Environment.IsEnvironment("Testing") && Environment.GetEnvironmentVaria
 // Add global exception handling middleware
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
+// Add authentication middleware
+app.UseMiddleware<AuthenticationMiddleware>();
+
 // Add audit middleware
 app.UseMiddleware<AuditMiddleware>();
 

@@ -9,11 +9,11 @@ using Moq;
 
 namespace Inventory.IntegrationTests.Controllers
 {
-    public class SSLCertificateControllerTests : IClassFixture<WebApplicationFactory<Program>>
+    public class SSLCertificateControllerTests : IClassFixture<WebApplicationFactory<Program>>, IDisposable
     {
         private readonly WebApplicationFactory<Program> _factory;
         private readonly HttpClient _client;
-        private readonly Mock<ISSLCertificateService> _mockSslService;
+        private Mock<ISSLCertificateService> _mockSslService;
 
         public SSLCertificateControllerTests(WebApplicationFactory<Program> factory)
         {

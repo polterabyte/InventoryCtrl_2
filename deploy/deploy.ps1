@@ -117,7 +117,7 @@ function Get-HealthCheckUrl {
     if ($Environment -eq "staging") {
         # Try domain first (if DNS is configured)
         try {
-            $testUrl = "https://$Domain/health"
+            $testUrl = "https://$Domain/api/health"
             $response = Invoke-WebRequest -Uri $testUrl -Method Get -TimeoutSec 5 -ErrorAction Stop
             Write-Host "Using domain URL: $testUrl" -ForegroundColor Green
             return $testUrl
@@ -127,7 +127,7 @@ function Get-HealthCheckUrl {
         
         # Try localhost with HTTP (nginx allows this for staging)
         try {
-            $testUrl = "http://localhost/health"
+            $testUrl = "http://localhost/api/health"
             $response = Invoke-WebRequest -Uri $testUrl -Method Get -TimeoutSec 5 -ErrorAction Stop
             Write-Host "Using localhost URL: $testUrl" -ForegroundColor Green
             return $testUrl
@@ -136,12 +136,12 @@ function Get-HealthCheckUrl {
         }
         
         # Fallback to IP (should be last resort)
-        $ipUrl = "http://192.168.139.96/health"
+        $ipUrl = "http://192.168.139.96/api/health"
         Write-Host "Using IP fallback URL: $ipUrl" -ForegroundColor Yellow
         return $ipUrl
     } else {
         # For production and test, use domain
-        return "https://$Domain/health"
+        return "https://$Domain/api/health"
     }
 }
 
