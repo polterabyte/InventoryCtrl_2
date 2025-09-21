@@ -12,22 +12,16 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" />
     <PackageReference Include="Blazored.LocalStorage" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Inventory.Shared\Inventory.Shared.csproj" />
     <ProjectReference Include="..\Inventory.UI\Inventory.UI.csproj" />
+    <ProjectReference Include="..\Inventory.Web.Assets\Inventory.Web.Assets.csproj" />
   </ItemGroup>
 
-  <!-- Автоматическое копирование статических ресурсов из Inventory.UI -->
-  <Target Name="CopyStaticAssets" BeforeTargets="Build">
-    <ItemGroup>
-      <UIStaticFiles Include="..\Inventory.UI\wwwroot\**\*" />
-    </ItemGroup>
-    <Copy SourceFiles="@(UIStaticFiles)" 
-          DestinationFiles="@(UIStaticFiles->'wwwroot\%(RecursiveDir)%(Filename)%(Extension)')" 
-          SkipUnchangedFiles="true" />
-  </Target>
+  <!-- Удалено копирование статических ресурсов из Inventory.UI. Взамен используется RCL: Inventory.Web.Assets -->
 
   <!-- Copy appsettings*.json to wwwroot so WASM can fetch them at runtime -->
   <ItemGroup>

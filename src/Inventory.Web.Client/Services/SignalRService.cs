@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Inventory.Shared.Interfaces;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.JSInterop;
 
 namespace Inventory.Web.Client.Services;
 
