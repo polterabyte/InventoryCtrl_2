@@ -109,6 +109,32 @@
         }
     }
 
+    [JSInvokable("OnConnectionStateChangedJS")]
+    public void OnConnectionStateChangedJS(string state, string? error = null)
+    {
+        try
+        {
+            Logger.LogInformation("SignalR state changed: {State}. Error: {Error}", state, error ?? "<none>");
+        }
+        catch
+        {
+            // no-op
+        }
+    }
+
+    [JSInvokable("OnNotificationReceivedJS")]
+    public void OnNotificationReceivedJS(object notification)
+    {
+        try
+        {
+            Logger.LogInformation("SignalR notification received: {Info}", notification?.ToString() ?? "<null>");
+        }
+        catch
+        {
+            // no-op
+        }
+    }
+
     public async ValueTask DisposeAsync()
     {
         try
