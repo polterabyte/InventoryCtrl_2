@@ -106,7 +106,7 @@ builder.Services.AddScoped(provider =>
     return validationService;
 });
 
-// Register SignalR service
+// Register SignalR service (C# client)
 builder.Services.AddScoped<ISignalRService, SignalRService>();
 
 await builder.Build().RunAsync();
