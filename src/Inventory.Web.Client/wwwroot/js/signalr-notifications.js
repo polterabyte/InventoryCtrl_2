@@ -47,19 +47,18 @@ class SignalRNotificationService {
             console.log('API Base URL:', apiBaseUrl);
             console.log('Access Token:', accessToken ? 'Present' : 'Missing');
             
-            // Build hub URL robustly: ensure exactly one /notificationHub and no duplicates
-            const base = (apiBaseUrl || '')
-                .replace(/\/notificationHub\/?$/i, '')
-                .replace(/\/api\/?$/i, '')
-                .replace(/\/$/, '');
-            const hubUrl = `${base}/notificationHub?access_token=${accessToken}`;
+            // Build hub URL robustly: if apiBaseUrl already ends with /notificationHub, don't append
+            const normalized = (apiBaseUrl || '').replace(/\/$/, '');
+            const hubBase = /\/notificationHub$/i.test(normalized)
+                ? normalized
+                : normalized.replace(/\/api$/i, '') + '/notificationHub';
+            const hubUrl = `${hubBase}?access_token=${accessToken}`;
             console.log('Hub URL:', hubUrl);
 
             this.connection = new signalR.HubConnectionBuilder()
                 .withUrl(hubUrl, {
-                    // Allow negotiation to fall back if WebSockets are blocked by proxy
-                    skipNegotiation: false,
-                    transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.ServerSentEvents | signalR.HttpTransportType.LongPolling
+                    skipNegotiation: true,
+                    transport: signalR.HttpTransportType.WebSockets
                 })
                 .withAutomaticReconnect({
                     nextRetryDelayInMilliseconds: (retryContext) => {
