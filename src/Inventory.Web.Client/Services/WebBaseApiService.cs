@@ -48,7 +48,7 @@ public abstract class WebBaseApiService(
                     catch
                     {
                         // Fallback для staging
-                        fullUrl = $"https://staging.warehouse.cuby{fullUrl}";
+                        fullUrl = $"http://staging.warehouse.cuby{fullUrl}";
                     }
                 }
                 else
@@ -98,7 +98,7 @@ public abstract class WebBaseApiService(
                     catch
                     {
                         // Fallback для staging
-                        fullUrl = $"https://staging.warehouse.cuby{fullUrl}";
+                        fullUrl = $"http://staging.warehouse.cuby{fullUrl}";
                     }
                 }
                 else
@@ -148,7 +148,7 @@ public abstract class WebBaseApiService(
                     catch
                     {
                         // Fallback для staging
-                        fullUrl = $"https://staging.warehouse.cuby{fullUrl}";
+                        fullUrl = $"http://staging.warehouse.cuby{fullUrl}";
                     }
                 }
                 else
@@ -198,7 +198,7 @@ public abstract class WebBaseApiService(
                     catch
                     {
                         // Fallback для staging
-                        fullUrl = $"https://staging.warehouse.cuby{fullUrl}";
+                        fullUrl = $"http://staging.warehouse.cuby{fullUrl}";
                     }
                 }
                 else
@@ -248,7 +248,7 @@ public abstract class WebBaseApiService(
                     catch
                     {
                         // Fallback для staging
-                        fullUrl = $"https://staging.warehouse.cuby{fullUrl}";
+                        fullUrl = $"http://staging.warehouse.cuby{fullUrl}";
                     }
                 }
                 else

@@ -254,7 +254,7 @@ public abstract class IntegrationTestBase : IClassFixture<WebApplicationFactory<
         using var scope = Factory.Services.CreateScope();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
         
-        var roles = new[] { "Admin", "SuperUser", "User" };
+        var roles = new[] { "Admin", "Manager", "User" };
         
         foreach (var role in roles)
         {

@@ -2,12 +2,21 @@ using Inventory.Shared.Constants;
 using Inventory.Shared.DTOs;
 using Inventory.Shared.Interfaces;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
+using Microsoft.JSInterop;
 
-namespace Inventory.Shared.Services;
+namespace Inventory.Web.Client.Services;
 
-public class AuditApiService(HttpClient httpClient, ILogger<AuditApiService> logger) : BaseApiService(httpClient, "", logger), IAuditService
+public class WebAuditApiService : WebBaseApiService, IAuditService
 {
+    public WebAuditApiService(
+        HttpClient httpClient, 
+        IApiUrlService apiUrlService, 
+        IResilientApiService resilientApiService, 
+        ILogger<WebAuditApiService> logger,
+        IJSRuntime jsRuntime) 
+        : base(httpClient, apiUrlService, resilientApiService, logger, jsRuntime)
+    {
+    }
 
     public async Task<ApiResponse<AuditLogResponse>> GetAuditLogsAsync(
         string? actionType = null,

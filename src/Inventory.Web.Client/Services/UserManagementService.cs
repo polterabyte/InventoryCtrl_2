@@ -56,7 +56,7 @@ public class UserManagementService : IUserManagementService
             if (!string.IsNullOrEmpty(role)) queryParams.Add($"role={Uri.EscapeDataString(role)}");
 
             var queryString = queryParams.Any() ? "?" + string.Join("&", queryParams) : "";
-            var fullUrl = await GetFullApiUrlAsync($"api/user{queryString}");
+            var fullUrl = await GetFullApiUrlAsync($"user{queryString}");
             var response = await client.GetAsync(fullUrl);
 
             if (response.IsSuccessStatusCode)
@@ -83,7 +83,7 @@ public class UserManagementService : IUserManagementService
         try
         {
             var client = await GetAuthenticatedClientAsync();
-            var fullUrl = await GetFullApiUrlAsync($"api/user/{id}");
+            var fullUrl = await GetFullApiUrlAsync($"user/{id}");
             var response = await client.GetAsync(fullUrl);
 
             if (response.IsSuccessStatusCode)
@@ -110,7 +110,7 @@ public class UserManagementService : IUserManagementService
         try
         {
             var client = await GetAuthenticatedClientAsync();
-            var fullUrl = await GetFullApiUrlAsync("api/user");
+            var fullUrl = await GetFullApiUrlAsync("user");
             var json = JsonSerializer.Serialize(user);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
@@ -150,7 +150,8 @@ public class UserManagementService : IUserManagementService
             var json = JsonSerializer.Serialize(user);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await client.PutAsync($"api/user/{id}", content);
+            var fullUrl = await GetFullApiUrlAsync($"user/{id}");
+            var response = await client.PutAsync(fullUrl, content);
 
             var responseContent = await response.Content.ReadAsStringAsync();
             var result = JsonSerializer.Deserialize<ApiResponse<UserDto>>(responseContent, new JsonSerializerOptions
@@ -181,7 +182,8 @@ public class UserManagementService : IUserManagementService
         try
         {
             var client = await GetAuthenticatedClientAsync();
-            var response = await client.DeleteAsync($"api/user/{id}");
+            var fullUrl = await GetFullApiUrlAsync($"user/{id}");
+            var response = await client.DeleteAsync(fullUrl);
 
             var responseContent = await response.Content.ReadAsStringAsync();
             var result = JsonSerializer.Deserialize<ApiResponse<object>>(responseContent, new JsonSerializerOptions
@@ -215,7 +217,8 @@ public class UserManagementService : IUserManagementService
             var json = JsonSerializer.Serialize(passwordDto);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await client.PostAsync($"api/user/{id}/change-password", content);
+            var fullUrl = await GetFullApiUrlAsync($"user/{id}/change-password");
+            var response = await client.PostAsync(fullUrl, content);
 
             var responseContent = await response.Content.ReadAsStringAsync();
             var result = JsonSerializer.Deserialize<ApiResponse<object>>(responseContent, new JsonSerializerOptions
@@ -252,7 +255,8 @@ public class UserManagementService : IUserManagementService
             if (!string.IsNullOrEmpty(role)) queryParams.Add($"role={Uri.EscapeDataString(role)}");
 
             var queryString = queryParams.Any() ? "?" + string.Join("&", queryParams) : "";
-            var response = await client.GetAsync($"api/user/export{queryString}");
+            var fullUrl = await GetFullApiUrlAsync($"user/export{queryString}");
+            var response = await client.GetAsync(fullUrl);
 
             if (response.IsSuccessStatusCode)
             {

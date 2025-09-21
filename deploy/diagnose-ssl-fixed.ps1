@@ -3,7 +3,7 @@ param(
     [switch]$Verbose = $false
 )
 
-Write-Host "🔍 SSL Deployment Diagnostics" -ForegroundColor Green
+Write-Host "SSL Deployment Diagnostics" -ForegroundColor Green
 Write-Host "=============================" -ForegroundColor Green
 
 # Function to write verbose output
@@ -19,8 +19,8 @@ function Test-AndReport {
     param(
         [string]$Description,
         [scriptblock]$TestScript,
-        [string]$SuccessMessage = "✅ OK",
-        [string]$FailureMessage = "❌ FAILED"
+        [string]$SuccessMessage = "OK",
+        [string]$FailureMessage = "FAILED"
     )
     
     try {
@@ -42,7 +42,7 @@ function Test-AndReport {
 
 $issues = @()
 
-Write-Host "`n🐳 Docker Environment:" -ForegroundColor Yellow
+Write-Host "`nDocker Environment:" -ForegroundColor Yellow
 $dockerRunning = Test-AndReport "Docker is running" { 
     docker version | Out-Null; $LASTEXITCODE -eq 0 
 }
@@ -53,7 +53,7 @@ $dockerCompose = Test-AndReport "Docker Compose available" {
 }
 if (-not $dockerCompose) { $issues += "Docker Compose not available" }
 
-Write-Host "`n📁 Required Files:" -ForegroundColor Yellow
+Write-Host "`nRequired Files:" -ForegroundColor Yellow
 $dockerComposeFile = Test-AndReport "docker-compose.ssl.yml exists" { 
     Test-Path "docker-compose.ssl.yml" 
 }
@@ -69,7 +69,7 @@ $sslDockerfile = Test-AndReport "Dockerfile.ssl exists" {
 }
 if (-not $sslDockerfile) { $issues += "Dockerfile.ssl missing" }
 
-Write-Host "`n🌐 Network Ports:" -ForegroundColor Yellow
+Write-Host "`nNetwork Ports:" -ForegroundColor Yellow
 $port80 = Test-AndReport "Port 80 available" { 
     -not (Get-NetTCPConnection -LocalPort 80 -ErrorAction SilentlyContinue) 
 }
@@ -90,57 +90,57 @@ $port5432 = Test-AndReport "Port 5432 available" {
 }
 if (-not $port5432) { $issues += "Port 5432 in use" }
 
-Write-Host "`n🔧 Docker Resources:" -ForegroundColor Yellow
+Write-Host "`nDocker Resources:" -ForegroundColor Yellow
 try {
     $dockerInfo = docker system df --format "table {{.Type}}\t{{.TotalCount}}\t{{.Size}}" 2>$null
     if ($dockerInfo) {
-        Write-Host "   ✅ Docker system info available" -ForegroundColor Green
+        Write-Host "   OK Docker system info available" -ForegroundColor Green
         Write-VerboseOutput "Docker system info: $dockerInfo"
     } else {
-        Write-Host "   ⚠️  Could not get Docker system info" -ForegroundColor Yellow
+        Write-Host "   Could not get Docker system info" -ForegroundColor Yellow
     }
 } catch {
-    Write-Host "   ⚠️  Could not check Docker resources" -ForegroundColor Yellow
+    Write-Host "   Could not check Docker resources" -ForegroundColor Yellow
 }
 
-Write-Host "`n📋 Environment Variables:" -ForegroundColor Yellow
+Write-Host "`nEnvironment Variables:" -ForegroundColor Yellow
 $envVars = @("DOTNET_RUNNING_IN_CONTAINER", "SSL_ENVIRONMENT", "SSL_LETS_ENCRYPT_ENABLED")
 foreach ($var in $envVars) {
     $value = [Environment]::GetEnvironmentVariable($var)
     if ($value) {
-        Write-Host "   ✅ $var = $value" -ForegroundColor Green
+        Write-Host "   OK $var = $value" -ForegroundColor Green
     } else {
-        Write-Host "   ⚠️  $var not set" -ForegroundColor Yellow
+        Write-Host "   $var not set" -ForegroundColor Yellow
     }
 }
 
-Write-Host "`n🐳 Existing Containers:" -ForegroundColor Yellow
+Write-Host "`nExisting Containers:" -ForegroundColor Yellow
 try {
     $containers = docker ps -a --filter "name=inventory-" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" 2>$null
     if ($containers) {
         Write-Host "   Found existing inventory containers:" -ForegroundColor Yellow
         Write-Host $containers -ForegroundColor Gray
     } else {
-        Write-Host "   ✅ No existing inventory containers" -ForegroundColor Green
+        Write-Host "   OK No existing inventory containers" -ForegroundColor Green
     }
 } catch {
-    Write-Host "   ⚠️  Could not check existing containers" -ForegroundColor Yellow
+    Write-Host "   Could not check existing containers" -ForegroundColor Yellow
 }
 
-Write-Host "`n📊 Docker Volumes:" -ForegroundColor Yellow
+Write-Host "`nDocker Volumes:" -ForegroundColor Yellow
 try {
     $volumes = docker volume ls --filter "name=inventory" --format "table {{.Name}}\t{{.Driver}}" 2>$null
     if ($volumes) {
         Write-Host "   Found inventory volumes:" -ForegroundColor Yellow
         Write-Host $volumes -ForegroundColor Gray
     } else {
-        Write-Host "   ✅ No existing inventory volumes" -ForegroundColor Green
+        Write-Host "   OK No existing inventory volumes" -ForegroundColor Green
     }
 } catch {
-    Write-Host "   ⚠️  Could not check volumes" -ForegroundColor Yellow
+    Write-Host "   Could not check volumes" -ForegroundColor Yellow
 }
 
-Write-Host "`n🔍 SSL Script Analysis:" -ForegroundColor Yellow
+Write-Host "`nSSL Script Analysis:" -ForegroundColor Yellow
 if (Test-Path "scripts\generate-ssl-linux.sh") {
     try {
         $scriptContent = Get-Content "scripts\generate-ssl-linux.sh" -Raw
@@ -149,47 +149,47 @@ if (Test-Path "scripts\generate-ssl-linux.sh") {
         $hasFunctions = $scriptContent -match "function|print_"
         
         if ($hasShebang) {
-            Write-Host "   ✅ Script has proper shebang" -ForegroundColor Green
+            Write-Host "   OK Script has proper shebang" -ForegroundColor Green
         } else {
-            Write-Host "   ❌ Script missing shebang" -ForegroundColor Red
+            Write-Host "   FAILED Script missing shebang" -ForegroundColor Red
             $issues += "SSL script missing shebang"
         }
         
         if ($hasOpenSSL) {
-            Write-Host "   ✅ Script uses OpenSSL" -ForegroundColor Green
+            Write-Host "   OK Script uses OpenSSL" -ForegroundColor Green
         } else {
-            Write-Host "   ❌ Script doesn't use OpenSSL" -ForegroundColor Red
+            Write-Host "   FAILED Script doesn't use OpenSSL" -ForegroundColor Red
             $issues += "SSL script doesn't use OpenSSL"
         }
         
         if ($hasFunctions) {
-            Write-Host "   ✅ Script has helper functions" -ForegroundColor Green
+            Write-Host "   OK Script has helper functions" -ForegroundColor Green
         } else {
-            Write-Host "   ⚠️  Script may be missing helper functions" -ForegroundColor Yellow
+            Write-Host "   Script may be missing helper functions" -ForegroundColor Yellow
         }
         
         Write-VerboseOutput "Script size: $($scriptContent.Length) characters"
     } catch {
-        Write-Host "   ❌ Could not analyze SSL script" -ForegroundColor Red
+        Write-Host "   FAILED Could not analyze SSL script" -ForegroundColor Red
         $issues += "Could not analyze SSL script"
     }
 } else {
-    Write-Host "   ❌ SSL script not found" -ForegroundColor Red
+    Write-Host "   FAILED SSL script not found" -ForegroundColor Red
     $issues += "SSL script not found"
 }
 
-Write-Host "`n📋 Summary:" -ForegroundColor Yellow
+Write-Host "`nSummary:" -ForegroundColor Yellow
 if ($issues.Count -eq 0) {
-    Write-Host "   ✅ No issues found! Ready to deploy with SSL." -ForegroundColor Green
-    Write-Host "`n🚀 You can now run:" -ForegroundColor Green
+    Write-Host "   OK No issues found! Ready to deploy with SSL." -ForegroundColor Green
+    Write-Host "`nYou can now run:" -ForegroundColor Green
     Write-Host "   .\deploy\deploy-with-ssl.ps1 -Verbose" -ForegroundColor White
 } else {
-    Write-Host "   ❌ Found $($issues.Count) issue(s):" -ForegroundColor Red
+    Write-Host "   Found $($issues.Count) issue(s):" -ForegroundColor Red
     foreach ($issue in $issues) {
         Write-Host "      - $issue" -ForegroundColor Red
     }
     
-    Write-Host "`n🔧 Recommended Actions:" -ForegroundColor Yellow
+    Write-Host "`nRecommended Actions:" -ForegroundColor Yellow
     if ($issues -contains "Docker not running") {
         Write-Host "   1. Start Docker Desktop" -ForegroundColor White
     }
@@ -202,6 +202,7 @@ if ($issues.Count -eq 0) {
     if ($issues -contains "SSL script missing shebang" -or $issues -contains "SSL script doesn't use OpenSSL") {
         Write-Host "   4. Check SSL script content" -ForegroundColor White
     }
+}
 
-Write-Host "`n💡 For more detailed output, run:" -ForegroundColor Cyan
-Write-Host "   .\deploy\diagnose-ssl.ps1 -Verbose" -ForegroundColor White
+Write-Host "`nFor more detailed output, run:" -ForegroundColor Cyan
+Write-Host "   .\deploy\diagnose-ssl-fixed.ps1 -Verbose" -ForegroundColor White

@@ -77,4 +77,12 @@ public static class ApiEndpoints
     public const string DashboardStats = $"{Dashboard}/stats";
     public const string DashboardRecentActivity = $"{Dashboard}/recent-activity";
     public const string DashboardLowStockProducts = $"{Dashboard}/low-stock-products";
+    
+    // Audit endpoints
+    public const string Audit = "/audit";
+    public const string AuditExport = $"{Audit}/export";
+    public const string AuditEntity = $"{Audit}/entity/{{entityType}}/{{entityId}}";
+    public const string AuditUser = $"{Audit}/user/{{userId}}";
+    public const string AuditTrace = $"{Audit}/trace/{{requestId}}";
+    public const string AuditById = $"{Audit}/{{id}}";
 }

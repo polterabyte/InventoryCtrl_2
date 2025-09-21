@@ -19,8 +19,8 @@ public static class DbInitializer
         // Создание ролей
         await CreateRolesAsync(roleManager);
 
-        // Создание суперпользователя
-        await CreateSuperUserAsync(userManager);
+        // Создание администратора
+        await CreateAdminUserAsync(userManager);
         
         // Seed notification data
         await NotificationSeeder.SeedAsync(db);
@@ -29,10 +29,10 @@ public static class DbInitializer
     private static async Task CreateRolesAsync(RoleManager<IdentityRole> roleManager)
     {
         const string adminRole = "Admin";
-        const string superUserRole = "SuperUser";
+        const string managerRole = "Manager";
         const string userRole = "User";
 
-        var roles = new[] { adminRole, superUserRole, userRole };
+        var roles = new[] { adminRole, managerRole, userRole };
 
         foreach (var role in roles)
         {
@@ -44,51 +44,49 @@ public static class DbInitializer
         }
     }
 
-    private static async Task CreateSuperUserAsync(UserManager<User> userManager)
+    private static async Task CreateAdminUserAsync(UserManager<User> userManager)
     {
-        const string superUserEmail = "admin@localhost";
-        const string superUserPassword = "Admin123!";
-        const string superUserRole = "SuperUser";
+        const string adminEmail = "admin@localhost";
+        const string adminPassword = "Admin123!";
         const string adminRole = "Admin";
 
-        var superUser = await userManager.FindByEmailAsync(superUserEmail);
-        if (superUser == null)
+        var adminUser = await userManager.FindByEmailAsync(adminEmail);
+        if (adminUser == null)
         {
-            superUser = new User
+            adminUser = new User
             {
                 Id = Guid.NewGuid().ToString(),
-                UserName = "superadmin",
-                Email = superUserEmail,
+                UserName = "admin",
+                Email = adminEmail,
                 EmailConfirmed = true,
-                Role = superUserRole,
+                Role = adminRole,
                 CreatedAt = DateTime.UtcNow
             };
 
-            var result = await userManager.CreateAsync(superUser, superUserPassword);
+            var result = await userManager.CreateAsync(adminUser, adminPassword);
             if (result.Succeeded)
             {
-                await userManager.AddToRoleAsync(superUser, superUserRole);
-                await userManager.AddToRoleAsync(superUser, adminRole);
-                Log.Information("Superuser created: {Email} with username: {Username} and password: {Password}", 
-                    superUserEmail, superUser.UserName, superUserPassword);
+                await userManager.AddToRoleAsync(adminUser, adminRole);
+                Log.Information("Admin user created: {Email} with username: {Username} and password: {Password}", 
+                    adminEmail, adminUser.UserName, adminPassword);
             }
             else
             {
-                Log.Error("Error creating superuser: {Errors}", 
+                Log.Error("Error creating admin user: {Errors}", 
                     string.Join(", ", result.Errors.Select(e => e.Description)));
             }
         }
         else
         {
             // Обновляем имя пользователя если оно изменилось
-            if (superUser.UserName != "superadmin")
+            if (adminUser.UserName != "admin")
             {
-                superUser.UserName = "superadmin";
-                superUser.NormalizedUserName = userManager.NormalizeName("superadmin");
-                var updateResult = await userManager.UpdateAsync(superUser);
+                adminUser.UserName = "admin";
+                adminUser.NormalizedUserName = userManager.NormalizeName("admin");
+                var updateResult = await userManager.UpdateAsync(adminUser);
                 if (updateResult.Succeeded)
                 {
-                    Log.Information("Username updated to superadmin for {Email}", superUserEmail);
+                    Log.Information("Username updated to admin for {Email}", adminEmail);
                 }
                 else
                 {
@@ -96,8 +94,8 @@ public static class DbInitializer
                         string.Join(", ", updateResult.Errors.Select(e => e.Description)));
                 }
             }
-            Log.Information("Superuser already exists: {Email} with username: {Username}", 
-                superUserEmail, superUser.UserName);
+            Log.Information("Admin user already exists: {Email} with username: {Username}", 
+                adminEmail, adminUser.UserName);
         }
     }
 }

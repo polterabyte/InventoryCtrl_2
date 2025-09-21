@@ -54,7 +54,7 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
             else
             {
                 // By default, show only active categories for non-admin users
-                var isAdmin = userRoles.Contains("Admin") || userRoles.Contains("SuperUser");
+                var isAdmin = userRoles.Contains("Admin");
                 
                 if (!isAdmin)
                 {

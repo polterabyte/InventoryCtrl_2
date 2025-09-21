@@ -49,7 +49,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
     }
 
     [HttpGet]
-    [Authorize(Roles = "Admin,SuperUser")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetUsers(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
@@ -130,7 +130,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
     }
 
     [HttpGet("{id}")]
-    [Authorize(Roles = "Admin,SuperUser")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetUser(string id)
     {
         try
@@ -177,7 +177,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
     }
 
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin,SuperUser")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UpdateUser(string id, [FromBody] UpdateUserDto request)
     {
         try
@@ -257,7 +257,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Admin,SuperUser")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteUser(string id)
     {
         try
@@ -314,7 +314,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
     }
 
     [HttpGet("export")]
-    [Authorize(Roles = "Admin,SuperUser")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> ExportUsers(
         [FromQuery] string? search = null,
         [FromQuery] string? role = null)
@@ -385,7 +385,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
     }
 
     [HttpPost("{id}/change-password")]
-    [Authorize(Roles = "Admin,SuperUser")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> ChangePassword(string id, [FromBody] ChangePasswordDto request)
     {
         try
@@ -444,7 +444,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin,SuperUser")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> CreateUser([FromBody] CreateUserDto request)
     {
         try

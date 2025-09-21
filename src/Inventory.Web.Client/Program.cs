@@ -84,7 +84,7 @@ builder.Services.AddScoped<Inventory.UI.Services.IAuthenticationService, Invento
 builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 
 // Register audit services
-builder.Services.AddScoped<IAuditService, AuditApiService>();
+builder.Services.AddScoped<IAuditService, WebAuditApiService>();
 
 // Register SignalR service
 builder.Services.AddScoped<ISignalRService, SignalRService>();

@@ -95,9 +95,8 @@ services:
     container_name: inventory-nginx-staging
     ports:
       - "80:80"
-      - "443:443"
     volumes:
-      - ./deploy/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./deploy/nginx/nginx-staging-http.conf:/etc/nginx/nginx.conf:ro
       - ./deploy/nginx/conf.d:/etc/nginx/conf.d:ro
       - ./deploy/nginx/ssl:/etc/nginx/ssl:ro
     depends_on:
