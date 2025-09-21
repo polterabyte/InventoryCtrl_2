@@ -204,6 +204,49 @@ docker-compose down
 - **Аудит действий** всех пользователей
 - **HTTPS обязательно** в production
 
+## 🔧 Обязательные переменные окружения (ENV)
+
+Для корректной и безопасной работы приложения требуется задать ряд переменных окружения (или User Secrets для локальной разработки):
+
+- API (src/Inventory.API)
+  - `ConnectionStrings__DefaultConnection` — строка подключения к PostgreSQL (не храните пароль в репозитории)
+  - `Jwt__Key` — секретный ключ для подписи JWT (обязателен вне Development)
+  - `CORS_ALLOWED_ORIGINS` — список разрешенных Origin через запятую (например: `https://localhost,https://staging.example.com`)
+  - `ADMIN_EMAIL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD` — учетные данные первоначального администратора (пароль опционален; если не указан — админ создается без пароля)
+  - `ApiUrl` — базовый URL API для `LocationApiService` (например: `https://localhost:7000` или ваш домен)
+
+Пример .env (Docker/скрипты деплоя):
+
+```env
+ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=inventorydb;Username=postgres;Password=CHANGE_ME
+Jwt__Key=CHANGE_ME_SUPER_SECRET
+CORS_ALLOWED_ORIGINS=https://localhost,https://staging.example.com,https://example.com
+ADMIN_EMAIL=admin@localhost
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=CHANGE_ME
+ApiUrl=https://localhost:7000
+```
+
+Пример User Secrets (локальная разработка):
+
+```powershell
+cd src/Inventory.API
+dotnet user-secrets init
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=inventorydb;Username=postgres;Password=CHANGE_ME"
+dotnet user-secrets set "Jwt:Key" "CHANGE_ME_SUPER_SECRET"
+dotnet user-secrets set "CORS_ALLOWED_ORIGINS" "https://localhost,https://staging.example.com"
+dotnet user-secrets set "ADMIN_EMAIL" "admin@localhost"
+dotnet user-secrets set "ADMIN_USERNAME" "admin"
+dotnet user-secrets set "ADMIN_PASSWORD" "CHANGE_ME"
+dotnet user-secrets set "ApiUrl" "https://localhost:7000"
+```
+
+Примечания:
+
+- Секреты и пароли не должны храниться в репозитории; используйте ENV/User Secrets.
+- `SignalR` клиент в браузере закреплен на версии `@microsoft/signalr@8.0.5` (см. `src/Inventory.Web.Client/wwwroot/index.html`).
+- Список CORS‑источников лучше поддерживать через `CORS_ALLOWED_ORIGINS`.
+
 ## 🔄 CI/CD
 
 Проект настроен для автоматической сборки и тестирования:

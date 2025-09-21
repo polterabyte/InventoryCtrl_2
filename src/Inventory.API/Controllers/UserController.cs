@@ -26,7 +26,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
             
             logger.LogInformation("User info requested for: {Username}", username);
             
-            return Ok(ApiResponse<object>.Success(new
+            return Ok(ApiResponse<object>.CreateSuccess(new
             {
                 Username = username,
                 UserId = userId,

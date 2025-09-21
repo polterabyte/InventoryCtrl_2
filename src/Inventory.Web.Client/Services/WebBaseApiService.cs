@@ -115,12 +115,29 @@ public abstract class WebBaseApiService(
             }
             
             Logger.LogDebug("Making {Method} request to {FullUrl}", method, fullUrl);
-            var response = await HttpClient.SendAsync(request);
             
-            // Используем кастомный обработчик или стандартный
-            return customResponseHandler != null 
-                ? await customResponseHandler(response)
-                : await HandleStandardResponseAsync<T>(response);
+            try
+            {
+                var response = await HttpClient.SendAsync(request);
+                Logger.LogDebug("Received response with status {StatusCode} for {Method} {FullUrl}", 
+                    response.StatusCode, method, fullUrl);
+                
+                // Используем кастомный обработчик или стандартный
+                return customResponseHandler != null 
+                    ? await customResponseHandler(response)
+                    : await HandleStandardResponseAsync<T>(response);
+            }
+            catch (HttpRequestException ex)
+            {
+                Logger.LogError(ex, "HTTP request failed for {Method} {FullUrl}: {Message}", 
+                    method, fullUrl, ex.Message);
+                throw;
+            }
+            catch (TaskCanceledException ex)
+            {
+                Logger.LogError(ex, "HTTP request timeout for {Method} {FullUrl}", method, fullUrl);
+                throw new HttpRequestException($"Request timeout for {method} {fullUrl}", ex);
+            }
         }, $"{method} {endpoint}");
     }
 
@@ -137,14 +154,28 @@ public abstract class WebBaseApiService(
     /// </summary>
     private async Task<T> HandleStandardResponseAsync<T>(HttpResponseMessage response)
     {
-        var apiResponse = await ErrorHandler.HandleResponseAsync<T>(response);
-        
-        if (!apiResponse.Success)
+        try
         {
-            throw new HttpRequestException(apiResponse.ErrorMessage);
+            var apiResponse = await ErrorHandler.HandleResponseAsync<T>(response);
+            
+            if (!apiResponse.Success)
+            {
+                Logger.LogError("API request failed: {ErrorMessage}", apiResponse.ErrorMessage);
+                throw new HttpRequestException($"API request failed: {apiResponse.ErrorMessage}");
+            }
+            
+            return apiResponse.Data ?? throw new InvalidOperationException("Response data is null");
         }
-        
-        return apiResponse.Data ?? throw new InvalidOperationException("Response data is null");
+        catch (HttpRequestException ex)
+        {
+            Logger.LogError(ex, "HTTP request failed with status {StatusCode}", response.StatusCode);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Unexpected error handling response");
+            throw new HttpRequestException($"Unexpected error: {ex.Message}", ex);
+        }
     }
 
     protected async Task<ApiResponse<T>> GetAsync<T>(string endpoint)
@@ -203,7 +234,7 @@ public abstract class WebBaseApiService(
                     {
                         var result = await response.Content.ReadFromJsonAsync<T>();
                         Logger.LogDebug("PUT request successful for {StatusCode}", response.StatusCode);
-                        return ApiResponse<T>.CreateSuccess(result);
+                        return ApiResponse<T>.CreateSuccess(result!);
                     }
                     else
                     {

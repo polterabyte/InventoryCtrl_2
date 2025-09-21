@@ -58,6 +58,7 @@ public class ApiUrlService : IApiUrlService
     {
         if (_cachedSignalRUrl != null)
         {
+            _logger.LogDebug("Returning cached SignalR URL: {SignalRUrl}", _cachedSignalRUrl);
             return _cachedSignalRUrl;
         }
 
@@ -103,10 +104,9 @@ public class ApiUrlService : IApiUrlService
             }
         }
 
-        // 3. Fallback: попробовать построить абсолютный URL
+        // 3. Fallback: построить URL из BaseUrl или относительный '/api'
         var fallbackUrl = _apiConfig.BaseUrl ?? "/api";
         var absoluteUrl = await EnsureAbsoluteUrlAsync(fallbackUrl);
-        
         _logger.LogWarning("Using fallback API URL: {ApiUrl}", absoluteUrl);
         return absoluteUrl;
     }
@@ -117,12 +117,24 @@ public class ApiUrlService : IApiUrlService
         var envConfig = GetEnvironmentConfig();
         if (!string.IsNullOrEmpty(envConfig?.SignalRUrl))
         {
+            _logger.LogDebug("Using configured SignalR URL: {SignalRUrl}", envConfig.SignalRUrl);
             return envConfig.SignalRUrl;
         }
 
         // 2. Fallback: построить на основе API URL
         var apiUrl = await GetApiBaseUrlAsync();
-        return apiUrl.Replace("/api", "/notificationHub");
+        
+        // Убедимся, что API URL не содержит /notificationHub
+        if (apiUrl.Contains("/notificationHub"))
+        {
+            apiUrl = apiUrl.Replace("/notificationHub", "/api");
+            _logger.LogDebug("Removed /notificationHub from API URL: {ApiUrl}", apiUrl);
+        }
+        
+        var signalRUrl = apiUrl.Replace("/api", "/notificationHub");
+        
+        _logger.LogDebug("Constructed SignalR URL from API URL: {SignalRUrl}", signalRUrl);
+        return signalRUrl;
     }
 
     private EnvironmentConfig? GetEnvironmentConfig()
@@ -220,24 +232,12 @@ public class ApiUrlService : IApiUrlService
             return url;
         }
 
-        // Если URL уже абсолютный, возвращаем как есть
-        if (url.StartsWith("http://") || url.StartsWith("https://"))
-        {
-            return url;
-        }
-
         // Если URL относительный, пытаемся построить абсолютный
         if (url.StartsWith("/"))
         {
-            // Для staging окружения используем полный URL
-            if (_environment.Environment == "Staging")
-            {
-                return $"https://staging.warehouse.cuby{url}";
-            }
-            
-            // В Blazor WebAssembly мы не можем использовать HttpClient.BaseAddress
-            // Поэтому используем текущий origin
-            return url; // Вернем относительный URL, он будет обработан в WebBaseApiService
+            // Для относительных путей возвращаем как есть.
+            // Абсолютизация выполняется в UrlBuilderService или на стороне хостинга.
+            return url;
         }
 
         // Если URL не начинается с /, добавляем его
@@ -251,21 +251,9 @@ public class ApiUrlService : IApiUrlService
             return url;
         }
 
-        // Если URL уже абсолютный, возвращаем как есть
-        if (url.StartsWith("http://") || url.StartsWith("https://"))
-        {
-            return url;
-        }
-
         // Если URL относительный, пытаемся построить абсолютный
         if (url.StartsWith("/"))
         {
-            // Для staging окружения используем полный URL
-            if (_environment.Environment == "Staging")
-            {
-                return $"https://staging.warehouse.cuby{url}";
-            }
-            
             try
             {
                 var origin = await GetCurrentOriginAsync();

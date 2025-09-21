@@ -95,12 +95,12 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
                 PageSize = pageSize
             };
 
-            return Ok(PagedApiResponse<CategoryDto>.Success(pagedResponse));
+            return Ok(PagedApiResponse<CategoryDto>.CreateSuccess(pagedResponse));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving categories");
-            return StatusCode(500, PagedApiResponse<CategoryDto>.Failure("Failed to retrieve categories"));
+            return StatusCode(500, PagedApiResponse<CategoryDto>.CreateFailure("Failed to retrieve categories"));
         }
     }
 
@@ -115,7 +115,7 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
 
             if (category == null)
             {
-                return NotFound(ApiResponse<CategoryDto>.Failure("Category not found"));
+                return NotFound(ApiResponse<CategoryDto>.CreateFailure("Category not found"));
             }
 
             var categoryDto = new CategoryDto
@@ -130,12 +130,12 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
                 UpdatedAt = category.UpdatedAt
             };
 
-            return Ok(ApiResponse<CategoryDto>.Success(categoryDto));
+            return Ok(ApiResponse<CategoryDto>.CreateSuccess(categoryDto));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving category {CategoryId}", id);
-            return StatusCode(500, ApiResponse<CategoryDto>.Failure("Failed to retrieve category"));
+            return StatusCode(500, ApiResponse<CategoryDto>.CreateFailure("Failed to retrieve category"));
         }
     }
 
@@ -269,7 +269,7 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
                 UpdatedAt = category.UpdatedAt
             };
 
-            return CreatedAtAction(nameof(GetCategory), new { id = category.Id }, ApiResponse<CategoryDto>.Success(categoryDto));
+            return CreatedAtAction(nameof(GetCategory), new { id = category.Id }, ApiResponse<CategoryDto>.CreateSuccess(categoryDto));
         }
         catch (Exception ex)
         {
@@ -301,7 +301,7 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
             var category = await context.Categories.FindAsync(id);
             if (category == null)
             {
-                return NotFound(ApiResponse<CategoryDto>.Failure("Category not found"));
+                return NotFound(ApiResponse<CategoryDto>.CreateFailure("Category not found"));
             }
 
             // Check if parent category exists (if specified)
@@ -341,7 +341,7 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
                 UpdatedAt = category.UpdatedAt
             };
 
-            return Ok(ApiResponse<CategoryDto>.Success(categoryDto));
+            return Ok(ApiResponse<CategoryDto>.CreateSuccess(categoryDto));
         }
         catch (Exception ex)
         {

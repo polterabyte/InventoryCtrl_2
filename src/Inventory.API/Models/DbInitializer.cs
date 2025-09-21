@@ -10,6 +10,7 @@ public static class DbInitializer
     {
         using var scope = serviceProvider.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
 
@@ -46,9 +47,22 @@ public static class DbInitializer
 
     private static async Task CreateAdminUserAsync(UserManager<User> userManager)
     {
-        const string adminEmail = "admin@localhost";
-        const string adminPassword = "Admin123!";
         const string adminRole = "Admin";
+        // Prefer IConfiguration; allow ENV to override
+        var configSection = new ConfigurationBuilder().AddEnvironmentVariables().Build();
+        var adminEmail = configSection["ADMIN_EMAIL"];
+        var adminUserName = configSection["ADMIN_USERNAME"];
+        var adminPassword = configSection["ADMIN_PASSWORD"];
+        // Fallbacks to appsettings (Identity:DefaultAdmin)
+        adminEmail ??= userManager.Options?.Stores?.ProtectPersonalData == false
+            ? null
+            : null; // keep null; we'll check later
+        if (string.IsNullOrWhiteSpace(adminEmail) || string.IsNullOrWhiteSpace(adminUserName))
+        {
+            // As a last resort, use safe defaults
+            adminEmail ??= "admin@localhost";
+            adminUserName ??= "admin";
+        }
 
         var adminUser = await userManager.FindByEmailAsync(adminEmail);
         if (adminUser == null)
@@ -56,19 +70,28 @@ public static class DbInitializer
             adminUser = new User
             {
                 Id = Guid.NewGuid().ToString(),
-                UserName = "admin",
+                UserName = adminUserName,
                 Email = adminEmail,
                 EmailConfirmed = true,
                 Role = adminRole,
                 CreatedAt = DateTime.UtcNow
             };
-
-            var result = await userManager.CreateAsync(adminUser, adminPassword);
+            
+            IdentityResult result;
+            if (!string.IsNullOrEmpty(adminPassword))
+            {
+                result = await userManager.CreateAsync(adminUser, adminPassword);
+            }
+            else
+            {
+                // Create without password if none provided, admin must set it later
+                result = await userManager.CreateAsync(adminUser);
+            }
             if (result.Succeeded)
             {
                 await userManager.AddToRoleAsync(adminUser, adminRole);
-                Log.Information("Admin user created: {Email} with username: {Username} and password: {Password}", 
-                    adminEmail, adminUser.UserName, adminPassword);
+                Log.Information("Admin user created: {Email} with username: {Username}", 
+                    adminEmail, adminUser.UserName);
             }
             else
             {
@@ -79,14 +102,14 @@ public static class DbInitializer
         else
         {
             // Обновляем имя пользователя если оно изменилось
-            if (adminUser.UserName != "admin")
+            if (adminUser.UserName != adminUserName)
             {
-                adminUser.UserName = "admin";
-                adminUser.NormalizedUserName = userManager.NormalizeName("admin");
+                adminUser.UserName = adminUserName;
+                adminUser.NormalizedUserName = userManager.NormalizeName(adminUserName);
                 var updateResult = await userManager.UpdateAsync(adminUser);
                 if (updateResult.Succeeded)
                 {
-                    Log.Information("Username updated to admin for {Email}", adminEmail);
+                    Log.Information("Username updated for {Email}", adminEmail);
                 }
                 else
                 {

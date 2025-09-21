@@ -15,9 +15,17 @@ class SignalRNotificationService {
                 return true;
             }
 
-            // SignalR should be loaded via script tag in HTML
-            console.log('SignalR library should be loaded via script tag');
-            return true;
+            // Wait a bit for the script to load
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Check again after waiting
+            if (window.signalR && window.signalR.HubConnectionBuilder) {
+                console.log('SignalR loaded after waiting');
+                return true;
+            }
+
+            console.error('SignalR library not found after loading');
+            return false;
         } catch (error) {
             console.error('Error loading SignalR library:', error);
             return false;
@@ -47,14 +55,40 @@ class SignalRNotificationService {
             console.log('API Base URL:', apiBaseUrl);
             console.log('Access Token:', accessToken ? 'Present' : 'Missing');
             
-            // Ensure we use the correct protocol (ws:// for http, wss:// for https)
-            const hubUrl = `${apiBaseUrl}/notificationHub?access_token=${accessToken}`;
+            // Ensure we use the correct protocol and construct proper URL
+            let hubUrl;
+            
+            // First, check if URL already contains /notificationHub/notificationHub and fix it
+            if (apiBaseUrl.includes('/notificationHub/notificationHub')) {
+                apiBaseUrl = apiBaseUrl.replace('/notificationHub/notificationHub', '/notificationHub');
+                console.log('Fixed duplicate /notificationHub in API URL');
+            }
+            
+            if (apiBaseUrl.endsWith('/notificationHub')) {
+                // If already contains /notificationHub, use as is
+                hubUrl = `${apiBaseUrl}?access_token=${accessToken}`;
+            } else if (apiBaseUrl.endsWith('/api')) {
+                // If ends with /api, replace with /notificationHub
+                hubUrl = `${apiBaseUrl.replace('/api', '/notificationHub')}?access_token=${accessToken}`;
+            } else {
+                // Otherwise, append /notificationHub
+                hubUrl = `${apiBaseUrl.replace(/\/$/, '')}/notificationHub?access_token=${accessToken}`;
+            }
+            
+            // Final check: if URL still contains /notificationHub/notificationHub, fix it
+            if (hubUrl.includes('/notificationHub/notificationHub')) {
+                hubUrl = hubUrl.replace('/notificationHub/notificationHub', '/notificationHub');
+                console.log('Fixed duplicate /notificationHub in final URL');
+            }
+            
+            // Debug logging
+            console.log('Constructed Hub URL:', hubUrl);
             console.log('Hub URL:', hubUrl);
 
             this.connection = new signalR.HubConnectionBuilder()
                 .withUrl(hubUrl, {
-                    skipNegotiation: true,
-                    transport: signalR.HttpTransportType.WebSockets
+                    skipNegotiation: false, // Allow negotiation for better compatibility
+                    transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.ServerSentEvents | signalR.HttpTransportType.LongPolling
                 })
                 .withAutomaticReconnect({
                     nextRetryDelayInMilliseconds: (retryContext) => {

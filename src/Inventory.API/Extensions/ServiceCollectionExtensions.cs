@@ -11,25 +11,40 @@ public static class ServiceCollectionExtensions
         {
             options.AddPolicy("AllowConfiguredOrigins", policy =>
             {
-                // Get server IP from environment or use default
-                var serverIp = Environment.GetEnvironmentVariable("SERVER_IP") ?? "192.168.139.96";
+                // Prefer CORS origins from environment variable CORS_ALLOWED_ORIGINS (comma-separated)
+                var originsEnv = Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS");
+                string[] origins = Array.Empty<string>();
+                if (!string.IsNullOrWhiteSpace(originsEnv))
+                {
+                    origins = originsEnv
+                        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                        .ToArray();
+                }
                 
-                policy.WithOrigins(
-                        // IP address origins
-                        $"https://{serverIp}",
-                        $"http://{serverIp}",
-                        // Localhost origins
-                        "https://localhost:5001",  // Blazor WebAssembly client
-                        "https://localhost:7001",  // Alternative client port
-                        "http://localhost:5001",   // HTTP fallback
-                        "http://localhost:7001",   // HTTP fallback
-                        // Additional mobile/development origins
-                        "http://10.0.2.2:8080",
-                        "capacitor://localhost"
-                      )
-                      .AllowAnyHeader()
-                      .AllowAnyMethod()
-                      .AllowCredentials(); // Required for Blazor WASM authentication with JWT
+                if (origins.Length > 0)
+                {
+                    policy.WithOrigins(origins)
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials();
+                }
+                else
+                {
+                    // Safe default: allow localhost origins commonly used in dev, no external domains
+                    policy.WithOrigins(
+                              "http://localhost",
+                              "https://localhost",
+                              "http://localhost:5000",
+                              "https://localhost:5001",
+                              "http://localhost:7000",
+                              "https://localhost:7001",
+                              "http://10.0.2.2:8080",
+                              "capacitor://localhost"
+                          )
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials();
+                }
             });
         });
         return services;

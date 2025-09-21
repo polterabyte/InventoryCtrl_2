@@ -26,6 +26,7 @@ public class UrlBuilderService : IUrlBuilderService
     {
         var apiUrl = await _apiUrlService.GetApiBaseUrlAsync();
         _logger.LogDebug("Using API URL: {ApiUrl}", apiUrl);
+        // endpoint intentionally ignored here; applied in BuildFullUrlAsync
         return apiUrl;
     }
 
@@ -50,7 +51,7 @@ public class UrlBuilderService : IUrlBuilderService
         {
             try
             {
-                // В staging окружении используем текущий origin
+                // Получаем текущий origin
                 var origin = await _jsRuntime.InvokeAsync<string>("eval", "window.location.origin");
                 var absoluteUrl = $"{origin.TrimEnd('/')}{url}";
                 
@@ -65,10 +66,9 @@ public class UrlBuilderService : IUrlBuilderService
                 _logger.LogWarning(ex, "Failed to get window.location.origin, using fallback");
             }
 
-            // Fallback для staging
-            var fallbackUrl = $"http://staging.warehouse.cuby{url}";
-            _logger.LogDebug("Using fallback URL: {FallbackUrl}", fallbackUrl);
-            return fallbackUrl;
+            // Если не удалось получить origin, возвращаем относительный URL без подстановки доменов
+            _logger.LogDebug("Origin unavailable, returning relative URL: {Url}", url);
+            return url;
         }
 
         // Если URL невалидный и не относительный, выбрасываем исключение

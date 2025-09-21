@@ -75,7 +75,7 @@ builder.Services.AddSwaggerGen(c =>
     }
 });
 
-// Add port configuration service
+// Add CORS configuration
 builder.Services.AddCorsConfiguration();
 
 // Database
@@ -95,6 +95,11 @@ builder.Services.AddIdentity<Inventory.API.Models.User, IdentityRole>(options =>
 
 // JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("Jwt");
+var jwtKey = jwtSettings["Key"];
+if (string.IsNullOrWhiteSpace(jwtKey) && !builder.Environment.IsDevelopment())
+{
+    throw new InvalidOperationException("JWT:Key must be provided via configuration/environment variables in non-development environments.");
+}
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -110,7 +115,7 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = jwtSettings["Issuer"],
         ValidAudience = jwtSettings["Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? string.Empty)),
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey ?? string.Empty)),
         ClockSkew = TimeSpan.FromMinutes(5) // Add some clock skew tolerance
     };
     
@@ -165,18 +170,38 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// CORS configuration
-builder.Services.AddCorsConfiguration();
+// (Duplicate CORS registration removed)
 
 // Additional CORS configuration for SignalR
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("SignalRPolicy", policy =>
     {
-        policy.SetIsOriginAllowed(origin => true)
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+        var originsEnv = Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS");
+        var origins = (originsEnv ?? string.Empty)
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        if (origins.Length > 0)
+        {
+            policy.WithOrigins(origins)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        }
+        else
+        {
+            policy.WithOrigins(
+                      "http://localhost",
+                      "https://localhost",
+                      "http://localhost:5000",
+                      "https://localhost:5001",
+                      "http://localhost:7000",
+                      "https://localhost:7001"
+                  )
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        }
     });
 });
 
@@ -226,7 +251,11 @@ builder.Services.AddScoped<ILocationService, LocationApiService>();
 // Add HttpClient for LocationApiService
 builder.Services.AddHttpClient<ILocationService, LocationApiService>(client =>
 {
-    var apiUrl = builder.Configuration["ApiUrl"] ?? "https://localhost:7001";
+    var apiUrl = builder.Configuration["ApiUrl"];
+    if (string.IsNullOrWhiteSpace(apiUrl))
+    {
+        throw new InvalidOperationException("ApiUrl configuration is required for LocationApiService");
+    }
     client.BaseAddress = new Uri(apiUrl);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
@@ -332,11 +361,11 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
-// Log JWT configuration for debugging
+// Log JWT configuration for debugging (do not log key)
 var jwtConfigLogger = app.Services.GetRequiredService<ILogger<Program>>();
 var jwtConfigSettings = app.Configuration.GetSection("Jwt");
-jwtConfigLogger.LogInformation("JWT Configuration - Issuer: {Issuer}, Audience: {Audience}, Key: {Key}", 
-    jwtConfigSettings["Issuer"], jwtConfigSettings["Audience"], jwtConfigSettings["Key"]?.Substring(0, 10) + "...");
+jwtConfigLogger.LogInformation("JWT Configuration - Issuer: {Issuer}, Audience: {Audience}", 
+    jwtConfigSettings["Issuer"], jwtConfigSettings["Audience"]);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
