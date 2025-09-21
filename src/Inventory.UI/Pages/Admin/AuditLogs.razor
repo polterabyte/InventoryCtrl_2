@@ -197,9 +197,9 @@
                                                 }
                                             </td>
                                             <td>
-                                                @if (log.ResponseTime > 0)
+                                                @if (log.Duration > 0)
                                                 {
-                                                    <span class="text-muted">@log.ResponseTime ms</span>
+                                                    <span class="text-muted">@log.Duration ms</span>
                                                 }
                                                 else
                                                 {
@@ -326,7 +326,7 @@
                                 </tr>
                                 <tr>
                                     <td><strong>URL:</strong></td>
-                                    <td><code>@selectedLog.Endpoint</code></td>
+                                    <td><code>@selectedLog.Url</code></td>
                                 </tr>
                                 <tr>
                                     <td><strong>Status Code:</strong></td>
@@ -334,7 +334,7 @@
                                 </tr>
                                 <tr>
                                     <td><strong>Response Time:</strong></td>
-                                    <td>@(selectedLog.ResponseTime.ToString()) ms</td>
+                                    <td>@(selectedLog.Duration?.ToString() ?? "N/A") ms</td>
                                 </tr>
                                 <tr>
                                     <td><strong>Success:</strong></td>
@@ -436,7 +436,7 @@
                 {
                     successfulRequests = auditLogs.Count(x => x.IsSuccess);
                     failedRequests = auditLogs.Count(x => !x.IsSuccess);
-                    averageResponseTime = auditLogs.Where(x => x.ResponseTime > 0).Average(x => x.ResponseTime);
+                    averageResponseTime = auditLogs.Where(x => x.Duration > 0).Average(x => x.Duration ?? 0);
                 }
             }
         }
@@ -527,7 +527,7 @@
     {
         if (!log.IsSuccess)
             return "table-danger";
-        if (log.ResponseTime > 5000) // Slow requests
+        if (log.Duration > 5000) // Slow requests
             return "table-warning";
         return "";
     }

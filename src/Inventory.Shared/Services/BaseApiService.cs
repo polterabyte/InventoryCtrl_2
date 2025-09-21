@@ -17,7 +17,7 @@ public abstract class BaseApiService(HttpClient httpClient, string baseUrl, ILog
         {
             var fullUrl = GetFullUrl(endpoint);
             Logger.LogDebug("Making GET request to {FullUrl}", fullUrl);
-            var response = await HttpClient.GetAsync(fullUrl);
+            var response = await HttpClient.GetAsync(new Uri(fullUrl));
             
             if (response.IsSuccessStatusCode)
             {
@@ -46,7 +46,7 @@ public abstract class BaseApiService(HttpClient httpClient, string baseUrl, ILog
         {
             var fullUrl = GetFullUrl(endpoint);
             Logger.LogDebug("Making GET request to {FullUrl}", fullUrl);
-            var response = await HttpClient.GetAsync(fullUrl);
+            var response = await HttpClient.GetAsync(new Uri(fullUrl));
             
             if (response.IsSuccessStatusCode)
             {
@@ -75,7 +75,7 @@ public abstract class BaseApiService(HttpClient httpClient, string baseUrl, ILog
         {
             var fullUrl = GetFullUrl(endpoint);
             Logger.LogDebug("Making POST request to {FullUrl}", fullUrl);
-            var response = await HttpClient.PostAsJsonAsync(fullUrl, data);
+            var response = await HttpClient.PostAsJsonAsync(new Uri(fullUrl), data);
             
             if (response.IsSuccessStatusCode)
             {
@@ -104,7 +104,7 @@ public abstract class BaseApiService(HttpClient httpClient, string baseUrl, ILog
         {
             var fullUrl = GetFullUrl(endpoint);
             Logger.LogDebug("Making PUT request to {FullUrl}", fullUrl);
-            var response = await HttpClient.PutAsJsonAsync(fullUrl, data);
+            var response = await HttpClient.PutAsJsonAsync(new Uri(fullUrl), data);
             
             if (response.IsSuccessStatusCode)
             {
@@ -133,7 +133,7 @@ public abstract class BaseApiService(HttpClient httpClient, string baseUrl, ILog
         {
             var fullUrl = GetFullUrl(endpoint);
             Logger.LogDebug("Making DELETE request to {FullUrl}", fullUrl);
-            var response = await HttpClient.DeleteAsync(fullUrl);
+            var response = await HttpClient.DeleteAsync(new Uri(fullUrl));
             
             if (response.IsSuccessStatusCode)
             {

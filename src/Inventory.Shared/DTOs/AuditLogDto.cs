@@ -27,10 +27,12 @@ public class AuditLogDto
     public string? AdditionalData { get; set; }
     public bool IsSuccess { get; set; }
     public string? ErrorMessage { get; set; }
-    public int ResponseTime { get; set; }
-    public string? Endpoint { get; set; }
+    public long? Duration { get; set; }
+    public string? Url { get; set; }
     public string? HttpMethod { get; set; }
     public int? StatusCode { get; set; }
+    public string? Metadata { get; set; }
+    public string Severity { get; set; } = string.Empty;
 }
 
 /// <summary>
