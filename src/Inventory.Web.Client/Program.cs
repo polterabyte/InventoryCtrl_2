@@ -81,7 +81,7 @@ builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 builder.Services.AddScoped<Inventory.UI.Services.IAuthenticationService, Inventory.UI.Services.AuthenticationService>();
 
 // Register user management service
-builder.Services.AddScoped<Inventory.UI.Services.IUserManagementService, Inventory.UI.Services.UserManagementService>();
+builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 
 // Register audit services
 builder.Services.AddScoped<IAuditService, AuditApiService>();

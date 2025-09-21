@@ -4,20 +4,10 @@ console.log('Loading API configuration...');
 // Define getApiBaseUrl function immediately
 window.getApiBaseUrl = function() {
     const origin = window.location.origin;
-    const port = window.location.port;
     
-    // Always use HTTPS for API connection (more secure and required for SignalR)
-    if (origin.startsWith('https://')) {
-        // If web client is HTTPS, use HTTPS for API
-        if (port) {
-            return origin.replace(port, '7000'); // Use HTTPS port 7000
-        } else {
-            return origin + ':7000';
-        }
-    } else {
-        // Even if web client is HTTP, use HTTPS for API (localhost development)
-        return 'https://localhost:7000';
-    }
+    // In Docker environment, API is served through nginx on the same port
+    // So we use relative URLs which will work correctly
+    return origin + '/api';
 };
 
 // Define other SignalR functions

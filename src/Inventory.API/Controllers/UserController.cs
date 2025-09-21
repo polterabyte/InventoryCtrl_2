@@ -49,7 +49,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
     }
 
     [HttpGet]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperUser")]
     public async Task<IActionResult> GetUsers(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
@@ -130,7 +130,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
     }
 
     [HttpGet("{id}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperUser")]
     public async Task<IActionResult> GetUser(string id)
     {
         try
@@ -177,7 +177,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
     }
 
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperUser")]
     public async Task<IActionResult> UpdateUser(string id, [FromBody] UpdateUserDto request)
     {
         try
@@ -257,7 +257,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperUser")]
     public async Task<IActionResult> DeleteUser(string id)
     {
         try
@@ -314,7 +314,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
     }
 
     [HttpGet("export")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperUser")]
     public async Task<IActionResult> ExportUsers(
         [FromQuery] string? search = null,
         [FromQuery] string? role = null)
@@ -385,7 +385,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
     }
 
     [HttpPost("{id}/change-password")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperUser")]
     public async Task<IActionResult> ChangePassword(string id, [FromBody] ChangePasswordDto request)
     {
         try
@@ -439,6 +439,100 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
             {
                 Success = false,
                 ErrorMessage = "Failed to change password"
+            });
+        }
+    }
+
+    [HttpPost]
+    [Authorize(Roles = "Admin,SuperUser")]
+    public async Task<IActionResult> CreateUser([FromBody] CreateUserDto request)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new ApiResponse<UserDto>
+                {
+                    Success = false,
+                    ErrorMessage = "Invalid model state",
+                    Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList()
+                });
+            }
+
+            // Check if username already exists
+            var existingUser = await userManager.FindByNameAsync(request.UserName);
+            if (existingUser != null)
+            {
+                return BadRequest(new ApiResponse<UserDto>
+                {
+                    Success = false,
+                    ErrorMessage = "Username already exists"
+                });
+            }
+
+            // Check if email already exists
+            var existingEmail = await userManager.FindByEmailAsync(request.Email);
+            if (existingEmail != null)
+            {
+                return BadRequest(new ApiResponse<UserDto>
+                {
+                    Success = false,
+                    ErrorMessage = "Email already exists"
+                });
+            }
+
+            var user = new Inventory.API.Models.User
+            {
+                Id = Guid.NewGuid().ToString(),
+                UserName = request.UserName,
+                Email = request.Email,
+                EmailConfirmed = request.EmailConfirmed,
+                Role = request.Role,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            var result = await userManager.CreateAsync(user, request.Password);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                return BadRequest(new ApiResponse<UserDto>
+                {
+                    Success = false,
+                    ErrorMessage = errors
+                });
+            }
+
+            // Assign role to user
+            await userManager.AddToRoleAsync(user, request.Role);
+
+            logger.LogInformation("User created: {Username} with role {Role} and ID {UserId}", 
+                user.UserName, user.Role, user.Id);
+
+            var userDto = new UserDto
+            {
+                Id = user.Id,
+                UserName = user.UserName!,
+                Email = user.Email!,
+                Role = user.Role,
+                Roles = new List<string> { request.Role },
+                EmailConfirmed = user.EmailConfirmed,
+                CreatedAt = user.CreatedAt,
+                UpdatedAt = user.UpdatedAt
+            };
+
+            return Created($"/api/user/{user.Id}", new ApiResponse<UserDto>
+            {
+                Success = true,
+                Data = userDto
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error creating user");
+            return StatusCode(500, new ApiResponse<UserDto>
+            {
+                Success = false,
+                ErrorMessage = "Failed to create user"
             });
         }
     }

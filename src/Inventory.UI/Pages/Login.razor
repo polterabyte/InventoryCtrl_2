@@ -1,10 +1,10 @@
 @page "/login"
 
+@using Inventory.UI.Services
+
 @inject NavigationManager Navigation
 @inject IAuthService AuthService
 @inject AuthenticationStateProvider AuthStateProvider
-@inject IJSRuntime JSRuntime
-@inject ILocalStorageService LocalStorage
 @inject IAuthenticationService AuthenticationService
 
 <AuthorizeView>

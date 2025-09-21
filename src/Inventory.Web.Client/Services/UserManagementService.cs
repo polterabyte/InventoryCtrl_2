@@ -3,33 +3,27 @@ using Inventory.Shared.Interfaces;
 using Microsoft.JSInterop;
 using System.Text;
 using System.Text.Json;
+using Inventory.UI.Services;
 
-namespace Inventory.UI.Services;
-
-public interface IUserManagementService
-{
-    Task<PagedApiResponse<UserDto>?> GetUsersAsync(int page = 1, int pageSize = 10, string? search = null, string? role = null);
-    Task<ApiResponse<UserDto>?> GetUserAsync(string id);
-    Task<ApiResponse<UserDto>?> UpdateUserAsync(string id, UpdateUserDto user);
-    Task<ApiResponse<object>?> DeleteUserAsync(string id);
-    Task<ApiResponse<object>?> ChangePasswordAsync(string id, ChangePasswordDto passwordDto);
-    Task<bool> ExportUsersAsync(string? search = null, string? role = null);
-}
+namespace Inventory.Web.Client.Services;
 
 public class UserManagementService : IUserManagementService
 {
     private readonly HttpClient _httpClient;
     private readonly IAuthenticationService _authService;
     private readonly IJSRuntime _jsRuntime;
+    private readonly IApiUrlService _apiUrlService;
 
     public UserManagementService(
         HttpClient httpClient,
         IAuthenticationService authService,
-        IJSRuntime jsRuntime)
+        IJSRuntime jsRuntime,
+        IApiUrlService apiUrlService)
     {
         _httpClient = httpClient;
         _authService = authService;
         _jsRuntime = jsRuntime;
+        _apiUrlService = apiUrlService;
     }
 
     private async Task<HttpClient> GetAuthenticatedClientAsync()
@@ -41,6 +35,12 @@ public class UserManagementService : IUserManagementService
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
         }
         return _httpClient;
+    }
+
+    private async Task<string> GetFullApiUrlAsync(string endpoint)
+    {
+        var apiBaseUrl = await _apiUrlService.GetApiBaseUrlAsync();
+        return $"{apiBaseUrl.TrimEnd('/')}/{endpoint.TrimStart('/')}";
     }
 
     public async Task<PagedApiResponse<UserDto>?> GetUsersAsync(int page = 1, int pageSize = 10, string? search = null, string? role = null)
@@ -56,7 +56,8 @@ public class UserManagementService : IUserManagementService
             if (!string.IsNullOrEmpty(role)) queryParams.Add($"role={Uri.EscapeDataString(role)}");
 
             var queryString = queryParams.Any() ? "?" + string.Join("&", queryParams) : "";
-            var response = await client.GetAsync($"api/user{queryString}");
+            var fullUrl = await GetFullApiUrlAsync($"api/user{queryString}");
+            var response = await client.GetAsync(fullUrl);
 
             if (response.IsSuccessStatusCode)
             {
@@ -82,7 +83,8 @@ public class UserManagementService : IUserManagementService
         try
         {
             var client = await GetAuthenticatedClientAsync();
-            var response = await client.GetAsync($"api/user/{id}");
+            var fullUrl = await GetFullApiUrlAsync($"api/user/{id}");
+            var response = await client.GetAsync(fullUrl);
 
             if (response.IsSuccessStatusCode)
             {
@@ -100,6 +102,43 @@ public class UserManagementService : IUserManagementService
         {
             await _jsRuntime.InvokeVoidAsync("console.error", "Error getting user:", ex.Message);
             return null;
+        }
+    }
+
+    public async Task<ApiResponse<UserDto>?> CreateUserAsync(CreateUserDto user)
+    {
+        try
+        {
+            var client = await GetAuthenticatedClientAsync();
+            var fullUrl = await GetFullApiUrlAsync("api/user");
+            var json = JsonSerializer.Serialize(user);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            await _jsRuntime.InvokeVoidAsync("console.log", $"Creating user at URL: {fullUrl}");
+            
+            var response = await client.PostAsync(fullUrl, content);
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            var result = JsonSerializer.Deserialize<ApiResponse<UserDto>>(responseContent, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            if (!response.IsSuccessStatusCode)
+            {
+                await _jsRuntime.InvokeVoidAsync("console.error", $"Error creating user: {response.StatusCode}, Response: {responseContent}");
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            await _jsRuntime.InvokeVoidAsync("console.error", "Error creating user:", ex.Message);
+            return new ApiResponse<UserDto>
+            {
+                Success = false,
+                ErrorMessage = ex.Message
+            };
         }
     }
 
