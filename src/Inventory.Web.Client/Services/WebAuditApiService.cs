@@ -2,7 +2,6 @@ using Inventory.Shared.Constants;
 using Inventory.Shared.DTOs;
 using Inventory.Shared.Interfaces;
 using Microsoft.Extensions.Logging;
-using Microsoft.JSInterop;
 
 namespace Inventory.Web.Client.Services;
 
@@ -10,11 +9,11 @@ public class WebAuditApiService : WebBaseApiService, IAuditService
 {
     public WebAuditApiService(
         HttpClient httpClient, 
-        IApiUrlService apiUrlService, 
+        IUrlBuilderService urlBuilderService, 
         IResilientApiService resilientApiService, 
-        ILogger<WebAuditApiService> logger,
-        IJSRuntime jsRuntime) 
-        : base(httpClient, apiUrlService, resilientApiService, logger, jsRuntime)
+        IApiErrorHandler errorHandler,        IRequestValidator requestValidator, 
+        ILogger<WebAuditApiService> logger) 
+        : base(httpClient, urlBuilderService, resilientApiService, errorHandler, requestValidator, logger)
     {
     }
 

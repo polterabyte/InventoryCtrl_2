@@ -8,269 +8,237 @@ namespace Inventory.Web.Client.Services;
 
 public abstract class WebBaseApiService(
     HttpClient httpClient, 
-    IApiUrlService apiUrlService, 
+    IUrlBuilderService urlBuilderService, 
     IResilientApiService resilientApiService,
-    ILogger logger,
-    IJSRuntime jsRuntime)
+    IApiErrorHandler errorHandler,
+    IRequestValidator requestValidator,
+    ILogger logger)
 {
     protected readonly HttpClient HttpClient = httpClient;
-    protected readonly IApiUrlService ApiUrlService = apiUrlService;
+    protected readonly IUrlBuilderService UrlBuilderService = urlBuilderService;
     protected readonly IResilientApiService ResilientApiService = resilientApiService;
+    protected readonly IApiErrorHandler ErrorHandler = errorHandler;
+    protected readonly IRequestValidator RequestValidator = requestValidator;
     protected readonly ILogger Logger = logger;
-    protected readonly IJSRuntime JSRuntime = jsRuntime;
 
     protected async Task<string> GetApiUrlAsync()
     {
-        var apiUrl = await ApiUrlService.GetApiBaseUrlAsync();
-        Logger.LogDebug("Using API URL: {ApiUrl}", apiUrl);
-        return apiUrl;
+        return await UrlBuilderService.BuildApiUrlAsync(string.Empty);
+    }
+
+    /// <summary>
+    /// Валидировать объект запроса перед отправкой
+    /// </summary>
+    protected async Task<ValidationResult> ValidateRequestAsync<T>(T request)
+    {
+        if (request == null)
+        {
+            return new ValidationResult
+            {
+                IsValid = false,
+                Errors = new List<ValidationError>
+                {
+                    new() { PropertyName = "Request", Message = "Request object cannot be null" }
+                }
+            };
+        }
+
+        try
+        {
+            Logger.LogDebug("Validating request of type {Type}", typeof(T).Name);
+            var result = await RequestValidator.ValidateAsync(request);
+            
+            if (!result.IsValid)
+            {
+                Logger.LogWarning("Request validation failed for {Type}. Errors: {Errors}", 
+                    typeof(T).Name, result.Summary);
+            }
+            else
+            {
+                Logger.LogDebug("Request validation successful for {Type}", typeof(T).Name);
+            }
+            
+            return result;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error during request validation for {Type}", typeof(T).Name);
+            return new ValidationResult
+            {
+                IsValid = false,
+                Errors = new List<ValidationError>
+                {
+                    new() { PropertyName = "Validation", Message = "Validation error occurred", ErrorCode = "VALIDATION_ERROR" }
+                }
+            };
+        }
+    }
+
+    /// <summary>
+    /// Выполнить HTTP запрос с валидацией
+    /// </summary>
+    protected async Task<ApiResponse<T>> ExecuteWithValidationAsync<T>(HttpMethod method, string endpoint, object? data = null)
+    {
+        // Валидируем данные если они есть
+        if (data != null)
+        {
+            var validationResult = await ValidateRequestAsync(data);
+            if (!validationResult.IsValid)
+            {
+                Logger.LogWarning("Request validation failed, skipping API call. Errors: {Errors}", validationResult.Summary);
+                return ApiResponse<T>.CreateValidationFailure(validationResult.Errors.Select(e => e.Message).ToList());
+            }
+        }
+
+        // Выполняем HTTP запрос
+        return await ExecuteHttpRequestAsync<ApiResponse<T>>(method, endpoint, data);
+    }
+
+    /// <summary>
+    /// Общий метод для выполнения HTTP запросов с устранением дублирования кода
+    /// </summary>
+    protected async Task<T> ExecuteHttpRequestAsync<T>(
+        HttpMethod method, 
+        string endpoint, 
+        object? data = null,
+        Func<HttpResponseMessage, Task<T>>? customResponseHandler = null)
+    {
+        return await ResilientApiService.ExecuteWithRetryAsync(async () =>
+        {
+            var fullUrl = await BuildFullUrlAsync(endpoint);
+            var request = new HttpRequestMessage(method, fullUrl);
+            
+            // Добавляем контент для POST/PUT запросов
+            if (data != null && (method == HttpMethod.Post || method == HttpMethod.Put))
+            {
+                request.Content = JsonContent.Create(data);
+            }
+            
+            Logger.LogDebug("Making {Method} request to {FullUrl}", method, fullUrl);
+            var response = await HttpClient.SendAsync(request);
+            
+            // Используем кастомный обработчик или стандартный
+            return customResponseHandler != null 
+                ? await customResponseHandler(response)
+                : await HandleStandardResponseAsync<T>(response);
+        }, $"{method} {endpoint}");
+    }
+
+    /// <summary>
+    /// Построение полного URL с валидацией и исправлением
+    /// </summary>
+    private async Task<string> BuildFullUrlAsync(string endpoint)
+    {
+        return await UrlBuilderService.BuildFullUrlAsync(endpoint);
+    }
+
+    /// <summary>
+    /// Стандартная обработка HTTP ответов
+    /// </summary>
+    private async Task<T> HandleStandardResponseAsync<T>(HttpResponseMessage response)
+    {
+        var apiResponse = await ErrorHandler.HandleResponseAsync<T>(response);
+        
+        if (!apiResponse.Success)
+        {
+            throw new HttpRequestException(apiResponse.ErrorMessage);
+        }
+        
+        return apiResponse.Data ?? throw new InvalidOperationException("Response data is null");
     }
 
     protected async Task<ApiResponse<T>> GetAsync<T>(string endpoint)
     {
-        return await ResilientApiService.GetWithRetryAsync(async () =>
+        try
         {
-            var apiUrl = await GetApiUrlAsync();
-            var fullUrl = $"{apiUrl.TrimEnd('/')}{endpoint}";
-            
-            // Валидация и исправление URL
-            if (!Uri.IsWellFormedUriString(fullUrl, UriKind.Absolute))
-            {
-                // Если URL относительный, делаем его абсолютным
-                if (fullUrl.StartsWith("/"))
-                {
-                    // В staging окружении используем текущий origin
-                    try
-                    {
-                        var origin = await JSRuntime.InvokeAsync<string>("eval", "window.location.origin");
-                        fullUrl = $"{origin.TrimEnd('/')}{fullUrl}";
-                    }
-                    catch
-                    {
-                        // Fallback для staging
-                        fullUrl = $"http://staging.warehouse.cuby{fullUrl}";
-                    }
-                }
-                else
-                {
-                    throw new InvalidOperationException($"Invalid URL format: {fullUrl}");
-                }
-            }
-            
-            Logger.LogDebug("Making GET request to {FullUrl}", fullUrl);
-            var response = await HttpClient.GetAsync(fullUrl);
-            
-            if (response.IsSuccessStatusCode)
-            {
-                var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<T>>();
-                Logger.LogDebug("GET request successful for {FullUrl}", fullUrl);
-                return apiResponse ?? new ApiResponse<T> { Success = false, ErrorMessage = "Failed to deserialize response" };
-            }
-            else
-            {
-                var errorMessage = await response.Content.ReadAsStringAsync();
-                Logger.LogWarning("GET request failed for {FullUrl}. Status: {StatusCode}, Error: {Error}", 
-                    fullUrl, response.StatusCode, errorMessage);
-                return new ApiResponse<T> { Success = false, ErrorMessage = errorMessage };
-            }
-        }, endpoint);
+            return await ExecuteHttpRequestAsync<ApiResponse<T>>(HttpMethod.Get, endpoint);
+        }
+        catch (Exception ex)
+        {
+            return await ErrorHandler.HandleExceptionAsync<T>(ex, $"GET {endpoint}");
+        }
     }
 
     protected async Task<PagedApiResponse<T>> GetPagedAsync<T>(string endpoint)
     {
-        return await ResilientApiService.GetWithRetryAsync(async () =>
+        try
         {
-            var apiUrl = await GetApiUrlAsync();
-            var fullUrl = $"{apiUrl.TrimEnd('/')}{endpoint}";
-            
-            // Валидация и исправление URL
-            if (!Uri.IsWellFormedUriString(fullUrl, UriKind.Absolute))
-            {
-                // Если URL относительный, делаем его абсолютным
-                if (fullUrl.StartsWith("/"))
-                {
-                    // В staging окружении используем текущий origin
-                    try
-                    {
-                        var origin = await JSRuntime.InvokeAsync<string>("eval", "window.location.origin");
-                        fullUrl = $"{origin.TrimEnd('/')}{fullUrl}";
-                    }
-                    catch
-                    {
-                        // Fallback для staging
-                        fullUrl = $"http://staging.warehouse.cuby{fullUrl}";
-                    }
-                }
-                else
-                {
-                    throw new InvalidOperationException($"Invalid URL format: {fullUrl}");
-                }
-            }
-            
-            Logger.LogDebug("Making GET request to {FullUrl}", fullUrl);
-            var response = await HttpClient.GetAsync(fullUrl);
-            
-            if (response.IsSuccessStatusCode)
-            {
-                var apiResponse = await response.Content.ReadFromJsonAsync<PagedApiResponse<T>>();
-                Logger.LogDebug("GET request successful for {FullUrl}", fullUrl);
-                return apiResponse ?? new PagedApiResponse<T> { Success = false, ErrorMessage = "Failed to deserialize response" };
-            }
-            else
-            {
-                var errorMessage = await response.Content.ReadAsStringAsync();
-                Logger.LogWarning("GET request failed for {FullUrl}. Status: {StatusCode}, Error: {Error}", 
-                    fullUrl, response.StatusCode, errorMessage);
-                return new PagedApiResponse<T> { Success = false, ErrorMessage = errorMessage };
-            }
-        }, endpoint);
+            return await ExecuteHttpRequestAsync<PagedApiResponse<T>>(HttpMethod.Get, endpoint);
+        }
+        catch (Exception ex)
+        {
+            return await ErrorHandler.HandlePagedExceptionAsync<T>(ex, $"GET PAGED {endpoint}");
+        }
     }
 
     protected async Task<ApiResponse<T>> PostAsync<T>(string endpoint, object data)
     {
-        return await ResilientApiService.PostWithRetryAsync(async () =>
+        try
         {
-            var apiUrl = await GetApiUrlAsync();
-            var fullUrl = $"{apiUrl.TrimEnd('/')}{endpoint}";
-            
-            // Валидация и исправление URL
-            if (!Uri.IsWellFormedUriString(fullUrl, UriKind.Absolute))
-            {
-                // Если URL относительный, делаем его абсолютным
-                if (fullUrl.StartsWith("/"))
-                {
-                    // В staging окружении используем текущий origin
-                    try
-                    {
-                        var origin = await JSRuntime.InvokeAsync<string>("eval", "window.location.origin");
-                        fullUrl = $"{origin.TrimEnd('/')}{fullUrl}";
-                    }
-                    catch
-                    {
-                        // Fallback для staging
-                        fullUrl = $"http://staging.warehouse.cuby{fullUrl}";
-                    }
-                }
-                else
-                {
-                    throw new InvalidOperationException($"Invalid URL format: {fullUrl}");
-                }
-            }
-            
-            Logger.LogDebug("Making POST request to {FullUrl}", fullUrl);
-            var response = await HttpClient.PostAsJsonAsync(fullUrl, data);
-            
-            if (response.IsSuccessStatusCode)
-            {
-                var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<T>>();
-                Logger.LogDebug("POST request successful for {FullUrl}", fullUrl);
-                return apiResponse ?? new ApiResponse<T> { Success = false, ErrorMessage = "Failed to deserialize response" };
-            }
-            else
-            {
-                var errorMessage = await response.Content.ReadAsStringAsync();
-                Logger.LogWarning("POST request failed for {FullUrl}. Status: {StatusCode}, Error: {Error}", 
-                    fullUrl, response.StatusCode, errorMessage);
-                return new ApiResponse<T> { Success = false, ErrorMessage = errorMessage };
-            }
-        }, endpoint);
+            return await ExecuteWithValidationAsync<T>(HttpMethod.Post, endpoint, data);
+        }
+        catch (Exception ex)
+        {
+            return await ErrorHandler.HandleExceptionAsync<T>(ex, $"POST {endpoint}");
+        }
     }
 
     protected async Task<ApiResponse<T>> PutAsync<T>(string endpoint, object data)
     {
-        return await ResilientApiService.PutWithRetryAsync(async () =>
+        try
         {
-            var apiUrl = await GetApiUrlAsync();
-            var fullUrl = $"{apiUrl.TrimEnd('/')}{endpoint}";
-            
-            // Валидация и исправление URL
-            if (!Uri.IsWellFormedUriString(fullUrl, UriKind.Absolute))
+            // Валидируем данные перед отправкой
+            var validationResult = await ValidateRequestAsync(data);
+            if (!validationResult.IsValid)
             {
-                // Если URL относительный, делаем его абсолютным
-                if (fullUrl.StartsWith("/"))
+                Logger.LogWarning("PUT request validation failed, skipping API call. Errors: {Errors}", validationResult.Summary);
+                return ApiResponse<T>.CreateValidationFailure(validationResult.Errors.Select(e => e.Message).ToList());
+            }
+
+            // Для PUT запросов нужен специальный обработчик ответа
+            return await ExecuteHttpRequestAsync<ApiResponse<T>>(HttpMethod.Put, endpoint, data, 
+                async response =>
                 {
-                    // В staging окружении используем текущий origin
-                    try
+                    if (response.IsSuccessStatusCode)
                     {
-                        var origin = await JSRuntime.InvokeAsync<string>("eval", "window.location.origin");
-                        fullUrl = $"{origin.TrimEnd('/')}{fullUrl}";
+                        var result = await response.Content.ReadFromJsonAsync<T>();
+                        Logger.LogDebug("PUT request successful for {StatusCode}", response.StatusCode);
+                        return ApiResponse<T>.CreateSuccess(result);
                     }
-                    catch
+                    else
                     {
-                        // Fallback для staging
-                        fullUrl = $"http://staging.warehouse.cuby{fullUrl}";
+                        return await ErrorHandler.HandleResponseAsync<T>(response);
                     }
-                }
-                else
-                {
-                    throw new InvalidOperationException($"Invalid URL format: {fullUrl}");
-                }
-            }
-            
-            Logger.LogDebug("Making PUT request to {FullUrl}", fullUrl);
-            var response = await HttpClient.PutAsJsonAsync(fullUrl, data);
-            
-            if (response.IsSuccessStatusCode)
-            {
-                var result = await response.Content.ReadFromJsonAsync<T>();
-                Logger.LogDebug("PUT request successful for {FullUrl}", fullUrl);
-                return new ApiResponse<T> { Success = true, Data = result };
-            }
-            else
-            {
-                var errorMessage = await response.Content.ReadAsStringAsync();
-                Logger.LogWarning("PUT request failed for {FullUrl}. Status: {StatusCode}, Error: {Error}", 
-                    fullUrl, response.StatusCode, errorMessage);
-                return new ApiResponse<T> { Success = false, ErrorMessage = errorMessage };
-            }
-        }, endpoint);
+                });
+        }
+        catch (Exception ex)
+        {
+            return await ErrorHandler.HandleExceptionAsync<T>(ex, $"PUT {endpoint}");
+        }
     }
 
     protected async Task<ApiResponse<bool>> DeleteAsync(string endpoint)
     {
-        return await ResilientApiService.ExecuteWithRetryAsync(async () =>
+        try
         {
-            var apiUrl = await GetApiUrlAsync();
-            var fullUrl = $"{apiUrl.TrimEnd('/')}{endpoint}";
-            
-            // Валидация и исправление URL
-            if (!Uri.IsWellFormedUriString(fullUrl, UriKind.Absolute))
-            {
-                // Если URL относительный, делаем его абсолютным
-                if (fullUrl.StartsWith("/"))
+            return await ExecuteHttpRequestAsync<ApiResponse<bool>>(HttpMethod.Delete, endpoint,
+                async (HttpResponseMessage response) =>
                 {
-                    // В staging окружении используем текущий origin
-                    try
+                    if (response.IsSuccessStatusCode)
                     {
-                        var origin = await JSRuntime.InvokeAsync<string>("eval", "window.location.origin");
-                        fullUrl = $"{origin.TrimEnd('/')}{fullUrl}";
+                        Logger.LogDebug("DELETE request successful for {StatusCode}", response.StatusCode);
+                        return ApiResponse<bool>.CreateSuccess(true);
                     }
-                    catch
+                    else
                     {
-                        // Fallback для staging
-                        fullUrl = $"http://staging.warehouse.cuby{fullUrl}";
+                        var errorResponse = await ErrorHandler.HandleResponseAsync<bool>(response);
+                        return ApiResponse<bool>.CreateFailure(errorResponse.ErrorMessage ?? "Delete operation failed");
                     }
-                }
-                else
-                {
-                    throw new InvalidOperationException($"Invalid URL format: {fullUrl}");
-                }
-            }
-            
-            Logger.LogDebug("Making DELETE request to {FullUrl}", fullUrl);
-            var response = await HttpClient.DeleteAsync(fullUrl);
-            
-            if (response.IsSuccessStatusCode)
-            {
-                Logger.LogDebug("DELETE request successful for {FullUrl}", fullUrl);
-            }
-            else
-            {
-                Logger.LogWarning("DELETE request failed for {FullUrl}. Status: {StatusCode}", 
-                    fullUrl, response.StatusCode);
-            }
-            
-            return new ApiResponse<bool> { Success = response.IsSuccessStatusCode, Data = response.IsSuccessStatusCode };
-        }, $"DELETE {endpoint}");
+                });
+        }
+        catch (Exception ex)
+        {
+            return await ErrorHandler.HandleExceptionAsync<bool>(ex, $"DELETE {endpoint}");
+        }
     }
 }

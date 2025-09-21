@@ -1,0 +1,432 @@
+/* ========================================
+   COMPACT UI OVERRIDE STYLES
+   ======================================== */
+
+/* Import the compact design system */
+@import url('./design-system-compact.css');
+
+/* ========================================
+   ADDITIONAL COMPACT OVERRIDES
+   ======================================== */
+
+/* Navigation Menu - COMPACT */
+.navbar {
+    min-height: 40px; /* уменьшено с 56px */
+    padding: var(--spacing-2) 0;
+}
+
+.navbar-brand {
+    font-size: var(--font-size-lg); /* уменьшено */
+    padding: var(--spacing-1) var(--spacing-2);
+}
+
+.navbar-toggler {
+    padding: var(--spacing-1) var(--spacing-2);
+    font-size: var(--font-size-base);
+}
+
+.navbar-nav .nav-link {
+    padding: var(--spacing-2) var(--spacing-3); /* уменьшено */
+    font-size: var(--font-size-sm);
+}
+
+.navbar-nav .nav-item {
+    margin-bottom: var(--spacing-1);
+}
+
+/* Sidebar - COMPACT */
+.sidebar {
+    width: var(--sidebar-width);
+    padding: var(--spacing-3);
+}
+
+.sidebar .nav-link {
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--font-size-sm);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-1);
+}
+
+.sidebar .nav-link:hover {
+    background-color: var(--color-bg-secondary);
+}
+
+.sidebar .nav-link.active {
+    background-color: var(--color-primary);
+    color: var(--color-text-primary);
+}
+
+/* Forms - COMPACT */
+.form-control {
+    padding: var(--spacing-2) var(--spacing-3); /* уменьшено */
+    font-size: var(--font-size-sm);
+    border-radius: var(--radius-md);
+    min-height: 32px; /* добавлено */
+}
+
+.form-label {
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-1);
+    font-weight: var(--font-weight-medium);
+}
+
+.form-group {
+    margin-bottom: var(--spacing-3); /* уменьшено */
+}
+
+.form-text {
+    font-size: var(--font-size-xs);
+    margin-top: var(--spacing-1);
+}
+
+/* Tables - COMPACT */
+.table {
+    font-size: var(--font-size-sm);
+}
+
+.table th {
+    padding: var(--spacing-2) var(--spacing-3); /* уменьшено */
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    border-bottom: 2px solid var(--color-border-light);
+}
+
+.table td {
+    padding: var(--spacing-2) var(--spacing-3); /* уменьшено */
+    vertical-align: middle;
+}
+
+.table-sm th,
+.table-sm td {
+    padding: var(--spacing-1) var(--spacing-2); /* еще более компактно */
+    font-size: var(--font-size-xs);
+}
+
+/* Pagination - COMPACT */
+.pagination {
+    margin: var(--spacing-3) 0;
+}
+
+.pagination .page-link {
+    padding: var(--spacing-1) var(--spacing-2);
+    font-size: var(--font-size-sm);
+    min-width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Modals - COMPACT */
+.modal-header {
+    padding: var(--spacing-3) var(--spacing-4);
+    border-bottom: 1px solid var(--color-border-light);
+}
+
+.modal-title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+}
+
+.modal-body {
+    padding: var(--spacing-4);
+}
+
+.modal-footer {
+    padding: var(--spacing-3) var(--spacing-4);
+    border-top: 1px solid var(--color-border-light);
+}
+
+/* Alerts - COMPACT */
+.alert {
+    padding: var(--spacing-3);
+    margin-bottom: var(--spacing-3);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+}
+
+.alert-heading {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--spacing-1);
+}
+
+/* Badges - COMPACT */
+.badge {
+    font-size: var(--font-size-xs);
+    padding: var(--spacing-1) var(--spacing-2);
+    border-radius: var(--radius-sm);
+}
+
+.badge-lg {
+    font-size: var(--font-size-sm);
+    padding: var(--spacing-2) var(--spacing-3);
+}
+
+/* Progress bars - COMPACT */
+.progress {
+    height: 6px; /* уменьшено с 8px */
+    border-radius: var(--radius-sm);
+}
+
+.progress-bar {
+    font-size: var(--font-size-xs);
+    line-height: 6px; /* уменьшено */
+}
+
+/* Dropdowns - COMPACT */
+.dropdown-menu {
+    font-size: var(--font-size-sm);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+}
+
+.dropdown-item {
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--font-size-sm);
+}
+
+.dropdown-divider {
+    margin: var(--spacing-2) 0;
+}
+
+/* Tooltips - COMPACT */
+.tooltip {
+    font-size: var(--font-size-xs);
+}
+
+.tooltip-inner {
+    padding: var(--spacing-2) var(--spacing-3);
+    border-radius: var(--radius-sm);
+}
+
+/* Popovers - COMPACT */
+.popover {
+    font-size: var(--font-size-sm);
+    border-radius: var(--radius-md);
+}
+
+.popover-header {
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+}
+
+.popover-body {
+    padding: var(--spacing-3);
+    font-size: var(--font-size-sm);
+}
+
+/* List groups - COMPACT */
+.list-group-item {
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--font-size-sm);
+    border-bottom: 1px solid var(--color-border-light);
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+}
+
+.list-group-item.active {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+/* Breadcrumbs - COMPACT */
+.breadcrumb {
+    font-size: var(--font-size-sm);
+    padding: var(--spacing-2) 0;
+    margin-bottom: var(--spacing-3);
+}
+
+.breadcrumb-item {
+    display: inline-flex;
+    align-items: center;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    content: ">";
+    padding: 0 var(--spacing-2);
+    color: var(--color-text-muted);
+}
+
+/* Jumbotron - COMPACT */
+.jumbotron {
+    padding: var(--spacing-6) var(--spacing-8);
+    margin-bottom: var(--spacing-6);
+    border-radius: var(--radius-lg);
+}
+
+.jumbotron h1 {
+    font-size: var(--font-size-3xl); /* уменьшено */
+    margin-bottom: var(--spacing-3);
+}
+
+.jumbotron p {
+    font-size: var(--font-size-base);
+    margin-bottom: var(--spacing-4);
+}
+
+/* Spinners - COMPACT */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+.spinner-grow-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Close buttons - COMPACT */
+.close {
+    font-size: var(--font-size-lg);
+    line-height: 1;
+    padding: var(--spacing-1);
+}
+
+/* Carousel - COMPACT */
+.carousel-caption {
+    padding: var(--spacing-3);
+    bottom: var(--spacing-4);
+}
+
+.carousel-caption h5 {
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--spacing-2);
+}
+
+.carousel-caption p {
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-2);
+}
+
+/* Collapse - COMPACT */
+.collapse {
+    transition: height 0.3s ease;
+}
+
+.collapsing {
+    transition: height 0.3s ease;
+}
+
+/* ========================================
+   RESPONSIVE COMPACT ADJUSTMENTS
+   ======================================== */
+
+@media (max-width: 768px) {
+    /* Mobile navigation */
+    .navbar {
+        min-height: 36px;
+        padding: var(--spacing-1) 0;
+    }
+    
+    .navbar-brand {
+        font-size: var(--font-size-base);
+    }
+    
+    .navbar-nav .nav-link {
+        padding: var(--spacing-2);
+        font-size: var(--font-size-sm);
+    }
+    
+    /* Mobile forms */
+    .form-control {
+        padding: var(--spacing-2);
+        font-size: var(--font-size-sm);
+        min-height: 36px;
+    }
+    
+    /* Mobile tables */
+    .table {
+        font-size: var(--font-size-xs);
+    }
+    
+    .table th,
+    .table td {
+        padding: var(--spacing-1) var(--spacing-2);
+    }
+    
+    /* Mobile cards */
+    .card-body {
+        padding: var(--spacing-3);
+    }
+    
+    .card-header,
+    .card-footer {
+        padding: var(--spacing-2) var(--spacing-3);
+    }
+    
+    /* Mobile modals */
+    .modal-body {
+        padding: var(--spacing-3);
+    }
+    
+    .modal-header,
+    .modal-footer {
+        padding: var(--spacing-2) var(--spacing-3);
+    }
+}
+
+@media (max-width: 576px) {
+    /* Extra small devices */
+    .container,
+    .container-fluid {
+        padding-left: var(--spacing-3);
+        padding-right: var(--spacing-3);
+    }
+    
+    .btn {
+        padding: var(--spacing-2) var(--spacing-3);
+        font-size: var(--font-size-sm);
+        min-height: 32px;
+    }
+    
+    .card-body {
+        padding: var(--spacing-2);
+    }
+    
+    .table {
+        font-size: var(--font-size-xs);
+    }
+    
+    .table th,
+    .table td {
+        padding: var(--spacing-1);
+    }
+}
+
+/* ========================================
+   PRINT STYLES
+   ======================================== */
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .card {
+        box-shadow: none;
+        border: 1px solid var(--color-gray-400);
+        page-break-inside: avoid;
+    }
+    
+    .btn {
+        display: none;
+    }
+    
+    .table {
+        font-size: var(--font-size-xs);
+    }
+    
+    .table th,
+    .table td {
+        padding: var(--spacing-1);
+        border: 1px solid var(--color-gray-400);
+    }
+    
+    .page-break {
+        page-break-before: always;
+    }
+}

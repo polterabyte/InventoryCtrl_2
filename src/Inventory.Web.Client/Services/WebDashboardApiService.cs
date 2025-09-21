@@ -10,11 +10,10 @@ public class WebDashboardApiService : WebBaseApiService, IDashboardService
 {
     public WebDashboardApiService(
         HttpClient httpClient, 
-        IApiUrlService apiUrlService, 
-        IResilientApiService resilientApiService, 
-        ILogger<WebDashboardApiService> logger,
-        IJSRuntime jsRuntime) 
-        : base(httpClient, apiUrlService, resilientApiService, logger, jsRuntime)
+        IUrlBuilderService urlBuilderService, 
+        IResilientApiService resilientApiService, IApiErrorHandler errorHandler,        IRequestValidator requestValidator, 
+        ILogger<WebDashboardApiService> logger) 
+        : base(httpClient, urlBuilderService, resilientApiService, errorHandler, requestValidator, logger)
     {
     }
 

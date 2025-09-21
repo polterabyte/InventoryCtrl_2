@@ -2,7 +2,6 @@ using Inventory.Shared.Constants;
 using Inventory.Shared.DTOs;
 using Inventory.Shared.Interfaces;
 using Microsoft.Extensions.Logging;
-using Microsoft.JSInterop;
 
 namespace Inventory.Web.Client.Services;
 
@@ -10,11 +9,11 @@ public class WebLocationApiService : WebBaseApiService, ILocationService
 {
     public WebLocationApiService(
         HttpClient httpClient,
-        IApiUrlService apiUrlService,
-        IResilientApiService resilientApiService,
-        ILogger<WebLocationApiService> logger,
-        IJSRuntime jsRuntime)
-        : base(httpClient, apiUrlService, resilientApiService, logger, jsRuntime)
+        IUrlBuilderService urlBuilderService,
+        IResilientApiService resilientApiService, 
+        IApiErrorHandler errorHandler,        IRequestValidator requestValidator,
+        ILogger<WebLocationApiService> logger)
+        : base(httpClient, urlBuilderService, resilientApiService, errorHandler, requestValidator, logger)
     {
     }
 

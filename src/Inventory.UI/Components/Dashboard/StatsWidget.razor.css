@@ -1,33 +1,33 @@
 .stats-widget {
     transition: all 0.3s ease;
-    border-left: 4px solid;
+    border-left: 3px solid; /* уменьшено с 4px */
     background-color: var(--color-bg-card);
     border: 1px solid var(--color-border-light);
 }
 
 .stats-widget:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    transform: translateY(-1px); /* уменьшено с -2px */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3); /* уменьшено */
     background-color: var(--color-bg-card-hover);
 }
 
 .stats-value {
-    font-size: 2rem;
+    font-size: 1.5rem; /* уменьшено с 2rem */
     font-weight: 700;
     line-height: 1;
-    margin-bottom: 0.25rem;
+    margin-bottom: var(--spacing-1); /* уменьшено с 0.25rem */
     color: var(--color-text-primary);
 }
 
 .stats-label {
-    font-size: 0.875rem;
+    font-size: var(--font-size-xs); /* уменьшено с 0.875rem */
     font-weight: 500;
     color: var(--color-text-secondary);
-    margin-bottom: 0.125rem;
+    margin-bottom: var(--spacing-1); /* уменьшено */
 }
 
 .stats-sublabel {
-    font-size: 0.75rem;
+    font-size: var(--font-size-xs);
     color: var(--color-text-muted);
 }
 
@@ -67,4 +67,19 @@
 
 [data-bs-theme="dark"] .stats-sublabel {
     color: var(--color-text-muted);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .stats-value {
+        font-size: 1.25rem;
+    }
+    
+    .stats-label {
+        font-size: var(--font-size-xs);
+    }
+    
+    .stats-sublabel {
+        font-size: var(--font-size-xs);
+    }
 }

@@ -26,16 +26,12 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
             
             logger.LogInformation("User info requested for: {Username}", username);
             
-            return Ok(new ApiResponse<object>
+            return Ok(ApiResponse<object>.Success(new
             {
-                Success = true,
-                Data = new
-                {
-                    Username = username,
-                    UserId = userId,
-                    Roles = roles
-                }
-            });
+                Username = username,
+                UserId = userId,
+                Roles = roles
+            }));
         }
         catch (Exception ex)
         {

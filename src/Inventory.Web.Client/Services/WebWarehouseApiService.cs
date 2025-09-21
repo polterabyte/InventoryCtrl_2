@@ -2,7 +2,6 @@ using Inventory.Shared.Constants;
 using Inventory.Shared.DTOs;
 using Inventory.Shared.Interfaces;
 using Microsoft.Extensions.Logging;
-using Microsoft.JSInterop;
 
 namespace Inventory.Web.Client.Services;
 
@@ -10,11 +9,11 @@ public class WebWarehouseApiService : WebBaseApiService, IWarehouseService
 {
     public WebWarehouseApiService(
         HttpClient httpClient, 
-        IApiUrlService apiUrlService, 
+        IUrlBuilderService urlBuilderService, 
         IResilientApiService resilientApiService, 
-        ILogger<WebWarehouseApiService> logger,
-        IJSRuntime jsRuntime) 
-        : base(httpClient, apiUrlService, resilientApiService, logger, jsRuntime)
+        IApiErrorHandler errorHandler,        IRequestValidator requestValidator,
+        ILogger<WebWarehouseApiService> logger)
+        : base(httpClient, urlBuilderService, resilientApiService, errorHandler, requestValidator, logger)
     {
     }
 

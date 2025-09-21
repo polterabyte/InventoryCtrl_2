@@ -95,20 +95,12 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
                 PageSize = pageSize
             };
 
-            return Ok(new PagedApiResponse<CategoryDto>
-            {
-                Success = true,
-                Data = pagedResponse
-            });
+            return Ok(PagedApiResponse<CategoryDto>.Success(pagedResponse));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving categories");
-            return StatusCode(500, new PagedApiResponse<CategoryDto>
-            {
-                Success = false,
-                ErrorMessage = "Failed to retrieve categories"
-            });
+            return StatusCode(500, PagedApiResponse<CategoryDto>.Failure("Failed to retrieve categories"));
         }
     }
 
@@ -123,11 +115,7 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
 
             if (category == null)
             {
-                return NotFound(new ApiResponse<CategoryDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Category not found"
-                });
+                return NotFound(ApiResponse<CategoryDto>.Failure("Category not found"));
             }
 
             var categoryDto = new CategoryDto
@@ -142,20 +130,12 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
                 UpdatedAt = category.UpdatedAt
             };
 
-            return Ok(new ApiResponse<CategoryDto>
-            {
-                Success = true,
-                Data = categoryDto
-            });
+            return Ok(ApiResponse<CategoryDto>.Success(categoryDto));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving category {CategoryId}", id);
-            return StatusCode(500, new ApiResponse<CategoryDto>
-            {
-                Success = false,
-                ErrorMessage = "Failed to retrieve category"
-            });
+            return StatusCode(500, ApiResponse<CategoryDto>.Failure("Failed to retrieve category"));
         }
     }
 
@@ -289,11 +269,7 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
                 UpdatedAt = category.UpdatedAt
             };
 
-            return CreatedAtAction(nameof(GetCategory), new { id = category.Id }, new ApiResponse<CategoryDto>
-            {
-                Success = true,
-                Data = categoryDto
-            });
+            return CreatedAtAction(nameof(GetCategory), new { id = category.Id }, ApiResponse<CategoryDto>.Success(categoryDto));
         }
         catch (Exception ex)
         {
@@ -325,11 +301,7 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
             var category = await context.Categories.FindAsync(id);
             if (category == null)
             {
-                return NotFound(new ApiResponse<CategoryDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Category not found"
-                });
+                return NotFound(ApiResponse<CategoryDto>.Failure("Category not found"));
             }
 
             // Check if parent category exists (if specified)
@@ -369,11 +341,7 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
                 UpdatedAt = category.UpdatedAt
             };
 
-            return Ok(new ApiResponse<CategoryDto>
-            {
-                Success = true,
-                Data = categoryDto
-            });
+            return Ok(ApiResponse<CategoryDto>.Success(categoryDto));
         }
         catch (Exception ex)
         {

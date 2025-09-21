@@ -37,17 +37,20 @@
             @* User greeting bar *@
             <UserGreeting />
             
+            @* Main content area *@
+            <main>
+                <div class="top-row px-4">
+                    @TopRowContent
+                </div>
+
+                <article class="content">
+                    @Body
+                </article>
+            </main>
+            
+            @* Sidebar справа *@
             <div class="sidebar">
                 <NavigationMenu AppTitle="@AppTitle" MenuItems="@MenuItems" />
-                <main>
-                    <div class="top-row px-4">
-                        @TopRowContent
-                    </div>
-
-                    <article class="content px-4">
-                        @Body
-                    </article>
-                </main>
             </div>
         </ProtectedRoute>
     }

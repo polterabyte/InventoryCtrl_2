@@ -2,14 +2,18 @@ using Inventory.Shared.Constants;
 using Inventory.Shared.DTOs;
 using Inventory.Shared.Interfaces;
 using Microsoft.Extensions.Logging;
-using Microsoft.JSInterop;
 
 namespace Inventory.Web.Client.Services;
 
 public class WebAuthApiService : WebBaseApiService, IAuthService
 {
-    public WebAuthApiService(HttpClient httpClient, IApiUrlService apiUrlService, IResilientApiService resilientApiService, ILogger<WebAuthApiService> logger, IJSRuntime jsRuntime) 
-        : base(httpClient, apiUrlService, resilientApiService, logger, jsRuntime)
+    public WebAuthApiService(
+        HttpClient httpClient, 
+        IUrlBuilderService urlBuilderService, 
+        IResilientApiService resilientApiService, 
+        IApiErrorHandler errorHandler,        IRequestValidator requestValidator, 
+        ILogger<WebAuthApiService> logger) 
+        : base(httpClient, urlBuilderService, resilientApiService, errorHandler, requestValidator, logger)
     {
     }
 

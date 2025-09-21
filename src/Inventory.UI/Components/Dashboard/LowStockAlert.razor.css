@@ -1,10 +1,10 @@
 .low-stock-list {
-    max-height: 300px;
+    max-height: 250px; /* уменьшено с 300px */
     overflow-y: auto;
 }
 
 .low-stock-item {
-    padding: 0.75rem 0;
+    padding: var(--spacing-3) 0; /* уменьшено с 0.75rem */
     border-bottom: 1px solid var(--color-border);
 }
 
@@ -14,11 +14,11 @@
 
 .low-stock-item:hover {
     background-color: var(--color-bg-card-hover);
-    border-radius: 0.375rem;
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
-    margin-left: -0.5rem;
-    margin-right: -0.5rem;
+    border-radius: var(--radius-md); /* уменьшено с 0.375rem */
+    padding-left: var(--spacing-2); /* уменьшено с 0.5rem */
+    padding-right: var(--spacing-2); /* уменьшено с 0.5rem */
+    margin-left: calc(-1 * var(--spacing-2)); /* уменьшено */
+    margin-right: calc(-1 * var(--spacing-2)); /* уменьшено */
 }
 
 .progress {
@@ -45,13 +45,21 @@
 
 /* Responsive design */
 @media (max-width: 768px) {
+    .low-stock-list {
+        max-height: 200px; /* уменьшено */
+    }
+    
+    .low-stock-item {
+        padding: var(--spacing-2) 0; /* уменьшено */
+    }
+    
     .low-stock-item .d-flex {
         flex-direction: column;
         align-items: flex-start !important;
     }
     
     .low-stock-item .flex-shrink-0:last-child {
-        margin-top: 0.5rem;
+        margin-top: var(--spacing-2); /* уменьшено с 0.5rem */
         margin-left: 0 !important;
     }
 }

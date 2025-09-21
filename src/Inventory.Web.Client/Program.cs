@@ -25,6 +25,18 @@ builder.Services.Configure<ApiConfiguration>(
 // Register API URL service
 builder.Services.AddScoped<Inventory.Web.Client.Services.IApiUrlService, Inventory.Web.Client.Services.ApiUrlService>();
 
+// Register URL builder service
+builder.Services.AddScoped<IUrlBuilderService, UrlBuilderService>();
+
+// Register API error handler
+builder.Services.AddScoped<IApiErrorHandler, ApiErrorHandler>();
+
+// Register request validator
+builder.Services.AddScoped<IRequestValidator, RequestValidator>();
+
+// Register validation service
+builder.Services.AddScoped<ValidationService>();
+
 // Register health check service
 builder.Services.AddScoped<IApiHealthService, ApiHealthService>();
 
@@ -85,6 +97,14 @@ builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 
 // Register audit services
 builder.Services.AddScoped<IAuditService, WebAuditApiService>();
+
+// Initialize validators
+builder.Services.AddScoped(provider =>
+{
+    var validationService = provider.GetRequiredService<ValidationService>();
+    validationService.RegisterAllValidators();
+    return validationService;
+});
 
 // Register SignalR service
 builder.Services.AddScoped<ISignalRService, SignalRService>();
