@@ -10,12 +10,14 @@ public abstract class WebBaseApiService(
     HttpClient httpClient, 
     IApiUrlService apiUrlService, 
     IResilientApiService resilientApiService,
-    ILogger logger)
+    ILogger logger,
+    IJSRuntime jsRuntime)
 {
     protected readonly HttpClient HttpClient = httpClient;
     protected readonly IApiUrlService ApiUrlService = apiUrlService;
     protected readonly IResilientApiService ResilientApiService = resilientApiService;
     protected readonly ILogger Logger = logger;
+    protected readonly IJSRuntime JSRuntime = jsRuntime;
 
     protected async Task<string> GetApiUrlAsync()
     {
@@ -37,9 +39,17 @@ public abstract class WebBaseApiService(
                 // Если URL относительный, делаем его абсолютным
                 if (fullUrl.StartsWith("/"))
                 {
-                    var baseAddress = HttpClient.BaseAddress?.ToString() ?? "http://localhost";
-                    var baseUri = new Uri(baseAddress);
-                    fullUrl = new Uri(baseUri, fullUrl).ToString();
+                    // В staging окружении используем текущий origin
+                    try
+                    {
+                        var origin = await JSRuntime.InvokeAsync<string>("eval", "window.location.origin");
+                        fullUrl = $"{origin.TrimEnd('/')}{fullUrl}";
+                    }
+                    catch
+                    {
+                        // Fallback для staging
+                        fullUrl = $"https://staging.warehouse.cuby{fullUrl}";
+                    }
                 }
                 else
                 {
@@ -79,9 +89,17 @@ public abstract class WebBaseApiService(
                 // Если URL относительный, делаем его абсолютным
                 if (fullUrl.StartsWith("/"))
                 {
-                    var baseAddress = HttpClient.BaseAddress?.ToString() ?? "http://localhost";
-                    var baseUri = new Uri(baseAddress);
-                    fullUrl = new Uri(baseUri, fullUrl).ToString();
+                    // В staging окружении используем текущий origin
+                    try
+                    {
+                        var origin = await JSRuntime.InvokeAsync<string>("eval", "window.location.origin");
+                        fullUrl = $"{origin.TrimEnd('/')}{fullUrl}";
+                    }
+                    catch
+                    {
+                        // Fallback для staging
+                        fullUrl = $"https://staging.warehouse.cuby{fullUrl}";
+                    }
                 }
                 else
                 {
@@ -121,9 +139,17 @@ public abstract class WebBaseApiService(
                 // Если URL относительный, делаем его абсолютным
                 if (fullUrl.StartsWith("/"))
                 {
-                    var baseAddress = HttpClient.BaseAddress?.ToString() ?? "http://localhost";
-                    var baseUri = new Uri(baseAddress);
-                    fullUrl = new Uri(baseUri, fullUrl).ToString();
+                    // В staging окружении используем текущий origin
+                    try
+                    {
+                        var origin = await JSRuntime.InvokeAsync<string>("eval", "window.location.origin");
+                        fullUrl = $"{origin.TrimEnd('/')}{fullUrl}";
+                    }
+                    catch
+                    {
+                        // Fallback для staging
+                        fullUrl = $"https://staging.warehouse.cuby{fullUrl}";
+                    }
                 }
                 else
                 {
@@ -163,9 +189,17 @@ public abstract class WebBaseApiService(
                 // Если URL относительный, делаем его абсолютным
                 if (fullUrl.StartsWith("/"))
                 {
-                    var baseAddress = HttpClient.BaseAddress?.ToString() ?? "http://localhost";
-                    var baseUri = new Uri(baseAddress);
-                    fullUrl = new Uri(baseUri, fullUrl).ToString();
+                    // В staging окружении используем текущий origin
+                    try
+                    {
+                        var origin = await JSRuntime.InvokeAsync<string>("eval", "window.location.origin");
+                        fullUrl = $"{origin.TrimEnd('/')}{fullUrl}";
+                    }
+                    catch
+                    {
+                        // Fallback для staging
+                        fullUrl = $"https://staging.warehouse.cuby{fullUrl}";
+                    }
                 }
                 else
                 {
@@ -205,9 +239,17 @@ public abstract class WebBaseApiService(
                 // Если URL относительный, делаем его абсолютным
                 if (fullUrl.StartsWith("/"))
                 {
-                    var baseAddress = HttpClient.BaseAddress?.ToString() ?? "http://localhost";
-                    var baseUri = new Uri(baseAddress);
-                    fullUrl = new Uri(baseUri, fullUrl).ToString();
+                    // В staging окружении используем текущий origin
+                    try
+                    {
+                        var origin = await JSRuntime.InvokeAsync<string>("eval", "window.location.origin");
+                        fullUrl = $"{origin.TrimEnd('/')}{fullUrl}";
+                    }
+                    catch
+                    {
+                        // Fallback для staging
+                        fullUrl = $"https://staging.warehouse.cuby{fullUrl}";
+                    }
                 }
                 else
                 {

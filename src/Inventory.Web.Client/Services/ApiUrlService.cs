@@ -229,6 +229,12 @@ public class ApiUrlService : IApiUrlService
         // Если URL относительный, пытаемся построить абсолютный
         if (url.StartsWith("/"))
         {
+            // Для staging окружения используем полный URL
+            if (_environment.Environment == "Staging")
+            {
+                return $"https://staging.warehouse.cuby{url}";
+            }
+            
             // В Blazor WebAssembly мы не можем использовать HttpClient.BaseAddress
             // Поэтому используем текущий origin
             return url; // Вернем относительный URL, он будет обработан в WebBaseApiService
@@ -254,6 +260,12 @@ public class ApiUrlService : IApiUrlService
         // Если URL относительный, пытаемся построить абсолютный
         if (url.StartsWith("/"))
         {
+            // Для staging окружения используем полный URL
+            if (_environment.Environment == "Staging")
+            {
+                return $"https://staging.warehouse.cuby{url}";
+            }
+            
             try
             {
                 var origin = await GetCurrentOriginAsync();

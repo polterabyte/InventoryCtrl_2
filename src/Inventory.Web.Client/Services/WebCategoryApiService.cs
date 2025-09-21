@@ -2,20 +2,29 @@ using Inventory.Shared.Constants;
 using Inventory.Shared.DTOs;
 using Inventory.Shared.Interfaces;
 using Microsoft.Extensions.Logging;
+using Microsoft.JSInterop;
 
-namespace Inventory.Shared.Services;
+namespace Inventory.Web.Client.Services;
 
-public class CategoryApiService(HttpClient httpClient, ILogger<CategoryApiService> logger) 
-    : BaseApiService(httpClient, "", logger), ICategoryService
+public class WebCategoryApiService : WebBaseApiService, ICategoryService
 {
+    public WebCategoryApiService(
+        HttpClient httpClient, 
+        IApiUrlService apiUrlService, 
+        IResilientApiService resilientApiService, 
+        ILogger<WebCategoryApiService> logger,
+        IJSRuntime jsRuntime) 
+        : base(httpClient, apiUrlService, resilientApiService, logger, jsRuntime)
+    {
+    }
 
     public async Task<List<CategoryDto>> GetAllCategoriesAsync()
     {
-        logger.LogInformation("GetAllCategoriesAsync called, requesting from: {Endpoint}", ApiEndpoints.Categories);
+        Logger.LogInformation("GetAllCategoriesAsync called, requesting from: {Endpoint}", ApiEndpoints.Categories);
         // Request all categories by setting a large page size
         var response = await GetPagedAsync<CategoryDto>($"{ApiEndpoints.Categories}?page=1&pageSize=1000");
         var categories = response.Data?.Items ?? new List<CategoryDto>();
-        logger.LogInformation("GetAllCategoriesAsync returned {Count} categories", categories.Count);
+        Logger.LogInformation("GetAllCategoriesAsync returned {Count} categories", categories.Count);
         return categories;
     }
 

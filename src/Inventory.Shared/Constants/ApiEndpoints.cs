@@ -57,7 +57,7 @@ public static class ApiEndpoints
     public const string UnitOfMeasureCount = $"{UnitOfMeasures}/count";
     
     // Warehouse endpoints
-    public const string Warehouses = "/warehouses";
+    public const string Warehouses = "/Warehouse";
     public const string WarehouseById = $"{Warehouses}/{{id}}";
     
     // Transaction endpoints

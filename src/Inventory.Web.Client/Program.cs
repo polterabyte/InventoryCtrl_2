@@ -56,12 +56,12 @@ builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Informatio
 // Register Web-specific services
 builder.Services.AddScoped<IAuthService, WebAuthApiService>();
 builder.Services.AddScoped<IProductService, ProductApiService>();
-builder.Services.AddScoped<IUnitOfMeasureApiService, UnitOfMeasureApiService>();
-builder.Services.AddScoped<ICategoryService, CategoryApiService>();
-builder.Services.AddScoped<IManufacturerService, ManufacturerApiService>();
-builder.Services.AddScoped<IProductGroupService, ProductGroupApiService>();
-builder.Services.AddScoped<IProductModelService, ProductModelApiService>();
-builder.Services.AddScoped<IWarehouseService, WarehouseApiService>();
+builder.Services.AddScoped<IUnitOfMeasureApiService, WebUnitOfMeasureApiService>();
+builder.Services.AddScoped<ICategoryService, WebCategoryApiService>();
+builder.Services.AddScoped<IManufacturerService, WebManufacturerApiService>();
+builder.Services.AddScoped<IProductGroupService, WebProductGroupApiService>();
+builder.Services.AddScoped<IProductModelService, WebProductModelApiService>();
+builder.Services.AddScoped<IWarehouseService, WebWarehouseApiService>();
 builder.Services.AddScoped<IDashboardService, WebDashboardApiService>();
 
 // Register logging and error handling services
