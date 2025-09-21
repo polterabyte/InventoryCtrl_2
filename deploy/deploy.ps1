@@ -16,8 +16,6 @@ param(
     [Parameter(Mandatory=$false)]
     [string]$BaseDomain = "warehouse.cuby",
     
-    [Parameter(Mandatory=$false)]
-    [switch]$SkipVapidCheck,
     
     [Parameter(Mandatory=$false)]
     [int]$HealthCheckTimeout = 10
@@ -75,36 +73,6 @@ $config = Get-EnvironmentConfig -Env $Environment -CustomEnvFile $EnvFile -Custo
 
 Write-Host "Starting $($config.DisplayName) deployment for $($config.Domain)..." -ForegroundColor Green
 
-# Function to check and generate VAPID keys
-function Test-AndGenerateVapidKeys {
-    param(
-        [string]$EnvFilePath,
-        [string]$EnvironmentName,
-        [bool]$SkipCheck
-    )
-    
-    if ($SkipCheck) {
-        Write-Host "Skipping VAPID keys check as requested" -ForegroundColor Yellow
-        return
-    }
-    
-    if (Test-Path $EnvFilePath) {
-        $envContent = Get-Content $EnvFilePath -Raw
-        if ($envContent -match "VAPID_PUBLIC_KEY=$" -or $envContent -match "VAPID_PRIVATE_KEY=$") {
-            Write-Host "VAPID keys not configured. Generating them..." -ForegroundColor Yellow
-            & ".\scripts\generate-vapid-production.ps1" -Environment $EnvironmentName
-        } else {
-            Write-Host "VAPID keys are already configured" -ForegroundColor Green
-        }
-    } else {
-        if ($EnvironmentName -eq "test") {
-            Write-Host "$EnvFilePath file not found. Creating it with VAPID keys for testing..." -ForegroundColor Yellow
-        } else {
-            Write-Warning "$EnvFilePath file not found. Creating it with VAPID keys..."
-        }
-        & ".\scripts\generate-vapid-production.ps1" -Environment $EnvironmentName
-    }
-}
 
 # Function to determine health check URL
 function Get-HealthCheckUrl {
@@ -186,8 +154,6 @@ try {
     Write-Host "  Health Check Timeout: $HealthCheckTimeout seconds" -ForegroundColor White
     Write-Host ""
 
-    # Check and generate VAPID keys
-    Test-AndGenerateVapidKeys -EnvFilePath $config.EnvFile -EnvironmentName $Environment -SkipCheck $SkipVapidCheck
 
     # Check environment file exists
     if (-not (Test-Path $config.EnvFile)) {

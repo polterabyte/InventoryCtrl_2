@@ -237,9 +237,7 @@ builder.Services.AddSignalR(options =>
 // Add SignalR notification service
 builder.Services.AddScoped<ISignalRNotificationService, SignalRNotificationService>();
 
-// Add Push Notifications
-builder.Services.Configure<VapidConfiguration>(builder.Configuration.GetSection("Vapid"));
-builder.Services.AddScoped<IPushNotificationService, PushNotificationService>();
+// VAPID/Web Push removed
 
 // Add notification rule engine
 builder.Services.AddScoped<Inventory.Shared.Interfaces.INotificationRuleEngine, Inventory.API.Services.NotificationRuleEngine>();

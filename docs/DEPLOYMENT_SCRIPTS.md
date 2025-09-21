@@ -24,7 +24,6 @@ The main deployment script that handles all environments with flexible configura
 - `ComposeFile` (Optional): Custom Docker Compose file path
 - `Domain` (Optional): Custom domain name
 - `BaseDomain` (Optional): Base domain for environment subdomains (default: "warehouse.cuby")
-- `SkipVapidCheck` (Optional): Skip VAPID keys generation check
 - `HealthCheckTimeout` (Optional): Health check timeout in seconds (default: 30)
 
 **Examples:**
@@ -38,8 +37,7 @@ The main deployment script that handles all environments with flexible configura
 # Custom domain
 .\deploy\deploy.ps1 -Environment production -Domain "myapp.example.com" -BaseDomain "example.com"
 
-# Skip VAPID check and custom timeout
-.\deploy\deploy.ps1 -Environment test -SkipVapidCheck -HealthCheckTimeout 60
+ 
 ```
 
 ### 2. Environment-Specific Scripts
@@ -80,7 +78,6 @@ Deploy multiple environments or all environments at once.
   - `all` - Deploy all environments (default)
 - `SkipHealthCheck` (Optional): Skip health checks during deployment
 - `BaseDomain` (Optional): Base domain for environment subdomains (default: "warehouse.cuby")
-- `SkipVapidCheck` (Optional): Skip VAPID keys generation check
 - `HealthCheckTimeout` (Optional): Health check timeout in seconds (default: 30)
 
 **Examples:**
@@ -94,8 +91,7 @@ Deploy multiple environments or all environments at once.
 # Deploy all with custom base domain
 .\deploy-all.ps1 -BaseDomain "myapp.com"
 
-# Deploy all with custom settings
-.\deploy-all.ps1 -SkipVapidCheck -HealthCheckTimeout 60
+ 
 ```
 
 ### 4. Custom Deployment Script (`deploy/deploy-custom.ps1`)
@@ -113,7 +109,7 @@ Deploy with completely custom file names and domains.
 - `ComposeFile` (Optional): Custom Docker Compose file path
 - `Domain` (Optional): Custom domain name
 - `BaseDomain` (Optional): Base domain for environment subdomains (default: "warehouse.cuby")
-- `SkipVapidCheck` (Optional): Skip VAPID keys generation check
+ 
 - `HealthCheckTimeout` (Optional): Health check timeout in seconds (default: 30)
 - `DryRun` (Optional): Show what would be executed without running
 
@@ -167,7 +163,7 @@ This standardization makes it easy to:
 
 The universal deployment script follows this process:
 
-1. **VAPID Keys Check**: Verifies and generates VAPID keys if needed
+ 
 2. **Environment File Validation**: Checks if the environment file exists
 3. **Container Cleanup**: Stops existing containers
 4. **Service Deployment**: Builds and starts services using Docker Compose
