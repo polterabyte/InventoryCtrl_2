@@ -15,8 +15,9 @@ public abstract class BaseApiService(HttpClient httpClient, string baseUrl, ILog
     {
         try
         {
-            Logger.LogDebug("Making GET request to {Endpoint}", endpoint);
-            var response = await HttpClient.GetAsync(endpoint);
+            var fullUrl = GetFullUrl(endpoint);
+            Logger.LogDebug("Making GET request to {FullUrl}", fullUrl);
+            var response = await HttpClient.GetAsync(new Uri(fullUrl));
             
             if (response.IsSuccessStatusCode)
             {
@@ -43,8 +44,9 @@ public abstract class BaseApiService(HttpClient httpClient, string baseUrl, ILog
     {
         try
         {
-            Logger.LogDebug("Making GET request to {Endpoint}", endpoint);
-            var response = await HttpClient.GetAsync(endpoint);
+            var fullUrl = GetFullUrl(endpoint);
+            Logger.LogDebug("Making GET request to {FullUrl}", fullUrl);
+            var response = await HttpClient.GetAsync(new Uri(fullUrl));
             
             if (response.IsSuccessStatusCode)
             {
@@ -71,8 +73,9 @@ public abstract class BaseApiService(HttpClient httpClient, string baseUrl, ILog
     {
         try
         {
-            Logger.LogDebug("Making POST request to {Endpoint}", endpoint);
-            var response = await HttpClient.PostAsJsonAsync(endpoint, data);
+            var fullUrl = GetFullUrl(endpoint);
+            Logger.LogDebug("Making POST request to {FullUrl}", fullUrl);
+            var response = await HttpClient.PostAsJsonAsync(new Uri(fullUrl), data);
             
             if (response.IsSuccessStatusCode)
             {
@@ -99,8 +102,9 @@ public abstract class BaseApiService(HttpClient httpClient, string baseUrl, ILog
     {
         try
         {
-            Logger.LogDebug("Making PUT request to {Endpoint}", endpoint);
-            var response = await HttpClient.PutAsJsonAsync(endpoint, data);
+            var fullUrl = GetFullUrl(endpoint);
+            Logger.LogDebug("Making PUT request to {FullUrl}", fullUrl);
+            var response = await HttpClient.PutAsJsonAsync(new Uri(fullUrl), data);
             
             if (response.IsSuccessStatusCode)
             {
@@ -127,8 +131,9 @@ public abstract class BaseApiService(HttpClient httpClient, string baseUrl, ILog
     {
         try
         {
-            Logger.LogDebug("Making DELETE request to {Endpoint}", endpoint);
-            var response = await HttpClient.DeleteAsync(endpoint);
+            var fullUrl = GetFullUrl(endpoint);
+            Logger.LogDebug("Making DELETE request to {FullUrl}", fullUrl);
+            var response = await HttpClient.DeleteAsync(new Uri(fullUrl));
             
             if (response.IsSuccessStatusCode)
             {
@@ -147,5 +152,29 @@ public abstract class BaseApiService(HttpClient httpClient, string baseUrl, ILog
             Logger.LogError(ex, "Exception occurred during DELETE request to {Endpoint}", endpoint);
             return new ApiResponse<bool> { Success = false, ErrorMessage = ex.Message };
         }
+    }
+
+    private string GetFullUrl(string endpoint)
+    {
+        // Если endpoint уже абсолютный URL, возвращаем как есть
+        if (Uri.IsWellFormedUriString(endpoint, UriKind.Absolute))
+        {
+            return endpoint;
+        }
+
+        // Если BaseUrl пустой, возвращаем endpoint как есть (он должен быть полным URL)
+        if (string.IsNullOrEmpty(BaseUrl))
+        {
+            return endpoint;
+        }
+
+        // Если endpoint начинается с /, добавляем к BaseUrl
+        if (endpoint.StartsWith("/"))
+        {
+            return $"{BaseUrl.TrimEnd('/')}{endpoint}";
+        }
+
+        // Если endpoint не начинается с /, добавляем его
+        return $"{BaseUrl.TrimEnd('/')}/{endpoint.TrimStart('/')}";
     }
 }

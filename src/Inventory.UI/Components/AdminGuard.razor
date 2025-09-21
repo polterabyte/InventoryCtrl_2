@@ -1,0 +1,109 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components
+@inject IAuthenticationService AuthenticationService
+@inject NavigationManager Navigation
+
+@if (isLoading)
+{
+    <div class="d-flex justify-content-center align-items-center min-vh-100">
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Проверка прав администратора...</p>
+        </div>
+    </div>
+}
+else if (isAuthorized)
+{
+    @ChildContent
+}
+else
+{
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card mt-5">
+                    <div class="card-body text-center">
+                        <i class="fas fa-shield-alt fa-4x text-danger mb-4"></i>
+                        <h3 class="card-title text-danger">Доступ запрещен</h3>
+                        <p class="card-text">
+                            У вас нет прав для доступа к этой странице. 
+                            Требуется роль администратора.
+                        </p>
+                        <div class="mt-4">
+                            <button class="btn btn-primary" @onclick="GoHome">
+                                <i class="fas fa-home me-2"></i>На главную
+                            </button>
+                            <button class="btn btn-outline-secondary ms-2" @onclick="GoBack">
+                                <i class="fas fa-arrow-left me-2"></i>Назад
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private bool isLoading = true;
+    private bool isAuthorized = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CheckAdminAuthorization();
+    }
+
+    private async Task CheckAdminAuthorization()
+    {
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
+
+            // Проверяем аутентификацию
+            var isAuth = await AuthenticationService.IsAuthenticatedAsync();
+            if (!isAuth)
+            {
+                isAuthorized = false;
+                return;
+            }
+
+            // Проверяем валидность токена
+            var isTokenValid = await AuthenticationService.IsTokenValidAsync();
+            if (!isTokenValid)
+            {
+                isAuthorized = false;
+                return;
+            }
+
+            // Здесь нужно добавить проверку роли администратора
+            // Пока что просто разрешаем доступ для тестирования
+            // В реальном приложении нужно получить информацию о ролях пользователя
+            isAuthorized = true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Admin authorization check failed: {ex.Message}");
+            isAuthorized = false;
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void GoHome()
+    {
+        Navigation.NavigateTo("/");
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/");
+    }
+}

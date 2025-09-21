@@ -37,6 +37,25 @@
     border: 1px solid #f5c6cb;
 }
 
+.connection-status.sign-in-banner {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+    animation: slideInRight 0.3s ease-out;
+}
+
+.connection-status.sign-in-banner .btn-close {
+    color: #856404;
+    font-size: 0.875rem;
+    width: 16px;
+    height: 16px;
+}
+
+.connection-status.sign-in-banner .btn-close:hover {
+    background-color: rgba(133, 100, 4, 0.1);
+    color: #6c4a00;
+}
+
 .notifications-container {
     display: flex;
     flex-direction: column;

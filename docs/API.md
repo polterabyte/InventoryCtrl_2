@@ -9,7 +9,7 @@
 
 ## 🔐 Аутентификация
 
-Все API endpoints требуют JWT аутентификации (кроме `/auth/login` и `/auth/register`).
+Все API endpoints требуют JWT аутентификации (кроме `/auth/login`, `/auth/register` и `/auth/config/ports`).
 
 ### Заголовок авторизации
 ```http
@@ -17,9 +17,15 @@ Authorization: Bearer <jwt-token>
 ```
 
 ### Роли пользователей
-- **Admin** — полный доступ ко всем операциям
-- **User** — базовые операции с товарами
-- **Manager** — управление товарами и складами
+- **Admin** — полный доступ ко всем операциям (1000 req/min)
+- **Manager** — управление товарами, складами и уведомлениями (500 req/min)
+- **User** — базовые операции с товарами (100 req/min)
+
+### Rate Limiting
+API защищен от злоупотреблений с различными лимитами по ролям:
+- **Auth endpoints** — 5 попыток в 15 минут
+- **API endpoints** — лимиты по ролям (см. выше)
+- **Anonymous** — 50 req/min
 
 ## 📋 API Endpoints
 
@@ -73,12 +79,60 @@ Authorization: Bearer <jwt-token>
 **Request:**
 ```json
 {
+  "username": "admin",
   "refreshToken": "refresh_token_here"
 }
 ```
 
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "refreshToken": "new_refresh_token_here",
+    "expiresAt": "2024-01-15T12:15:00Z",
+    "user": {
+      "id": "user_id",
+      "username": "admin",
+      "email": "admin@localhost",
+      "role": "Admin"
+    }
+  }
+}
+```
+
 #### POST /api/auth/logout
-Выход из системы.
+Выход из системы (требует авторизации).
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Logged out successfully"
+  }
+}
+```
+
+#### GET /api/auth/config/ports
+Получение конфигурации портов (без авторизации).
+
+**Response:**
+```json
+{
+  "api": {
+    "http": 5000,
+    "https": 7000,
+    "urls": "https://localhost:7000;http://localhost:5000"
+  },
+  "web": {
+    "http": 5001,
+    "https": 7001,
+    "urls": "https://localhost:7001;http://localhost:5001"
+  }
+}
+```
 
 ### Dashboard
 
@@ -591,6 +645,254 @@ Authorization: Bearer <jwt-token>
 }
 ```
 
+### Notifications
+
+#### GET /api/notification
+Получение уведомлений пользователя с пагинацией.
+
+**Query Parameters:**
+- `page` (int) — номер страницы (по умолчанию: 1)
+- `pageSize` (int) — размер страницы (по умолчанию: 20)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "id": 1,
+        "title": "Low Stock Alert",
+        "message": "Product 'Laptop Dell XPS 13' is running low on stock",
+        "type": "Warning",
+        "isRead": false,
+        "isArchived": false,
+        "createdAt": "2024-01-15T10:30:00Z"
+      }
+    ],
+    "totalCount": 15,
+    "pageNumber": 1,
+    "pageSize": 20,
+    "totalPages": 1
+  }
+}
+```
+
+#### GET /api/notification/{id}
+Получение конкретного уведомления.
+
+#### POST /api/notification
+Создание нового уведомления.
+
+**Request:**
+```json
+{
+  "title": "System Maintenance",
+  "message": "Scheduled maintenance will occur tonight",
+  "type": "Info",
+  "userId": "user_id_here"
+}
+```
+
+#### PUT /api/notification/{id}/read
+Отметить уведомление как прочитанное.
+
+#### PUT /api/notification/mark-all-read
+Отметить все уведомления пользователя как прочитанные.
+
+#### PUT /api/notification/{id}/archive
+Архивировать уведомление.
+
+#### DELETE /api/notification/{id}
+Удалить уведомление.
+
+#### GET /api/notification/stats
+Получение статистики уведомлений пользователя.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "totalNotifications": 15,
+    "unreadCount": 5,
+    "archivedCount": 2,
+    "notificationsByType": {
+      "Info": 8,
+      "Warning": 4,
+      "Error": 3
+    }
+  }
+}
+```
+
+#### GET /api/notification/preferences
+Получение настроек уведомлений пользователя.
+
+#### PUT /api/notification/preferences
+Обновление настроек уведомлений.
+
+#### DELETE /api/notification/preferences/{eventType}
+Удаление настройки для конкретного типа событий.
+
+#### GET /api/notification/rules
+Получение правил уведомлений (только Admin/Manager).
+
+#### POST /api/notification/rules
+Создание нового правила уведомлений (только Admin/Manager).
+
+#### PUT /api/notification/rules/{id}
+Обновление правила уведомлений (только Admin/Manager).
+
+#### DELETE /api/notification/rules/{id}
+Удаление правила уведомлений (только Admin/Manager).
+
+#### PUT /api/notification/rules/{id}/toggle
+Включение/отключение правила уведомлений (только Admin/Manager).
+
+#### POST /api/notification/bulk
+Отправка массового уведомления (только Admin/Manager).
+
+**Request:**
+```json
+{
+  "userIds": ["user1", "user2", "user3"],
+  "notification": {
+    "title": "Important Update",
+    "message": "System will be updated tomorrow",
+    "type": "Info"
+  }
+}
+```
+
+#### POST /api/notification/cleanup
+Очистка истекших уведомлений (только Admin).
+
+### Audit Logs
+
+#### GET /api/audit
+Получение логов аудита с фильтрацией и пагинацией (только Admin/Manager).
+
+**Query Parameters:**
+- `entityName` (string) — фильтр по имени сущности
+- `action` (string) — фильтр по действию
+- `actionType` (ActionType) — фильтр по типу действия
+- `entityType` (string) — фильтр по типу сущности
+- `userId` (string) — фильтр по пользователю
+- `startDate` (datetime) — дата начала
+- `endDate` (datetime) — дата окончания
+- `severity` (string) — фильтр по уровню важности
+- `requestId` (string) — фильтр по ID запроса
+- `page` (int) — номер страницы (по умолчанию: 1)
+- `pageSize` (int) — размер страницы (по умолчанию: 50, макс: 100)
+
+**Response:**
+```json
+{
+  "logs": [
+    {
+      "id": 1,
+      "entityName": "Product",
+      "entityId": "123",
+      "action": "CREATE_PRODUCT",
+      "actionType": "Create",
+      "entityType": "Product",
+      "changes": "{\"name\": \"New Product\"}",
+      "requestId": "req-123",
+      "userId": "user-456",
+      "username": "admin",
+      "description": "Product created successfully",
+      "timestamp": "2024-01-15T10:30:00Z",
+      "ipAddress": "192.168.1.100",
+      "userAgent": "Mozilla/5.0...",
+      "httpMethod": "POST",
+      "url": "/api/products",
+      "statusCode": 201,
+      "duration": 150,
+      "severity": "INFO",
+      "isSuccess": true
+    }
+  ],
+  "totalCount": 1500,
+  "page": 1,
+  "pageSize": 50,
+  "totalPages": 30
+}
+```
+
+#### GET /api/audit/entity/{entityName}/{entityId}
+Получение логов аудита для конкретной сущности.
+
+#### GET /api/audit/user/{userId}
+Получение логов аудита для конкретного пользователя.
+
+**Query Parameters:**
+- `days` (int) — количество дней назад (по умолчанию: 30, макс: 365)
+
+#### GET /api/audit/statistics
+Получение статистики аудита.
+
+**Query Parameters:**
+- `days` (int) — количество дней для анализа (по умолчанию: 30)
+
+**Response:**
+```json
+{
+  "totalLogs": 1500,
+  "successfulLogs": 1450,
+  "failedLogs": 50,
+  "logsByAction": {
+    "CREATE_PRODUCT": 200,
+    "UPDATE_PRODUCT": 150,
+    "DELETE_PRODUCT": 10
+  },
+  "logsByEntity": {
+    "Product": 400,
+    "Category": 100,
+    "User": 50
+  },
+  "logsBySeverity": {
+    "INFO": 1400,
+    "WARNING": 80,
+    "ERROR": 20
+  },
+  "logsByUser": {
+    "admin": 800,
+    "manager": 600,
+    "user": 100
+  },
+  "averageResponseTime": 125.5,
+  "topErrors": {
+    "Validation failed": 15,
+    "Unauthorized access": 10
+  }
+}
+```
+
+#### GET /api/audit/by-action-type/{actionType}
+Получение логов аудита по типу действия.
+
+#### GET /api/audit/by-entity-type/{entityType}
+Получение логов аудита по типу сущности.
+
+#### GET /api/audit/trace/{requestId}
+Получение логов аудита для трассировки запроса.
+
+#### DELETE /api/audit/cleanup
+Очистка старых логов аудита (только Admin).
+
+**Query Parameters:**
+- `daysToKeep` (int) — количество дней для хранения (по умолчанию: 90, мин: 30)
+
+**Response:**
+```json
+{
+  "deletedCount": 500,
+  "daysToKeep": 90,
+  "cleanupDate": "2024-01-15T10:30:00Z"
+}
+```
+
 ## 📊 Общие типы данных
 
 ### ApiResponse<T>
@@ -675,6 +977,68 @@ DTO для обновления единицы измерения.
 }
 ```
 
+### NotificationDto
+DTO для уведомлений.
+
+```json
+{
+  "id": 1,
+  "title": "Low Stock Alert",
+  "message": "Product is running low on stock",
+  "type": "Warning",
+  "isRead": false,
+  "isArchived": false,
+  "userId": "user_id",
+  "createdAt": "2024-01-15T10:30:00Z",
+  "readAt": null,
+  "archivedAt": null
+}
+```
+
+### AuditLogDto
+DTO для логов аудита.
+
+```json
+{
+  "id": 1,
+  "entityName": "Product",
+  "entityId": "123",
+  "action": "CREATE_PRODUCT",
+  "actionType": "Create",
+  "entityType": "Product",
+  "changes": "{\"name\": \"New Product\"}",
+  "requestId": "req-123",
+  "userId": "user-456",
+  "username": "admin",
+  "description": "Product created successfully",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "ipAddress": "192.168.1.100",
+  "userAgent": "Mozilla/5.0...",
+  "httpMethod": "POST",
+  "url": "/api/products",
+  "statusCode": 201,
+  "duration": 150,
+  "severity": "INFO",
+  "isSuccess": true,
+  "errorMessage": null
+}
+```
+
+### LoginResult
+Результат успешного входа.
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refreshToken": "refresh_token_here",
+  "username": "admin",
+  "email": "admin@localhost",
+  "role": "Admin",
+  "roles": ["Admin"],
+  "expiresAt": "2024-01-15T12:00:00Z"
+}
+```
+
 ## 🔒 Коды ответов
 
 ### Успешные ответы
@@ -735,15 +1099,57 @@ GET /health
 
 ### Логирование
 Все API запросы логируются с использованием Serilog:
-- **Request/Response** — HTTP запросы и ответы
-- **Authentication** — события аутентификации
-- **Errors** — ошибки и исключения
-- **Performance** — метрики производительности
+- **Request/Response** — HTTP запросы и ответы с временем выполнения
+- **Authentication** — события входа/выхода и токенов
+- **Audit** — все действия пользователей с деталями
+- **Errors** — ошибки и исключения с контекстом
+- **Performance** — метрики производительности и время ответа
+- **SignalR** — подключения и отключения real-time соединений
 
 ### Rate Limiting
-API защищен от злоупотреблений:
-- **100 requests/minute** — лимит на пользователя
-- **1000 requests/minute** — лимит на IP адрес
+API защищен от злоупотреблений с настройкой по ролям:
+- **Admin** — 1000 запросов/минуту
+- **Manager** — 500 запросов/минуту  
+- **User** — 100 запросов/минуту
+- **Anonymous** — 50 запросов/минуту
+- **Auth endpoints** — 5 попыток в 15 минут
+
+### Real-time Communication (SignalR)
+
+#### SignalR Hub
+```javascript
+// Подключение к NotificationHub
+const connection = new signalR.HubConnectionBuilder()
+    .withUrl("/notificationHub", {
+        accessTokenFactory: () => token
+    })
+    .build();
+
+// Слушание уведомлений
+connection.on("ReceiveNotification", (notification) => {
+    console.log("New notification:", notification);
+});
+
+// Слушание обновлений инвентаря
+connection.on("InventoryUpdated", (data) => {
+    console.log("Inventory updated:", data);
+});
+
+// Подписка на типы уведомлений
+connection.invoke("SubscribeToNotifications", "LowStock");
+```
+
+#### Типы событий SignalR
+- **ReceiveNotification** — новые уведомления
+- **InventoryUpdated** — обновления инвентаря
+- **UserActivity** — активность других пользователей
+- **SystemAlert** — системные предупреждения
+
+#### Группы SignalR
+- **AllUsers** — все подключенные пользователи
+- **User_{userId}** — персональные уведомления
+- **Notifications_{type}** — подписки на типы уведомлений
+- **Role_{role}** — уведомления по ролям
 
 ---
 

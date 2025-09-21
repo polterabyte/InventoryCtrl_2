@@ -21,9 +21,8 @@ public class RefreshTokenService(
     private readonly ILogger<RefreshTokenService> _logger = logger;
 
     /// <summary>
-    /// Generates a new refresh token for the user
+    /// Generates a new refresh token
     /// </summary>
-    /// <param name="user">The user to generate token for</param>
     /// <returns>Refresh token string</returns>
     public string GenerateRefreshToken()
     {

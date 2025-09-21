@@ -33,28 +33,26 @@
     else
     {
         @* Обычная логика с проверкой авторизации *@
-        <AuthorizeView>
-            <Authorized>
-                @* User greeting bar *@
-                <UserGreeting />
-                
-                <div class="sidebar">
-                    <NavigationMenu AppTitle="@AppTitle" MenuItems="@MenuItems" />
-                    <main>
-                        <div class="top-row px-4">
-                            @TopRowContent
-                        </div>
-
-                        <article class="content px-4">
-                            @Body
-                        </article>
-                    </main>
+        <ProtectedRoute>
+            @* User greeting bar *@
+            <UserGreeting />
+            
+            @* Main content area *@
+            <main>
+                <div class="top-row px-4">
+                    @TopRowContent
                 </div>
-            </Authorized>
-            <NotAuthorized>
-                @LoginComponent
-            </NotAuthorized>
-        </AuthorizeView>
+
+                <article class="content">
+                    @Body
+                </article>
+            </main>
+            
+            @* Sidebar справа *@
+            <div class="sidebar">
+                <NavigationMenu AppTitle="@AppTitle" MenuItems="@MenuItems" />
+            </div>
+        </ProtectedRoute>
     }
     
     @* Notification container for toast notifications *@

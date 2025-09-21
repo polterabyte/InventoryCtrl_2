@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
@@ -12,12 +12,39 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" />
     <PackageReference Include="Blazored.LocalStorage" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Inventory.Shared\Inventory.Shared.csproj" />
     <ProjectReference Include="..\Inventory.UI\Inventory.UI.csproj" />
+    <ProjectReference Include="..\Inventory.Web.Assets\Inventory.Web.Assets.csproj" />
   </ItemGroup>
 
+  <!-- Удалено копирование статических ресурсов из Inventory.UI. Взамен используется RCL: Inventory.Web.Assets -->
+
+  <!-- Copy appsettings*.json to wwwroot so WASM can fetch them at runtime -->
+  <ItemGroup>
+    <None Include="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+      <Link>wwwroot\appsettings.json</Link>
+    </None>
+    <None Include="appsettings.Development.json" Condition="Exists('appsettings.Development.json')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+      <Link>wwwroot\appsettings.Development.json</Link>
+    </None>
+    <None Include="appsettings.Staging.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+      <Link>wwwroot\appsettings.Staging.json</Link>
+    </None>
+    <None Include="appsettings.Production.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+      <Link>wwwroot\appsettings.Production.json</Link>
+    </None>
+  </ItemGroup>
 
 </Project>

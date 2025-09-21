@@ -254,7 +254,7 @@ public abstract class IntegrationTestBase : IClassFixture<WebApplicationFactory<
         using var scope = Factory.Services.CreateScope();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
         
-        var roles = new[] { "Admin", "SuperUser", "User" };
+        var roles = new[] { "Admin", "Manager", "User" };
         
         foreach (var role in roles)
         {
@@ -433,14 +433,14 @@ public abstract class IntegrationTestBase : IClassFixture<WebApplicationFactory<
         var mainWarehouse = new Warehouse
         {
             Name = "Main Warehouse",
-            Location = "Building A",
+            Address = "Building A",
             IsActive = true
         };
 
         var secondaryWarehouse = new Warehouse
         {
             Name = "Secondary Warehouse", 
-            Location = "Building B",
+            Address = "Building B",
             IsActive = true
         };
 

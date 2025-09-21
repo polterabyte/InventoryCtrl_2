@@ -138,6 +138,8 @@ namespace Inventory.API.Models
             entity.Property(e => e.Category).IsRequired().HasMaxLength(50);
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
         });
+
+        // PushSubscription removed with VAPID/Web Push
     }
            public DbSet<Product> Products { get; set; } = null!;
            public DbSet<Category> Categories { get; set; } = null!;
@@ -156,5 +158,6 @@ namespace Inventory.API.Models
            public DbSet<NotificationPreference> NotificationPreferences { get; set; } = null!;
            public DbSet<NotificationTemplate> NotificationTemplates { get; set; } = null!;
            public DbSet<SignalRConnection> SignalRConnections { get; set; } = null!;
+           // public DbSet<PushSubscription> PushSubscriptions { get; set; } = null!;
     }
 }

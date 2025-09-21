@@ -1,4 +1,6 @@
-﻿<CascadingAuthenticationState>
+﻿@using Inventory.Web.Client.Components
+
+<CascadingAuthenticationState>
     <Router AppAssembly="@typeof(App).Assembly" AdditionalAssemblies="new[] { typeof(Inventory.UI.Pages.Login).Assembly }">
         <Found Context="routeData">
             <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
@@ -24,4 +26,7 @@
             </LayoutView>
         </NotFound>
     </Router>
+    
+    @* SignalR Initializer - runs in background *@
+    <SignalRInitializer />
 </CascadingAuthenticationState>

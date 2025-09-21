@@ -1,4 +1,4 @@
-using Serilog;
+﻿using Serilog;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -14,6 +14,8 @@ using System.Threading.RateLimiting;
 using FluentValidation;
 using Inventory.API.Validators;
 using Inventory.API.Hubs;
+using Microsoft.AspNetCore.Components.WebAssembly.Server;
+using Inventory.API.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -73,8 +75,8 @@ builder.Services.AddSwaggerGen(c =>
     }
 });
 
-// Add port configuration service
-builder.Services.AddPortConfiguration();
+// Add CORS configuration
+builder.Services.AddCorsConfiguration();
 
 // Database
 builder.Services.AddDbContext<Inventory.API.Models.AppDbContext>(options =>
@@ -93,6 +95,11 @@ builder.Services.AddIdentity<Inventory.API.Models.User, IdentityRole>(options =>
 
 // JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("Jwt");
+var jwtKey = jwtSettings["Key"];
+if (string.IsNullOrWhiteSpace(jwtKey) && !builder.Environment.IsDevelopment())
+{
+    throw new InvalidOperationException("JWT:Key must be provided via configuration/environment variables in non-development environments.");
+}
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -108,7 +115,7 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = jwtSettings["Issuer"],
         ValidAudience = jwtSettings["Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? string.Empty)),
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey ?? string.Empty)),
         ClockSkew = TimeSpan.FromMinutes(5) // Add some clock skew tolerance
     };
     
@@ -123,6 +130,16 @@ builder.Services.AddAuthentication(options =>
             if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/notificationHub"))
             {
                 context.Token = accessToken;
+            }
+            
+            // Also check Authorization header for SignalR
+            if (string.IsNullOrEmpty(accessToken))
+            {
+                var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+                if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer "))
+                {
+                    context.Token = authHeader.Substring("Bearer ".Length).Trim();
+                }
             }
             
             return Task.CompletedTask;
@@ -153,8 +170,40 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// CORS with port configuration
-builder.Services.AddCorsWithPorts();
+// (Duplicate CORS registration removed)
+
+// Additional CORS configuration for SignalR
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("SignalRPolicy", policy =>
+    {
+        var originsEnv = Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS");
+        var origins = (originsEnv ?? string.Empty)
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        if (origins.Length > 0)
+        {
+            policy.WithOrigins(origins)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        }
+        else
+        {
+            policy.WithOrigins(
+                      "http://localhost",
+                      "https://localhost",
+                      "http://localhost:5000",
+                      "https://localhost:5001",
+                      "http://localhost:7000",
+                      "https://localhost:7001"
+                  )
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        }
+    });
+});
 
 // Add custom services
 builder.Services.AddScoped<ILoggingService, LoggingService>();
@@ -171,6 +220,9 @@ builder.Services.AddAuditServices();
 // Add notification services
 builder.Services.AddNotificationServices();
 
+// Add SSL services
+builder.Services.AddSSLServices();
+
 // Add SignalR
 builder.Services.AddSignalR(options =>
 {
@@ -178,16 +230,33 @@ builder.Services.AddSignalR(options =>
     options.KeepAliveInterval = TimeSpan.FromSeconds(15);
     options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
     options.HandshakeTimeout = TimeSpan.FromSeconds(15);
+    options.MaximumReceiveMessageSize = 1024 * 1024; // 1MB
+    options.StreamBufferCapacity = 10;
 });
 
 // Add SignalR notification service
 builder.Services.AddScoped<ISignalRNotificationService, SignalRNotificationService>();
+
+// VAPID/Web Push removed
 
 // Add notification rule engine
 builder.Services.AddScoped<Inventory.Shared.Interfaces.INotificationRuleEngine, Inventory.API.Services.NotificationRuleEngine>();
 
 // Add reference data services
 builder.Services.AddScoped<IReferenceDataService<UnitOfMeasureDto, CreateUnitOfMeasureDto, UpdateUnitOfMeasureDto>, UnitOfMeasureService>();
+builder.Services.AddScoped<ILocationService, LocationApiService>();
+
+// Add HttpClient for LocationApiService
+builder.Services.AddHttpClient<ILocationService, LocationApiService>(client =>
+{
+    var apiUrl = builder.Configuration["ApiUrl"];
+    if (string.IsNullOrWhiteSpace(apiUrl))
+    {
+        throw new InvalidOperationException("ApiUrl configuration is required for LocationApiService");
+    }
+    client.BaseAddress = new Uri(apiUrl);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
 
 // Add FluentValidation
 builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
@@ -290,27 +359,33 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
-// Log JWT configuration for debugging
+// Log JWT configuration for debugging (do not log key)
 var jwtConfigLogger = app.Services.GetRequiredService<ILogger<Program>>();
 var jwtConfigSettings = app.Configuration.GetSection("Jwt");
-jwtConfigLogger.LogInformation("JWT Configuration - Issuer: {Issuer}, Audience: {Audience}, Key: {Key}", 
-    jwtConfigSettings["Issuer"], jwtConfigSettings["Audience"], jwtConfigSettings["Key"]?.Substring(0, 10) + "...");
+jwtConfigLogger.LogInformation("JWT Configuration - Issuer: {Issuer}, Audience: {Audience}", 
+    jwtConfigSettings["Issuer"], jwtConfigSettings["Audience"]);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    
-    // Initialize database (skip in testing environment)
-    if (!app.Environment.IsEnvironment("Testing"))
-    {
-        await Inventory.API.Models.DbInitializer.InitializeAsync(app.Services);
-    }
 }
 
-// Skip HTTPS redirection in testing environment
+// Initialize database (skip in testing environment)
 if (!app.Environment.IsEnvironment("Testing"))
+{
+    await Inventory.API.Models.DbInitializer.InitializeAsync(app.Services);
+}
+
+// Enable static files serving for Blazor WebAssembly
+app.UseStaticFiles();
+
+// Enable Blazor WebAssembly files serving
+app.UseBlazorFrameworkFiles();
+
+// Skip HTTPS redirection in testing environment or container
+if (!app.Environment.IsEnvironment("Testing") && Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") != "true")
 {
     app.UseHttpsRedirection();
 }
@@ -318,11 +393,17 @@ if (!app.Environment.IsEnvironment("Testing"))
 // Add global exception handling middleware
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
+// Add authentication middleware
+app.UseMiddleware<AuthenticationMiddleware>();
+
 // Add audit middleware
 app.UseMiddleware<AuditMiddleware>();
 
 // Configure CORS with port configuration
-app.ConfigureCorsWithPorts();
+app.ConfigureCors();
+
+// Apply SignalR CORS policy
+app.UseCors("SignalRPolicy");
 
 // Add rate limiting
 app.UseRateLimiter();
@@ -333,26 +414,21 @@ app.UseAuthorization();
 app.MapControllers();
 
 // Map SignalR hubs
-app.MapHub<NotificationHub>("/notificationHub");
+app.MapHub<NotificationHub>("/notificationHub", options =>
+{
+    options.Transports = Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets;
+    options.CloseOnAuthenticationExpiration = true;
+    options.ApplicationMaxBufferSize = 1024 * 1024; // 1MB
+    options.TransportMaxBufferSize = 1024 * 1024; // 1MB
+});
 
-// Configure ports and log information
-var portConfigService = app.Services.GetRequiredService<IPortConfigurationService>();
-var portConfig = portConfigService.LoadPortConfiguration();
+// Map Blazor WebAssembly fallback
+app.MapFallbackToFile("index.html");
+
+// Log startup information
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
-
-// Configure Kestrel to listen on configured ports
-app.Urls.Clear();
-app.Urls.Add($"http://localhost:{portConfig.ApiHttp}");
-app.Urls.Add($"https://localhost:{portConfig.ApiHttps}");
-
-// Log port information on startup
 logger.LogInformation("🚀 Inventory Control API starting...");
-logger.LogInformation("📡 API HTTP Port: {HttpPort}", portConfig.ApiHttp);
-logger.LogInformation("🔒 API HTTPS Port: {HttpsPort}", portConfig.ApiHttps);
-logger.LogInformation("🌐 Web HTTP Port: {WebHttpPort}", portConfig.WebHttp);
-logger.LogInformation("🔐 Web HTTPS Port: {WebHttpsPort}", portConfig.WebHttps);
-logger.LogInformation("🔗 API URLs: http://localhost:{HttpPort} | https://localhost:{HttpsPort}", portConfig.ApiHttp, portConfig.ApiHttps);
-logger.LogInformation("🔗 Web URLs: http://localhost:{WebHttpPort} | https://localhost:{WebHttpsPort}", portConfig.WebHttp, portConfig.WebHttps);
+logger.LogInformation("🔗 API running on configured ports");
 
 app.Run();
 

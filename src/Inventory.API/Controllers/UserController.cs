@@ -6,6 +6,7 @@ using Inventory.API.Models;
 using Inventory.Shared.DTOs;
 using Serilog;
 using System.Security.Claims;
+using System.Text;
 
 namespace Inventory.API.Controllers;
 
@@ -25,16 +26,12 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
             
             logger.LogInformation("User info requested for: {Username}", username);
             
-            return Ok(new ApiResponse<object>
+            return Ok(ApiResponse<object>.CreateSuccess(new
             {
-                Success = true,
-                Data = new
-                {
-                    Username = username,
-                    UserId = userId,
-                    Roles = roles
-                }
-            });
+                Username = username,
+                UserId = userId,
+                Roles = roles
+            }));
         }
         catch (Exception ex)
         {
@@ -312,6 +309,77 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
         }
     }
 
+    [HttpGet("export")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> ExportUsers(
+        [FromQuery] string? search = null,
+        [FromQuery] string? role = null)
+    {
+        try
+        {
+            var query = userManager.Users.AsQueryable();
+
+            // Apply search filter
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(u => u.UserName!.Contains(search) || u.Email!.Contains(search));
+            }
+
+            // Apply role filter
+            if (!string.IsNullOrEmpty(role))
+            {
+                var usersInRole = await userManager.GetUsersInRoleAsync(role);
+                var userIds = usersInRole.Select(u => u.Id);
+                query = query.Where(u => userIds.Contains(u.Id));
+            }
+
+            var users = await query
+                .OrderBy(u => u.UserName)
+                .Select(u => new UserDto
+                {
+                    Id = u.Id,
+                    UserName = u.UserName!,
+                    Email = u.Email!,
+                    Role = u.Role,
+                    EmailConfirmed = u.EmailConfirmed,
+                    CreatedAt = u.CreatedAt,
+                    UpdatedAt = u.UpdatedAt
+                })
+                .ToListAsync();
+
+            // Get roles for each user
+            foreach (var user in users)
+            {
+                var userEntity = await userManager.FindByIdAsync(user.Id);
+                if (userEntity != null)
+                {
+                    user.Roles = (await userManager.GetRolesAsync(userEntity)).ToList();
+                }
+            }
+
+            // Generate CSV content
+            var csv = new StringBuilder();
+            csv.AppendLine("Username,Email,Role,EmailConfirmed,CreatedAt,UpdatedAt");
+            
+            foreach (var user in users)
+            {
+                csv.AppendLine($"{user.UserName},{user.Email},{user.Role},{user.EmailConfirmed},{user.CreatedAt:yyyy-MM-dd HH:mm:ss},{user.UpdatedAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? ""}");
+            }
+
+            var bytes = Encoding.UTF8.GetBytes(csv.ToString());
+            return File(bytes, "text/csv", $"users-export-{DateTime.UtcNow:yyyy-MM-dd-HH-mm-ss}.csv");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error exporting users");
+            return StatusCode(500, new ApiResponse<object>
+            {
+                Success = false,
+                ErrorMessage = "Failed to export users"
+            });
+        }
+    }
+
     [HttpPost("{id}/change-password")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> ChangePassword(string id, [FromBody] ChangePasswordDto request)
@@ -367,6 +435,100 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
             {
                 Success = false,
                 ErrorMessage = "Failed to change password"
+            });
+        }
+    }
+
+    [HttpPost]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> CreateUser([FromBody] CreateUserDto request)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new ApiResponse<UserDto>
+                {
+                    Success = false,
+                    ErrorMessage = "Invalid model state",
+                    Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList()
+                });
+            }
+
+            // Check if username already exists
+            var existingUser = await userManager.FindByNameAsync(request.UserName);
+            if (existingUser != null)
+            {
+                return BadRequest(new ApiResponse<UserDto>
+                {
+                    Success = false,
+                    ErrorMessage = "Username already exists"
+                });
+            }
+
+            // Check if email already exists
+            var existingEmail = await userManager.FindByEmailAsync(request.Email);
+            if (existingEmail != null)
+            {
+                return BadRequest(new ApiResponse<UserDto>
+                {
+                    Success = false,
+                    ErrorMessage = "Email already exists"
+                });
+            }
+
+            var user = new Inventory.API.Models.User
+            {
+                Id = Guid.NewGuid().ToString(),
+                UserName = request.UserName,
+                Email = request.Email,
+                EmailConfirmed = request.EmailConfirmed,
+                Role = request.Role,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            var result = await userManager.CreateAsync(user, request.Password);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                return BadRequest(new ApiResponse<UserDto>
+                {
+                    Success = false,
+                    ErrorMessage = errors
+                });
+            }
+
+            // Assign role to user
+            await userManager.AddToRoleAsync(user, request.Role);
+
+            logger.LogInformation("User created: {Username} with role {Role} and ID {UserId}", 
+                user.UserName, user.Role, user.Id);
+
+            var userDto = new UserDto
+            {
+                Id = user.Id,
+                UserName = user.UserName!,
+                Email = user.Email!,
+                Role = user.Role,
+                Roles = new List<string> { request.Role },
+                EmailConfirmed = user.EmailConfirmed,
+                CreatedAt = user.CreatedAt,
+                UpdatedAt = user.UpdatedAt
+            };
+
+            return Created($"/api/user/{user.Id}", new ApiResponse<UserDto>
+            {
+                Success = true,
+                Data = userDto
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error creating user");
+            return StatusCode(500, new ApiResponse<UserDto>
+            {
+                Success = false,
+                ErrorMessage = "Failed to create user"
             });
         }
     }

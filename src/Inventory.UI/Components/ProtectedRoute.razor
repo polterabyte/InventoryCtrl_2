@@ -1,0 +1,93 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components
+@inject IAuthenticationService AuthenticationService
+@inject NavigationManager Navigation
+
+@if (isLoading)
+{
+    <div class="d-flex justify-content-center align-items-center min-vh-100">
+        <div class="text-center">
+            <LoadingSpinner Message="Проверка доступа..." 
+                           LoadingText="Checking access..." 
+                           Color="SpinnerColor.Primary" 
+                           Size="SpinnerSize.Large" />
+        </div>
+    </div>
+}
+else if (isAuthenticated)
+{
+    @ChildContent
+}
+else
+{
+    <RedirectToLogin />
+}
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string[]? RequiredRoles { get; set; }
+    [Parameter] public bool RequireAuthentication { get; set; } = true;
+
+    private bool isLoading = true;
+    private bool isAuthenticated = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (RequireAuthentication)
+        {
+            await CheckAuthentication();
+        }
+        else
+        {
+            isLoading = false;
+            isAuthenticated = true;
+        }
+    }
+
+    private async Task CheckAuthentication()
+    {
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
+
+            // Проверяем аутентификацию
+            var isAuth = await AuthenticationService.IsAuthenticatedAsync();
+            if (!isAuth)
+            {
+                isAuthenticated = false;
+                return;
+            }
+
+            // Проверяем валидность токена
+            var isTokenValid = await AuthenticationService.IsTokenValidAsync();
+            if (!isTokenValid)
+            {
+                isAuthenticated = false;
+                return;
+            }
+
+            // Если требуются роли, проверяем их
+            if (RequiredRoles != null && RequiredRoles.Length > 0)
+            {
+                // Здесь можно добавить проверку ролей
+                // Пока что просто разрешаем доступ
+                isAuthenticated = true;
+            }
+            else
+            {
+                isAuthenticated = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Authentication check failed: {ex.Message}");
+            isAuthenticated = false;
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+}

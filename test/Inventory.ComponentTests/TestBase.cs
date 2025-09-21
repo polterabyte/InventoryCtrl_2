@@ -15,7 +15,7 @@ public abstract class ComponentTestBase : TestContext
     {
         // Register common services
         Services.AddSingleton(Mock.Of<ILogger<NotificationService>>());
-        Services.AddSingleton(Mock.Of<INotificationService>());
+        // Services.AddSingleton(Mock.Of<INotificationService>()); // Commented out - interface not found
     }
 
     /// <summary>

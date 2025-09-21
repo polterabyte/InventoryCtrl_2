@@ -18,7 +18,6 @@ public class AuthServiceTests : IDisposable
     private readonly Mock<UserManager<User>> _userManagerMock;
     private readonly Mock<IConfiguration> _configMock;
     private readonly Mock<ILogger<AuthController>> _loggerMock;
-    private readonly Mock<IPortConfigurationService> _portServiceMock;
     private readonly AuthController _authController;
     private readonly AppDbContext _context;
     private readonly string _testDatabaseName;
@@ -39,8 +38,6 @@ public class AuthServiceTests : IDisposable
             Mock.Of<IUserStore<User>>(), null!, null!, null!, null!, null!, null!, null!, null!);
         _configMock = new Mock<IConfiguration>();
         _loggerMock = new Mock<ILogger<AuthController>>();
-        _portServiceMock = new Mock<IPortConfigurationService>();
-
         var mockRefreshTokenService = new Mock<RefreshTokenService>(Mock.Of<ILogger<RefreshTokenService>>());
         var mockAuditService = new Mock<AuditService>(_context, Mock.Of<IHttpContextAccessor>(), Mock.Of<ILogger<AuditService>>());
 
@@ -48,7 +45,6 @@ public class AuthServiceTests : IDisposable
             _userManagerMock.Object,
             _configMock.Object,
             _loggerMock.Object,
-            _portServiceMock.Object,
             mockRefreshTokenService.Object,
             mockAuditService.Object);
     }

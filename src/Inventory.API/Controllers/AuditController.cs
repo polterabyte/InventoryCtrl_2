@@ -27,10 +27,15 @@ public class AuditController(AuditService auditService, ILogger<AuditController>
     /// <param name="actionType">Filter by action type</param>
     /// <param name="entityType">Filter by entity type</param>
     /// <param name="userId">Filter by user ID</param>
+    /// <param name="userName">Filter by user name</param>
     /// <param name="startDate">Filter by start date</param>
     /// <param name="endDate">Filter by end date</param>
+    /// <param name="dateFrom">Filter by date from (alternative to startDate)</param>
+    /// <param name="dateTo">Filter by date to (alternative to endDate)</param>
     /// <param name="severity">Filter by severity</param>
     /// <param name="requestId">Filter by request ID</param>
+    /// <param name="isSuccess">Filter by success status</param>
+    /// <param name="ipAddress">Filter by IP address</param>
     /// <param name="page">Page number (default: 1)</param>
     /// <param name="pageSize">Page size (default: 50, max: 100)</param>
     /// <returns>Paginated audit logs</returns>
@@ -41,10 +46,15 @@ public class AuditController(AuditService auditService, ILogger<AuditController>
         [FromQuery] ActionType? actionType = null,
         [FromQuery] string? entityType = null,
         [FromQuery] string? userId = null,
+        [FromQuery] string? userName = null,
         [FromQuery] DateTime? startDate = null,
         [FromQuery] DateTime? endDate = null,
+        [FromQuery] DateTime? dateFrom = null,
+        [FromQuery] DateTime? dateTo = null,
         [FromQuery] string? severity = null,
         [FromQuery] string? requestId = null,
+        [FromQuery] bool? isSuccess = null,
+        [FromQuery] string? ipAddress = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50)
     {
@@ -57,8 +67,15 @@ public class AuditController(AuditService auditService, ILogger<AuditController>
             if (page < 1)
                 page = 1;
 
+            // Use dateFrom/dateTo if provided, otherwise fall back to startDate/endDate
+            var fromDate = dateFrom ?? startDate;
+            var toDate = dateTo ?? endDate;
+            
+            // Use userName if provided, otherwise fall back to userId
+            var userFilter = !string.IsNullOrEmpty(userName) ? userName : userId;
+
             var (logs, totalCount) = await _auditService.GetAuditLogsAsync(
-                entityName, action, actionType, entityType, userId, startDate, endDate, severity, requestId, page, pageSize);
+                entityName, action, actionType, entityType, userFilter, fromDate, toDate, severity, requestId, page, pageSize);
 
             var response = new AuditLogResponse
             {
@@ -291,6 +308,71 @@ public class AuditController(AuditService auditService, ILogger<AuditController>
     }
 
     /// <summary>
+    /// Exports audit logs to CSV format
+    /// </summary>
+    /// <param name="entityName">Filter by entity name</param>
+    /// <param name="action">Filter by action</param>
+    /// <param name="actionType">Filter by action type</param>
+    /// <param name="entityType">Filter by entity type</param>
+    /// <param name="userId">Filter by user ID</param>
+    /// <param name="userName">Filter by user name</param>
+    /// <param name="startDate">Filter by start date</param>
+    /// <param name="endDate">Filter by end date</param>
+    /// <param name="dateFrom">Filter by date from</param>
+    /// <param name="dateTo">Filter by date to</param>
+    /// <param name="severity">Filter by severity</param>
+    /// <param name="requestId">Filter by request ID</param>
+    /// <param name="isSuccess">Filter by success status</param>
+    /// <param name="ipAddress">Filter by IP address</param>
+    /// <returns>CSV content</returns>
+    [HttpGet("export")]
+    public async Task<ActionResult<string>> ExportAuditLogs(
+        [FromQuery] string? entityName = null,
+        [FromQuery] string? action = null,
+        [FromQuery] ActionType? actionType = null,
+        [FromQuery] string? entityType = null,
+        [FromQuery] string? userId = null,
+        [FromQuery] string? userName = null,
+        [FromQuery] DateTime? startDate = null,
+        [FromQuery] DateTime? endDate = null,
+        [FromQuery] DateTime? dateFrom = null,
+        [FromQuery] DateTime? dateTo = null,
+        [FromQuery] string? severity = null,
+        [FromQuery] string? requestId = null,
+        [FromQuery] bool? isSuccess = null,
+        [FromQuery] string? ipAddress = null)
+    {
+        try
+        {
+            // Use dateFrom/dateTo if provided, otherwise fall back to startDate/endDate
+            var fromDate = dateFrom ?? startDate;
+            var toDate = dateTo ?? endDate;
+            
+            // Use userName if provided, otherwise fall back to userId
+            var userFilter = !string.IsNullOrEmpty(userName) ? userName : userId;
+
+            var (logs, _) = await _auditService.GetAuditLogsAsync(
+                entityName, action, actionType, entityType, userFilter, fromDate, toDate, severity, requestId, 1, int.MaxValue);
+
+            // Generate CSV content
+            var csv = new System.Text.StringBuilder();
+            csv.AppendLine("Id,Timestamp,Action,ActionType,EntityType,EntityId,EntityName,Username,UserId,IpAddress,UserAgent,HttpMethod,Url,StatusCode,Duration,IsSuccess,ErrorMessage,Severity,RequestId,Changes,OldValues,NewValues,Description,Metadata");
+            
+            foreach (var log in logs)
+            {
+                csv.AppendLine($"{log.Id},{log.Timestamp:yyyy-MM-dd HH:mm:ss},{EscapeCsv(log.Action)},{log.ActionType},{EscapeCsv(log.EntityType)},{EscapeCsv(log.EntityId)},{EscapeCsv(log.EntityName)},{EscapeCsv(log.Username)},{EscapeCsv(log.UserId)},{EscapeCsv(log.IpAddress)},{EscapeCsv(log.UserAgent)},{EscapeCsv(log.HttpMethod)},{EscapeCsv(log.Url)},{log.StatusCode},{log.Duration},{log.IsSuccess},{EscapeCsv(log.ErrorMessage)},{EscapeCsv(log.Severity)},{EscapeCsv(log.RequestId)},{EscapeCsv(log.Changes)},{EscapeCsv(log.OldValues)},{EscapeCsv(log.NewValues)},{EscapeCsv(log.Description)},{EscapeCsv(log.Metadata)}");
+            }
+
+            return Ok(csv.ToString());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error exporting audit logs");
+            return StatusCode(500, "An error occurred while exporting audit logs");
+        }
+    }
+
+    /// <summary>
     /// Cleans up old audit logs
     /// </summary>
     /// <param name="daysToKeep">Number of days to keep logs (default: 90)</param>
@@ -351,6 +433,20 @@ public class AuditController(AuditService auditService, ILogger<AuditController>
             IsSuccess = log.IsSuccess,
             ErrorMessage = log.ErrorMessage
         };
+    }
+
+    private static string EscapeCsv(string? value)
+    {
+        if (string.IsNullOrEmpty(value))
+            return string.Empty;
+            
+        // Escape quotes and wrap in quotes if contains comma, quote, or newline
+        if (value.Contains(',') || value.Contains('"') || value.Contains('\n') || value.Contains('\r'))
+        {
+            return "\"" + value.Replace("\"", "\"\"") + "\"";
+        }
+        
+        return value;
     }
 }
 

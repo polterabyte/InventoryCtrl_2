@@ -136,6 +136,8 @@ dev-debug.log
 node_modules/
 # Environment variables
 .env
+env.*
+!env.example
 # Editor directories and files
 .idea
 .vscode
@@ -146,5 +148,5 @@ node_modules/
 # OS specific
 
 # Task files
-# tasks.json
-# tasks/ 
+tasks.json
+tasks/ 

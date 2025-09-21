@@ -20,10 +20,6 @@ public record ErrorContext(string Operation, string? UserId, Dictionary<string, 
 }
 
 // Configuration models with primary constructors
-public record PortConfiguration(int ApiHttp, int ApiHttps, int WebHttp, int WebHttps)
-{
-    public static PortConfiguration Default => new(5000, 7000, 5001, 7001);
-}
 
 public record CorsConfiguration(string[] AllowedOrigins, string[] AllowedMethods, string[] AllowedHeaders)
 {

@@ -1,9 +1,11 @@
 @page "/login"
 
+@using Inventory.UI.Services
+
 @inject NavigationManager Navigation
 @inject IAuthService AuthService
 @inject AuthenticationStateProvider AuthStateProvider
-@inject IJSRuntime JSRuntime
+@inject IAuthenticationService AuthenticationService
 
 <AuthorizeView>
     <Authorized>
@@ -160,9 +162,18 @@
                 isRedirecting = true;
                 StateHasChanged(); // Force UI update
                 
+                // Получаем URL для возврата
+                var returnUrl = await AuthenticationService.GetReturnUrlAsync();
+                
+                // Очищаем сохраненный URL
+                await AuthenticationService.ClearReturnUrlAsync();
+                
                 // Smooth redirect with progress indication
                 await Task.Delay(650); // Show success message and redirect progress
-                Navigation.NavigateTo("/");
+                
+                // Перенаправляем на сохраненный URL или на главную страницу
+                var redirectUrl = !string.IsNullOrEmpty(returnUrl) ? $"/{returnUrl}" : "/";
+                Navigation.NavigateTo(redirectUrl, true);
             }
             else
             {

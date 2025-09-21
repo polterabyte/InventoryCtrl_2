@@ -1,12 +1,12 @@
 .activity-list {
-    max-height: 400px;
+    max-height: 300px; /* уменьшено с 400px */
     overflow-y: auto;
 }
 
 .activity-item {
     display: flex;
     align-items: flex-start;
-    padding: 1rem 0;
+    padding: var(--spacing-3) 0; /* уменьшено с 1rem */
     border-bottom: 1px solid var(--color-border);
 }
 
@@ -16,15 +16,15 @@
 
 .activity-icon {
     flex-shrink: 0;
-    width: 40px;
-    height: 40px;
+    width: 32px; /* уменьшено с 40px */
+    height: 32px; /* уменьшено с 40px */
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     background-color: var(--color-bg-tertiary);
-    margin-right: 1rem;
-    font-size: 1.2rem;
+    margin-right: var(--spacing-3); /* уменьшено с 1rem */
+    font-size: var(--font-size-base); /* уменьшено с 1.2rem */
     color: var(--color-text-primary);
 }
 
@@ -35,29 +35,30 @@
 
 .activity-title {
     font-weight: 500;
-    margin-bottom: 0.25rem;
+    margin-bottom: var(--spacing-1); /* уменьшено с 0.25rem */
     line-height: 1.4;
+    font-size: var(--font-size-sm); /* добавлено для компактности */
 }
 
 .activity-details {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-bottom: 0.25rem;
+    gap: var(--spacing-2); /* уменьшено с 0.5rem */
+    margin-bottom: var(--spacing-1); /* уменьшено с 0.25rem */
 }
 
 .activity-time {
-    font-size: 0.75rem;
+    font-size: var(--font-size-xs); /* уменьшено с 0.75rem */
     color: var(--color-text-muted);
     display: flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: var(--spacing-1); /* уменьшено с 0.25rem */
 }
 
 .badge {
-    font-size: 0.7rem;
-    padding: 0.25rem 0.5rem;
+    font-size: var(--font-size-xs); /* уменьшено с 0.7rem */
+    padding: var(--spacing-1) var(--spacing-2); /* уменьшено */
 }
 
 /* Dark theme support (Enhanced) */
@@ -72,10 +73,29 @@
 
 /* Responsive design */
 @media (max-width: 768px) {
+    .activity-list {
+        max-height: 250px; /* уменьшено */
+    }
+    
+    .activity-item {
+        padding: var(--spacing-2) 0; /* уменьшено */
+    }
+    
+    .activity-icon {
+        width: 28px; /* уменьшено с 32px */
+        height: 28px; /* уменьшено с 32px */
+        font-size: var(--font-size-sm); /* уменьшено */
+        margin-right: var(--spacing-2); /* уменьшено */
+    }
+    
+    .activity-title {
+        font-size: var(--font-size-xs); /* уменьшено */
+    }
+    
     .activity-details {
         flex-direction: column;
         align-items: flex-start;
-        gap: 0.25rem;
+        gap: var(--spacing-1); /* уменьшено с 0.25rem */
     }
     
     .activity-details .text-muted {

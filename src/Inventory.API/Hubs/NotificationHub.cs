@@ -35,7 +35,7 @@ public class NotificationHub : Hub
             _logger.LogInformation("User {UserId} connected with connection {ConnectionId}", userId, Context.ConnectionId);
             
             // Notify user about successful connection
-            await Clients.Caller.SendAsync("ConnectionEstablished", new
+            await Clients.Caller.SendAsync("connectionEstablished", new
             {
                 ConnectionId = Context.ConnectionId,
                 UserId = userId,
@@ -123,6 +123,11 @@ public class NotificationHub : Hub
             var user = await _context.Users.FindAsync(userId);
             var userRole = Context.User?.FindFirst(ClaimTypes.Role)?.Value;
             var userAgent = Context.GetHttpContext()?.Request.Headers["User-Agent"].FirstOrDefault();
+            // Truncate UserAgent if too long
+            if (!string.IsNullOrEmpty(userAgent) && userAgent.Length > 500)
+            {
+                userAgent = userAgent.Substring(0, 500);
+            }
             var ipAddress = Context.GetHttpContext()?.Connection.RemoteIpAddress?.ToString();
 
             var connection = new SignalRConnection

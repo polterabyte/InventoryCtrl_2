@@ -1,0 +1,252 @@
+/* ========================================
+   BUTTON COMPONENTS - COMPACT VERSION
+   ======================================== */
+
+/* Base Button - COMPACT */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-1) var(--spacing-3); /* уменьшено с spacing-2 spacing-4 */
+  font-size: var(--font-size-xs); /* уменьшено с font-size-sm */
+  font-weight: var(--font-weight-medium);
+  line-height: 1;
+  text-align: center;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  user-select: none;
+  min-height: 28px; /* добавлено минимальное ограничение высоты */
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+/* Button Variants (Ultra Calm) */
+.btn-primary {
+  color: var(--color-text-primary);
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+}
+
+.btn-secondary {
+  color: var(--color-text-primary);
+  background-color: var(--color-secondary);
+  border-color: var(--color-secondary);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--color-secondary-dark);
+  border-color: var(--color-secondary-dark);
+}
+
+.btn-outline {
+  color: var(--color-primary);
+  background-color: transparent;
+  border-color: var(--color-primary);
+}
+
+.btn-outline:hover:not(:disabled) {
+  color: var(--color-text-primary);
+  background-color: var(--color-primary);
+}
+
+/* Outline Button Variants */
+.btn-outline-primary {
+  color: var(--color-primary);
+  background-color: transparent;
+  border-color: var(--color-primary);
+}
+
+.btn-outline-primary:hover:not(:disabled) {
+  color: var(--color-text-primary);
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.btn-outline-success {
+  color: var(--color-success);
+  background-color: transparent;
+  border-color: var(--color-success);
+}
+
+.btn-outline-success:hover:not(:disabled) {
+  color: var(--color-text-primary);
+  background-color: var(--color-success);
+  border-color: var(--color-success);
+}
+
+.btn-outline-warning {
+  color: var(--color-warning);
+  background-color: transparent;
+  border-color: var(--color-warning);
+}
+
+.btn-outline-warning:hover:not(:disabled) {
+  color: var(--color-text-primary);
+  background-color: var(--color-warning);
+  border-color: var(--color-warning);
+}
+
+.btn-outline-danger {
+  color: var(--color-error);
+  background-color: transparent;
+  border-color: var(--color-error);
+}
+
+.btn-outline-danger:hover:not(:disabled) {
+  color: var(--color-text-primary);
+  background-color: var(--color-error);
+  border-color: var(--color-error);
+}
+
+.btn-outline-info {
+  color: var(--color-info);
+  background-color: transparent;
+  border-color: var(--color-info);
+}
+
+.btn-outline-info:hover:not(:disabled) {
+  color: var(--color-text-primary);
+  background-color: var(--color-info);
+  border-color: var(--color-info);
+}
+
+/* Button Sizes - COMPACT */
+.btn-sm {
+  padding: var(--spacing-1) var(--spacing-2); /* уменьшено */
+  font-size: var(--font-size-xs);
+  min-height: 24px; /* добавлено */
+}
+
+.btn-lg {
+  padding: var(--spacing-2) var(--spacing-4); /* уменьшено с spacing-3 spacing-6 */
+  font-size: var(--font-size-sm); /* уменьшено с font-size-lg */
+  min-height: 32px; /* добавлено */
+}
+
+/* Button States (Ultra Calm) */
+.btn-success {
+  color: var(--color-text-primary);
+  background-color: var(--color-success);
+  border-color: var(--color-success);
+}
+
+.btn-success:hover:not(:disabled) {
+  background-color: var(--color-success-dark);
+  border-color: var(--color-success-dark);
+}
+
+.btn-error {
+  color: var(--color-text-primary);
+  background-color: var(--color-error);
+  border-color: var(--color-error);
+}
+
+.btn-error:hover:not(:disabled) {
+  background-color: var(--color-error-dark);
+  border-color: var(--color-error-dark);
+}
+
+.btn-warning {
+  color: var(--color-text-primary);
+  background-color: var(--color-warning);
+  border-color: var(--color-warning);
+}
+
+.btn-warning:hover:not(:disabled) {
+  background-color: var(--color-warning-dark);
+  border-color: var(--color-warning-dark);
+}
+
+.btn-info {
+  color: var(--color-text-primary);
+  background-color: var(--color-info);
+  border-color: var(--color-info);
+}
+
+.btn-info:hover:not(:disabled) {
+  background-color: var(--color-info-dark);
+  border-color: var(--color-info-dark);
+}
+
+/* Icon buttons */
+.btn-icon {
+  padding: var(--spacing-1);
+  min-width: 28px;
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icon-sm {
+  padding: var(--spacing-1);
+  min-width: 24px;
+  min-height: 24px;
+}
+
+.btn-icon-lg {
+  padding: var(--spacing-2);
+  min-width: 32px;
+  min-height: 32px;
+}
+
+/* Button groups */
+.btn-group {
+  display: inline-flex;
+  gap: var(--spacing-1);
+}
+
+.btn-group .btn {
+  margin: 0;
+}
+
+/* Compact table buttons */
+.table .btn {
+  padding: var(--spacing-1) var(--spacing-2);
+  font-size: var(--font-size-xs);
+  min-height: 24px;
+}
+
+/* Form buttons */
+.form-actions .btn {
+  margin-right: var(--spacing-2);
+  margin-bottom: var(--spacing-2);
+}
+
+.form-actions .btn:last-child {
+  margin-right: 0;
+}
+
+/* Responsive buttons */
+@media (max-width: 768px) {
+  .btn {
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--font-size-sm);
+    min-height: 32px;
+  }
+  
+  .btn-sm {
+    padding: var(--spacing-1) var(--spacing-2);
+    min-height: 28px;
+  }
+  
+  .btn-lg {
+    padding: var(--spacing-3) var(--spacing-4);
+    min-height: 36px;
+  }
+}

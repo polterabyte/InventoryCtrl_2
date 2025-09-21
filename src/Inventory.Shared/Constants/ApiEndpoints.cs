@@ -5,13 +5,15 @@ public static class ApiEndpoints
     public const string BaseUrl = "/api";
     
     // Auth endpoints
-    public const string Login = $"{BaseUrl}/auth/login";
-    public const string Register = $"{BaseUrl}/auth/register";
-    public const string Refresh = $"{BaseUrl}/auth/refresh";
-    public const string Logout = $"{BaseUrl}/auth/logout";
+    public const string Login = "/auth/login";
+    public const string Register = "/auth/register";
+    public const string Refresh = "/auth/refresh";
+    public const string Logout = "/auth/logout";
+    public const string ValidateToken = "/auth/validate";
+    public const string UserInfo = "/auth/userinfo";
     
     // Product endpoints
-    public const string Products = $"{BaseUrl}/products";
+    public const string Products = "/products";
     public const string ProductById = $"{Products}/{{id}}";
     public const string ProductBySku = $"{Products}/sku/{{sku}}";
     public const string ProductStockAdjust = $"{Products}/{{id}}/stock/adjust";
@@ -20,28 +22,28 @@ public static class ApiEndpoints
     public const string SearchProducts = $"{Products}/search";
     
     // Category endpoints
-    public const string Categories = $"{BaseUrl}/Category";
+    public const string Categories = "/Category";
     public const string CategoryById = $"{Categories}/{{id}}";
     public const string RootCategories = $"{Categories}/root";
     public const string SubCategories = $"{Categories}/{{parentId}}/sub";
     
     // Manufacturer endpoints
-    public const string Manufacturers = $"{BaseUrl}/Manufacturer";
+    public const string Manufacturers = "/Manufacturer";
     public const string ManufacturerById = $"{Manufacturers}/{{id}}";
     
     // ProductGroup endpoints
-    public const string ProductGroups = $"{BaseUrl}/ProductGroup";
+    public const string ProductGroups = "/ProductGroup";
     public const string ProductGroupById = $"{ProductGroups}/{{id}}";
     
     // ProductModel endpoints
-    public const string ProductModels = $"{BaseUrl}/ProductModel";
+    public const string ProductModels = "/ProductModel";
     public const string ProductModelById = $"{ProductModels}/{{id}}";
     
     // UnitOfMeasure endpoints
-    public const string UnitOfMeasures = $"{BaseUrl}/UnitOfMeasure";
+    public const string UnitOfMeasures = "/UnitOfMeasure";
     
     // Notification endpoints
-    public const string Notifications = $"{BaseUrl}/Notification";
+    public const string Notifications = "/Notification";
     public const string NotificationById = $"{Notifications}/{{id}}";
     public const string NotificationStats = $"{Notifications}/stats";
     public const string NotificationPreferences = $"{Notifications}/preferences";
@@ -55,17 +57,32 @@ public static class ApiEndpoints
     public const string UnitOfMeasureCount = $"{UnitOfMeasures}/count";
     
     // Warehouse endpoints
-    public const string Warehouses = $"{BaseUrl}/warehouses";
+    public const string Warehouses = "/Warehouse";
     public const string WarehouseById = $"{Warehouses}/{{id}}";
     
+    // Location endpoints
+    public const string Locations = "/Location";
+    public const string LocationById = $"{Locations}/{{id}}";
+    public const string LocationByParentId = $"{Locations}/parent/{{parentId}}";
+    public const string RootLocations = $"{Locations}/root";
+    public const string AllLocations = $"{Locations}/all";
+    
     // Transaction endpoints
-    public const string Transactions = $"{BaseUrl}/transactions";
+    public const string Transactions = "/transactions";
     public const string TransactionById = $"{Transactions}/{{id}}";
     public const string TransactionsByProduct = $"{Transactions}/product/{{productId}}";
     
     // Dashboard endpoints
-    public const string Dashboard = $"{BaseUrl}/dashboard";
+    public const string Dashboard = "/dashboard";
     public const string DashboardStats = $"{Dashboard}/stats";
     public const string DashboardRecentActivity = $"{Dashboard}/recent-activity";
     public const string DashboardLowStockProducts = $"{Dashboard}/low-stock-products";
+    
+    // Audit endpoints
+    public const string Audit = "/audit";
+    public const string AuditExport = $"{Audit}/export";
+    public const string AuditEntity = $"{Audit}/entity/{{entityType}}/{{entityId}}";
+    public const string AuditUser = $"{Audit}/user/{{userId}}";
+    public const string AuditTrace = $"{Audit}/trace/{{requestId}}";
+    public const string AuditById = $"{Audit}/{{id}}";
 }

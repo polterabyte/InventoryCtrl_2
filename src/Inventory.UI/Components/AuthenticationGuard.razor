@@ -1,0 +1,187 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@inject ILocalStorageService LocalStorage
+
+<div class="auth-guard">
+    @if (isLoading)
+    {
+        <div class="d-flex justify-content-center align-items-center min-vh-100">
+            <div class="text-center">
+                <LoadingSpinner Message="Проверка авторизации..." 
+                               LoadingText="Checking authentication..." 
+                               Color="SpinnerColor.Primary" 
+                               Size="SpinnerSize.Large" />
+                <h4 class="mt-3 text-muted">Проверка доступа...</h4>
+            </div>
+        </div>
+    }
+    else if (isAuthenticated)
+    {
+        @ChildContent
+    }
+    else
+    {
+        <div class="d-flex justify-content-center align-items-center min-vh-100">
+            <div class="text-center">
+                <LoadingSpinner Message="Перенаправление на страницу входа..." 
+                               LoadingText="Redirecting to login..." 
+                               Color="SpinnerColor.Primary" 
+                               Size="SpinnerSize.Large" />
+                <h4 class="mt-3 text-muted">Перенаправление...</h4>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public bool RequireAuthentication { get; set; } = true;
+    [Parameter] public string[]? RequiredRoles { get; set; }
+    [Parameter] public string? RedirectTo { get; set; }
+
+    private bool isLoading = true;
+    private bool isAuthenticated = false;
+    private bool hasCheckedAuth = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (RequireAuthentication)
+        {
+            await CheckAuthenticationStatus();
+        }
+        else
+        {
+            isLoading = false;
+            isAuthenticated = true;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && RequireAuthentication && !isAuthenticated && !isLoading)
+        {
+            await RedirectToLogin();
+        }
+    }
+
+    private async Task CheckAuthenticationStatus()
+    {
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
+
+            // Получаем состояние аутентификации
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            // Проверяем, аутентифицирован ли пользователь
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                // Проверяем роли, если они требуются
+                if (RequiredRoles != null && RequiredRoles.Length > 0)
+                {
+                    isAuthenticated = RequiredRoles.Any(role => user.IsInRole(role));
+                }
+                else
+                {
+                    isAuthenticated = true;
+                }
+
+                // Проверяем валидность токена
+                if (isAuthenticated)
+                {
+                    var token = await LocalStorage.GetItemAsStringAsync("authToken");
+                    if (string.IsNullOrEmpty(token))
+                    {
+                        isAuthenticated = false;
+                    }
+                    else
+                    {
+                        // Дополнительная проверка токена (опционально)
+                        isAuthenticated = await ValidateTokenAsync(token);
+                    }
+                }
+            }
+            else
+            {
+                isAuthenticated = false;
+            }
+
+            hasCheckedAuth = true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Authentication check failed: {ex.Message}");
+            isAuthenticated = false;
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task<bool> ValidateTokenAsync(string token)
+    {
+        try
+        {
+            // Простая проверка формата JWT токена
+            if (token.Split('.').Length != 3)
+                return false;
+
+            // Проверяем, не истек ли токен
+            var payload = token.Split('.')[1];
+            var jsonBytes = ParseBase64WithoutPadding(payload);
+            var keyValuePairs = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(jsonBytes);
+
+            if (keyValuePairs != null && keyValuePairs.TryGetValue("exp", out var expObj))
+            {
+                if (long.TryParse(expObj.ToString(), out var exp))
+                {
+                    var expDateTime = DateTimeOffset.FromUnixTimeSeconds(exp);
+                    if (expDateTime <= DateTimeOffset.UtcNow)
+                    {
+                        // Токен истек, удаляем его
+                        await LocalStorage.RemoveItemAsync("authToken");
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private byte[] ParseBase64WithoutPadding(string base64)
+    {
+        switch (base64.Length % 4)
+        {
+            case 2: base64 += "=="; break;
+            case 3: base64 += "="; break;
+        }
+        return Convert.FromBase64String(base64);
+    }
+
+    private async Task RedirectToLogin()
+    {
+        // Сохраняем текущий URL для перенаправления после входа
+        var currentUrl = Navigation.ToBaseRelativePath(Navigation.Uri);
+        if (!string.IsNullOrEmpty(currentUrl) && currentUrl != "login")
+        {
+            await LocalStorage.SetItemAsStringAsync("returnUrl", currentUrl);
+        }
+
+        // Перенаправляем на страницу входа
+        var redirectUrl = !string.IsNullOrEmpty(RedirectTo) ? RedirectTo : "/login";
+        Navigation.NavigateTo(redirectUrl, true);
+    }
+}

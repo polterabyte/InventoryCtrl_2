@@ -1,3 +1,4 @@
+using Inventory.Shared.Constants;
 using Inventory.Shared.DTOs;
 using Inventory.Shared.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -5,10 +6,8 @@ using System.Text.Json;
 
 namespace Inventory.Shared.Services;
 
-public class AuditApiService(HttpClient httpClient, ILogger<AuditApiService> logger) : IAuditService
+public class AuditApiService(HttpClient httpClient, ILogger<AuditApiService> logger) : BaseApiService(httpClient, "", logger), IAuditService
 {
-    private readonly HttpClient _httpClient = httpClient;
-    private readonly ILogger<AuditApiService> _logger = logger;
 
     public async Task<ApiResponse<AuditLogResponse>> GetAuditLogsAsync(
         string? actionType = null,
@@ -39,28 +38,11 @@ public class AuditApiService(HttpClient httpClient, ILogger<AuditApiService> log
             queryParams.Add($"pageSize={pageSize}");
 
             var queryString = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "";
-            var response = await _httpClient.GetAsync($"/api/audit{queryString}");
-
-            if (response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync();
-                var result = JsonSerializer.Deserialize<ApiResponse<AuditLogResponse>>(content, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
-
-                return result ?? new ApiResponse<AuditLogResponse> { Success = false, ErrorMessage = "Failed to deserialize response" };
-            }
-
-            return new ApiResponse<AuditLogResponse>
-            {
-                Success = false,
-                ErrorMessage = $"API request failed with status: {response.StatusCode}"
-            };
+            return await GetAsync<AuditLogResponse>($"{ApiEndpoints.Audit}{queryString}");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting audit logs");
+            Logger.LogError(ex, "Error getting audit logs");
             return new ApiResponse<AuditLogResponse>
             {
                 Success = false,
@@ -93,27 +75,22 @@ public class AuditApiService(HttpClient httpClient, ILogger<AuditApiService> log
             if (!string.IsNullOrEmpty(ipAddress)) queryParams.Add($"ipAddress={Uri.EscapeDataString(ipAddress)}");
 
             var queryString = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "";
-            var response = await _httpClient.GetAsync($"/api/audit/export{queryString}");
-
-            if (response.IsSuccessStatusCode)
+            var response = await GetAsync<string>($"{ApiEndpoints.AuditExport}{queryString}");
+            
+            if (response.Success && response.Data != null)
             {
-                var content = await response.Content.ReadAsStringAsync();
-                return new ApiResponse<string>
-                {
-                    Success = true,
-                    Data = content
-                };
+                return response;
             }
-
+            
             return new ApiResponse<string>
             {
                 Success = false,
-                ErrorMessage = $"API request failed with status: {response.StatusCode}"
+                ErrorMessage = response.ErrorMessage ?? "Failed to export audit logs"
             };
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error exporting audit logs");
+            Logger.LogError(ex, "Error exporting audit logs");
             return new ApiResponse<string>
             {
                 Success = false,
@@ -126,28 +103,12 @@ public class AuditApiService(HttpClient httpClient, ILogger<AuditApiService> log
     {
         try
         {
-            var response = await _httpClient.GetAsync($"/api/audit/entity/{Uri.EscapeDataString(entityType)}/{Uri.EscapeDataString(entityId)}");
-
-            if (response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync();
-                var result = JsonSerializer.Deserialize<ApiResponse<List<AuditLogDto>>>(content, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
-
-                return result ?? new ApiResponse<List<AuditLogDto>> { Success = false, ErrorMessage = "Failed to deserialize response" };
-            }
-
-            return new ApiResponse<List<AuditLogDto>>
-            {
-                Success = false,
-                ErrorMessage = $"API request failed with status: {response.StatusCode}"
-            };
+            var endpoint = ApiEndpoints.AuditEntity.Replace("{entityType}", Uri.EscapeDataString(entityType)).Replace("{entityId}", Uri.EscapeDataString(entityId));
+            return await GetAsync<List<AuditLogDto>>(endpoint);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting entity audit logs for {EntityType} {EntityId}", entityType, entityId);
+            Logger.LogError(ex, "Error getting entity audit logs for {EntityType} {EntityId}", entityType, entityId);
             return new ApiResponse<List<AuditLogDto>>
             {
                 Success = false,
@@ -160,28 +121,12 @@ public class AuditApiService(HttpClient httpClient, ILogger<AuditApiService> log
     {
         try
         {
-            var response = await _httpClient.GetAsync($"/api/audit/user/{Uri.EscapeDataString(userId)}?page={page}&pageSize={pageSize}");
-
-            if (response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync();
-                var result = JsonSerializer.Deserialize<ApiResponse<List<AuditLogDto>>>(content, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
-
-                return result ?? new ApiResponse<List<AuditLogDto>> { Success = false, ErrorMessage = "Failed to deserialize response" };
-            }
-
-            return new ApiResponse<List<AuditLogDto>>
-            {
-                Success = false,
-                ErrorMessage = $"API request failed with status: {response.StatusCode}"
-            };
+            var endpoint = ApiEndpoints.AuditUser.Replace("{userId}", Uri.EscapeDataString(userId)) + $"?page={page}&pageSize={pageSize}";
+            return await GetAsync<List<AuditLogDto>>(endpoint);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting user audit logs for {UserId}", userId);
+            Logger.LogError(ex, "Error getting user audit logs for {UserId}", userId);
             return new ApiResponse<List<AuditLogDto>>
             {
                 Success = false,
@@ -194,28 +139,12 @@ public class AuditApiService(HttpClient httpClient, ILogger<AuditApiService> log
     {
         try
         {
-            var response = await _httpClient.GetAsync($"/api/audit/request/{Uri.EscapeDataString(requestId)}");
-
-            if (response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync();
-                var result = JsonSerializer.Deserialize<ApiResponse<List<AuditLogDto>>>(content, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
-
-                return result ?? new ApiResponse<List<AuditLogDto>> { Success = false, ErrorMessage = "Failed to deserialize response" };
-            }
-
-            return new ApiResponse<List<AuditLogDto>>
-            {
-                Success = false,
-                ErrorMessage = $"API request failed with status: {response.StatusCode}"
-            };
+            var endpoint = ApiEndpoints.AuditTrace.Replace("{requestId}", Uri.EscapeDataString(requestId));
+            return await GetAsync<List<AuditLogDto>>(endpoint);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting audit logs for request {RequestId}", requestId);
+            Logger.LogError(ex, "Error getting audit logs for request {RequestId}", requestId);
             return new ApiResponse<List<AuditLogDto>>
             {
                 Success = false,
@@ -228,28 +157,12 @@ public class AuditApiService(HttpClient httpClient, ILogger<AuditApiService> log
     {
         try
         {
-            var response = await _httpClient.GetAsync($"/api/audit/{logId}");
-
-            if (response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync();
-                var result = JsonSerializer.Deserialize<ApiResponse<AuditLogDto>>(content, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
-
-                return result ?? new ApiResponse<AuditLogDto> { Success = false, ErrorMessage = "Failed to deserialize response" };
-            }
-
-            return new ApiResponse<AuditLogDto>
-            {
-                Success = false,
-                ErrorMessage = $"API request failed with status: {response.StatusCode}"
-            };
+            var endpoint = ApiEndpoints.AuditById.Replace("{id}", logId.ToString());
+            return await GetAsync<AuditLogDto>(endpoint);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting audit log {LogId}", logId);
+            Logger.LogError(ex, "Error getting audit log {LogId}", logId);
             return new ApiResponse<AuditLogDto>
             {
                 Success = false,

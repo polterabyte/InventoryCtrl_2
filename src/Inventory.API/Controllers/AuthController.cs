@@ -17,7 +17,7 @@ namespace Inventory.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class AuthController(UserManager<Inventory.API.Models.User> userManager, IConfiguration config, ILogger<AuthController> logger, IPortConfigurationService portService, RefreshTokenService refreshTokenService, AuditService auditService) : ControllerBase
+    public class AuthController(UserManager<Inventory.API.Models.User> userManager, IConfiguration config, ILogger<AuthController> logger, RefreshTokenService refreshTokenService, AuditService auditService) : ControllerBase
     {
         private readonly IConfiguration _config = config;
         private readonly ILogger<AuthController> _logger = logger;
@@ -31,6 +31,7 @@ namespace Inventory.API.Controllers
         /// <response code="400">Invalid request data</response>
         /// <response code="401">Invalid credentials</response>
         [HttpPost("login")]
+        [AllowAnonymous]
         [EnableRateLimiting("AuthPolicy")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
@@ -39,11 +40,7 @@ namespace Inventory.API.Controllers
             if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
             {
                 _logger.LogWarning("Failed login attempt: missing username or password for {Username}", request.Username);
-                return BadRequest(new ApiResponse<LoginResult>
-                {
-                    Success = false,
-                    ErrorMessage = "Username and password are required"
-                });
+                return BadRequest(ApiResponse<LoginResult>.CreateFailure("Username and password are required"));
             }
 
             var user = await userManager.FindByNameAsync(request.Username);
@@ -84,11 +81,7 @@ namespace Inventory.API.Controllers
                     "Invalid credentials"
                 );
                 
-                return Unauthorized(new ApiResponse<LoginResult>
-                {
-                    Success = false,
-                    ErrorMessage = "Invalid credentials"
-                });
+                return Unauthorized(ApiResponse<LoginResult>.CreateFailure("Invalid credentials"));
             }
 
             // Generate access token using RefreshTokenService
@@ -127,20 +120,16 @@ namespace Inventory.API.Controllers
                 true
             );
 
-            return Ok(new ApiResponse<LoginResult>
+            return Ok(ApiResponse<LoginResult>.CreateSuccess(new LoginResult
             {
-                Success = true,
-                Data = new LoginResult
-                {
-                    Token = accessToken,
-                    RefreshToken = refreshToken,
-                    Username = user.UserName ?? string.Empty,
-                    Email = user.Email ?? string.Empty,
-                    Role = user.Role,
-                    Roles = roles.ToList(),
-                    ExpiresAt = expires
-                }
-            });
+                Token = accessToken,
+                RefreshToken = refreshToken,
+                Username = user.UserName ?? string.Empty,
+                Email = user.Email ?? string.Empty,
+                Role = user.Role,
+                Roles = roles.ToList(),
+                ExpiresAt = expires
+            }));
         }
 
         /// <summary>
@@ -160,33 +149,21 @@ namespace Inventory.API.Controllers
             if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.RefreshToken))
             {
                 _logger.LogWarning("Failed refresh attempt: missing username or refresh token");
-                return BadRequest(new ApiResponse<LoginResult>
-                {
-                    Success = false,
-                    ErrorMessage = "Username and refresh token are required"
-                });
+                return BadRequest(ApiResponse<LoginResult>.CreateFailure("Username and refresh token are required"));
             }
 
             var user = await userManager.FindByNameAsync(request.Username);
             if (user == null)
             {
                 _logger.LogWarning("Failed refresh attempt: user {Username} not found", request.Username);
-                return Unauthorized(new ApiResponse<LoginResult>
-                {
-                    Success = false,
-                    ErrorMessage = "Invalid refresh token"
-                });
+                return Unauthorized(ApiResponse<LoginResult>.CreateFailure("Invalid refresh token"));
             }
 
             // Validate refresh token
             if (!refreshTokenService.ValidateRefreshToken(user, request.RefreshToken))
             {
                 _logger.LogWarning("Failed refresh attempt: invalid or expired refresh token for user {Username}", request.Username);
-                return Unauthorized(new ApiResponse<LoginResult>
-                {
-                    Success = false,
-                    ErrorMessage = "Invalid or expired refresh token"
-                });
+                return Unauthorized(ApiResponse<LoginResult>.CreateFailure("Invalid or expired refresh token"));
             }
 
             // Generate new access token
@@ -201,20 +178,16 @@ namespace Inventory.API.Controllers
 
             _logger.LogInformation("Token refreshed successfully for user {Username}", user.UserName);
 
-            return Ok(new ApiResponse<LoginResult>
+            return Ok(ApiResponse<LoginResult>.CreateSuccess(new LoginResult
             {
-                Success = true,
-                Data = new LoginResult
-                {
-                    Token = accessToken,
-                    RefreshToken = newRefreshToken,
-                    Username = user.UserName ?? string.Empty,
-                    Email = user.Email ?? string.Empty,
-                    Role = user.Role,
-                    Roles = roles.ToList(),
-                    ExpiresAt = expires
-                }
-            });
+                Token = accessToken,
+                RefreshToken = newRefreshToken,
+                Username = user.UserName ?? string.Empty,
+                Email = user.Email ?? string.Empty,
+                Role = user.Role,
+                Roles = roles.ToList(),
+                ExpiresAt = expires
+            }));
         }
 
         /// <summary>
@@ -236,11 +209,7 @@ namespace Inventory.API.Controllers
                 await refreshTokenService.RevokeRefreshTokenAsync(username);
             }
             
-            return Ok(new ApiResponse<object>
-            {
-                Success = true,
-                Data = new { message = "Logged out successfully" }
-            });
+            return Ok(ApiResponse<object>.CreateSuccess(new { message = "Logged out successfully" }));
         }
 
         /// <summary>
@@ -251,6 +220,7 @@ namespace Inventory.API.Controllers
         /// <response code="201">User created successfully</response>
         /// <response code="400">Invalid request data or user already exists</response>
         [HttpPost("register")]
+        [AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
             _logger.LogInformation("New user registration attempt: {Username}, Email: {Email}", 
@@ -261,33 +231,21 @@ namespace Inventory.API.Controllers
                 string.IsNullOrWhiteSpace(request.Email))
             {
                 _logger.LogWarning("Failed registration attempt: missing required fields for {Username}", request.Username);
-                return BadRequest(new ApiResponse<object>
-                {
-                    Success = false,
-                    ErrorMessage = "Username, email and password are required"
-                });
+                return BadRequest(ApiResponse<object>.CreateFailure("Username, email and password are required"));
             }
 
             var existingUser = await userManager.FindByNameAsync(request.Username);
             if (existingUser != null)
             {
                 _logger.LogWarning("Failed registration attempt: username {Username} already exists", request.Username);
-                return BadRequest(new ApiResponse<object>
-                {
-                    Success = false,
-                    ErrorMessage = "Username already exists"
-                });
+                return BadRequest(ApiResponse<object>.CreateFailure("Username already exists"));
             }
 
             var existingEmail = await userManager.FindByEmailAsync(request.Email);
             if (existingEmail != null)
             {
                 _logger.LogWarning("Failed registration attempt: email {Email} already in use", request.Email);
-                return BadRequest(new ApiResponse<object>
-                {
-                    Success = false,
-                    ErrorMessage = "Email already exists"
-                });
+                return BadRequest(ApiResponse<object>.CreateFailure("Email already exists"));
             }
 
             var user = new Inventory.API.Models.User
@@ -307,51 +265,15 @@ namespace Inventory.API.Controllers
                 await userManager.AddToRoleAsync(user, "User");
                 _logger.LogInformation("Successful user registration: {Username} with email {Email}", 
                     user.UserName, user.Email);
-                return Created("", new ApiResponse<object>
-                {
-                    Success = true,
-                    Data = new { message = "User created successfully" }
-                });
+                return Created("", ApiResponse<object>.CreateSuccess(new { message = "User created successfully" }));
             }
 
             var errors = string.Join(", ", result.Errors.Select(e => e.Description));
             _logger.LogError("Failed user registration for {Username}: {Errors}", 
                 request.Username, errors);
-            return BadRequest(new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = errors
-            });
+            return BadRequest(ApiResponse<object>.CreateFailure(errors));
         }
 
-        [HttpGet("config/ports")]
-        public IActionResult GetPortConfiguration()
-        {
-            try
-            {
-                var config = portService.LoadPortConfiguration();
-                return Ok(new
-                {
-                    api = new
-                    {
-                        http = config.ApiHttp,
-                        https = config.ApiHttps,
-                        urls = $"https://localhost:{config.ApiHttps};http://localhost:{config.ApiHttp}"
-                    },
-                    web = new
-                    {
-                        http = config.WebHttp,
-                        https = config.WebHttps,
-                        urls = $"https://localhost:{config.WebHttps};http://localhost:{config.WebHttp}"
-                    }
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to get port configuration");
-                return StatusCode(500, "Failed to get port configuration");
-            }
-        }
 
         private string GetClientIpAddress()
         {

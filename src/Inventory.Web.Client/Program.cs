@@ -11,22 +11,43 @@ using Inventory.Shared.Services;
 using Microsoft.Extensions.Logging;
 using Inventory.Web.Client.Services;
 using Microsoft.AspNetCore.Components;
+using Inventory.Web.Client.Configuration;
+using Microsoft.Extensions.Configuration;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-// Add port configuration service first
-builder.Services.AddScoped<PortConfigurationService>();
+// Configure API settings
+builder.Services.Configure<ApiConfiguration>(
+    builder.Configuration.GetSection(ApiConfiguration.SectionName));
 
-// Configure API HTTP client using port configuration service
-builder.Services.AddScoped(sp =>
+// Register API URL service
+builder.Services.AddScoped<Inventory.Web.Client.Services.IApiUrlService, Inventory.Web.Client.Services.ApiUrlService>();
+
+// Register URL builder service
+builder.Services.AddScoped<IUrlBuilderService, UrlBuilderService>();
+
+// Register API error handler
+builder.Services.AddScoped<IApiErrorHandler, ApiErrorHandler>();
+
+// Register request validator
+builder.Services.AddScoped<IRequestValidator, RequestValidator>();
+
+// Register validation service
+builder.Services.AddScoped<ValidationService>();
+
+// Register health check service
+builder.Services.AddScoped<IApiHealthService, ApiHealthService>();
+
+// Register resilient API service
+builder.Services.AddScoped<IResilientApiService, ResilientApiService>();
+
+// Configure API HTTP client - will be configured dynamically via JavaScript
+builder.Services.AddScoped<HttpClient>(sp =>
 {
-    var portService = sp.GetRequiredService<PortConfigurationService>();
-    var apiUrl = portService.GetApiUrl();
-    var httpClient = new HttpClient { BaseAddress = new Uri(apiUrl) };
-    
-    // Configure for CORS with credentials
+    // Create HttpClient without BaseAddress - URLs will be constructed in services
+    var httpClient = new HttpClient();
     httpClient.DefaultRequestHeaders.Add("X-Requested-With", "XMLHttpRequest");
     
     return httpClient;
@@ -44,16 +65,17 @@ builder.Services.AddBlazoredLocalStorage();
 builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Information);
 //builder.Logging.AddConsole(); -- not work in browser
 
-// Register Shared services
-builder.Services.AddScoped<IAuthService, AuthApiService>();
+// Register Web-specific services
+builder.Services.AddScoped<IAuthService, WebAuthApiService>();
 builder.Services.AddScoped<IProductService, ProductApiService>();
-builder.Services.AddScoped<IUnitOfMeasureApiService, UnitOfMeasureApiService>();
-builder.Services.AddScoped<ICategoryService, CategoryApiService>();
-builder.Services.AddScoped<IManufacturerService, ManufacturerApiService>();
-builder.Services.AddScoped<IProductGroupService, ProductGroupApiService>();
-builder.Services.AddScoped<IProductModelService, ProductModelApiService>();
-builder.Services.AddScoped<IWarehouseService, WarehouseApiService>();
-builder.Services.AddScoped<IDashboardService, DashboardApiService>();
+builder.Services.AddScoped<IUnitOfMeasureApiService, WebUnitOfMeasureApiService>();
+builder.Services.AddScoped<ICategoryService, WebCategoryApiService>();
+builder.Services.AddScoped<IManufacturerService, WebManufacturerApiService>();
+builder.Services.AddScoped<IProductGroupService, WebProductGroupApiService>();
+builder.Services.AddScoped<IProductModelService, WebProductModelApiService>();
+builder.Services.AddScoped<IWarehouseService, WebWarehouseApiService>();
+builder.Services.AddScoped<ILocationService, WebLocationApiService>();
+builder.Services.AddScoped<IDashboardService, WebDashboardApiService>();
 
 // Register logging and error handling services
 builder.Services.AddScoped<ILoggingService, LoggingService>();
@@ -67,7 +89,24 @@ builder.Services.AddScoped<IDebugLogsService, DebugLogsService>();
 // Register authorization services
 builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 
+// Register authentication service
+builder.Services.AddScoped<Inventory.UI.Services.IAuthenticationService, Inventory.UI.Services.AuthenticationService>();
+
+// Register user management service
+builder.Services.AddScoped<IUserManagementService, UserManagementService>();
+
 // Register audit services
-builder.Services.AddScoped<IAuditService, AuditApiService>();
+builder.Services.AddScoped<IAuditService, WebAuditApiService>();
+
+// Initialize validators
+builder.Services.AddScoped(provider =>
+{
+    var validationService = provider.GetRequiredService<ValidationService>();
+    validationService.RegisterAllValidators();
+    return validationService;
+});
+
+// Register SignalR service (C# client)
+builder.Services.AddScoped<ISignalRService, SignalRService>();
 
 await builder.Build().RunAsync();

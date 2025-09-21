@@ -4,12 +4,13 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="blazor-environment" content="Staging" />
     <title>Inventory.Web.Client</title>
     <base href="/" />
-    <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="_content/Inventory.UI/css/design-system.css" />
-    <link rel="stylesheet" href="css/app.css" />
-    <link rel="icon" type="image/png" href="favicon.png" />
+    <link rel="stylesheet" href="_content/Inventory.Web.Assets/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="_content/Inventory.Web.Assets/css/compact-ui.css" />
+    <link rel="stylesheet" href="_content/Inventory.Web.Assets/css/app.css" />
+    <link rel="icon" type="image/png" href="_content/Inventory.Web.Assets/favicon.png" />
     <link href="Inventory.Web.Client.styles.css" rel="stylesheet" />
 </head>
 
@@ -27,66 +28,91 @@
         <a href="." class="reload">Reload</a>
         <span class="dismiss">🗙</span>
     </div>
+    <script src="_content/Inventory.Web.Assets/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="_framework/blazor.webassembly.js"></script>
-    <script src="js/signalr-notifications.js"></script>
+    <!-- SignalR scripts removed: using C# client -->
+    <!-- Web Push (VAPID) removed -->
+    <script src="_content/Inventory.Web.Assets/js/file-download.js?v=20250921-3"></script>
+    
     <script>
-        // Global functions for SignalR integration
-        window.getApiBaseUrl = function() {
-            return window.location.origin.replace(window.location.port, '5000');
-        };
-
-
-        window.initializeSignalRConnection = async function(apiBaseUrl, accessToken, dotNetRef) {
+        // JWT Token validation function
+        window.isJwtTokenExpired = function(token) {
             try {
-                const success = await window.signalRNotificationService.initialize(apiBaseUrl, accessToken);
+                if (!token) return true;
                 
-                if (success) {
-                    // Set up event handlers
-                    window.signalRNotificationService.on('notificationReceived', (notification) => {
-                        dotNetRef.invokeMethodAsync('OnNotificationReceivedJS', notification);
-                    });
-
-                    window.signalRNotificationService.on('connectionStateChanged', (data) => {
-                        dotNetRef.invokeMethodAsync('OnConnectionStateChangedJS', data.state, data.error);
-                    });
-
-                    // Subscribe to common notification types
-                    await window.signalRNotificationService.subscribeToNotifications('STOCK');
-                    await window.signalRNotificationService.subscribeToNotifications('TRANSACTION');
-                    await window.signalRNotificationService.subscribeToNotifications('SYSTEM');
-                }
+                // Split the token into parts
+                const parts = token.split('.');
+                if (parts.length !== 3) return true;
                 
-                return success;
+                // Decode the payload (second part)
+                const payload = parts[1];
+                // Add padding if needed
+                const paddedPayload = payload + '='.repeat((4 - payload.length % 4) % 4);
+                const decodedPayload = atob(paddedPayload);
+                const payloadObj = JSON.parse(decodedPayload);
+                
+                // Check if token has expiration claim
+                if (!payloadObj.exp) return true;
+                
+                // Get current time in seconds
+                const currentTime = Math.floor(Date.now() / 1000);
+                
+                // Check if token is expired (with 5 minute buffer)
+                const bufferTime = 5 * 60; // 5 minutes in seconds
+                return payloadObj.exp < (currentTime + bufferTime);
             } catch (error) {
-                console.error('Error initializing SignalR connection:', error);
-                return false;
+                console.error('Error checking JWT token expiration:', error);
+                return true; // If we can't parse, assume expired
             }
         };
 
-        window.subscribeToNotificationType = async function(notificationType) {
-            try {
-                await window.signalRNotificationService.subscribeToNotifications(notificationType);
-            } catch (error) {
-                console.error('Error subscribing to notification type:', error);
+        // Toast notification function
+        window.showToast = function(message, type = 'info') {
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-white bg-${type} border-0`;
+            toast.setAttribute('role', 'alert');
+            toast.setAttribute('aria-live', 'assertive');
+            toast.setAttribute('aria-atomic', 'true');
+            
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            `;
+            
+            // Create toast container if it doesn't exist
+            let toastContainer = document.getElementById('toast-container');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.id = 'toast-container';
+                toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+                toastContainer.style.zIndex = '9999';
+                document.body.appendChild(toastContainer);
             }
-        };
-
-        window.unsubscribeFromNotificationType = async function(notificationType) {
-            try {
-                await window.signalRNotificationService.unsubscribeFromNotifications(notificationType);
-            } catch (error) {
-                console.error('Error unsubscribing from notification type:', error);
-            }
-        };
-
-        window.disconnectSignalR = async function() {
-            try {
-                await window.signalRNotificationService.disconnect();
-            } catch (error) {
-                console.error('Error disconnecting SignalR:', error);
-            }
+            
+            // Add toast to container
+            toastContainer.appendChild(toast);
+            
+            // Initialize and show toast
+            const bsToast = new bootstrap.Toast(toast, {
+                autohide: true,
+                delay: 5000
+            });
+            bsToast.show();
+            
+            // Remove toast element after it's hidden
+            toast.addEventListener('hidden.bs.toast', function() {
+                toast.remove();
+            });
         };
     </script>
 </body>
 
 </html>
+
+
+

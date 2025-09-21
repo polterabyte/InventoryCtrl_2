@@ -4,38 +4,47 @@
 
 ## 🚀 Автоматический запуск (Рекомендуется)
 
-### PowerShell скрипт
+### Deploy запуск
 ```powershell
-# Полный запуск с проверками портов
-.\start-apps.ps1
+# Быстрый запуск через deploy
+.\deploy\quick-deploy.ps1
 
-# Быстрый запуск без проверок
-.\start-apps.ps1 -Quick
+# Полный развертывание
+.\deploy\deploy-all.ps1
 
-# Показать справку по использованию
-.\start-apps.ps1 -Help
+# Просмотр логов
+docker-compose logs -f
+
+# Остановка всех сервисов
+docker-compose down
 ```
 
-**Что делает скрипт:**
-- Проверяет доступность портов
-- Запускает API сервер (порт 7000)
-- Запускает Web клиент (порт 7001)
-- Показывает статус запуска
+**Что делают deploy скрипты:**
+- Запускают все сервисы в Docker контейнерах
+- Настраивают сеть между сервисами
+- Управляют жизненным циклом приложений
+- Обеспечивают изоляцию окружения
 
 ## 🔧 Ручной запуск
 
 ### 1. Установка требований
-- **.NET 9.0 SDK** — скачать с [dotnet.microsoft.com](https://dotnet.microsoft.com/download)
+- **.NET 8.0 SDK** — скачать с [dotnet.microsoft.com](https://dotnet.microsoft.com/download)
 - **PostgreSQL** — установить и запустить сервис
 
-### 2. Настройка базы данных
-Отредактируйте `src/Inventory.API/appsettings.json`:
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Port=5432;Database=InventoryDb;Username=postgres;Password=your_password;"
-  }
-}
+### 2. Настройка базы данных и переменных окружения
+Не изменяйте секреты в исходниках. Используйте ENV/User Secrets:
+
+```powershell
+# User Secrets (локальная разработка)
+cd src/Inventory.API
+dotnet user-secrets init
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=InventoryDb;Username=postgres;Password=CHANGE_ME"
+dotnet user-secrets set "Jwt:Key" "CHANGE_ME_SUPER_SECRET"
+dotnet user-secrets set "CORS_ALLOWED_ORIGINS" "https://localhost"
+dotnet user-secrets set "ADMIN_EMAIL" "admin@localhost"
+dotnet user-secrets set "ADMIN_USERNAME" "admin"
+dotnet user-secrets set "ADMIN_PASSWORD" "CHANGE_ME"
+dotnet user-secrets set "ApiUrl" "https://localhost:7000"
 ```
 
 ### 3. Запуск приложения
@@ -58,13 +67,15 @@ dotnet run
 - HTTPS: https://localhost:7001
 - HTTP: http://localhost:5001
 
-## 🌐 Доступ к приложению
+## 🌐 Доступ к приложению и конфигурация клиента
 
 После запуска откройте браузер:
 
 - **Web приложение**: https://localhost:7001
 - **API документация**: https://localhost:7000/swagger
 - **API Health Check**: https://localhost:7000/health
+
+Клиент (WASM) читает `appsettings.{Environment}.json` из `wwwroot` и использует секцию `ApiSettings` с относительными путями (`/api`, `/notificationHub`). Файлы `appsettings*.json` копируются в `wwwroot` при сборке/публикации (см. `Inventory.Web.Client.csproj`).
 
 ## 👤 Тестовые данные
 
@@ -109,17 +120,7 @@ taskkill /PID <PID> /F
 ```
 
 ### CORS ошибки
-Проверьте настройки CORS в `src/Inventory.API/appsettings.json`:
-```json
-{
-  "Cors": {
-    "AllowedOrigins": [
-      "https://localhost:7001",
-      "http://localhost:5001"
-    ]
-  }
-}
-```
+Используйте переменную окружения `CORS_ALLOWED_ORIGINS` (запятая‑разделённый список Origin). Конфигурация читается в `AddCorsConfiguration` из ENV.
 
 ### База данных недоступна
 ```powershell
@@ -173,20 +174,28 @@ Test-NetConnection localhost -Port 7001
 
 ## 🛑 Остановка приложений
 
-### Автоматический запуск
-- Нажмите `Ctrl+C` в терминале со скриптом
+### Docker остановка
+```powershell
+# Остановить все сервисы
+docker-compose down
 
-### Ручной запуск
+# Остановить и удалить контейнеры
+docker-compose down --remove-orphans
+
+# Остановить с удалением volumes
+docker-compose down -v
+```
+
+### Ручной запуск (если используется)
 - Нажмите `Ctrl+C` в каждом терминале
 
 ### Принудительная остановка
 ```powershell
-# Остановить все процессы dotnet
-Get-Process dotnet | Stop-Process -Force
+# Остановить все Docker контейнеры проекта
+docker-compose kill
 
-# Остановить по портам
-netstat -ano | findstr :7000
-taskkill /PID <PID> /F
+# Остановить все процессы dotnet (если запущены вручную)
+Get-Process dotnet | Stop-Process -Force
 ```
 
 ## 📈 Следующие шаги

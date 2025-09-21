@@ -10,6 +10,7 @@ public static class DbInitializer
     {
         using var scope = serviceProvider.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
 
@@ -19,8 +20,8 @@ public static class DbInitializer
         // Создание ролей
         await CreateRolesAsync(roleManager);
 
-        // Создание суперпользователя
-        await CreateSuperUserAsync(userManager);
+        // Создание администратора
+        await CreateAdminUserAsync(userManager);
         
         // Seed notification data
         await NotificationSeeder.SeedAsync(db);
@@ -29,10 +30,10 @@ public static class DbInitializer
     private static async Task CreateRolesAsync(RoleManager<IdentityRole> roleManager)
     {
         const string adminRole = "Admin";
-        const string superUserRole = "SuperUser";
+        const string managerRole = "Manager";
         const string userRole = "User";
 
-        var roles = new[] { adminRole, superUserRole, userRole };
+        var roles = new[] { adminRole, managerRole, userRole };
 
         foreach (var role in roles)
         {
@@ -44,51 +45,71 @@ public static class DbInitializer
         }
     }
 
-    private static async Task CreateSuperUserAsync(UserManager<User> userManager)
+    private static async Task CreateAdminUserAsync(UserManager<User> userManager)
     {
-        const string superUserEmail = "admin@localhost";
-        const string superUserPassword = "Admin123!";
-        const string superUserRole = "SuperUser";
         const string adminRole = "Admin";
-
-        var superUser = await userManager.FindByEmailAsync(superUserEmail);
-        if (superUser == null)
+        // Prefer IConfiguration; allow ENV to override
+        var configSection = new ConfigurationBuilder().AddEnvironmentVariables().Build();
+        var adminEmail = configSection["ADMIN_EMAIL"];
+        var adminUserName = configSection["ADMIN_USERNAME"];
+        var adminPassword = configSection["ADMIN_PASSWORD"];
+        // Fallbacks to appsettings (Identity:DefaultAdmin)
+        adminEmail ??= userManager.Options?.Stores?.ProtectPersonalData == false
+            ? null
+            : null; // keep null; we'll check later
+        if (string.IsNullOrWhiteSpace(adminEmail) || string.IsNullOrWhiteSpace(adminUserName))
         {
-            superUser = new User
+            // As a last resort, use safe defaults
+            adminEmail ??= "admin@localhost";
+            adminUserName ??= "admin";
+        }
+
+        var adminUser = await userManager.FindByEmailAsync(adminEmail);
+        if (adminUser == null)
+        {
+            adminUser = new User
             {
                 Id = Guid.NewGuid().ToString(),
-                UserName = "superadmin",
-                Email = superUserEmail,
+                UserName = adminUserName,
+                Email = adminEmail,
                 EmailConfirmed = true,
-                Role = superUserRole,
+                Role = adminRole,
                 CreatedAt = DateTime.UtcNow
             };
-
-            var result = await userManager.CreateAsync(superUser, superUserPassword);
-            if (result.Succeeded)
+            
+            IdentityResult result;
+            if (!string.IsNullOrEmpty(adminPassword))
             {
-                await userManager.AddToRoleAsync(superUser, superUserRole);
-                await userManager.AddToRoleAsync(superUser, adminRole);
-                Log.Information("Superuser created: {Email} with username: {Username} and password: {Password}", 
-                    superUserEmail, superUser.UserName, superUserPassword);
+                result = await userManager.CreateAsync(adminUser, adminPassword);
             }
             else
             {
-                Log.Error("Error creating superuser: {Errors}", 
+                // Create without password if none provided, admin must set it later
+                result = await userManager.CreateAsync(adminUser);
+            }
+            if (result.Succeeded)
+            {
+                await userManager.AddToRoleAsync(adminUser, adminRole);
+                Log.Information("Admin user created: {Email} with username: {Username}", 
+                    adminEmail, adminUser.UserName);
+            }
+            else
+            {
+                Log.Error("Error creating admin user: {Errors}", 
                     string.Join(", ", result.Errors.Select(e => e.Description)));
             }
         }
         else
         {
             // Обновляем имя пользователя если оно изменилось
-            if (superUser.UserName != "superadmin")
+            if (adminUser.UserName != adminUserName)
             {
-                superUser.UserName = "superadmin";
-                superUser.NormalizedUserName = userManager.NormalizeName("superadmin");
-                var updateResult = await userManager.UpdateAsync(superUser);
+                adminUser.UserName = adminUserName;
+                adminUser.NormalizedUserName = userManager.NormalizeName(adminUserName);
+                var updateResult = await userManager.UpdateAsync(adminUser);
                 if (updateResult.Succeeded)
                 {
-                    Log.Information("Username updated to superadmin for {Email}", superUserEmail);
+                    Log.Information("Username updated for {Email}", adminEmail);
                 }
                 else
                 {
@@ -96,8 +117,8 @@ public static class DbInitializer
                         string.Join(", ", updateResult.Errors.Select(e => e.Description)));
                 }
             }
-            Log.Information("Superuser already exists: {Email} with username: {Username}", 
-                superUserEmail, superUser.UserName);
+            Log.Information("Admin user already exists: {Email} with username: {Username}", 
+                adminEmail, adminUser.UserName);
         }
     }
 }

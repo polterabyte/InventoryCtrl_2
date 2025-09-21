@@ -1,0 +1,123 @@
+<context>
+# Overview  
+Inventory Control System v2 - это современная система управления инвентарем, построенная на ASP.NET Core 8.0 и Blazor WebAssembly с поддержкой реального времени через SignalR. Система уже имеет базовую функциональность управления товарами, пользователями, складами и операциями, но требует доработки системы уведомлений и улучшения инфраструктуры для production deployment.
+
+# Core Features  
+## Текущие возможности:
+- **Управление инвентарем** — полный каталог товаров с иерархической структурой категорий
+- **Система пользователей** — ролевая модель (Admin/Manager/User) с JWT аутентификацией
+- **Операции с товарами** — приход, расход, установка товаров
+- **Real-time уведомления** — базовые SignalR уведомления
+- **Аналитика и отчетность** — dashboard с ключевыми метриками
+- **Аудит действий** — полная история операций пользователей
+
+## Требуемые улучшения:
+- **Push Notifications** — браузерные push уведомления для лучшего UX
+- **SSL Certificate Generation** — автоматическая генерация сертификатов для production
+- **Notification Analytics** — расширенная аналитика уведомлений
+- **Notification Scheduling** — планировщик уведомлений
+- **Webhook Support** — интеграции с внешними системами
+
+# User Experience  
+## Пользовательские роли:
+- **Admin** — полный доступ ко всем функциям, управление пользователями
+- **Manager** — управление инвентарем, просмотр аналитики
+- **User** — базовые операции с товарами, просмотр уведомлений
+
+## Ключевые пользовательские сценарии:
+- Получение мгновенных уведомлений о критических изменениях в инвентаре
+- Настройка персональных push уведомлений
+- Просмотр аналитики эффективности уведомлений
+- Планирование регулярных уведомлений
+- Интеграция с внешними системами через webhooks
+</context>
+
+<PRD>
+# Technical Architecture  
+## Системные компоненты:
+- **Backend**: ASP.NET Core 8.0 Web API с Entity Framework Core и PostgreSQL
+- **Frontend**: Blazor WebAssembly с Bootstrap UI
+- **Real-time**: SignalR для мгновенных уведомлений
+- **Authentication**: JWT с refresh токенами и ролевой авторизацией
+- **Infrastructure**: Docker контейнеризация с nginx reverse proxy
+
+## Модели данных для новых функций:
+- **PushSubscriptions** — подписки пользователей на push уведомления
+- **NotificationMetrics** — метрики эффективности уведомлений
+- **ScheduledNotifications** — запланированные уведомления
+- **WebhookEndpoints** — конфигурация webhook интеграций
+- **SSLConfiguration** — настройки SSL сертификатов
+
+## API endpoints:
+- **Push Notifications**: POST /api/notifications/push/subscribe, POST /api/notifications/push/send
+- **Analytics**: GET /api/notifications/analytics/overview, GET /api/notifications/analytics/engagement
+- **Scheduling**: POST /api/notifications/schedule, GET /api/notifications/scheduled
+- **Webhooks**: POST /api/webhooks/endpoints, POST /api/webhooks/test
+- **SSL Management**: POST /api/ssl/generate, GET /api/ssl/status
+
+## Интеграции:
+- **Web Push API** — браузерные push уведомления
+- **VAPID Keys** — аутентификация push сервисов
+- **Hangfire** — планировщик задач
+- **Let's Encrypt** — автоматические SSL сертификаты
+- **External APIs** — Slack, Teams, Discord, Telegram
+
+# Development Roadmap  
+## Фаза 1: Критические функции (MVP)
+1. **SSL Certificate Generation** — автоматическая генерация сертификатов для production deployment
+2. **Push Notifications** — браузерные push уведомления с VAPID аутентификацией
+3. **Notification Analytics** — базовая аналитика эффективности уведомлений
+
+## Фаза 2: Расширенные функции
+4. **Notification Scheduling** — планировщик уведомлений с Hangfire
+5. **Webhook Support** — интеграции с внешними системами
+6. **Enhanced Analytics** — расширенная аналитика с real-time обновлениями
+
+## Фаза 3: Дополнительные возможности
+7. **Third-party Integrations** — интеграции со Slack, Teams, Discord, Telegram
+8. **Mobile App Support** — .NET MAUI приложения с нативными push уведомлениями
+
+# Logical Dependency Chain
+## Основа (должна быть реализована первой):
+1. **SSL Certificate Generation** — критично для production deployment
+2. **Push Notifications Infrastructure** — VAPID ключи, Service Worker, базовые API
+
+## Построение на основе (второй приоритет):
+3. **Notification Analytics** — требует работающей системы уведомлений
+4. **Notification Scheduling** — расширяет существующую систему уведомлений
+
+## Интеграции (третий приоритет):
+5. **Webhook Support** — независимая функция, может быть реализована параллельно
+6. **Third-party Integrations** — требует webhook инфраструктуры
+7. **Mobile App Support** — требует стабильной API и push уведомлений
+
+# Risks and Mitigations  
+## Технические вызовы:
+- **VAPID Key Management** — обеспечить безопасное хранение и ротацию ключей
+- **Push Notification Delivery** — реализовать retry логику и fallback механизмы
+- **SSL Certificate Renewal** — автоматическая ротация сертификатов
+- **Performance Impact** — минимизировать влияние новых функций на производительность
+
+## MVP определение:
+- Сосредоточиться на Push Notifications и SSL Generation как критически важных функциях
+- Реализовать базовую аналитику без сложных вычислений
+- Отложить сложные интеграции до стабилизации основных функций
+
+## Ограничения ресурсов:
+- Использовать существующую архитектуру и не переписывать базовые компоненты
+- Максимально переиспользовать существующие сервисы и модели
+- Поэтапная реализация с возможностью отката изменений
+
+# Appendix  
+## Исследовательские находки:
+- Проект уже имеет хорошо структурированную архитектуру с Clean Architecture принципами
+- SignalR инфраструктура готова для расширения функциональности уведомлений
+- Docker конфигурация позволяет легко добавить новые сервисы
+- Существующая система аутентификации поддерживает необходимые роли
+
+## Технические спецификации:
+- **.NET 8.0** — последняя LTS версия с поддержкой всех необходимых функций
+- **PostgreSQL** — надежная база данных для хранения метрик и конфигураций
+- **Docker** — контейнеризация для упрощения deployment
+- **nginx** — reverse proxy с SSL termination
+</PRD>

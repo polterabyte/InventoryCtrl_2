@@ -5,22 +5,46 @@ namespace Inventory.API.Extensions;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddPortConfiguration(this IServiceCollection services)
-    {
-        services.AddSingleton<IPortConfigurationService, PortConfigurationService>();
-        return services;
-    }
-    
-    public static IServiceCollection AddCorsWithPorts(this IServiceCollection services)
+    public static IServiceCollection AddCorsConfiguration(this IServiceCollection services)
     {
         services.AddCors(options =>
         {
             options.AddPolicy("AllowConfiguredOrigins", policy =>
             {
-                // CORS будет настроен в ConfigureCorsWithPorts с использованием портов из ports.json
-                policy.AllowAnyHeader()
-                      .AllowAnyMethod()
-                      .AllowCredentials(); // Required for Blazor WASM authentication
+                // Prefer CORS origins from environment variable CORS_ALLOWED_ORIGINS (comma-separated)
+                var originsEnv = Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS");
+                string[] origins = Array.Empty<string>();
+                if (!string.IsNullOrWhiteSpace(originsEnv))
+                {
+                    origins = originsEnv
+                        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                        .ToArray();
+                }
+                
+                if (origins.Length > 0)
+                {
+                    policy.WithOrigins(origins)
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials();
+                }
+                else
+                {
+                    // Safe default: allow localhost origins commonly used in dev, no external domains
+                    policy.WithOrigins(
+                              "http://localhost",
+                              "https://localhost",
+                              "http://localhost:5000",
+                              "https://localhost:5001",
+                              "http://localhost:7000",
+                              "https://localhost:7001",
+                              "http://10.0.2.2:8080",
+                              "capacitor://localhost"
+                          )
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials();
+                }
             });
         });
         return services;
@@ -39,22 +63,19 @@ public static class ServiceCollectionExtensions
         services.AddScoped<INotificationRuleEngine, NotificationRuleEngine>();
         return services;
     }
+    
+    public static IServiceCollection AddSSLServices(this IServiceCollection services)
+    {
+        services.AddScoped<ISSLCertificateService, SSLCertificateService>();
+        return services;
+    }
 }
 
 public static class WebApplicationExtensions
 {
-    public static WebApplication ConfigureCorsWithPorts(this WebApplication app)
+    public static WebApplication ConfigureCors(this WebApplication app)
     {
-        var portService = app.Services.GetRequiredService<IPortConfigurationService>();
-        var corsOrigins = portService.GetCorsOrigins();
-        
-        app.UseCors(builder =>
-        {
-            builder.WithOrigins(corsOrigins)
-                   .AllowAnyHeader()
-                   .AllowAnyMethod()
-                   .AllowCredentials(); // Required for Blazor WASM authentication
-        });
+        app.UseCors("AllowConfiguredOrigins");
         
         return app;
     }

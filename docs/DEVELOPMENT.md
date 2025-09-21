@@ -1,6 +1,6 @@
 # Development Guide
 
-Руководство разработчика для системы управления инвентарем.
+Руководство разработчика для системы управления инвентарем на .NET 8.0.
 
 ## 🛠 Инструкции для разработчиков
 
@@ -18,15 +18,19 @@
 - **Понятность**: Код должен быть понятен другому разработчику через 6 месяцев
 
 ### Архитектура
-- **Разделение ответственности**: Domain, Application, Infrastructure
-- **Паттерны**: CQRS, Mediator, DI, строгая типизация
-- **Безопасность**: JWT, Identity, политики доступа. Все API защищены, CORS настроен явно, HTTPS обязателен
+- **Разделение ответственности**: API Layer, Business Layer, Data Layer, Presentation Layer
+- **Паттерны**: Dependency Injection, Service Layer, Repository (через EF Core), Middleware Pattern
+- **Real-time Communication**: SignalR для уведомлений и live updates
+- **Безопасность**: JWT с refresh токенами, Rate Limiting, Audit Middleware, CORS настроен явно, HTTPS обязателен
+- **Масштабируемость**: Stateless design, Multi-client ready (WebAssembly, MAUI), Modular architecture
 
 ### Качество кода
 - **Тестирование**: Unit-тесты для бизнес-логики, integration-тесты для сценариев, component-тесты для UI. Без тестов код считается непригодным к продакшену
 - **Покрытие тестами**: Минимум 80% покрытия для критически важного кода
-- **Логирование**: Serilog с выводом в файл и Seq. Ошибки не должны теряться
+- **Логирование**: Serilog с выводом в файл, структурированное логирование с контекстом, Audit Middleware для отслеживания действий
 - **UI**: Blazor WASM должен быть отзывчивым, адаптированным под роли и сценарии. Компоненты переиспользуемы, состояние управляется явно
+- **Performance**: Rate Limiting, Connection pooling, Async/Await, Retry механизмы
+- **Security**: JWT с refresh токенами, Role-based access, Input validation через FluentValidation
 
 ## 🔧 Технические требования
 
@@ -66,11 +70,15 @@
 - **История**: Использовать ProductHistory для отслеживания изменений
 
 ### API и сервисы
-- **BaseApiService**: Все API сервисы должны наследоваться от BaseApiService
-- **Логирование**: Использовать структурированное логирование через ILogger
-- **Обработка ошибок**: Всегда возвращать ApiResponse<T> с Success/ErrorMessage
+- **BaseApiService**: Все API сервисы должны наследоваться от BaseApiService с общей обработкой ошибок
+- **Логирование**: Использовать структурированное логирование через ILogger с контекстом
+- **Обработка ошибок**: Всегда возвращать ApiResponse<T> с Success/ErrorMessage, использовать GlobalExceptionMiddleware
 - **DTOs**: Использовать DTOs из Inventory.Shared для API контрактов
-- **JWT**: Все API защищены JWT токенами с ролями (Admin, User, Manager)
+- **JWT**: Все API защищены JWT токенами с ролями (Admin, User, Manager) и refresh токенами
+- **Rate Limiting**: API защищен от злоупотреблений с настройкой по ролям
+- **Audit**: Все действия пользователей логируются через AuditMiddleware
+- **Validation**: Использовать FluentValidation для валидации входных данных
+- **Retry Logic**: Автоматические повторы при сбоях через RetryService
 
 ### Blazor компоненты
 - **Переиспользование**: Компоненты должны быть в Inventory.UI (RCL) для переиспользования
@@ -79,6 +87,8 @@
 - **Состояние**: Использовать Blazored.LocalStorage для локального хранения
 - **Авторизация**: Компоненты должны учитывать роли пользователей
 - **Уведомления**: Использовать NotificationService для пользовательских уведомлений
+- **Real-time**: Интеграция с SignalR для live updates и уведомлений
+- **Error Handling**: Использовать ErrorHandlingService для обработки ошибок с retry логикой
 
 ## 🎨 Design System
 
@@ -214,19 +224,84 @@
 }
 ```
 
-## 🔔 Notification System
+## 🔔 Notification System v2
 
 ### Обзор
-Реализована комплексная система улучшения UX для ошибок, включающая:
+Реализована комплексная система уведомлений и улучшения UX, включающая:
 
-1. **Toast notifications** - всплывающие уведомления для пользователей
-2. **Retry logic** - автоматический повтор операций
-3. **Debug logs** - специальная страница для суперпользователей
-4. **Enhanced error handling** - детальная обработка ошибок и логирование
+1. **Real-time Notifications** - мгновенные уведомления через SignalR
+2. **Toast notifications** - всплывающие уведомления для пользователей
+3. **Notification Center** - централизованное управление уведомлениями
+4. **Retry logic** - автоматический повтор операций
+5. **Debug logs** - специальная страница для суперпользователей
+6. **Enhanced error handling** - детальная обработка ошибок и логирование
+7. **Audit System** - полное отслеживание действий пользователей
 
 ### Компоненты
 
-#### 1. Toast Notifications
+#### 1. Real-time Notifications (SignalR)
+
+##### NotificationHub
+```csharp
+// Подключение к SignalR Hub
+[Authorize]
+public class NotificationHub : Hub
+{
+    // Управление подключениями пользователей
+    // Группировка по ролям и типам уведомлений
+    // Отслеживание активности в базе данных
+}
+```
+
+##### SignalR Client Integration
+```csharp
+// В Blazor компонентах
+@inject IJSRuntime JSRuntime
+
+private async Task InitializeSignalR()
+{
+    var connection = await JSRuntime.InvokeAsync<IJSObjectReference>(
+        "import", "/js/signalr-connection.js");
+    
+    await connection.InvokeVoidAsync("startConnection", authToken);
+}
+
+// JavaScript интеграция
+const connection = new signalR.HubConnectionBuilder()
+    .withUrl("/notificationHub", {
+        accessTokenFactory: () => token
+    })
+    .build();
+
+connection.on("ReceiveNotification", (notification) => {
+    // Обработка уведомлений
+});
+
+connection.on("InventoryUpdated", (data) => {
+    // Обновление данных инвентаря
+});
+```
+
+##### Типы событий SignalR
+- **ReceiveNotification** — новые уведомления
+- **InventoryUpdated** — обновления инвентаря
+- **UserActivity** — активность других пользователей
+- **SystemAlert** — системные предупреждения
+
+#### 2. Notification Center
+
+##### NotificationCenter.razor
+- Централизованное управление уведомлениями
+- Фильтрация по типам и статусу
+- Массовые операции (отметить все как прочитанные)
+- Интеграция с SignalR для real-time updates
+
+##### NotificationBell.razor
+- Индикатор новых уведомлений
+- Быстрый доступ к Notification Center
+- Анимации и уведомления о новых событиях
+
+#### 3. Toast Notifications
 
 ##### NotificationService
 ```csharp
@@ -294,7 +369,45 @@ var result = await RetryService.ExecuteWithRetryAsync(
 - Автоматическая прокрутка
 - Модальные окна с детальной информацией
 
-#### 4. Enhanced Error Handling
+#### 4. Audit System
+
+##### AuditMiddleware
+```csharp
+// Автоматическое логирование всех HTTP запросов
+public class AuditMiddleware
+{
+    // Извлечение метаданных (IP, User-Agent, время выполнения)
+    // Интеграция с AuditService
+    // Трассировка запросов через RequestId
+}
+```
+
+##### AuditService
+```csharp
+// Логирование изменений с деталями
+await auditService.LogDetailedChangeAsync(
+    entityName: "Product",
+    entityId: "123",
+    action: "CREATE_PRODUCT",
+    actionType: ActionType.Create,
+    entityType: "Product",
+    changes: new { Name = "New Product" },
+    requestId: "req-123",
+    description: "Product created successfully",
+    severity: "INFO",
+    isSuccess: true
+);
+```
+
+##### Audit Features
+- **HTTP Request Tracking** — автоматическое логирование всех запросов
+- **User Activity Logging** — отслеживание действий пользователей
+- **Performance Metrics** — время выполнения запросов
+- **Error Tracking** — детальное логирование ошибок
+- **Request Tracing** — уникальные ID для трассировки запросов
+- **IP and User-Agent Tracking** — информация о клиенте
+
+#### 5. Enhanced Error Handling
 
 ##### ErrorHandlingService
 ```csharp
@@ -315,8 +428,9 @@ await ErrorHandlingService.HandleApiErrorAsync(response, "API Operation");
 ##### GlobalExceptionMiddleware
 - Детальное логирование ошибок с контекстом
 - Понятные пользователю сообщения об ошибках
-- Интеграция с отладочными логами
-- Определение IP клиента
+- Интеграция с отладочными логами и аудитом
+- Определение IP клиента и User-Agent
+- Трассировка через RequestId
 
 ### Использование
 
@@ -325,6 +439,7 @@ await ErrorHandlingService.HandleApiErrorAsync(response, "API Operation");
 @inject INotificationService NotificationService
 @inject IRetryService RetryService
 @inject IErrorHandlingService ErrorHandlingService
+@inject IJSRuntime JSRuntime
 
 @code {
     private async Task LoadData()
@@ -337,11 +452,19 @@ await ErrorHandlingService.HandleApiErrorAsync(response, "API Operation");
             );
             
             NotificationService.ShowSuccess("Data Loaded", $"Loaded {data.Count} items");
+            
+            // Отправить real-time уведомление через SignalR
+            await SendNotificationAsync("Data updated", $"Loaded {data.Count} items");
         }
         catch (Exception ex)
         {
             await ErrorHandlingService.HandleErrorAsync(ex, "Loading data");
         }
+    }
+    
+    private async Task SendNotificationAsync(string title, string message)
+    {
+        await JSRuntime.InvokeVoidAsync("sendNotification", title, message);
     }
 }
 ```
@@ -373,6 +496,49 @@ public class MyApiService
 builder.Services.AddScoped<ILoggingService, LoggingService>();
 builder.Services.AddScoped<IDebugLogsService, DebugLogsService>();
 builder.Services.AddScoped<IErrorHandlingService, ErrorHandlingService>();
+builder.Services.AddScoped<AuditService>();
+builder.Services.AddScoped<RefreshTokenService>();
+
+// SignalR
+builder.Services.AddSignalR(options =>
+{
+    options.EnableDetailedErrors = builder.Environment.IsDevelopment();
+    options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+    options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
+});
+
+// Rate Limiting
+builder.Services.AddRateLimiter(options =>
+{
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+    {
+        var userRole = context.User?.FindFirst(ClaimTypes.Role)?.Value ?? "Anonymous";
+        return RateLimitPartition.GetTokenBucketLimiter(
+            partitionKey: userRole,
+            factory: partitionKey => new TokenBucketRateLimiterOptions
+            {
+                TokenLimit = partitionKey switch
+                {
+                    "Admin" => 1000,
+                    "Manager" => 500,
+                    "User" => 100,
+                    _ => 50
+                },
+                ReplenishmentPeriod = TimeSpan.FromMinutes(1),
+                TokensPerPeriod = partitionKey switch
+                {
+                    "Admin" => 1000,
+                    "Manager" => 500,
+                    "User" => 100,
+                    _ => 50
+                },
+                AutoReplenishment = true
+            });
+    });
+});
+
+// FluentValidation
+builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
 
 // Web проект
 builder.Services.AddScoped<INotificationService, NotificationService>();
@@ -383,65 +549,52 @@ builder.Services.AddScoped<IDebugLogsService, DebugLogsService>();
 ## ⚙️ Port Configuration
 
 ### Обзор
-Все конфигурации портов централизованы в файле `ports.json` в корне проекта. Это устраняет конфликты портов и упрощает изменение портов во всех компонентах.
+Конфигурации портов настраиваются в соответствующих файлах для каждого режима работы.
 
-### Структура файла конфигурации
+### Настройка портов
 
-#### ports.json
+#### Development режим
+Порты настраиваются в `src/Inventory.API/Properties/launchSettings.json`:
+
 ```json
 {
-  "api": {
-    "http": 5000,
-    "https": 7000,
-    "urls": "https://localhost:7000;http://localhost:5000"
-  },
-  "web": {
-    "http": 5001,
-    "https": 7001,
-    "urls": "https://localhost:7001;http://localhost:5001"
-  },
-  "database": {
-    "port": 5432
-  },
-  "cors": {
-    "allowedOrigins": [
-      "http://localhost:5000",
-      "https://localhost:7000",
-      "http://localhost:5001",
-      "https://localhost:7001",
-      "http://10.0.2.2:8080",
-      "capacitor://localhost",
-      "https://yourmobileapp.com"
-    ]
-  },
-  "launchUrls": {
-    "api": "https://localhost:7000",
-    "web": "https://localhost:7001"
+  "profiles": {
+    "http": {
+      "applicationUrl": "http://localhost:5000"
+    },
+    "https": {
+      "applicationUrl": "https://localhost:7000;http://localhost:5000"
+    }
   }
 }
 ```
 
+#### Production режим (Docker)
+Порты настраиваются в `docker-compose.yml`:
+- **Nginx**: 80 (HTTP), 443 (HTTPS)
+- **API**: доступен через nginx reverse proxy
+- **PostgreSQL**: 5432 (только в development)
+
 ### Назначение портов
 - **API Server**: 
-  - HTTP: 5000
-  - HTTPS: 7000
+  - Development HTTP: 5000
+  - Development HTTPS: 7000
+  - Production: через nginx (80/443)
 - **Web Client**: 
-  - HTTP: 5001
-  - HTTPS: 7001
+  - Production: через nginx (80/443)
 - **Database**: 
-  - Port: 5432 (PostgreSQL)
+  - Port: 5432 (PostgreSQL, только development)
 
-### Использование
+### Изменение портов
+Чтобы изменить порты в development режиме, отредактируйте `launchSettings.json`. Для production режима измените конфигурацию в `docker-compose.yml`.
 
-#### Изменение портов
-Чтобы изменить порты, просто отредактируйте файл `ports.json` и обновите нужные значения. Все скрипты и конфигурации автоматически будут использовать новые порты.
-
-#### Скрипты
-Единый скрипт запуска с несколькими режимами:
-- `start-apps.ps1` - Единый запускатель с полным и быстрым режимами
-  - `.\start-apps.ps1` - Полный запуск с проверкой портов
-  - `.\start-apps.ps1 -Quick` - Быстрый запуск без проверок
-  - `.\start-apps.ps1 -Help` - Показать справку по использованию
+#### Deploy скрипты
+Запуск через deploy скрипты с различными режимами:
+- `deploy\quick-deploy.ps1` - Быстрый запуск (рекомендуется)
+  - `.\deploy\quick-deploy.ps1` - Быстрый запуск через deploy
+  - `.\deploy\deploy-all.ps1` - Полное развертывание
+  - `docker-compose down` - Остановка всех сервисов
+  - `docker-compose logs -f` - Просмотр логов
 
 #### Файлы конфигурации
 Следующие файлы автоматически обновляются для использования централизованной конфигурации:
@@ -456,17 +609,132 @@ builder.Services.AddScoped<IDebugLogsService, DebugLogsService>();
 4. **Согласованность**: Все скрипты и конфигурации остаются синхронизированными
 5. **Документация**: Четкое назначение портов и использование
 
+## 🧪 Тестирование
+
+### Стратегия тестирования
+- **Unit Tests** — тестирование бизнес-логики и сервисов
+- **Integration Tests** — тестирование API endpoints с реальной БД
+- **Component Tests** — тестирование Blazor компонентов
+- **Coverage** — минимум 80% покрытия для критически важного кода
+
+### Инструменты
+- **xUnit** — основной фреймворк тестирования
+- **Moq** — мокирование зависимостей
+- **FluentAssertions** — читаемые утверждения
+- **bUnit** — тестирование Blazor компонентов
+- **Microsoft.AspNetCore.Mvc.Testing** — интеграционные тесты
+
+### Структура тестов
+```
+test/
+├── Inventory.UnitTests/          # Unit тесты
+│   ├── Controllers/             # Тесты контроллеров
+│   ├── Services/                # Тесты сервисов
+│   └── Models/                  # Тесты моделей
+├── Inventory.IntegrationTests/   # Интеграционные тесты
+│   └── Controllers/             # Тесты API endpoints
+└── Inventory.ComponentTests/     # Тесты компонентов
+    └── Components/              # Тесты Blazor компонентов
+```
+
+### Примеры тестов
+
+#### Unit Test
+```csharp
+[Fact]
+public async Task GetProductById_ShouldReturnProduct_WhenProductExists()
+{
+    // Arrange
+    var productId = 1;
+    var expectedProduct = new ProductDto { Id = productId, Name = "Test Product" };
+    _mockService.Setup(s => s.GetProductByIdAsync(productId))
+                .ReturnsAsync(expectedProduct);
+    
+    // Act
+    var result = await _controller.GetProduct(productId);
+    
+    // Assert
+    result.Should().NotBeNull();
+    result.Value.Should().BeEquivalentTo(expectedProduct);
+}
+```
+
+#### Integration Test
+```csharp
+[Fact]
+public async Task GetProducts_ShouldReturnProducts_WhenAuthenticated()
+{
+    // Arrange
+    var client = _factory.CreateClient();
+    var token = await GetAuthTokenAsync();
+    client.DefaultRequestHeaders.Authorization = 
+        new AuthenticationHeaderValue("Bearer", token);
+    
+    // Act
+    var response = await client.GetAsync("/api/products");
+    
+    // Assert
+    response.StatusCode.Should().Be(HttpStatusCode.OK);
+    var products = await response.Content.ReadFromJsonAsync<ApiResponse<List<ProductDto>>>();
+    products.Should().NotBeNull();
+    products.Success.Should().BeTrue();
+}
+```
+
+#### Component Test
+```csharp
+[Fact]
+public void ProductList_ShouldDisplayProducts_WhenProductsExist()
+{
+    // Arrange
+    var products = new List<ProductDto>
+    {
+        new() { Id = 1, Name = "Product 1" },
+        new() { Id = 2, Name = "Product 2" }
+    };
+    
+    using var ctx = new TestContext();
+    ctx.Services.AddMockHttpClient();
+    
+    // Act
+    var component = ctx.RenderComponent<ProductList>(parameters => 
+        parameters.Add(p => p.Products, products));
+    
+    // Assert
+    component.FindAll(".product-item").Should().HaveCount(2);
+    component.Find(".product-item").TextContent.Should().Contain("Product 1");
+}
+```
+
+### Запуск тестов
+```powershell
+# Все тесты
+dotnet test
+
+# Конкретный проект
+dotnet test --project test/Inventory.UnitTests
+
+# С покрытием кода
+dotnet test --collect:"XPlat Code Coverage"
+
+# Через PowerShell скрипт
+.\test\run-tests.ps1
+.\test\run-tests.ps1 -Coverage
+```
+
 ## 🚫 Специфические ограничения
 
 - **НЕ создавать**: Отдельные .css файлы для компонентов (использовать логические подфайлы в design-system.css)
 - **НЕ использовать**: `cd "путь"; dotnet build` - только `dotnet build --project 'путь'`
-- **НЕ создавать**: Временные файлы в корне проекта - ТОЛЬКО в `.ai-agents/`
+- **НЕ создавать**: Временные файлы в корне проекта - ТОЛЬКО в `.ai-temp/`
 - **НЕ создавать**: CSS файлы в Inventory.Shared - ТОЛЬКО в Inventory.UI для переиспользуемых компонентов
 - **ОБЯЗАТЕЛЬНО**: Проверять соответствие DOCUMENTATION.md и README.md
 - **ВСЕГДА**: Предлагать миграции при изменении моделей БД
 - **ТОЛЬКО**: Администраторы могут управлять IsActive полями
 - **ЗАПРЕЩЕНО**: Использовать InMemory базу данных в любом виде (UseInMemoryDatabase, InMemoryDatabase и т.д.)
 - **ОБЯЗАТЕЛЬНО**: Использовать только PostgreSQL для всех тестов и разработки, но не production а test БД
+- **ОБЯЗАТЕЛЬНО**: Писать тесты для всех новых функций и API endpoints
+- **ОБЯЗАТЕЛЬНО**: Использовать FluentAssertions для читаемых утверждений в тестах
 
 ## 🔄 Primary конструкторы (ПРИМЕРЫ)
 
@@ -515,13 +783,43 @@ public class AuditLog(
 - Слишком много параметров (более 7-8)
 - Primary конструкторы без документации
 
+## 🚀 Новые возможности v2
+
+### Real-time Features
+- **SignalR Integration** — мгновенные уведомления и live updates
+- **Notification Center** — централизованное управление уведомлениями
+- **Collaborative Features** — работа нескольких пользователей одновременно
+- **Live Dashboard** — обновления статистики в реальном времени
+
+### Enhanced Security
+- **JWT with Refresh Tokens** — улучшенная система аутентификации
+- **Rate Limiting** — защита от злоупотреблений с настройкой по ролям
+- **Comprehensive Auditing** — полное отслеживание действий пользователей
+- **Input Validation** — валидация через FluentValidation
+
+### Developer Experience
+- **Centralized Configuration** — управление через launchSettings.json и docker-compose
+- **Package Version Management** — централизованные версии пакетов
+- **Comprehensive Testing** — unit, integration, component тесты
+- **Auto-generated Documentation** — Swagger/OpenAPI
+- **Enhanced Logging** — структурированное логирование с контекстом
+
+### Performance & Monitoring
+- **Connection Pooling** — эффективное управление соединениями с БД
+- **Retry Mechanisms** — автоматические повторы при сбоях
+- **Performance Tracking** — мониторинг времени выполнения запросов
+- **Error Tracking** — централизованная обработка ошибок
+- **Health Checks** — проверка состояния системы
+
 ## 📚 Дополнительные ресурсы
 
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** — архитектура системы
 - **[API.md](API.md)** — документация API
 - **[TESTING.md](TESTING.md)** — руководство по тестированию
+- **[NOTIFICATION_SYSTEM.md](NOTIFICATION_SYSTEM.md)** — система уведомлений
+- **[SIGNALR_NOTIFICATIONS.md](SIGNALR_NOTIFICATIONS.md)** — real-time коммуникация
 - **[css/README.md](css/README.md)** — CSS архитектура
 
 ---
 
-> 💡 **Совет**: Следуйте принципам из `.ai-agent-prompts` для обеспечения качества и согласованности кода.
+> 💡 **Совет**: Следуйте принципам из `.ai-agent-prompts` для обеспечения качества и согласованности кода. Используйте новые возможности v2 для создания современного enterprise-уровня приложения.

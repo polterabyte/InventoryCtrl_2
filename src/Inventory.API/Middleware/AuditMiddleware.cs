@@ -34,7 +34,7 @@ public class AuditMiddleware
             }
 
             // Add request ID to response headers for tracing
-            context.Response.Headers.Add("X-Request-ID", requestId);
+            context.Response.Headers["X-Request-ID"] = requestId;
 
             // Log the request start
             _logger.LogDebug("Auditing request: {Method} {Path} [RequestId: {RequestId}]", 
