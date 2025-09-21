@@ -20,7 +20,7 @@ param(
     [switch]$SkipVapidCheck,
     
     [Parameter(Mandatory=$false)]
-    [int]$HealthCheckTimeout = 30
+    [int]$HealthCheckTimeout = 10
 )
 
 # Function to generate standardized file names

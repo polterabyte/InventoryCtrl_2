@@ -4,7 +4,15 @@
 
 ## 🔐 Обзор
 
-Система использует самоподписанные SSL сертификаты для разработки и тестирования. В production рекомендуется использовать сертификаты от доверенного CA.
+Система использует самоподписанные SSL сертификаты для разработки и тестирования. В production рекомендуется использовать сертификаты от доверенного CA (например, Let's Encrypt). Система включает в себя автоматизированное управление сертификатами через API и PowerShell скрипты.
+
+## 🚀 Новые возможности
+
+- **API для управления сертификатами** - RESTful API для создания, обновления и удаления сертификатов
+- **Автоматическая генерация** - Улучшенные PowerShell скрипты с поддержкой различных окружений
+- **Мониторинг здоровья** - Отслеживание состояния сертификатов и уведомления об истечении
+- **Поддержка Let's Encrypt** - Автоматическое получение и обновление сертификатов
+- **Валидация сертификатов** - Проверка корректности и безопасности сертификатов
 
 ## 📁 Структура сертификатов
 
@@ -24,15 +32,33 @@ deploy/nginx/ssl/
 
 ## 🚀 Автоматическая генерация
 
-### Использование скрипта
+### Использование улучшенного скрипта
 ```powershell
-.\generate-ssl-warehouse.ps1
+# Генерация для всех окружений
+.\scripts\Generate-SSLCertificates.ps1
+
+# Генерация для конкретного окружения
+.\scripts\Generate-SSLCertificates.ps1 -Environment production
+
+# Генерация с Let's Encrypt
+.\scripts\Generate-SSLCertificates.ps1 -UseLetsEncrypt -Email admin@warehouse.cuby
+
+# Генерация с принудительной перезаписью
+.\scripts\Generate-SSLCertificates.ps1 -Force
 ```
 
 Скрипт создаст сертификаты для всех доменов:
 - `warehouse.cuby`
 - `staging.warehouse.cuby`
 - `test.warehouse.cuby`
+- `localhost`
+- `127.0.0.1`
+- `192.168.139.96`
+
+### Использование старого скрипта (для совместимости)
+```powershell
+.\generate-ssl-warehouse.ps1
+```
 
 ## 🔧 Ручная генерация
 
@@ -147,8 +173,108 @@ cd /path/to/project
 docker restart inventory-nginx-staging
 ```
 
+## 🔌 API для управления сертификатами
+
+### Получение всех сертификатов
+```http
+GET /api/SSLCertificate
+Authorization: Bearer <token>
+```
+
+### Получение сертификата по домену
+```http
+GET /api/SSLCertificate/{domain}
+Authorization: Bearer <token>
+```
+
+### Генерация нового сертификата
+```http
+POST /api/SSLCertificate/generate
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "domain": "example.com",
+  "email": "admin@example.com",
+  "useLetsEncrypt": false,
+  "keySize": 4096,
+  "validityDays": 365,
+  "subjectAlternativeNames": ["www.example.com", "api.example.com"],
+  "environment": "production"
+}
+```
+
+### Обновление сертификата
+```http
+POST /api/SSLCertificate/{domain}/renew
+Authorization: Bearer <token>
+```
+
+### Удаление сертификата
+```http
+DELETE /api/SSLCertificate/{domain}
+Authorization: Bearer <token>
+```
+
+### Проверка здоровья сертификатов
+```http
+GET /api/SSLCertificate/health
+Authorization: Bearer <token>
+```
+
+### Валидация сертификата
+```http
+POST /api/SSLCertificate/{domain}/validate
+Authorization: Bearer <token>
+```
+
+## 🔧 Конфигурация
+
+### appsettings.json
+```json
+{
+  "SSL": {
+    "Path": "deploy/nginx/ssl",
+    "DefaultKeySize": 4096,
+    "DefaultValidityDays": 365,
+    "AutoRenewalDays": 30,
+    "LetsEncrypt": {
+      "Enabled": false,
+      "Email": "admin@warehouse.cuby",
+      "Staging": false
+    }
+  }
+}
+```
+
+## 🧪 Тестирование
+
+### Запуск тестов
+```powershell
+# Unit тесты
+dotnet test test/Inventory.UnitTests/Services/SSLCertificateServiceTests.cs
+
+# Integration тесты
+dotnet test test/Inventory.IntegrationTests/Controllers/SSLCertificateControllerTests.cs
+
+# Все тесты
+dotnet test
+```
+
+### Тестирование API
+```bash
+# Получение всех сертификатов
+curl -H "Authorization: Bearer <token>" https://localhost:7000/api/SSLCertificate
+
+# Генерация сертификата
+curl -X POST -H "Authorization: Bearer <token>" -H "Content-Type: application/json" \
+  -d '{"domain":"test.com","useLetsEncrypt":false}' \
+  https://localhost:7000/api/SSLCertificate/generate
+```
+
 ## 📚 Дополнительные ресурсы
 
 - [OpenSSL Documentation](https://www.openssl.org/docs/)
 - [Let's Encrypt Documentation](https://letsencrypt.org/docs/)
 - [Nginx SSL Configuration](https://nginx.org/en/docs/http/configuring_https_servers.html)
+- [ASP.NET Core SSL Configuration](https://docs.microsoft.com/en-us/aspnet/core/security/enforcing-ssl)

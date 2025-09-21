@@ -48,6 +48,12 @@ public static class ServiceCollectionExtensions
         services.AddScoped<INotificationRuleEngine, NotificationRuleEngine>();
         return services;
     }
+    
+    public static IServiceCollection AddSSLServices(this IServiceCollection services)
+    {
+        services.AddScoped<ISSLCertificateService, SSLCertificateService>();
+        return services;
+    }
 }
 
 public static class WebApplicationExtensions

@@ -127,6 +127,16 @@ builder.Services.AddAuthentication(options =>
                 context.Token = accessToken;
             }
             
+            // Also check Authorization header for SignalR
+            if (string.IsNullOrEmpty(accessToken))
+            {
+                var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+                if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer "))
+                {
+                    context.Token = authHeader.Substring("Bearer ".Length).Trim();
+                }
+            }
+            
             return Task.CompletedTask;
         },
         OnAuthenticationFailed = context =>
@@ -158,6 +168,18 @@ builder.Services.AddAuthentication(options =>
 // CORS configuration
 builder.Services.AddCorsConfiguration();
 
+// Additional CORS configuration for SignalR
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("SignalRPolicy", policy =>
+    {
+        policy.SetIsOriginAllowed(origin => true)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
 // Add custom services
 builder.Services.AddScoped<ILoggingService, LoggingService>();
 builder.Services.AddScoped<IDebugLogsService, DebugLogsService>();
@@ -173,6 +195,9 @@ builder.Services.AddAuditServices();
 // Add notification services
 builder.Services.AddNotificationServices();
 
+// Add SSL services
+builder.Services.AddSSLServices();
+
 // Add SignalR
 builder.Services.AddSignalR(options =>
 {
@@ -180,6 +205,8 @@ builder.Services.AddSignalR(options =>
     options.KeepAliveInterval = TimeSpan.FromSeconds(15);
     options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
     options.HandshakeTimeout = TimeSpan.FromSeconds(15);
+    options.MaximumReceiveMessageSize = 1024 * 1024; // 1MB
+    options.StreamBufferCapacity = 10;
 });
 
 // Add SignalR notification service
@@ -336,6 +363,9 @@ app.UseMiddleware<AuditMiddleware>();
 // Configure CORS with port configuration
 app.ConfigureCors();
 
+// Apply SignalR CORS policy
+app.UseCors("SignalRPolicy");
+
 // Add rate limiting
 app.UseRateLimiter();
 
@@ -345,7 +375,13 @@ app.UseAuthorization();
 app.MapControllers();
 
 // Map SignalR hubs
-app.MapHub<NotificationHub>("/notificationHub");
+app.MapHub<NotificationHub>("/notificationHub", options =>
+{
+    options.Transports = Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets;
+    options.CloseOnAuthenticationExpiration = true;
+    options.ApplicationMaxBufferSize = 1024 * 1024; // 1MB
+    options.TransportMaxBufferSize = 1024 * 1024; // 1MB
+});
 
 // Map Blazor WebAssembly fallback
 app.MapFallbackToFile("index.html");
