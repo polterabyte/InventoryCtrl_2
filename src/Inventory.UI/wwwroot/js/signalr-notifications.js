@@ -47,14 +47,19 @@ class SignalRNotificationService {
             console.log('API Base URL:', apiBaseUrl);
             console.log('Access Token:', accessToken ? 'Present' : 'Missing');
             
-            // Ensure we use the correct protocol (ws:// for http, wss:// for https)
-            const hubUrl = `${apiBaseUrl}/notificationHub?access_token=${accessToken}`;
+            // Build hub URL robustly: collapse duplicate /notificationHub and normalize
+            const input = (apiBaseUrl || '').trim();
+            const normalized = input
+                .replace(/(\/notificationHub)+(\/)?$/i, '')
+                .replace(/\/api(\/)?$/i, '')
+                .replace(/\/+$/, '');
+            const hubUrl = `${normalized}/notificationHub?access_token=${accessToken}`;
             console.log('Hub URL:', hubUrl);
 
             this.connection = new signalR.HubConnectionBuilder()
                 .withUrl(hubUrl, {
-                    skipNegotiation: true,
-                    transport: signalR.HttpTransportType.WebSockets
+                    skipNegotiation: false,
+                    transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.ServerSentEvents | signalR.HttpTransportType.LongPolling
                 })
                 .withAutomaticReconnect({
                     nextRetryDelayInMilliseconds: (retryContext) => {
