@@ -12,34 +12,41 @@
         <div class="reference-data-widget">
             <div class="widget-header">
                 <h3>@Title</h3>
-                <div class="widget-actions">
-                    <button class="btn btn-primary btn-sm" @onclick="ShowCreateModal">
-                        <i class="fas fa-plus"></i> Add New
-                    </button>
-                    <button class="btn btn-outline-secondary btn-sm" @onclick="RefreshData">
-                        <i class="fas fa-refresh"></i> Refresh
-                    </button>
-                </div>
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                    <RadzenButton Text="Add New Item"
+                                 Icon="add"
+                                 ButtonStyle="ButtonStyle.Primary"
+                                 Size="ButtonSize.Small"
+                                 @onclick="ShowCreateModal" />
+                    <RadzenButton Text="Refresh"
+                                 Icon="refresh"
+                                 ButtonStyle="ButtonStyle.Secondary"
+                                 Variant="Variant.Outlined"
+                                 Size="ButtonSize.Small"
+                                 @onclick="RefreshData" />
+                </RadzenStack>
             </div>
 
             <div class="widget-filters">
                 <div class="row">
                     <div class="col-md-4">
-                        <input type="text" class="form-control" placeholder="Search..." @bind="searchTerm" @onkeyup="OnSearchKeyUp" />
+                        <RadzenTextBox @bind-Value="searchTerm" @bind-Value:after="@OnSearchKeyUp" 
+                                       Placeholder="Search..." Name="searchTerm" />
                     </div>
                     <div class="col-md-2">
-                        <select class="form-select" @bind="isActiveFilter">
-                            <option value="">All</option>
-                            <option value="true">Active</option>
-                            <option value="false">Inactive</option>
-                        </select>
+                        <RadzenDropDown @bind-Value="isActiveFilter" 
+                                       Data="@statusOptions" 
+                                       ValueProperty="Value" 
+                                       TextProperty="Text"
+                                       Placeholder="All"
+                                       Name="isActiveFilter" />
                     </div>
                     <div class="col-md-2">
-                        <select class="form-select" @bind="pageSize">
-                            <option value="10">10 per page</option>
-                            <option value="25">25 per page</option>
-                            <option value="50">50 per page</option>
-                        </select>
+                        <RadzenDropDown @bind-Value="pageSize" 
+                                       Data="@pageSizeOptions" 
+                                       ValueProperty="Value" 
+                                       TextProperty="Text"
+                                       Name="pageSize" />
                     </div>
                 </div>
             </div>
@@ -55,51 +62,52 @@
                 }
                 else if (data?.Any() == true)
                 {
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Symbol</th>
-                                    <th>Description</th>
-                                    <th>Status</th>
-                                    <th>Created</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var item in data)
-                                {
-                                    <tr>
-                                        <td>@item.Name</td>
-                                        <td><span class="badge bg-secondary">@item.Symbol</span></td>
-                                        <td>@(item.Description ?? "-")</td>
-                                        <td>
-                                            @if (item.IsActive)
-                                            {
-                                                <span class="badge bg-success">Active</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge bg-secondary">Inactive</span>
-                                            }
-                                        </td>
-                                        <td>@item.CreatedAt.ToString("MMM dd, yyyy")</td>
-                                        <td>
-                                            <div class="btn-group btn-group-sm">
-                                                <button class="btn btn-outline-primary" @onclick="() => EditItem(item)" title="Edit">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                <button class="btn btn-outline-danger" @onclick="() => DeleteItem(item)" title="Delete">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
+                    <RadzenDataGrid Data="@data" TItem="UnitOfMeasureDto" AllowPaging="true" PageSize="10" 
+                                   AllowSorting="true" FilterMode="FilterMode.Advanced" 
+                                   class="rz-datagrid-custom">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="UnitOfMeasureDto" Property="Name" Title="Name" Width="150px" />
+                            <RadzenDataGridColumn TItem="UnitOfMeasureDto" Property="Symbol" Title="Symbol" Width="100px">
+                                <Template Context="item">
+                                    <span class="badge bg-secondary">@item.Symbol</span>
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="UnitOfMeasureDto" Property="Description" Title="Description" Width="200px">
+                                <Template Context="item">
+                                    @(item.Description ?? "-")
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="UnitOfMeasureDto" Property="IsActive" Title="Status" Width="100px">
+                                <Template Context="item">
+                                    @if (item.IsActive)
+                                    {
+                                        <span class="badge bg-success">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    }
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="UnitOfMeasureDto" Property="CreatedAt" Title="Created" Width="120px">
+                                <Template Context="item">
+                                    @item.CreatedAt.ToString("MMM dd, yyyy")
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="UnitOfMeasureDto" Title="Actions" Width="120px" Sortable="false" Filterable="false">
+                                <Template Context="item">
+                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
+                                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" 
+                                                     Variant="Variant.Outlined" Size="ButtonSize.Small"
+                                                     @onclick="() => EditItem(item)" title="Edit" />
+                                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" 
+                                                     Variant="Variant.Outlined" Size="ButtonSize.Small"
+                                                     @onclick="() => DeleteItem(item)" title="Delete" />
+                                    </RadzenStack>
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
 
                     @if (totalPages > 1)
                     {
@@ -147,43 +155,45 @@
                         <button type="button" class="btn-close" @onclick="CloseModal"></button>
                     </div>
                     <div class="modal-body">
-                        <EditForm Model="@currentItem" OnValidSubmit="@SaveItem" Context="editFormContext">
+                        <RadzenTemplateForm Data="@currentItem" Submit="@(async (CreateUnitOfMeasureDto model) => await SaveItem())">
                             <DataAnnotationsValidator />
                             <div class="mb-3">
-                                <label class="form-label">Name *</label>
-                                <InputText class="form-control" @bind-Value="currentItem.Name" />
-                                <ValidationMessage For="@(() => currentItem.Name)" />
+                                <RadzenFormField Text="Name *" class="rz-mb-3">
+                                    <RadzenTextBox @bind-Value="currentItem.Name" Name="referenceDataName" />
+                                    <RadzenRequiredValidator Component="referenceDataName" Text="Name is required" />
+                                </RadzenFormField>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Symbol *</label>
-                                <InputText class="form-control" @bind-Value="currentItem.Symbol" />
-                                <ValidationMessage For="@(() => currentItem.Symbol)" />
+                                <RadzenFormField Text="Symbol *" class="rz-mb-3">
+                                    <RadzenTextBox @bind-Value="currentItem.Symbol" Name="referenceDataSymbol" />
+                                    <RadzenRequiredValidator Component="referenceDataSymbol" Text="Symbol is required" />
+                                </RadzenFormField>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Description</label>
-                                <InputTextArea class="form-control" @bind-Value="currentItem.Description" rows="3" />
-                                <ValidationMessage For="@(() => currentItem.Description)" />
+                                <RadzenFormField Text="Description" class="rz-mb-3">
+                                    <RadzenTextArea @bind-Value="currentItem.Description" Rows="3" Name="referenceDataDescription" />
+                                </RadzenFormField>
                             </div>
                             @if (isEditing)
                             {
                                 <div class="mb-3">
-                                    <div class="form-check">
-                                        <InputCheckbox class="form-check-input" @bind-Value="isActive" />
-                                        <label class="form-check-label">Active</label>
-                                    </div>
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center">
+                                        <RadzenCheckBox @bind-Value="isActive" Name="isActive" />
+                                        <RadzenLabel Text="Active" For="isActive" />
+                                    </RadzenStack>
                                 </div>
                             }
-                        </EditForm>
+                        </RadzenTemplateForm>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
-                        <button type="button" class="btn btn-primary" @onclick="SaveItem" disabled="@isSaving">
-                            @if (isSaving)
-                            {
-                                <span class="spinner-border spinner-border-sm me-2"></span>
-                            }
-                            @(isEditing ? "Update" : "Create")
-                        </button>
+                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                            <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" 
+                                         Variant="Variant.Outlined" @onclick="CloseModal" />
+                            <RadzenButton Text="@(isSaving ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update" : "Create"))" 
+                                         ButtonStyle="ButtonStyle.Primary" 
+                                         @onclick="SaveItem" 
+                                         Disabled="@isSaving" />
+                        </RadzenStack>
                     </div>
                 </div>
             </div>
@@ -216,6 +226,32 @@
     private CreateUnitOfMeasureDto currentItem = new();
     private UnitOfMeasureDto? selectedItem = null;
     private bool isActive = true;
+
+    private List<StatusOption> statusOptions = new()
+    {
+        new() { Value = "", Text = "All" },
+        new() { Value = "true", Text = "Active" },
+        new() { Value = "false", Text = "Inactive" }
+    };
+
+    private List<PageSizeOption> pageSizeOptions = new()
+    {
+        new() { Value = 10, Text = "10 per page" },
+        new() { Value = 25, Text = "25 per page" },
+        new() { Value = 50, Text = "50 per page" }
+    };
+
+    public class StatusOption
+    {
+        public string Value { get; set; } = "";
+        public string Text { get; set; } = "";
+    }
+
+    public class PageSizeOption
+    {
+        public int Value { get; set; }
+        public string Text { get; set; } = "";
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -263,13 +299,10 @@
         await LoadData();
     }
 
-    private async Task OnSearchKeyUp(KeyboardEventArgs e)
+    private async Task OnSearchKeyUp()
     {
-        if (e.Key == "Enter")
-        {
-            currentPage = 1;
-            await LoadData();
-        }
+        currentPage = 1;
+        await LoadData();
     }
 
     private async Task ChangePage(int page)

@@ -10,80 +10,59 @@
 
 <h3>@Title</h3>
 
-<EditForm Model="productModel" OnValidSubmit="HandleSubmit">
+    <RadzenTemplateForm Data="productModel" Submit="@(async (CreateProductDto model) => await HandleSubmit())">
     <DataAnnotationsValidator />
     <ValidationSummary />
     
     <div class="row">
         <div class="col-md-6">
             <div class="mb-3">
-                <label class="form-label">Название товара:</label>
-                <InputText class="form-control" @bind-Value="productModel.Name" />
+                <RadzenFormField Text="Название товара:" class="rz-mb-3">
+                    <RadzenTextBox @bind-Value="productModel.Name" Name="productName" />
+                    <RadzenRequiredValidator Component="productName" Text="Название товара обязательно" />
+                </RadzenFormField>
             </div>
         </div>
         <div class="col-md-6">
             <div class="mb-3">
-                <label class="form-label">SKU:</label>
-                <InputText class="form-control" @bind-Value="productModel.SKU" />
+                <RadzenFormField Text="SKU:" class="rz-mb-3">
+                    <RadzenTextBox @bind-Value="productModel.SKU" Name="productSku" />
+                    <RadzenRequiredValidator Component="productSku" Text="SKU обязательно" />
+                </RadzenFormField>
             </div>
         </div>
     </div>
 
     <div class="mb-3">
-        <label class="form-label">Описание:</label>
-        <InputTextArea class="form-control" @bind-Value="productModel.Description" rows="3" />
+        <RadzenFormField Text="Описание:" class="rz-mb-3">
+            <RadzenTextArea @bind-Value="productModel.Description" Rows="3" Name="description" />
+        </RadzenFormField>
     </div>
 
     <div class="row">
         <div class="col-md-6">
             <div class="mb-3">
-                <label class="form-label">Категория:</label>
-                <InputSelect class="form-select" @bind-Value="productModel.CategoryId">
-                    <option value="">Выберите категорию</option>
-                    @foreach (var category in categories)
-                    {
-                        <option value="@category.Id">@category.Name</option>
-                    }
-                </InputSelect>
+                <RadzenFormField Text="Категория:" class="rz-mb-3">
+                    <RadzenDropDown @bind-Value="productModel.CategoryId" 
+                                   Data="@categories" 
+                                   ValueProperty="Id" 
+                                   TextProperty="Name"
+                                   Placeholder="Выберите категорию"
+                                   Name="categoryId" />
+                </RadzenFormField>
             </div>
         </div>
         <div class="col-md-6">
             <div class="mb-3">
-                <label class="form-label">Производитель:</label>
-                <InputSelect class="form-select" @bind-Value="productModel.ManufacturerId" @onchange="OnManufacturerChanged">
-                    <option value="">Выберите производителя</option>
-                    @foreach (var manufacturer in manufacturers)
-                    {
-                        <option value="@manufacturer.Id">@manufacturer.Name</option>
-                    }
-                </InputSelect>
-            </div>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="col-md-6">
-            <div class="mb-3">
-                <label class="form-label">Модель товара:</label>
-                <InputSelect class="form-select" @bind-Value="productModel.ProductModelId">
-                    <option value="">Выберите модель</option>
-                    @foreach (var model in productModels)
-                    {
-                        <option value="@model.Id">@model.Name</option>
-                    }
-                </InputSelect>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="mb-3">
-                <label class="form-label">Группа товара:</label>
-                <InputSelect class="form-select" @bind-Value="productModel.ProductGroupId">
-                    <option value="">Выберите группу</option>
-                    @foreach (var group in productGroups)
-                    {
-                        <option value="@group.Id">@group.Name</option>
-                    }
-                </InputSelect>
+                <RadzenFormField Text="Производитель:" class="rz-mb-3">
+                    <RadzenDropDown @bind-Value="productModel.ManufacturerId" 
+                                   @bind-Value:after="@OnManufacturerChanged"
+                                   Data="@manufacturers" 
+                                   ValueProperty="Id" 
+                                   TextProperty="Name"
+                                   Placeholder="Выберите производителя"
+                                   Name="manufacturerId" />
+                </RadzenFormField>
             </div>
         </div>
     </div>
@@ -91,25 +70,26 @@
     <div class="row">
         <div class="col-md-6">
             <div class="mb-3">
-                <label class="form-label">Единица измерения:</label>
-                <InputSelect class="form-select" @bind-Value="productModel.UnitOfMeasureId">
-                    <option value="">Выберите единицу измерения</option>
-                    @if (unitOfMeasures != null)
-                    {
-                        @foreach (var unit in unitOfMeasures)
-                        {
-                            <option value="@unit.Id">@unit.Name (@unit.Symbol)</option>
-                        }
-                    }
-                </InputSelect>
+                <RadzenFormField Text="Модель товара:" class="rz-mb-3">
+                    <RadzenDropDown @bind-Value="productModel.ProductModelId" 
+                                   Data="@productModels" 
+                                   ValueProperty="Id" 
+                                   TextProperty="Name"
+                                   Placeholder="Выберите модель"
+                                   Name="productModelId" />
+                </RadzenFormField>
             </div>
         </div>
         <div class="col-md-6">
             <div class="mb-3">
-                <div class="form-check mt-4">
-                    <InputCheckbox class="form-check-input" @bind-Value="productModel.IsActive" />
-                    <label class="form-check-label">Активный товар</label>
-                </div>
+                <RadzenFormField Text="Группа товара:" class="rz-mb-3">
+                    <RadzenDropDown @bind-Value="productModel.ProductGroupId" 
+                                   Data="@productGroups" 
+                                   ValueProperty="Id" 
+                                   TextProperty="Name"
+                                   Placeholder="Выберите группу"
+                                   Name="productGroupId" />
+                </RadzenFormField>
             </div>
         </div>
     </div>
@@ -117,38 +97,68 @@
     <div class="row">
         <div class="col-md-6">
             <div class="mb-3">
-                <label class="form-label">Минимальный остаток:</label>
-                <InputNumber class="form-control" @bind-Value="productModel.MinStock" />
+                <RadzenFormField Text="Единица измерения:" class="rz-mb-3">
+                    <RadzenDropDown @bind-Value="productModel.UnitOfMeasureId" 
+                                   Data="@unitOfMeasures" 
+                                   ValueProperty="Id" 
+                                   TextProperty="Name"
+                                   Placeholder="Выберите единицу измерения"
+                                   Name="unitOfMeasureId" />
+                </RadzenFormField>
             </div>
         </div>
         <div class="col-md-6">
             <div class="mb-3">
-                <label class="form-label">Максимальный остаток:</label>
-                <InputNumber class="form-control" @bind-Value="productModel.MaxStock" />
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" class="rz-mt-4">
+                    <RadzenCheckBox @bind-Value="productModel.IsActive" Name="isActive" />
+                    <RadzenLabel Text="Активный товар" For="isActive" />
+                </RadzenStack>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="mb-3">
+                <RadzenFormField Text="Минимальный остаток:" class="rz-mb-3">
+                    <RadzenNumeric @bind-Value="productModel.MinStock" Name="minStock" />
+                </RadzenFormField>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="mb-3">
+                <RadzenFormField Text="Максимальный остаток:" class="rz-mb-3">
+                    <RadzenNumeric @bind-Value="productModel.MaxStock" Name="maxStock" />
+                </RadzenFormField>
             </div>
         </div>
     </div>
 
     <div class="mb-3">
-        <label class="form-label">Примечание:</label>
-        <InputTextArea class="form-control" @bind-Value="productModel.Note" rows="2" />
+        <RadzenFormField Text="Примечание:" class="rz-mb-3">
+            <RadzenTextArea @bind-Value="productModel.Note" Rows="2" Name="note" />
+        </RadzenFormField>
     </div>
 
     <div class="mb-3">
-        <button type="submit" class="btn btn-primary" disabled="@isLoading">
-            @if (isLoading)
-            {
-                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-            }
-            @SubmitButtonText
-        </button>
-        <button type="button" class="btn btn-secondary ms-2" @onclick="OnCancel">Отмена</button>
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+            <RadzenButton Text="@(isLoading ? "Сохранение..." : SubmitButtonText)" 
+                         ButtonStyle="ButtonStyle.Primary" 
+                         ButtonType="ButtonType.Submit" 
+                         Disabled="@isLoading" />
+            <RadzenButton Text="Отмена" 
+                         ButtonStyle="ButtonStyle.Light" 
+                         Variant="Variant.Outlined" 
+                         @onclick="OnCancel" />
+        </RadzenStack>
     </div>
-</EditForm>
+</RadzenTemplateForm>
 
 @if (!string.IsNullOrEmpty(errorMessage))
 {
-    <div class="alert alert-danger" role="alert">@errorMessage</div>
+    <RadzenAlert AlertStyle="AlertStyle.Danger" ShowIcon="true" class="rz-mt-3">
+        @errorMessage
+    </RadzenAlert>
 }
 
 @code {
@@ -195,13 +205,13 @@
         }
     }
 
-    private async Task OnManufacturerChanged(ChangeEventArgs e)
+    private async Task OnManufacturerChanged()
     {
-        if (int.TryParse(e.Value?.ToString(), out int manufacturerId) && manufacturerId > 0)
+        if (productModel.ManufacturerId > 0)
         {
             try
             {
-                productModels = await ProductModelService.GetProductModelsByManufacturerAsync(manufacturerId);
+                productModels = await ProductModelService.GetProductModelsByManufacturerAsync(productModel.ManufacturerId);
                 productModel.ProductModelId = 0; // Reset model selection
                 StateHasChanged();
             }

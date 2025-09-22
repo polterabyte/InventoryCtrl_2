@@ -8,7 +8,7 @@
 @inject IAuthenticationService AuthenticationService
 
 <AuthorizeView>
-    <Authorized>
+    <Authorized Context="authContext">
         <div class="text-center">
             <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Redirecting...</span>
@@ -16,7 +16,7 @@
             <p class="mt-3 text-muted">You are already logged in. Redirecting...</p>
         </div>
     </Authorized>
-    <NotAuthorized Context="loginContext">
+    <NotAuthorized Context="authContext">
         <div class="text-center mb-5">
             <h2 class="fw-bold text-primary">Inventory Control System</h2>
             <p class="lead text-muted">Manage your inventory efficiently</p>
@@ -32,72 +32,51 @@
                                 <p class="text-muted">Sign in to your account</p>
                             </div>
                             
-                            <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin">
-                                <DataAnnotationsValidator />
+                            <RadzenTemplateForm Data="@loginModel" Submit="@(async (LoginRequest model) => await HandleLogin())">
                                 <div @onkeypress="@OnKeyPress"></div>
                                 
                                 <div class="mb-3">
-                                    <label for="username" class="form-label">Username:</label>
-                                    <InputText @bind-Value="loginModel.Username" 
-                                             @oninput="OnUsernameChanged"
-                                             class="@GetUsernameClass()" 
-                                             id="username" />
-                                    <ValidationMessage For="@(() => loginModel.Username)" />
+                                    <RadzenFormField Text="Username:" class="mb-3">
+                                        <RadzenTextBox @bind-Value="loginModel.Username" 
+                                                      @oninput="OnUsernameChanged"
+                                                      class="@GetUsernameClass()" 
+                                                      Name="username" />
+                                        <RadzenRequiredValidator Component="username" Text="Username is required" />
+                                    </RadzenFormField>
                                 </div>
                                 
                                 <div class="mb-3">
-                                    <label for="password" class="form-label">Password:</label>
-                                    <InputText @bind-Value="loginModel.Password" 
-                                             @oninput="OnPasswordChanged"
-                                             type="password" 
-                                             class="@GetPasswordClass()" 
-                                             id="password" />
-                                    <ValidationMessage For="@(() => loginModel.Password)" />
+                                    <RadzenFormField Text="Password:" class="mb-3">
+                                        <RadzenPassword @bind-Value="loginModel.Password" 
+                                                       @oninput="OnPasswordChanged"
+                                                       class="@GetPasswordClass()" 
+                                                       Name="password" />
+                                        <RadzenRequiredValidator Component="password" Text="Password is required" />
+                                    </RadzenFormField>
                                 </div>
                                 
                                 <div class="d-grid">
-                                    <button type="submit" 
-                                            class="btn btn-primary btn-lg fw-semibold py-3" 
-                                            disabled="@(isLoading || isRedirecting)"
-                                            style="transition: all 0.3s ease;">
-                                        @if (isLoading)
-                                        {
-                                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                                            <span>Signing in...</span>
-                                        }
-                                        else if (isRedirecting)
-                                        {
-                                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                                            <span>Redirecting...</span>
-                                        }
-                                        else
-                                        {
-                                            <i class="bi bi-box-arrow-in-right me-2"></i>
-                                            <span>Sign In</span>
-                                        }
-                                    </button>
+                                    <RadzenButton Text="@GetLoginButtonText()" 
+                                                 ButtonType="ButtonType.Submit"
+                                                 ButtonStyle="ButtonStyle.Primary" 
+                                                 Size="ButtonSize.Large"
+                                                 Disabled="@(isLoading || isRedirecting)"
+                                                 class="fw-semibold py-3" />
                                 </div>
-                            </EditForm>
+                            </RadzenTemplateForm>
                             
                             @if (!string.IsNullOrEmpty(errorMessage))
                             {
-                                <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
-                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                <RadzenAlert AlertStyle="AlertStyle.Danger" class="rz-mt-3" ShowIcon="true">
                                     @errorMessage
-                                    <button type="button" class="btn-close" @onclick="() => errorMessage = string.Empty" aria-label="Close"></button>
-                                </div>
+                                </RadzenAlert>
                             }
                             
                             @if (!string.IsNullOrEmpty(successMessage))
                             {
-                                <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
-                                    <i class="bi bi-check-circle-fill me-2"></i>
+                                <RadzenAlert AlertStyle="AlertStyle.Success" class="rz-mt-3" ShowIcon="true">
                                     @successMessage
-                                    @if (!isRedirecting)
-                                    {
-                                        <button type="button" class="btn-close" @onclick="() => successMessage = string.Empty" aria-label="Close"></button>
-                                    }
-                                </div>
+                                </RadzenAlert>
                             }
                             
                             <div class="mt-4 text-center">
@@ -130,7 +109,7 @@
     private bool IsUsernameValid => !string.IsNullOrWhiteSpace(loginModel.Username) && loginModel.Username.Length >= 3;
     private bool IsPasswordValid => !string.IsNullOrWhiteSpace(loginModel.Password) && loginModel.Password.Length >= 6;
 
-    private async Task HandleLogin()
+    private async Task HandleLogin(LoginRequest? model = null)
     {
         isLoading = true;
         errorMessage = string.Empty;
@@ -217,5 +196,12 @@
         if (IsPasswordValid) return $"{baseClass} is-valid";
         if (IsPasswordTouched) return $"{baseClass} is-invalid";
         return baseClass;
+    }
+
+    private string GetLoginButtonText()
+    {
+        if (isLoading) return "Signing in...";
+        if (isRedirecting) return "Redirecting...";
+        return "Sign In";
     }
 }

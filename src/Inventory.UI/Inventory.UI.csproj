@@ -13,6 +13,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" />
     <PackageReference Include="Microsoft.AspNetCore.Components.Forms" />
     <PackageReference Include="Blazored.LocalStorage" />
+    <PackageReference Include="Radzen.Blazor" />
   </ItemGroup>
 
   <ItemGroup>

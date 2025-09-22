@@ -13,6 +13,7 @@ using Inventory.Web.Client.Services;
 using Microsoft.AspNetCore.Components;
 using Inventory.Web.Client.Configuration;
 using Microsoft.Extensions.Configuration;
+using Radzen;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -82,7 +83,7 @@ builder.Services.AddScoped<ILoggingService, LoggingService>();
 builder.Services.AddScoped<IErrorHandlingService, ErrorHandlingService>();
 
 // Register notification and retry services
-builder.Services.AddScoped<IUINotificationService, NotificationService>();
+builder.Services.AddScoped<IUINotificationService, Inventory.Shared.Services.NotificationService>();
 builder.Services.AddScoped<IRetryService, RetryService>();
 builder.Services.AddScoped<IDebugLogsService, DebugLogsService>();
 
@@ -105,5 +106,8 @@ builder.Services.AddScoped(provider =>
 
 // Register SignalR service (C# client)
 builder.Services.AddScoped<ISignalRService, SignalRService>();
+
+// Register Radzen services
+builder.Services.AddRadzenComponents();
 
 await builder.Build().RunAsync();

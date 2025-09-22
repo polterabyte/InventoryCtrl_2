@@ -98,44 +98,45 @@
                         <button type="button" class="btn-close" @onclick="CloseModal"></button>
                     </div>
                     <div class="modal-body">
-                        <EditForm Model="@currentItem" OnValidSubmit="@SaveItem" Context="editFormContext">
+                        <RadzenTemplateForm Data="@currentItem" Submit="@SaveItem">
                             <DataAnnotationsValidator />
                             <div class="mb-3">
-                                <label class="form-label">Name *</label>
-                                <InputText class="form-control" @bind-Value="currentItem.Name" />
-                                <ValidationMessage For="@(() => currentItem.Name)" />
+                                <RadzenFormField Text="Name *" class="rz-mb-3">
+                                    <RadzenTextBox @bind-Value="currentItem.Name" Name="productModelName" />
+                                    <RadzenRequiredValidator Component="productModelName" Text="Name is required" />
+                                </RadzenFormField>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Manufacturer *</label>
-                                <InputSelect class="form-select" @bind-Value="currentItem.ManufacturerId">
-                                    <option value="">Select Manufacturer</option>
-                                    @foreach (var manufacturer in manufacturers)
-                                    {
-                                        <option value="@manufacturer.Id">@manufacturer.Name</option>
-                                    }
-                                </InputSelect>
-                                <ValidationMessage For="@(() => currentItem.ManufacturerId)" />
+                                <RadzenFormField Text="Manufacturer *" class="rz-mb-3">
+                                    <RadzenDropDown @bind-Value="currentItem.ManufacturerId"
+                                                   Data="@manufacturerOptions"
+                                                   ValueProperty="Value"
+                                                   TextProperty="Text"
+                                                   Placeholder="Select Manufacturer"
+                                                   Name="manufacturerId" />
+                                    <RadzenRequiredValidator Component="manufacturerId" Text="Manufacturer is required" />
+                                </RadzenFormField>
                             </div>
                             @if (isEditing)
                             {
                                 <div class="mb-3">
-                                    <div class="form-check">
-                                        <InputCheckbox class="form-check-input" @bind-Value="isActive" />
-                                        <label class="form-check-label">Active</label>
-                                    </div>
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center">
+                                        <RadzenCheckBox @bind-Value="isActive" Name="isActive" />
+                                        <RadzenLabel Text="Active" For="isActive" />
+                                    </RadzenStack>
                                 </div>
                             }
-                        </EditForm>
+                        </RadzenTemplateForm>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
-                        <button type="button" class="btn btn-primary" @onclick="SaveItem" disabled="@isSaving">
-                            @if (isSaving)
-                            {
-                                <span class="spinner-border spinner-border-sm me-2"></span>
-                            }
-                            @(isEditing ? "Update" : "Create")
-                        </button>
+                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                            <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" 
+                                         Variant="Variant.Outlined" @onclick="CloseModal" />
+                            <RadzenButton Text="@(isSaving ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update" : "Create"))" 
+                                         ButtonStyle="ButtonStyle.Primary" 
+                                         @onclick="SaveItem" 
+                                         Disabled="@isSaving" />
+                        </RadzenStack>
                     </div>
                 </div>
             </div>
@@ -161,6 +162,14 @@
     private ProductModelDto? selectedItem = null;
     private bool isActive = true;
 
+    private List<ManufacturerOption> manufacturerOptions = new();
+
+    public class ManufacturerOption
+    {
+        public Guid Value { get; set; }
+        public string Text { get; set; } = "";
+    }
+
     protected override async Task OnInitializedAsync()
     {
         await LoadManufacturers();
@@ -172,6 +181,18 @@
         try
         {
             manufacturers = await ManufacturerService.GetAllManufacturersAsync();
+            
+            // Create options for RadzenDropDown
+            manufacturerOptions = new List<ManufacturerOption>();
+            
+            foreach (var manufacturer in manufacturers)
+            {
+                manufacturerOptions.Add(new ManufacturerOption
+                {
+                    Value = manufacturer.Id,
+                    Text = manufacturer.Name
+                });
+            }
         }
         catch (Exception ex)
         {

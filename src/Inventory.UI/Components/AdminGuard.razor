@@ -1,5 +1,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components
+@using Radzen
+@using Radzen.Blazor
 @inject IAuthenticationService AuthenticationService
 @inject NavigationManager Navigation
 
@@ -23,24 +25,27 @@ else
     <div class="container-fluid">
         <div class="row justify-content-center">
             <div class="col-md-6">
-                <div class="card mt-5">
-                    <div class="card-body text-center">
+                <RadzenCard class="mt-5">
+                    <RadzenStack AlignItems="AlignItems.Center" class="text-center">
                         <i class="fas fa-shield-alt fa-4x text-danger mb-4"></i>
-                        <h3 class="card-title text-danger">Доступ запрещен</h3>
-                        <p class="card-text">
+                        <RadzenText TextStyle="TextStyle.H3" class="text-danger">Доступ запрещен</RadzenText>
+                        <RadzenText class="rz-mb-4">
                             У вас нет прав для доступа к этой странице. 
                             Требуется роль администратора.
-                        </p>
-                        <div class="mt-4">
-                            <button class="btn btn-primary" @onclick="GoHome">
-                                <i class="fas fa-home me-2"></i>На главную
-                            </button>
-                            <button class="btn btn-outline-secondary ms-2" @onclick="GoBack">
-                                <i class="fas fa-arrow-left me-2"></i>Назад
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                        </RadzenText>
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" class="rz-mt-4">
+                            <RadzenButton Text="На главную"
+                                          Icon="home"
+                                          ButtonStyle="ButtonStyle.Primary"
+                                          @onclick="GoHome" />
+                            <RadzenButton Text="Назад"
+                                          Icon="arrow_back"
+                                          ButtonStyle="ButtonStyle.Secondary"
+                                          Variant="Variant.Outlined"
+                                          @onclick="GoBack" />
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenCard>
             </div>
         </div>
     </div>

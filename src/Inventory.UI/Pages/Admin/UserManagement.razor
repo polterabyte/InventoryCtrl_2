@@ -5,6 +5,8 @@
 @using Microsoft.AspNetCore.Components.Web
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.Forms
+@using Radzen
+@using Radzen.Blazor
 @inject IUserManagementService UserService
 @inject IJSRuntime JSRuntime
 @inject NavigationManager Navigation
@@ -18,17 +20,22 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2><i class="fas fa-users me-2"></i>User Management</h2>
-                <div class="btn-group" role="group">
-                    <button class="btn btn-success" @onclick="CreateUser">
-                        <i class="fas fa-plus me-1"></i>Create User
-                    </button>
-                    <button class="btn btn-outline-primary" @onclick="RefreshUsers">
-                        <i class="fas fa-sync-alt me-1"></i>Refresh
-                    </button>
-                    <button class="btn btn-outline-success" @onclick="ExportUsers">
-                        <i class="fas fa-download me-1"></i>Export
-                    </button>
-                </div>
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                    <RadzenButton Text="Create User" 
+                                 Icon="add" 
+                                 ButtonStyle="ButtonStyle.Success" 
+                                 @onclick="CreateUser" />
+                    <RadzenButton Text="Refresh" 
+                                 Icon="refresh" 
+                                 ButtonStyle="ButtonStyle.Primary" 
+                                 Variant="Variant.Outlined"
+                                 @onclick="RefreshUsers" />
+                    <RadzenButton Text="Export" 
+                                 Icon="download" 
+                                 ButtonStyle="ButtonStyle.Success" 
+                                 Variant="Variant.Outlined"
+                                 @onclick="ExportUsers" />
+                </RadzenStack>
             </div>
 
             <!-- Filters -->
@@ -39,18 +46,19 @@
                 <div class="card-body">
                     <div class="row g-3">
                         <div class="col-md-4">
-                            <label class="form-label">Search</label>
-                            <input type="text" class="form-control" @bind="searchTerm" @bind:after="OnFilterChange" 
-                                   placeholder="Search by username or email" />
+                            <RadzenFormField Text="Search" class="mb-3">
+                                <RadzenTextBox @bind-Value="searchTerm" @bind-Value:after="OnFilterChange" 
+                                              Placeholder="Search by username or email" />
+                            </RadzenFormField>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label">Role</label>
-                            <select class="form-select" @bind="selectedRole" @bind:after="OnFilterChange">
-                                <option value="">All Roles</option>
-                                <option value="Admin">Admin</option>
-                                <option value="Manager">Manager</option>
-                                <option value="User">User</option>
-                            </select>
+                            <RadzenFormField Text="Role" class="mb-3">
+                                <RadzenDropDown @bind-Value="selectedRole" @bind-Value:after="OnFilterChange"
+                                               Data="@roleOptions" 
+                                               ValueProperty="Value" 
+                                               TextProperty="Text"
+                                               Placeholder="All Roles" />
+                            </RadzenFormField>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">Page Size</label>
@@ -125,93 +133,92 @@
                     }
                     else if (users?.Any() == true)
                     {
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Username</th>
-                                        <th>Email</th>
-                                        <th>Role</th>
-                                        <th>Email Confirmed</th>
-                                        <th>Created</th>
-                                        <th>Updated</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var user in users)
-                                    {
-                                        <tr>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2">
-                                                        @user.UserName.Substring(0, 1).ToUpper()
-                                                    </div>
-                                                    <div>
-                                                        <div class="fw-bold">@user.UserName</div>
-                                                        <small class="text-muted">ID: @user.Id</small>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div>
-                                                    <div>@user.Email</div>
-                                                    @if (user.EmailConfirmed)
-                                                    {
-                                                        <small class="text-success"><i class="fas fa-check-circle me-1"></i>Verified</small>
-                                                    }
-                                                    else
-                                                    {
-                                                        <small class="text-warning"><i class="fas fa-exclamation-circle me-1"></i>Unverified</small>
-                                                    }
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <span class="badge @GetRoleBadgeClass(user.Role)">
-                                                    @user.Role
-                                                </span>
-                                            </td>
-                                            <td>
-                                                @if (user.EmailConfirmed)
-                                                {
-                                                    <span class="badge bg-success">Yes</span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="badge bg-warning">No</span>
-                                                }
-                                            </td>
-                                            <td>
-                                                <small class="text-muted">@user.CreatedAt.ToString("yyyy-MM-dd HH:mm")</small>
-                                            </td>
-                                            <td>
-                                                @if (user.UpdatedAt.HasValue)
-                                                {
-                                                    <small class="text-muted">@user.UpdatedAt.Value.ToString("yyyy-MM-dd HH:mm")</small>
-                                                }
-                                                else
-                                                {
-                                                    <small class="text-muted">-</small>
-                                                }
-                                            </td>
-                                            <td>
-                                                <div class="btn-group" role="group">
-                                                    <button class="btn btn-sm btn-outline-primary" @onclick="() => EditUser(user)" title="Edit User">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                    <button class="btn btn-sm btn-outline-warning" @onclick="() => ChangePassword(user)" title="Change Password">
-                                                        <i class="fas fa-key"></i>
-                                                    </button>
-                                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteUser(user)" title="Delete User" disabled="@(user.Id == currentUserId)">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
+                        <RadzenDataGrid Data="@users" TItem="UserDto" AllowPaging="true" PageSize="@pageSize" 
+                                       AllowSorting="true" FilterMode="FilterMode.Advanced" 
+                                       class="rz-datagrid-custom">
+                            <Columns>
+                                <RadzenDataGridColumn TItem="UserDto" Property="UserName" Title="Username" Width="200px">
+                                    <Template Context="user">
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2">
+                                                @user.UserName.Substring(0, 1).ToUpper()
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold">@user.UserName</div>
+                                                <small class="text-muted">ID: @user.Id</small>
+                                            </div>
+                                        </div>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="UserDto" Property="Email" Title="Email" Width="250px">
+                                    <Template Context="user">
+                                        <div>
+                                            <div>@user.Email</div>
+                                            @if (user.EmailConfirmed)
+                                            {
+                                                <small class="text-success"><i class="fas fa-check-circle me-1"></i>Verified</small>
+                                            }
+                                            else
+                                            {
+                                                <small class="text-warning"><i class="fas fa-exclamation-circle me-1"></i>Unverified</small>
+                                            }
+                                        </div>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="UserDto" Property="Role" Title="Role" Width="100px">
+                                    <Template Context="user">
+                                        <span class="badge @GetRoleBadgeClass(user.Role)">
+                                            @user.Role
+                                        </span>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="UserDto" Property="EmailConfirmed" Title="Email Confirmed" Width="120px">
+                                    <Template Context="user">
+                                        @if (user.EmailConfirmed)
+                                        {
+                                            <span class="badge bg-success">Yes</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning">No</span>
+                                        }
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="UserDto" Property="CreatedAt" Title="Created" Width="150px">
+                                    <Template Context="user">
+                                        <small class="text-muted">@user.CreatedAt.ToString("yyyy-MM-dd HH:mm")</small>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="UserDto" Property="UpdatedAt" Title="Updated" Width="150px">
+                                    <Template Context="user">
+                                        @if (user.UpdatedAt.HasValue)
+                                        {
+                                            <small class="text-muted">@user.UpdatedAt.Value.ToString("yyyy-MM-dd HH:mm")</small>
+                                        }
+                                        else
+                                        {
+                                            <small class="text-muted">-</small>
+                                        }
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="UserDto" Title="Actions" Width="150px" Sortable="false" Filterable="false">
+                                    <Template Context="user">
+                                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
+                                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" 
+                                                         Variant="Variant.Outlined" Size="ButtonSize.Small"
+                                                         @onclick="() => EditUser(user)" title="Edit User" />
+                                            <RadzenButton Icon="key" ButtonStyle="ButtonStyle.Warning" 
+                                                         Variant="Variant.Outlined" Size="ButtonSize.Small"
+                                                         @onclick="() => ChangePassword(user)" title="Change Password" />
+                                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" 
+                                                         Variant="Variant.Outlined" Size="ButtonSize.Small"
+                                                         @onclick="() => DeleteUser(user)" title="Delete User" 
+                                                         Disabled="@(user.Id == currentUserId)" />
+                                        </RadzenStack>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                            </Columns>
+                        </RadzenDataGrid>
 
                         <!-- Pagination -->
                         @if (totalPages > 1)
@@ -266,169 +273,130 @@
     </div>
 </div>
 
-<!-- Edit User Modal -->
-@if (showEditModal && selectedUser != null)
-{
-    <div class="modal fade show" style="display: block;" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="fas fa-edit me-2"></i>Edit User
-                    </h5>
-                    <button type="button" class="btn-close" @onclick="CloseEditModal"></button>
-                </div>
-                <div class="modal-body">
-                    <EditForm Model="editUser" OnValidSubmit="SaveUser">
-                        <DataAnnotationsValidator />
-                        <div class="mb-3">
-                            <label class="form-label">Username</label>
-                            <InputText class="form-control" @bind-Value="editUser.UserName" />
-                            <ValidationMessage For="@(() => editUser.UserName)" />
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Email</label>
-                            <InputText class="form-control" @bind-Value="editUser.Email" />
-                            <ValidationMessage For="@(() => editUser.Email)" />
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Role</label>
-                            <InputSelect class="form-select" @bind-Value="editUser.Role">
-                                <option value="User">User</option>
-                                <option value="Manager">Manager</option>
-                                <option value="Admin">Admin</option>
-                            </InputSelect>
-                            <ValidationMessage For="@(() => editUser.Role)" />
-                        </div>
-                        <div class="mb-3">
-                            <div class="form-check">
-                                <InputCheckbox class="form-check-input" @bind-Value="editUser.EmailConfirmed" />
-                                <label class="form-check-label">Email Confirmed</label>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" @onclick="CloseEditModal">Cancel</button>
-                            <button type="submit" class="btn btn-primary" disabled="@isSaving">
-                                @if (isSaving)
-                                {
-                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                                }
-                                Save Changes
-                            </button>
-                        </div>
-                    </EditForm>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="modal-backdrop fade show"></div>
-}
+<!-- Edit User Dialog -->
+<RadzenDialog @bind-Visible="showEditModal" Style="min-width: 500px;">
+    <RadzenTemplateForm Data="editUser" Submit="SaveUser">
+        <RadzenStack>
+            <RadzenText TextStyle="TextStyle.H4" class="rz-mb-3">
+                <i class="fas fa-edit me-2"></i>Edit User
+            </RadzenText>
+            
+            <RadzenFormField Text="Username" class="rz-mb-3">
+                <RadzenTextBox @bind-Value="editUser.UserName" Name="editUserName" />
+                <RadzenRequiredValidator Component="editUserName" Text="Username is required" />
+            </RadzenFormField>
+            
+            <RadzenFormField Text="Email" class="rz-mb-3">
+                <RadzenTextBox @bind-Value="editUser.Email" Name="editUserEmail" />
+                <RadzenRequiredValidator Component="editUserEmail" Text="Email is required" />
+                <RadzenEmailValidator Component="editUserEmail" Text="Invalid email format" />
+            </RadzenFormField>
+            
+            <RadzenFormField Text="Role" class="rz-mb-3">
+                <RadzenDropDown @bind-Value="editUser.Role" 
+                               Data="@roleOptions" 
+                               ValueProperty="Value" 
+                               TextProperty="Text"
+                               Name="editUserRole" />
+                <RadzenRequiredValidator Component="editUserRole" Text="Role is required" />
+            </RadzenFormField>
+            
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" class="rz-mb-3">
+                <RadzenCheckBox @bind-Value="editUser.EmailConfirmed" Name="editEmailConfirmed" />
+                <RadzenLabel Text="Email Confirmed" For="editEmailConfirmed" />
+            </RadzenStack>
+            
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" 
+                             Variant="Variant.Outlined" @onclick="CloseEditModal" />
+                <RadzenButton Text="@(isSaving ? "Saving..." : "Save Changes")" 
+                             ButtonStyle="ButtonStyle.Primary" 
+                             ButtonType="ButtonType.Submit" 
+                             Disabled="@isSaving" />
+            </RadzenStack>
+        </RadzenStack>
+    </RadzenTemplateForm>
+</RadzenDialog>
 
-<!-- Change Password Modal -->
-@if (showPasswordModal && selectedUser != null)
-{
-    <div class="modal fade show" style="display: block;" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="fas fa-key me-2"></i>Change Password for @selectedUser.UserName
-                    </h5>
-                    <button type="button" class="btn-close" @onclick="ClosePasswordModal"></button>
-                </div>
-                <div class="modal-body">
-                    <EditForm Model="passwordDto" OnValidSubmit="SavePassword">
-                        <DataAnnotationsValidator />
-                        <div class="mb-3">
-                            <label class="form-label">New Password</label>
-                            <InputText type="password" class="form-control" @bind-Value="passwordDto.NewPassword" />
-                            <ValidationMessage For="@(() => passwordDto.NewPassword)" />
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Confirm Password</label>
-                            <InputText type="password" class="form-control" @bind-Value="passwordDto.ConfirmPassword" />
-                            <ValidationMessage For="@(() => passwordDto.ConfirmPassword)" />
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" @onclick="ClosePasswordModal">Cancel</button>
-                            <button type="submit" class="btn btn-warning" disabled="@isSaving">
-                                @if (isSaving)
-                                {
-                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                                }
-                                Change Password
-                            </button>
-                        </div>
-                    </EditForm>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="modal-backdrop fade show"></div>
-}
+<!-- Change Password Dialog -->
+<RadzenDialog @bind-Visible="showPasswordModal" Style="min-width: 400px;">
+    <RadzenTemplateForm Data="passwordDto" Submit="SavePassword">
+        <RadzenStack>
+            <RadzenText TextStyle="TextStyle.H4" class="rz-mb-3">
+                <i class="fas fa-key me-2"></i>Change Password for @selectedUser?.UserName
+            </RadzenText>
+            
+            <RadzenFormField Text="New Password" class="rz-mb-3">
+                <RadzenPassword @bind-Value="passwordDto.NewPassword" Name="newPassword" />
+                <RadzenRequiredValidator Component="newPassword" Text="New password is required" />
+            </RadzenFormField>
+            
+            <RadzenFormField Text="Confirm Password" class="rz-mb-3">
+                <RadzenPassword @bind-Value="passwordDto.ConfirmPassword" Name="confirmPassword" />
+                <RadzenRequiredValidator Component="confirmPassword" Text="Confirm password is required" />
+            </RadzenFormField>
+            
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" 
+                             Variant="Variant.Outlined" @onclick="ClosePasswordModal" />
+                <RadzenButton Text="@(isSaving ? "Changing..." : "Change Password")" 
+                             ButtonStyle="ButtonStyle.Warning" 
+                             ButtonType="ButtonType.Submit" 
+                             Disabled="@isSaving" />
+            </RadzenStack>
+        </RadzenStack>
+    </RadzenTemplateForm>
+</RadzenDialog>
 
-<!-- Create User Modal -->
-@if (showCreateModal)
-{
-    <div class="modal fade show" style="display: block;" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="fas fa-user-plus me-2"></i>Create New User
-                    </h5>
-                    <button type="button" class="btn-close" @onclick="CloseCreateModal"></button>
-                </div>
-                <div class="modal-body">
-                    <EditForm Model="createUser" OnValidSubmit="SaveNewUser">
-                        <DataAnnotationsValidator />
-                        <div class="mb-3">
-                            <label class="form-label">Username</label>
-                            <InputText class="form-control" @bind-Value="createUser.UserName" />
-                            <ValidationMessage For="@(() => createUser.UserName)" />
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Email</label>
-                            <InputText class="form-control" @bind-Value="createUser.Email" />
-                            <ValidationMessage For="@(() => createUser.Email)" />
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Password</label>
-                            <InputText type="password" class="form-control" @bind-Value="createUser.Password" />
-                            <ValidationMessage For="@(() => createUser.Password)" />
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Role</label>
-                            <InputSelect class="form-select" @bind-Value="createUser.Role">
-                                <option value="User">User</option>
-                                <option value="Manager">Manager</option>
-                                <option value="Admin">Admin</option>
-                            </InputSelect>
-                            <ValidationMessage For="@(() => createUser.Role)" />
-                        </div>
-                        <div class="mb-3">
-                            <div class="form-check">
-                                <InputCheckbox class="form-check-input" @bind-Value="createUser.EmailConfirmed" />
-                                <label class="form-check-label">Email Confirmed</label>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" @onclick="CloseCreateModal">Cancel</button>
-                            <button type="submit" class="btn btn-success" disabled="@isSaving">
-                                @if (isSaving)
-                                {
-                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                                }
-                                Create User
-                            </button>
-                        </div>
-                    </EditForm>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="modal-backdrop fade show"></div>
-}
+<!-- Create User Dialog -->
+<RadzenDialog @bind-Visible="showCreateModal" Style="min-width: 500px;">
+    <RadzenTemplateForm Data="createUser" Submit="SaveNewUser">
+        <RadzenStack>
+            <RadzenText TextStyle="TextStyle.H4" class="rz-mb-3">
+                <i class="fas fa-user-plus me-2"></i>Create New User
+            </RadzenText>
+            
+            <RadzenFormField Text="Username" class="rz-mb-3">
+                <RadzenTextBox @bind-Value="createUser.UserName" Name="createUserName" />
+                <RadzenRequiredValidator Component="createUserName" Text="Username is required" />
+            </RadzenFormField>
+            
+            <RadzenFormField Text="Email" class="rz-mb-3">
+                <RadzenTextBox @bind-Value="createUser.Email" Name="createUserEmail" />
+                <RadzenRequiredValidator Component="createUserEmail" Text="Email is required" />
+                <RadzenEmailValidator Component="createUserEmail" Text="Invalid email format" />
+            </RadzenFormField>
+            
+            <RadzenFormField Text="Password" class="rz-mb-3">
+                <RadzenPassword @bind-Value="createUser.Password" Name="createUserPassword" />
+                <RadzenRequiredValidator Component="createUserPassword" Text="Password is required" />
+            </RadzenFormField>
+            
+            <RadzenFormField Text="Role" class="rz-mb-3">
+                <RadzenDropDown @bind-Value="createUser.Role" 
+                               Data="@roleOptions" 
+                               ValueProperty="Value" 
+                               TextProperty="Text"
+                               Name="createUserRole" />
+                <RadzenRequiredValidator Component="createUserRole" Text="Role is required" />
+            </RadzenFormField>
+            
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" class="rz-mb-3">
+                <RadzenCheckBox @bind-Value="createUser.EmailConfirmed" Name="createEmailConfirmed" />
+                <RadzenLabel Text="Email Confirmed" For="createEmailConfirmed" />
+            </RadzenStack>
+            
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" 
+                             Variant="Variant.Outlined" @onclick="CloseCreateModal" />
+                <RadzenButton Text="@(isSaving ? "Creating..." : "Create User")" 
+                             ButtonStyle="ButtonStyle.Success" 
+                             ButtonType="ButtonType.Submit" 
+                             Disabled="@isSaving" />
+            </RadzenStack>
+        </RadzenStack>
+    </RadzenTemplateForm>
+</RadzenDialog>
 
 @code {
     private List<UserDto>? users;
@@ -443,6 +411,14 @@
     private string searchTerm = "";
     private string selectedRole = "";
     private string? currentUserId;
+
+    private List<RoleOption> roleOptions = new()
+    {
+        new() { Value = "", Text = "All Roles" },
+        new() { Value = "Admin", Text = "Admin" },
+        new() { Value = "Manager", Text = "Manager" },
+        new() { Value = "User", Text = "User" }
+    };
 
     // Modal states
     private bool showEditModal = false;
@@ -733,6 +709,12 @@
             "User" => "bg-primary",
             _ => "bg-secondary"
         };
+    }
+
+    public class RoleOption
+    {
+        public string Value { get; set; } = "";
+        public string Text { get; set; } = "";
     }
 }
 </AdminGuard>

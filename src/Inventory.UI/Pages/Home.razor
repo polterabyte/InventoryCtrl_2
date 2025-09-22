@@ -1,7 +1,9 @@
 ﻿@page "/"
 @attribute [Authorize]
 
+
 @inject IDashboardService DashboardService
+@inject NavigationManager NavigationManager
 
 <PageTitle>Home</PageTitle>
 
@@ -51,42 +53,51 @@
                     <!-- Quick Actions -->
                     <div class="row mt-4">
                         <div class="col-12">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5 class="mb-0">
-                                        <i class="bi bi-lightning me-2"></i>Быстрые действия
-                                    </h5>
-                                </div>
-                                <div class="card-body">
+                            <RadzenCard>
+                                <RadzenText TextStyle="TextStyle.H5" class="rz-mb-3">
+                                    <i class="bi bi-lightning me-2"></i>Быстрые действия
+                                </RadzenText>
+                                <RadzenStack>
                                     <div class="row">
                                         <div class="col-md-3 mb-3">
-                                            <a href="/products" class="btn btn-outline-primary btn-lg w-100 quick-action-btn d-flex flex-column justify-content-center">
-                                                <i class="bi bi-plus-circle mb-2" style="font-size: 1.5rem;"></i>
-                                                <span>Добавить товар</span>
-                                            </a>
+                                            <RadzenButton Text="Добавить товар" 
+                                                         Icon="add_circle" 
+                                                         ButtonStyle="ButtonStyle.Primary" 
+                                                         Variant="Variant.Outlined"
+                                                         Size="ButtonSize.Large"
+                                                         class="w-100"
+                                                         @onclick="NavigateToProducts" />
                                         </div>
                                         <div class="col-md-3 mb-3">
-                                            <a href="/products" class="btn btn-outline-success btn-lg w-100 quick-action-btn d-flex flex-column justify-content-center">
-                                                <i class="bi bi-arrow-down-circle mb-2" style="font-size: 1.5rem;"></i>
-                                                <span>Приход товара</span>
-                                            </a>
+                                            <RadzenButton Text="Приход товара" 
+                                                         Icon="arrow_downward" 
+                                                         ButtonStyle="ButtonStyle.Success" 
+                                                         Variant="Variant.Outlined"
+                                                         Size="ButtonSize.Large"
+                                                         class="w-100"
+                                                         @onclick="NavigateToProducts" />
                                         </div>
                                         <div class="col-md-3 mb-3">
-                                            <a href="/products" class="btn btn-outline-warning btn-lg w-100 quick-action-btn d-flex flex-column justify-content-center">
-                                                <i class="bi bi-arrow-up-circle mb-2" style="font-size: 1.5rem;"></i>
-                                                <span>Расход товара</span>
-                                            </a>
+                                            <RadzenButton Text="Расход товара" 
+                                                         Icon="arrow_upward" 
+                                                         ButtonStyle="ButtonStyle.Warning" 
+                                                         Variant="Variant.Outlined"
+                                                         Size="ButtonSize.Large"
+                                                         class="w-100"
+                                                         @onclick="NavigateToProducts" />
                                         </div>
                                         <div class="col-md-3 mb-3">
-                                            <button class="btn btn-outline-info btn-lg w-100 quick-action-btn d-flex flex-column justify-content-center" disabled>
-                                                <i class="bi bi-file-earmark-text mb-2" style="font-size: 1.5rem;"></i>
-                                                <span>Отчеты</span>
-                                                <small class="text-muted">Скоро</small>
-                                            </button>
+                                            <RadzenButton Text="Отчеты" 
+                                                         Icon="description" 
+                                                         ButtonStyle="ButtonStyle.Info" 
+                                                         Variant="Variant.Outlined"
+                                                         Size="ButtonSize.Large"
+                                                         class="w-100"
+                                                         Disabled="true" />
                                         </div>
                                     </div>
-                                </div>
-                            </div>
+                                </RadzenStack>
+                            </RadzenCard>
                         </div>
                     </div>
                 </div>
@@ -101,6 +112,11 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadDashboardStats();
+    }
+
+    private void NavigateToProducts()
+    {
+        NavigationManager.NavigateTo("/products");
     }
 
     private async Task LoadDashboardStats()

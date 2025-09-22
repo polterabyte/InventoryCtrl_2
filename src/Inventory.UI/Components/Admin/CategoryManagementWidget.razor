@@ -163,55 +163,55 @@
                         <button type="button" class="btn-close" @onclick="CloseModal"></button>
                     </div>
                     <div class="modal-body">
-                        <EditForm Model="@currentItem" OnValidSubmit="@SaveItem" Context="editFormContext">
+                        <RadzenTemplateForm Data="@currentItem" Submit="@SaveItem">
                             <DataAnnotationsValidator />
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label">Name *</label>
-                                        <InputText class="form-control" @bind-Value="currentItem.Name" />
-                                        <ValidationMessage For="@(() => currentItem.Name)" />
+                                        <RadzenFormField Text="Name *" class="rz-mb-3">
+                                            <RadzenTextBox @bind-Value="currentItem.Name" Name="categoryName" />
+                                            <RadzenRequiredValidator Component="categoryName" Text="Name is required" />
+                                        </RadzenFormField>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label">Parent Category</label>
-                                        <InputSelect class="form-select" @bind-Value="currentItem.ParentCategoryId">
-                                            <option value="">Root Category</option>
-                                            @foreach (var category in rootCategories)
-                                            {
-                                                <option value="@category.Id">@category.Name</option>
-                                            }
-                                        </InputSelect>
-                                        <ValidationMessage For="@(() => currentItem.ParentCategoryId)" />
+                                        <RadzenFormField Text="Parent Category" class="rz-mb-3">
+                                            <RadzenDropDown @bind-Value="currentItem.ParentCategoryId"
+                                                           Data="@parentCategoryOptions"
+                                                           ValueProperty="Value"
+                                                           TextProperty="Text"
+                                                           Placeholder="Root Category"
+                                                           Name="parentCategoryId" />
+                                        </RadzenFormField>
                                     </div>
                                 </div>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Description</label>
-                                <InputTextArea class="form-control" @bind-Value="currentItem.Description" rows="3" />
-                                <ValidationMessage For="@(() => currentItem.Description)" />
+                                <RadzenFormField Text="Description" class="rz-mb-3">
+                                    <RadzenTextArea @bind-Value="currentItem.Description" Rows="3" Name="description" />
+                                </RadzenFormField>
                             </div>
                             @if (isEditing)
                             {
                                 <div class="mb-3">
-                                    <div class="form-check">
-                                        <InputCheckbox class="form-check-input" @bind-Value="isActive" />
-                                        <label class="form-check-label">Active</label>
-                                    </div>
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center">
+                                        <RadzenCheckBox @bind-Value="isActive" Name="isActive" />
+                                        <RadzenLabel Text="Active" For="isActive" />
+                                    </RadzenStack>
                                 </div>
                             }
-                        </EditForm>
+                        </RadzenTemplateForm>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
-                        <button type="button" class="btn btn-primary" @onclick="SaveItem" disabled="@isSaving">
-                            @if (isSaving)
-                            {
-                                <span class="spinner-border spinner-border-sm me-2"></span>
-                            }
-                            @(isEditing ? "Update" : "Create")
-                        </button>
+                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                            <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" 
+                                         Variant="Variant.Outlined" @onclick="CloseModal" />
+                            <RadzenButton Text="@(isSaving ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update" : "Create"))" 
+                                         ButtonStyle="ButtonStyle.Primary" 
+                                         @onclick="SaveItem" 
+                                         Disabled="@isSaving" />
+                        </RadzenStack>
                     </div>
                 </div>
             </div>
@@ -244,6 +244,14 @@
     private CategoryDto? selectedItem = null;
     private bool isActive = true;
 
+    private List<ParentCategoryOption> parentCategoryOptions = new();
+
+    public class ParentCategoryOption
+    {
+        public Guid? Value { get; set; }
+        public string Text { get; set; } = "";
+    }
+
     protected override async Task OnInitializedAsync()
     {
         await LoadRootCategories();
@@ -255,6 +263,21 @@
         try
         {
             rootCategories = await CategoryService.GetRootCategoriesAsync();
+            
+            // Create options for RadzenDropDown
+            parentCategoryOptions = new List<ParentCategoryOption>
+            {
+                new() { Value = null, Text = "Root Category" }
+            };
+            
+            foreach (var category in rootCategories)
+            {
+                parentCategoryOptions.Add(new ParentCategoryOption
+                {
+                    Value = category.Id,
+                    Text = category.Name
+                });
+            }
         }
         catch (Exception ex)
         {

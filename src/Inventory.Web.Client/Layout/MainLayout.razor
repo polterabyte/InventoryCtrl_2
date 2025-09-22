@@ -3,11 +3,13 @@
 @using Inventory.Shared.Models
 @using Inventory.UI.Components.Notifications
 @using Inventory.UI.Components
+@using Radzen
+@using Radzen.Blazor
 
 
 
 <AuthorizeView>
-    <Authorized>
+    <Authorized Context="userContext">
         <div class="page">
             <div class="sidebar">
                 <NavMenu />
@@ -18,7 +20,7 @@
                     <div class="user-info">
                         <span class="greeting-text">
                             <i class="bi bi-person-circle me-2"></i>
-                            Привет, @context.User.Identity?.Name!
+                            Привет, @userContext.User.Identity?.Name!
                         </span>
                     </div>
 
@@ -37,6 +39,9 @@
 
         @* Real-time notifications *@
         <RealTimeNotificationComponent />
+        
+        @* Radzen Components for interactive features *@
+        <RadzenComponents @rendermode="InteractiveAuto" />
     </Authorized>
     <NotAuthorized>
         <Inventory.UI.Pages.Login />
