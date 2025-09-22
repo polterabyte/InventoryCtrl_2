@@ -10,9 +10,9 @@
         <div class="container-fluid">
             <div class="row">
                 <div class="col-12">
-                    <h1 class="display-4 text-primary mb-4">Добро пожаловать в систему управления складом!</h1>
-                    <p class="lead text-secondary">Привет, <strong class="text-primary">@authContext.User.Identity?.Name</strong>!</p>
-                    <p class="text-muted">Вы успешно авторизованы в системе.</p>
+                    @* <h1 class="display-4 text-primary mb-4">Добро пожаловать в систему управления складом!</h1> *@
+                    @* <p class="lead text-secondary">Привет, <strong class="text-primary">@authContext.User.Identity?.Name</strong>!</p>
+                    <p class="text-muted">Вы успешно авторизованы в системе.</p> *@
                     
                     <!-- Dashboard Statistics -->
                     <div class="row mt-4">
@@ -93,10 +93,6 @@
             </div>
         </div>
     </Authorized>
-    
-    <NotAuthorized>
-        <RedirectToLogin />
-    </NotAuthorized>
 </AuthorizeView>
 
 @code {

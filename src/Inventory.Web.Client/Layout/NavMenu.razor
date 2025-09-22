@@ -1,33 +1,78 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@using Blazored.LocalStorage
+
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IAuthService AuthService
+@inject NavigationManager Navigation
+@inject ILocalStorageService LocalStorage
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">Inventory.Web.Client</a>
+        <a class="navbar-brand" href="">Inventory App</a>
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
             <span class="navbar-toggler-icon"></span>
         </button>
     </div>
 </div>
 
+
 <div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
     <nav class="nav flex-column">
+        @foreach (var item in MenuItems)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="@item.Url" Match="@(Enum.Parse<NavLinkMatch>(item.Match))">
+                    @if (!string.IsNullOrEmpty(item.Icon))
+                    {
+                        <span class="@item.Icon" aria-hidden="true"></span>
+                    }
+                    @item.Text
+                </NavLink>
+            </div>
+        }
+        
+        @* Admin links *@
+        <AuthorizeView Roles="Admin">
+            <Authorized Context="authContext">
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="admin/reference-data">
+                            <span class="bi bi-gear" aria-hidden="true"></span>
+                            Dictionaries
+                        </NavLink>
+                    </div>
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="admin/users">
+                            <span class="bi bi-people" aria-hidden="true"></span>
+                            Users
+                        </NavLink>
+                    </div>
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="admin/audit-logs">
+                            <span class="bi bi-clipboard-list" aria-hidden="true"></span>
+                            Audit Logs
+                        </NavLink>
+                    </div>
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="debug">
+                            <span class="bi bi-bug" aria-hidden="true"></span>
+                            Debug Logs
+                        </NavLink>
+                    </div>
+            </Authorized>
+        </AuthorizeView>
+        
+        @* Logout button *@
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
+            <button class="btn btn-outline-danger" @onclick="LogoutAsync">
+                <span class="bi bi-box-arrow-right" aria-hidden="false"></span>
+                Выйти
+            </button>
         </div>
     </nav>
 </div>
 
 @code {
+
+    private List<NavMenuItem> MenuItems { get; set; } = new();
     private bool collapseNavMenu = true;
 
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
@@ -35,5 +80,53 @@
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
+    }
+    private async Task LogoutAsync()
+    {
+        try
+        {
+            // Get current token from storage
+            var token = await LocalStorage.GetItemAsStringAsync("authToken");
+            
+            if (!string.IsNullOrEmpty(token))
+            {
+                await AuthService.LogoutAsync(token);
+            }
+            
+            // Clear local storage and redirect to login
+            await ClearAuthDataAsync();
+            Navigation.NavigateTo("/login", true);
+        }
+        catch (Exception ex)
+        {
+            // Log error but still redirect to login
+            Console.WriteLine($"Logout error: {ex.Message}");
+            await ClearAuthDataAsync();
+            Navigation.NavigateTo("/login", true);
+        }
+    }
+    
+    private async Task ClearAuthDataAsync()
+    {
+        // Clear token from local storage
+        await LocalStorage.RemoveItemAsync("authToken");
+        
+        // Notify authentication state provider about logout
+        if (AuthStateProvider is ICustomAuthenticationStateProvider customProvider)
+        {
+            await customProvider.MarkUserAsLoggedOutAsync();
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        // Default menu items
+        MenuItems = new List<NavMenuItem>
+        {
+            new() { Text = "Главная", Url = "", Icon = "bi bi-house-door-fill-nav-menu", Match = "All" },
+            new() { Text = "Товары", Url = "products", Icon = "bi bi-box-seam" },
+            new() { Text = "Склады", Url = "warehouses", Icon = "bi bi-building" },
+            new() { Text = "Отчеты", Url = "reports", Icon = "bi bi-graph-up" }
+        };
     }
 }

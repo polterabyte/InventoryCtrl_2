@@ -86,9 +86,6 @@ builder.Services.AddScoped<IUINotificationService, NotificationService>();
 builder.Services.AddScoped<IRetryService, RetryService>();
 builder.Services.AddScoped<IDebugLogsService, DebugLogsService>();
 
-// Register authorization services
-builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
-
 // Register authentication service
 builder.Services.AddScoped<Inventory.UI.Services.IAuthenticationService, Inventory.UI.Services.AuthenticationService>();
 

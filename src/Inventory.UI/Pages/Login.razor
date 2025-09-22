@@ -130,19 +130,6 @@
     private bool IsUsernameValid => !string.IsNullOrWhiteSpace(loginModel.Username) && loginModel.Username.Length >= 3;
     private bool IsPasswordValid => !string.IsNullOrWhiteSpace(loginModel.Password) && loginModel.Password.Length >= 6;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-            if (authState.User.Identity?.IsAuthenticated == true)
-            {
-                await Task.Delay(1000); // Show loading message briefly
-                Navigation.NavigateTo("/");
-            }
-        }
-    }
-
     private async Task HandleLogin()
     {
         isLoading = true;

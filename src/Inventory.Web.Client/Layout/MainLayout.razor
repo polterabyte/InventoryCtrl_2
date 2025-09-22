@@ -3,64 +3,42 @@
 @using Inventory.Shared.Models
 @using Inventory.UI.Components.Notifications
 @using Inventory.UI.Components
-@inject NavigationManager Navigation
 
-<div class="page">
-    @if (IsAuthPage)
-    {
-        @* Показываем содержимое страницы без проверки авторизации для страниц входа/регистрации *@
-        <div class="top-row ps-3 navbar navbar-dark">
-            <div class="container-fluid">
-                <a class="navbar-brand" href="/">Inventory App</a>
-                <div class="d-flex">
-                    <a href="/" class="btn btn-outline-light me-2">
-                        <i class="bi bi-house"></i> Главная
-                    </a>
-                    <a href="login" class="btn btn-outline-light me-2">
-                        <i class="bi bi-box-arrow-in-right"></i> Вход
-                    </a>
-                    <a href="register" class="btn btn-outline-light">
-                        <i class="bi bi-person-plus"></i> Регистрация
-                    </a>
-                </div>
+
+
+<AuthorizeView>
+    <Authorized>
+        <div class="page">
+            <div class="sidebar">
+                <NavMenu />
             </div>
-        </div>
-        <article class="content px-4">
-            @Body
-        </article>
-    }
-    else
-    {
-        @* Обычная логика с проверкой авторизации *@
-        <ProtectedRoute>
-            @* User greeting bar *@
-            <UserGreeting />
-            
-            @* Main content area *@
+
             <main>
                 <div class="top-row px-4">
-                    <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+                    <div class="user-info">
+                        <span class="greeting-text">
+                            <i class="bi bi-person-circle me-2"></i>
+                            Привет, @context.User.Identity?.Name!
+                        </span>
+                    </div>
+
+                    <a href="https://www.cubytechnologies.com/" target="_blank">About</a>
                 </div>
 
                 <article class="content">
                     @Body
                 </article>
             </main>
-            
-            @* Sidebar справа *@
-            <div class="sidebar">
-                <NavMenu />
-            </div>
-        </ProtectedRoute>
-    }
-    
-    @* Notification container for toast notifications *@
-    <NotificationContainer />
-    
-    @* Real-time notifications *@
-    <RealTimeNotificationComponent />
-</div>
+        </div>
 
-@code {
-    private bool IsAuthPage => Navigation.Uri.Contains("/login") || Navigation.Uri.Contains("/register");
-}
+
+        @* Notification container for toast notifications *@
+        <NotificationContainer />
+
+        @* Real-time notifications *@
+        <RealTimeNotificationComponent />
+    </Authorized>
+    <NotAuthorized>
+        <Inventory.UI.Pages.Login />
+    </NotAuthorized>
+</AuthorizeView>
