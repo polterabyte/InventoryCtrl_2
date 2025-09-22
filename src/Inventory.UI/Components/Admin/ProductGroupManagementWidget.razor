@@ -95,8 +95,9 @@
                         <button type="button" class="btn-close" @onclick="CloseModal"></button>
                     </div>
                     <div class="modal-body">
-                        <RadzenTemplateForm Data="@currentItem" Submit="@SaveItem">
-                            <DataAnnotationsValidator />
+                        <RadzenTemplateForm Data="@currentItem" Submit="@(async (CreateProductGroupDto model) => await OnSubmit(model))">
+                            <ChildContent Context="formContext">
+                                <DataAnnotationsValidator />
                             <div class="mb-3">
                                 <RadzenFormField Text="Name *" class="rz-mb-3">
                                     <RadzenTextBox @bind-Value="currentItem.Name" Name="productGroupName" />
@@ -112,6 +113,7 @@
                                     </RadzenStack>
                                 </div>
                             }
+                            </ChildContent>
                         </RadzenTemplateForm>
                     </div>
                     <div class="modal-footer">
@@ -120,7 +122,7 @@
                                          Variant="Variant.Outlined" @onclick="CloseModal" />
                             <RadzenButton Text="@(isSaving ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update" : "Create"))" 
                                          ButtonStyle="ButtonStyle.Primary" 
-                                         @onclick="SaveItem" 
+                                         type="submit" 
                                          Disabled="@isSaving" />
                         </RadzenStack>
                     </div>
@@ -203,7 +205,7 @@
         isEditing = false;
     }
 
-    private async Task SaveItem()
+    private async Task OnSubmit(CreateProductGroupDto model)
     {
         isSaving = true;
         try
@@ -212,7 +214,7 @@
             {
                 var updateDto = new UpdateProductGroupDto
                 {
-                    Name = currentItem.Name,
+                    Name = model.Name,
                     IsActive = isActive
                 };
                 var result = await ProductGroupService.UpdateProductGroupAsync(selectedItem.Id, updateDto);
@@ -229,7 +231,7 @@
             }
             else
             {
-                var result = await ProductGroupService.CreateProductGroupAsync(currentItem);
+                var result = await ProductGroupService.CreateProductGroupAsync(model);
                 if (result != null)
                 {
                     NotificationService.ShowSuccess("Success", "Product group created successfully");

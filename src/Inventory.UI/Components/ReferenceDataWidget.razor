@@ -156,12 +156,13 @@
                     </div>
                     <div class="modal-body">
                         <RadzenTemplateForm Data="@currentItem" Submit="@(async (CreateUnitOfMeasureDto model) => await SaveItem())">
-                            <DataAnnotationsValidator />
+                            <ChildContent Context="formContext">
+                                <DataAnnotationsValidator />
                             <div class="mb-3">
-                                <RadzenFormField Text="Name *" class="rz-mb-3">
+                                <Radzen.Blazor.RadzenFormField Text="Name *" class="rz-mb-3">
                                     <RadzenTextBox @bind-Value="currentItem.Name" Name="referenceDataName" />
                                     <RadzenRequiredValidator Component="referenceDataName" Text="Name is required" />
-                                </RadzenFormField>
+                                </Radzen.Blazor.RadzenFormField>
                             </div>
                             <div class="mb-3">
                                 <RadzenFormField Text="Symbol *" class="rz-mb-3">
@@ -183,6 +184,7 @@
                                     </RadzenStack>
                                 </div>
                             }
+                            </ChildContent>
                         </RadzenTemplateForm>
                     </div>
                     <div class="modal-footer">

@@ -1,8 +1,5 @@
-@using Inventory.Shared.DTOs
-@using Inventory.Shared.Interfaces
 @using Inventory.Shared.Services
-@using Microsoft.AspNetCore.Authorization
-@using Microsoft.AspNetCore.Components.Authorization
+
 @inject IUnitOfMeasureApiService UnitOfMeasureService
 @inject IUINotificationService NotificationService
 @inject IJSRuntime JSRuntime
@@ -30,7 +27,7 @@
             <div class="widget-filters">
                 <div class="row">
                     <div class="col-md-4">
-                        <RadzenTextBox @bind-Value="searchTerm" @bind-Value:after="OnSearchKeyUp" 
+                        <RadzenTextBox @bind-Value="searchTerm" @onkeyup="OnSearchKeyUp" 
                                        Placeholder="Search units..." Name="searchTerm" />
                     </div>
                     <div class="col-md-2">
@@ -152,8 +149,9 @@
 
         <!-- Create/Edit Dialog -->
         <RadzenDialog @bind-Visible="showModal" Style="min-width: 500px;">
-            <RadzenTemplateForm Data="@currentItem" Submit="@SaveItem">
-                <RadzenStack>
+            <RadzenTemplateForm Data="@currentItem" Submit="@(async (CreateUnitOfMeasureDto model) => await OnSubmit(model))">
+                <ChildContent Context="formContext">
+                    <RadzenStack>
                     <RadzenText TextStyle="TextStyle.H4" class="rz-mb-3">
                         @(isEditing ? "Edit" : "Create") Unit of Measure
                     </RadzenText>
@@ -194,10 +192,11 @@
                                      Variant="Variant.Outlined" @onclick="CloseModal" />
                         <RadzenButton Text="@(isSaving ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update" : "Create"))" 
                                      ButtonStyle="ButtonStyle.Primary" 
-                                     @onclick="SaveItem" 
+                                     type="submit" 
                                      Disabled="@isSaving" />
                     </RadzenStack>
-                </RadzenStack>
+                    </RadzenStack>
+                </ChildContent>
             </RadzenTemplateForm>
         </RadzenDialog>
     </Authorized>
@@ -346,7 +345,7 @@
         isEditing = false;
     }
 
-    private async Task SaveItem()
+    private async Task OnSubmit(CreateUnitOfMeasureDto model)
     {
         isSaving = true;
         try
@@ -357,16 +356,16 @@
             {
                 var updateDto = new UpdateUnitOfMeasureDto
                 {
-                    Name = currentItem.Name,
-                    Symbol = currentItem.Symbol,
-                    Description = currentItem.Description,
+                    Name = model.Name,
+                    Symbol = model.Symbol,
+                    Description = model.Description,
                     IsActive = isActive
                 };
                 response = await UnitOfMeasureService.UpdateAsync(selectedItem.Id, updateDto);
             }
             else
             {
-                response = await UnitOfMeasureService.CreateAsync(currentItem);
+                response = await UnitOfMeasureService.CreateAsync(model);
             }
 
             if (response.Success)

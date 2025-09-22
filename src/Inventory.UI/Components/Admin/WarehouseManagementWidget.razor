@@ -1,8 +1,5 @@
-@using Inventory.Shared.DTOs
-@using Inventory.Shared.Interfaces
 @using Inventory.Shared.Services
-@using Microsoft.AspNetCore.Authorization
-@using Microsoft.AspNetCore.Components.Authorization
+
 @inject IWarehouseService WarehouseService
 @inject IUINotificationService NotificationService
 @inject IJSRuntime JSRuntime
@@ -31,7 +28,7 @@
             <div class="widget-filters">
                 <div class="row">
                     <div class="col-md-4">
-                        <RadzenTextBox @bind-Value="searchTerm" @bind-Value:after="OnSearchKeyUp" 
+                        <RadzenTextBox @bind-Value="searchTerm" @onkeyup="OnSearchKeyUp" 
                                        Placeholder="Search warehouses..." Name="searchTerm" />
                     </div>
                     <div class="col-md-2">
@@ -158,8 +155,9 @@
 
         <!-- Create/Edit Dialog -->
         <RadzenDialog @bind-Visible="showModal" Style="min-width: 600px;">
-            <RadzenTemplateForm Data="@currentItem" Submit="@SaveItem">
-                <RadzenStack>
+            <RadzenTemplateForm Data="@currentItem" Submit="@(async (CreateWarehouseDto model) => await OnSubmit(model))">
+                <ChildContent Context="formContext">
+                    <RadzenStack>
                     <RadzenText TextStyle="TextStyle.H4" class="rz-mb-3">
                         @(isEditing ? "Edit" : "Create") Warehouse
                     </RadzenText>
@@ -210,10 +208,11 @@
                                      Variant="Variant.Outlined" @onclick="CloseModal" />
                         <RadzenButton Text="@(isSaving ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update" : "Create"))" 
                                      ButtonStyle="ButtonStyle.Primary" 
-                                     @onclick="SaveItem" 
+                                     type="submit" 
                                      Disabled="@isSaving" />
                     </RadzenStack>
-                </RadzenStack>
+                    </RadzenStack>
+                </ChildContent>
             </RadzenTemplateForm>
         </RadzenDialog>
     </Authorized>
@@ -375,7 +374,7 @@
         isEditing = false;
     }
 
-    private async Task SaveItem()
+    private async Task OnSubmit(CreateWarehouseDto model)
     {
         isSaving = true;
         try
@@ -384,10 +383,10 @@
             {
                 var updateDto = new UpdateWarehouseDto
                 {
-                    Name = currentItem.Name,
-                    LocationId = currentItem.LocationId,
-                    Description = currentItem.Description,
-                    ContactInfo = currentItem.ContactInfo,
+                    Name = model.Name,
+                    LocationId = model.LocationId,
+                    Description = model.Description,
+                    ContactInfo = model.ContactInfo,
                     IsActive = isActive
                 };
                 var result = await WarehouseService.UpdateWarehouseAsync(selectedItem.Id, updateDto);
@@ -404,7 +403,7 @@
             }
             else
             {
-                var result = await WarehouseService.CreateWarehouseAsync(currentItem);
+                var result = await WarehouseService.CreateWarehouseAsync(model);
                 if (result != null)
                 {
                     NotificationService.ShowSuccess("Success", "Warehouse created successfully");

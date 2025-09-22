@@ -3,8 +3,7 @@
 @using Inventory.Shared.Services
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
-@using Radzen
-@using Radzen.Blazor
+
 @inject IManufacturerService ManufacturerService
 @inject IUINotificationService NotificationService
 @inject IJSRuntime JSRuntime
@@ -84,9 +83,10 @@
         </div>
 
         <!-- Create/Edit Dialog -->
-        <RadzenDialog @bind-Visible="showModal" Style="min-width: 500px;">
-            <RadzenTemplateForm Data="@currentItem" Submit="@SaveItem">
-                <RadzenStack>
+        <RadzenDialog @bind-Visible="showModal" @bind-Visible:event="onchange" Style="min-width: 500px;">
+                        <RadzenTemplateForm Data="@currentItem" Submit="@(async (CreateManufacturerDto model) => await OnSubmit(model))">
+                            <ChildContent Context="formContext">
+                                <RadzenStack>
                     <RadzenText TextStyle="TextStyle.H4" class="rz-mb-3">
                         @(isEditing ? "Edit" : "Create") Manufacturer
                     </RadzenText>
@@ -99,11 +99,12 @@
                                      Variant="Variant.Outlined" @onclick="CloseModal" />
                         <RadzenButton Text="@(isSaving ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update" : "Create"))"
                                      ButtonStyle="ButtonStyle.Primary"
-                                     @onclick="SaveItem"
+                                     type="submit"
                                      Disabled="@isSaving" />
                     </RadzenStack>
-                </RadzenStack>
-            </RadzenTemplateForm>
+                                </RadzenStack>
+                            </ChildContent>
+                        </RadzenTemplateForm>
         </RadzenDialog>
     </Authorized>
     <NotAuthorized>
@@ -178,7 +179,7 @@
         isEditing = false;
     }
 
-    private async Task SaveItem()
+    private async Task OnSubmit(CreateManufacturerDto model)
     {
         isSaving = true;
         try
@@ -187,7 +188,7 @@
             {
                 var updateDto = new UpdateManufacturerDto
                 {
-                    Name = currentItem.Name
+                    Name = model.Name
                 };
                 var result = await ManufacturerService.UpdateManufacturerAsync(selectedItem.Id, updateDto);
                 if (result != null)
@@ -203,7 +204,7 @@
             }
             else
             {
-                var result = await ManufacturerService.CreateManufacturerAsync(currentItem);
+                var result = await ManufacturerService.CreateManufacturerAsync(model);
                 if (result != null)
                 {
                     NotificationService.ShowSuccess("Success", "Manufacturer created successfully");

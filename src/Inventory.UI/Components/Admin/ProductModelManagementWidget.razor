@@ -98,8 +98,9 @@
                         <button type="button" class="btn-close" @onclick="CloseModal"></button>
                     </div>
                     <div class="modal-body">
-                        <RadzenTemplateForm Data="@currentItem" Submit="@SaveItem">
-                            <DataAnnotationsValidator />
+                        <RadzenTemplateForm Data="@currentItem" Submit="@(async (CreateProductModelDto model) => await OnSubmit(model))">
+                            <ChildContent Context="formContext">
+                                <DataAnnotationsValidator />
                             <div class="mb-3">
                                 <RadzenFormField Text="Name *" class="rz-mb-3">
                                     <RadzenTextBox @bind-Value="currentItem.Name" Name="productModelName" />
@@ -126,6 +127,7 @@
                                     </RadzenStack>
                                 </div>
                             }
+                            </ChildContent>
                         </RadzenTemplateForm>
                     </div>
                     <div class="modal-footer">
@@ -134,7 +136,7 @@
                                          Variant="Variant.Outlined" @onclick="CloseModal" />
                             <RadzenButton Text="@(isSaving ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update" : "Create"))" 
                                          ButtonStyle="ButtonStyle.Primary" 
-                                         @onclick="SaveItem" 
+                                         type="submit" 
                                          Disabled="@isSaving" />
                         </RadzenStack>
                     </div>
@@ -166,7 +168,7 @@
 
     public class ManufacturerOption
     {
-        public Guid Value { get; set; }
+        public int Value { get; set; }
         public string Text { get; set; } = "";
     }
 
@@ -252,7 +254,7 @@
         isEditing = false;
     }
 
-    private async Task SaveItem()
+    private async Task OnSubmit(CreateProductModelDto model)
     {
         isSaving = true;
         try
@@ -261,8 +263,8 @@
             {
                 var updateDto = new UpdateProductModelDto
                 {
-                    Name = currentItem.Name,
-                    ManufacturerId = currentItem.ManufacturerId,
+                    Name = model.Name,
+                    ManufacturerId = model.ManufacturerId,
                     IsActive = isActive
                 };
                 var result = await ProductModelService.UpdateProductModelAsync(selectedItem.Id, updateDto);
@@ -279,7 +281,7 @@
             }
             else
             {
-                var result = await ProductModelService.CreateProductModelAsync(currentItem);
+                var result = await ProductModelService.CreateProductModelAsync(model);
                 if (result != null)
                 {
                     NotificationService.ShowSuccess("Success", "Product model created successfully");

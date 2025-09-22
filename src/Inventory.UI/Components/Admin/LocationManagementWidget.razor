@@ -157,8 +157,9 @@
                         <button type="button" class="btn-close" @onclick="CloseModal"></button>
                     </div>
                     <div class="modal-body">
-                        <RadzenTemplateForm Data="@currentItem" Submit="@SaveItem">
-                            <DataAnnotationsValidator />
+                        <RadzenTemplateForm Data="@currentItem" Submit="@(async (CreateLocationDto model) => await OnSubmit(model))">
+                            <ChildContent Context="formContext">
+                                <DataAnnotationsValidator />
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="mb-3">
@@ -195,6 +196,7 @@
                                     </RadzenStack>
                                 </div>
                             }
+                            </ChildContent>
                         </RadzenTemplateForm>
                     </div>
                     <div class="modal-footer">
@@ -203,7 +205,7 @@
                                          Variant="Variant.Outlined" @onclick="CloseModal" />
                             <RadzenButton Text="@(isSaving ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update" : "Create"))" 
                                          ButtonStyle="ButtonStyle.Primary" 
-                                         @onclick="SaveItem" 
+                                         type="submit" 
                                          Disabled="@isSaving" />
                         </RadzenStack>
                     </div>
@@ -243,7 +245,7 @@
 
     public class ParentLocationOption
     {
-        public Guid? Value { get; set; }
+        public int? Value { get; set; }
         public string Text { get; set; } = "";
     }
 
@@ -394,7 +396,7 @@
         isEditing = false;
     }
 
-    private async Task SaveItem()
+    private async Task OnSubmit(CreateLocationDto model)
     {
         isSaving = true;
         try
@@ -403,9 +405,9 @@
             {
                 var updateDto = new UpdateLocationDto
                 {
-                    Name = currentItem.Name,
-                    Description = currentItem.Description,
-                    ParentLocationId = currentItem.ParentLocationId,
+                    Name = model.Name,
+                    Description = model.Description,
+                    ParentLocationId = model.ParentLocationId,
                     IsActive = isActive
                 };
                 var result = await LocationService.UpdateLocationAsync(selectedItem.Id, updateDto);
@@ -423,7 +425,7 @@
             }
             else
             {
-                var result = await LocationService.CreateLocationAsync(currentItem);
+                var result = await LocationService.CreateLocationAsync(model);
                 if (result != null)
                 {
                     NotificationService.ShowSuccess("Success", "Location created successfully");
