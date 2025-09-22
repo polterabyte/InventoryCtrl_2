@@ -1,0 +1,23 @@
+@using Radzen.Blazor
+@using Inventory.UI.Utils
+
+<RadzenFieldset Text="@Label" Expanded="@Expanded">
+    @ChildContent
+</RadzenFieldset>
+
+@code {
+    /// <summary>
+    /// Заголовок поля
+    /// </summary>
+    [Parameter] public string Label { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Развернуто ли поле
+    /// </summary>
+    [Parameter] public bool Expanded { get; set; } = true;
+
+    /// <summary>
+    /// Содержимое поля
+    /// </summary>
+    [Parameter] public RenderFragment ChildContent { get; set; }
+}

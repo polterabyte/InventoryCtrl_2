@@ -1,0 +1,113 @@
+@using Radzen
+@using Radzen.Blazor
+@inject NotificationService NotificationService
+
+<div class="rz-notification-wrapper">
+    <RadzenNotification />
+</div>
+
+@code {
+    /// <summary>
+    /// Показать успешное уведомление
+    /// </summary>
+    /// <param name="summary">Краткое описание</param>
+    /// <param name="detail">Детальное описание</param>
+    /// <param name="duration">Длительность отображения в миллисекундах (по умолчанию 4000)</param>
+    public void ShowSuccess(string summary, string detail = null, int duration = 4000)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Success,
+            Summary = summary,
+            Detail = detail,
+            Duration = duration
+        });
+    }
+
+    /// <summary>
+    /// Показать информационное уведомление
+    /// </summary>
+    /// <param name="summary">Краткое описание</param>
+    /// <param name="detail">Детальное описание</param>
+    /// <param name="duration">Длительность отображения в миллисекундах (по умолчанию 4000)</param>
+    public void ShowInfo(string summary, string detail = null, int duration = 4000)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Info,
+            Summary = summary,
+            Detail = detail,
+            Duration = duration
+        });
+    }
+
+    /// <summary>
+    /// Показать предупреждающее уведомление
+    /// </summary>
+    /// <param name="summary">Краткое описание</param>
+    /// <param name="detail">Детальное описание</param>
+    /// <param name="duration">Длительность отображения в миллисекундах (по умолчанию 6000)</param>
+    public void ShowWarning(string summary, string detail = null, int duration = 6000)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Warning,
+            Summary = summary,
+            Detail = detail,
+            Duration = duration
+        });
+    }
+
+    /// <summary>
+    /// Показать уведомление об ошибке
+    /// </summary>
+    /// <param name="summary">Краткое описание</param>
+    /// <param name="detail">Детальное описание</param>
+    /// <param name="duration">Длительность отображения в миллисекундах (по умолчанию 8000)</param>
+    public void ShowError(string summary, string detail = null, int duration = 8000)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Error,
+            Summary = summary,
+            Detail = detail,
+            Duration = duration
+        });
+    }
+
+    /// <summary>
+    /// Показать кастомное уведомление
+    /// </summary>
+    /// <param name="message">Объект уведомления</param>
+    public void ShowNotification(NotificationMessage message)
+    {
+        NotificationService.Notify(message);
+    }
+
+    /// <summary>
+    /// Показать уведомление с использованием RadzenUtils
+    /// </summary>
+    /// <param name="severity">Тип уведомления</param>
+    /// <param name="summary">Краткое описание</param>
+    /// <param name="detail">Детальное описание</param>
+    /// <param name="duration">Длительность отображения</param>
+    public void ShowNotification(NotificationSeverity severity, string summary, string detail = null, int? duration = null)
+    {
+        var defaultDuration = severity switch
+        {
+            NotificationSeverity.Success => 4000,
+            NotificationSeverity.Info => 4000,
+            NotificationSeverity.Warning => 6000,
+            NotificationSeverity.Error => 8000,
+            _ => 4000
+        };
+
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = severity,
+            Summary = summary,
+            Detail = detail,
+            Duration = duration ?? defaultDuration
+        });
+    }
+}
