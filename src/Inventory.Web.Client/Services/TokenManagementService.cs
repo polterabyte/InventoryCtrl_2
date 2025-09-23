@@ -19,7 +19,7 @@ namespace Inventory.Web.Client.Services;
 public class TokenManagementService : ITokenManagementService
 {
     private readonly ILocalStorageService _localStorage;
-    private readonly IAuthService _authService;
+    private readonly ITokenRefreshService _tokenRefreshService;
     private readonly HttpClient _httpClient;
     private readonly TokenConfiguration _config;
     private readonly ILogger<TokenManagementService> _logger;
@@ -33,13 +33,13 @@ public class TokenManagementService : ITokenManagementService
 
     public TokenManagementService(
         ILocalStorageService localStorage,
-        IAuthService authService,
+        ITokenRefreshService tokenRefreshService,
         HttpClient httpClient,
         IOptions<TokenConfiguration> config,
         ILogger<TokenManagementService> logger)
     {
         _localStorage = localStorage;
-        _authService = authService;
+        _tokenRefreshService = tokenRefreshService;
         _httpClient = httpClient;
         _config = config.Value;
         _logger = logger;
@@ -126,7 +126,7 @@ public class TokenManagementService : ITokenManagementService
                 {
                     _logger.LogDebug("Token refresh attempt {Attempt}/{MaxRetries}", attempt, _config.MaxRefreshRetries);
 
-                    var result = await _authService.RefreshTokenAsync(refreshToken);
+                    var result = await _tokenRefreshService.RefreshTokenAsync(refreshToken);
                     
                     if (result.Success && !string.IsNullOrEmpty(result.Token))
                     {

@@ -13,6 +13,7 @@ using Inventory.Web.Client.Services;
 using Microsoft.AspNetCore.Components;
 using Inventory.Web.Client.Configuration;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Radzen;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -48,6 +49,20 @@ builder.Services.AddScoped<IApiHealthService, ApiHealthService>();
 // Register resilient API service
 builder.Services.AddScoped<IResilientApiService, ResilientApiService>();
 
+// Register token refresh service (without circular dependencies)
+builder.Services.AddScoped<ITokenRefreshService>(sp =>
+{
+    // Separate HttpClient to avoid interceptor recursion; no fixed BaseAddress
+    var httpClient = new HttpClient();
+    httpClient.DefaultRequestHeaders.Add("X-Requested-With", "XMLHttpRequest");
+
+    var logger = sp.GetRequiredService<ILogger<TokenRefreshService>>();
+    var config = sp.GetRequiredService<IOptions<TokenConfiguration>>();
+    var urlBuilder = sp.GetRequiredService<IUrlBuilderService>();
+
+    return new TokenRefreshService(httpClient, logger, config, urlBuilder);
+});
+
 // Register token management service
 builder.Services.AddScoped<ITokenManagementService, TokenManagementService>();
 
@@ -65,6 +80,7 @@ builder.Services.AddScoped<HttpClient>(sp =>
     
     return httpClient;
 });
+
 
 // Add Blazor authorization services
 builder.Services.AddAuthorizationCore();

@@ -73,6 +73,7 @@ public class AuthenticationMiddleware
             "/api/auth/login",
             "/api/auth/register",
             "/api/health",
+            "/health",
             "/swagger",
             "/notificationHub"
         };
