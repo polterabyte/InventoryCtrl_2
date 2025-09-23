@@ -1,4 +1,4 @@
-﻿@using Blazored.LocalStorage
+@using Blazored.LocalStorage
 @using Radzen
 @using Radzen.Blazor
 
@@ -7,115 +7,54 @@
 @inject NavigationManager Navigation
 @inject ILocalStorageService LocalStorage
 
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">Inventory App</a>
-        <RadzenButton Icon="menu" ButtonStyle="ButtonStyle.Light" 
-                     Variant="Variant.Text" 
-                     @onclick="ToggleNavMenu" 
-                     title="Navigation menu" />
-    </div>
-</div>
+<RadzenMenu Class="rz-border-0" Orientation="Orientation.Vertical">
+    <RadzenMenuItem Text="Главная" Icon="home" Path="/" />
+    <RadzenMenuItem Text="Товары" Icon="inventory_2" Path="products" />
+    <RadzenMenuItem Text="Склады" Icon="warehouse" Path="warehouses" />
+    <RadzenMenuItem Text="Отчеты" Icon="insights" Path="reports" />
 
+    <AuthorizeView Roles="Admin">
+        <Authorized>
+            <RadzenMenuItem Text="Администрирование" Icon="admin_panel_settings">
+                <RadzenMenuItem Text="Справочники" Icon="settings" Path="admin/reference-data" />
+                <RadzenMenuItem Text="Пользователи" Icon="group" Path="admin/users" />
+                <RadzenMenuItem Text="Аудит" Icon="list_alt" Path="admin/audit-logs" />
+                <RadzenMenuItem Text="Отладка" Icon="bug_report" Path="debug" />
+            </RadzenMenuItem>
+        </Authorized>
+    </AuthorizeView>
 
-<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
-    <nav class="nav flex-column">
-        @foreach (var item in MenuItems)
-        {
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="@item.Url" Match="@(Enum.Parse<NavLinkMatch>(item.Match))">
-                    @if (!string.IsNullOrEmpty(item.Icon))
-                    {
-                        <span class="@item.Icon" aria-hidden="true"></span>
-                    }
-                    @item.Text
-                </NavLink>
-            </div>
-        }
-        
-        @* Admin links *@
-        <AuthorizeView Roles="Admin">
-            <Authorized Context="authContext">
-                    <div class="nav-item px-3">
-                        <NavLink class="nav-link" href="admin/reference-data">
-                            <span class="bi bi-gear" aria-hidden="true"></span>
-                            Dictionaries
-                        </NavLink>
-                    </div>
-                    <div class="nav-item px-3">
-                        <NavLink class="nav-link" href="admin/users">
-                            <span class="bi bi-people" aria-hidden="true"></span>
-                            Users
-                        </NavLink>
-                    </div>
-                    <div class="nav-item px-3">
-                        <NavLink class="nav-link" href="admin/audit-logs">
-                            <span class="bi bi-clipboard-list" aria-hidden="true"></span>
-                            Audit Logs
-                        </NavLink>
-                    </div>
-                    <div class="nav-item px-3">
-                        <NavLink class="nav-link" href="debug">
-                            <span class="bi bi-bug" aria-hidden="true"></span>
-                            Debug Logs
-                        </NavLink>
-                    </div>
-            </Authorized>
-        </AuthorizeView>
-        
-        @* Logout button *@
-        <div class="nav-item px-3">
-            <RadzenButton Text="Выйти" 
-                         Icon="logout" 
-                         ButtonStyle="ButtonStyle.Danger" 
-                         Variant="Variant.Outlined"
-                         @onclick="LogoutAsync" />
-        </div>
-    </nav>
-</div>
+    <RadzenMenuItem Text="Выйти" Icon="logout" Click="@(() => LogoutAsync())" />
+</RadzenMenu>
 
 @code {
-
     private List<NavMenuItem> MenuItems { get; set; } = new();
-    private bool collapseNavMenu = true;
 
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-
-    private void ToggleNavMenu()
-    {
-        collapseNavMenu = !collapseNavMenu;
-    }
     private async Task LogoutAsync()
     {
         try
         {
-            // Get current token from storage
             var token = await LocalStorage.GetItemAsStringAsync("authToken");
-            
             if (!string.IsNullOrEmpty(token))
             {
                 await AuthService.LogoutAsync(token);
             }
-            
-            // Clear local storage and redirect to login
+
             await ClearAuthDataAsync();
             Navigation.NavigateTo("/login", true);
         }
         catch (Exception ex)
         {
-            // Log error but still redirect to login
             Console.WriteLine($"Logout error: {ex.Message}");
             await ClearAuthDataAsync();
             Navigation.NavigateTo("/login", true);
         }
     }
-    
+
     private async Task ClearAuthDataAsync()
     {
-        // Clear token from local storage
         await LocalStorage.RemoveItemAsync("authToken");
-        
-        // Notify authentication state provider about logout
+
         if (AuthStateProvider is ICustomAuthenticationStateProvider customProvider)
         {
             await customProvider.MarkUserAsLoggedOutAsync();
@@ -124,13 +63,8 @@
 
     protected override void OnInitialized()
     {
-        // Default menu items
-        MenuItems = new List<NavMenuItem>
-        {
-            new() { Text = "Главная", Url = "", Icon = "bi bi-house-door-fill-nav-menu", Match = "All" },
-            new() { Text = "Товары", Url = "products", Icon = "bi bi-box-seam" },
-            new() { Text = "Склады", Url = "warehouses", Icon = "bi bi-building" },
-            new() { Text = "Отчеты", Url = "reports", Icon = "bi bi-graph-up" }
-        };
+        // Reserved for future dynamic menu generation
+        MenuItems = new();
     }
 }
+

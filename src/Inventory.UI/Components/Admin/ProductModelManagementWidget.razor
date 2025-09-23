@@ -3,12 +3,13 @@
 @using Inventory.Shared.Services
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
+@using System.Linq
 @inject IProductModelService ProductModelService
 @inject IManufacturerService ManufacturerService
 @inject IUINotificationService NotificationService
 @inject IJSRuntime JSRuntime
 
-<AuthorizeView Roles="Admin">
+<AuthorizeView Roles="Admin" Context="authState">
     <Authorized>
         <div class="reference-data-widget">
             <div class="widget-header">
@@ -32,53 +33,50 @@
                         </div>
                     </div>
                 }
-                else if (data?.Any() == true)
+                else if (pagedModels?.Any() == true)
                 {
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Manufacturer</th>
-                                    <th>Status</th>
-                                    <th>Created</th>
-                                    <th>Updated</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var item in data)
-                                {
-                                    <tr>
-                                        <td><strong>@item.Name</strong></td>
-                                        <td>@item.ManufacturerName</td>
-                                        <td>
-                                            @if (item.IsActive)
-                                            {
-                                                <span class="badge bg-success">Active</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge bg-secondary">Inactive</span>
-                                            }
-                                        </td>
-                                        <td>@item.CreatedAt.ToString("MMM dd, yyyy")</td>
-                                        <td>@(item.UpdatedAt?.ToString("MMM dd, yyyy") ?? "-")</td>
-                                        <td>
-                                            <div class="btn-group btn-group-sm">
-                                                <button class="btn btn-outline-primary" @onclick="() => EditItem(item)" title="Edit">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                <button class="btn btn-outline-danger" @onclick="() => DeleteItem(item)" title="Delete">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
+                    <RadzenDataGrid TItem="ProductModelDto"
+                                     @ref="grid"
+                                     Data="@pagedModels"
+                                     Count="@totalCount"
+                                     AllowPaging="true"
+                                     PageSize="@pageSize"
+                                     LoadData="@OnGridLoad"
+                                     AllowSorting="true"
+                                     Responsive="true">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="ProductModelDto" Title="Name" Property="Name">
+                                <Template Context="item"><strong>@item.Name</strong></Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="ProductModelDto" Title="Manufacturer">
+                                <Template Context="item">@item.ManufacturerName</Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="ProductModelDto" Title="Status">
+                                <Template Context="item">
+                                    @if (item.IsActive)
+                                    {
+                                        <RadzenBadge Text="Active" Style="success" />
+                                    }
+                                    else
+                                    {
+                                        <RadzenBadge Text="Inactive" Style="secondary" />
+                                    }
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="ProductModelDto" Title="Created" Property="CreatedAt">
+                                <Template Context="item">@item.CreatedAt.ToString("MMM dd, yyyy")</Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="ProductModelDto" Title="Updated" Property="UpdatedAt">
+                                <Template Context="item">@(item.UpdatedAt?.ToString("MMM dd, yyyy") ?? "-")</Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="ProductModelDto" Title="Actions">
+                                <Template Context="item">
+                                    <RadzenButton Icon="edit" Size="ButtonSize.Small" Variant="Variant.Text" @onclick="(() => EditItem(item))" />
+                                    <RadzenButton Icon="delete" Size="ButtonSize.Small" Variant="Variant.Text" ButtonStyle="ButtonStyle.Danger" @onclick="(() => DeleteItem(item))" />
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
                 }
                 else
                 {
@@ -89,60 +87,54 @@
             </div>
         </div>
 
-        <!-- Create/Edit Modal -->
-        <div class="modal @(showModal ? "show d-block" : "d-none")" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">@(isEditing ? "Edit" : "Create") Product Model</h5>
-                        <button type="button" class="btn-close" @onclick="CloseModal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <RadzenTemplateForm Data="@currentItem" Submit="@(async (CreateProductModelDto model) => await OnSubmit(model))">
-                            <ChildContent Context="formContext">
-                                <DataAnnotationsValidator />
+        <RadzenDialog Visible="@showModal"
+                      Title="@($"{(isEditing ? "Edit" : "Create")} Product Model")"
+                      Close="CloseModal"
+                      Width="520px">
+            <ChildContent>
+                <RadzenTemplateForm Data="@currentItem" Submit="@(async (CreateProductModelDto model) => await OnSubmit(model))">
+                    <ChildContent Context="formContext">
+                        <DataAnnotationsValidator />
+                        <div class="mb-3">
+                            <RadzenFormField Text="Name *" class="rz-mb-3">
+                                <RadzenTextBox @bind-Value="currentItem.Name" Name="productModelName" />
+                                <RadzenRequiredValidator Component="productModelName" Text="Name is required" />
+                            </RadzenFormField>
+                        </div>
+                        <div class="mb-3">
+                            <RadzenFormField Text="Manufacturer *" class="rz-mb-3">
+                                <RadzenDropDown @bind-Value="currentItem.ManufacturerId"
+                                               Data="@manufacturerOptions"
+                                               ValueProperty="Value"
+                                               TextProperty="Text"
+                                               Placeholder="Select Manufacturer"
+                                               Name="manufacturerId" />
+                                <RadzenRequiredValidator Component="manufacturerId" Text="Manufacturer is required" />
+                            </RadzenFormField>
+                        </div>
+                        @if (isEditing)
+                        {
                             <div class="mb-3">
-                                <RadzenFormField Text="Name *" class="rz-mb-3">
-                                    <RadzenTextBox @bind-Value="currentItem.Name" Name="productModelName" />
-                                    <RadzenRequiredValidator Component="productModelName" Text="Name is required" />
-                                </RadzenFormField>
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center">
+                                    <RadzenCheckBox @bind-Value="isActive" Name="isActive" />
+                                    <RadzenLabel Text="Active" For="isActive" />
+                                </RadzenStack>
                             </div>
-                            <div class="mb-3">
-                                <RadzenFormField Text="Manufacturer *" class="rz-mb-3">
-                                    <RadzenDropDown @bind-Value="currentItem.ManufacturerId"
-                                                   Data="@manufacturerOptions"
-                                                   ValueProperty="Value"
-                                                   TextProperty="Text"
-                                                   Placeholder="Select Manufacturer"
-                                                   Name="manufacturerId" />
-                                    <RadzenRequiredValidator Component="manufacturerId" Text="Manufacturer is required" />
-                                </RadzenFormField>
-                            </div>
-                            @if (isEditing)
-                            {
-                                <div class="mb-3">
-                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center">
-                                        <RadzenCheckBox @bind-Value="isActive" Name="isActive" />
-                                        <RadzenLabel Text="Active" For="isActive" />
-                                    </RadzenStack>
-                                </div>
-                            }
-                            </ChildContent>
-                        </RadzenTemplateForm>
-                    </div>
-                    <div class="modal-footer">
-                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
-                            <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" 
-                                         Variant="Variant.Outlined" @onclick="CloseModal" />
-                            <RadzenButton Text="@(isSaving ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update" : "Create"))" 
-                                         ButtonStyle="ButtonStyle.Primary" 
-                                         type="submit" 
-                                         Disabled="@isSaving" />
+                        }
+                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.75rem">
+                            <RadzenButton Text="Cancel"
+                                          ButtonStyle="ButtonStyle.Light"
+                                          Variant="Variant.Outlined"
+                                          Click="@(args => CloseModal())" />
+                            <RadzenButton Text="@(isSaving ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update" : "Create"))"
+                                          ButtonStyle="ButtonStyle.Primary"
+                                          ButtonType="ButtonType.Submit"
+                                          Disabled="@isSaving" />
                         </RadzenStack>
-                    </div>
-                </div>
-            </div>
-        </div>
+                    </ChildContent>
+                </RadzenTemplateForm>
+            </ChildContent>
+        </RadzenDialog>
     </Authorized>
     <NotAuthorized>
         <div class="alert alert-danger">
@@ -153,12 +145,15 @@
 </AuthorizeView>
 
 @code {
-    private List<ProductModelDto> data = new();
+    private RadzenDataGrid<ProductModelDto>? grid;
+    private List<ProductModelDto> pagedModels = new();
     private List<ManufacturerDto> manufacturers = new();
     private bool isLoading = false;
     private bool showModal = false;
     private bool isEditing = false;
     private bool isSaving = false;
+    private int totalCount = 0;
+    private int pageSize = 10;
 
     private CreateProductModelDto currentItem = new();
     private ProductModelDto? selectedItem = null;
@@ -175,7 +170,6 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadManufacturers();
-        await LoadData();
     }
 
     private async Task LoadManufacturers()
@@ -202,27 +196,12 @@
         }
     }
 
-    private async Task LoadData()
-    {
-        isLoading = true;
-        try
-        {
-            data = await ProductModelService.GetAllProductModelsAsync();
-        }
-        catch (Exception ex)
-        {
-            NotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
-            data = new();
-        }
-        finally
-        {
-            isLoading = false;
-        }
-    }
-
     private async Task RefreshData()
     {
-        await LoadData();
+        if (grid != null)
+        {
+            await grid.Reload();
+        }
     }
 
     private void ShowCreateModal()
@@ -326,6 +305,38 @@
             {
                 NotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
             }
+        }
+    }
+
+    private async Task OnGridLoad(Radzen.LoadDataArgs args)
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var top = args.Top ?? pageSize;
+            if (top > 0)
+            {
+                pageSize = top;
+            }
+
+            var skip = args.Skip ?? 0;
+
+            var allModels = await ProductModelService.GetAllProductModelsAsync();
+            totalCount = allModels.Count;
+            pagedModels = allModels.Skip(skip).Take(pageSize).ToList();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
+            pagedModels = new();
+            totalCount = 0;
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
         }
     }
 }

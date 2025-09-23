@@ -1,0 +1,28 @@
+﻿@using Radzen
+@implements IDisposable
+@inject Inventory.Shared.Services.IUINotificationService UiNotifications
+@inject NotificationService RadzenNotifications
+
+@code {
+    protected override void OnInitialized()
+    {
+        UiNotifications.NotificationReceived += OnNotificationReceived;
+    }
+
+    private void OnNotificationReceived(Inventory.Shared.Models.ToastNotification toast)
+    {
+        var severity = Inventory.UI.Utilities.RadzenUi.MapSeverity(toast.Type);
+        RadzenNotifications.Notify(new Radzen.NotificationMessage
+        {
+            Severity = severity,
+            Summary = toast.Title,
+            Detail = toast.Message,
+            Duration = toast.Duration
+        });
+    }
+
+    public void Dispose()
+    {
+        UiNotifications.NotificationReceived -= OnNotificationReceived;
+    }
+}

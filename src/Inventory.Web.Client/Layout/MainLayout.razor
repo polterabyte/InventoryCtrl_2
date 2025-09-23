@@ -1,49 +1,41 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 @using Microsoft.AspNetCore.Components.Authorization
-@using Inventory.Shared.Models
 @using Inventory.UI.Components.Notifications
 @using Inventory.UI.Components
+@using Inventory.UI.Utilities
 @using Radzen
 @using Radzen.Blazor
 
-
-
 <AuthorizeView>
     <Authorized Context="userContext">
-        <div class="page">
-            <div class="sidebar">
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="@RadzenUi.Gap" Style="min-height: 100vh;">
+            <RadzenCard Style="width: 260px; margin: 0; border-radius: 0;">
                 <NavMenu />
-            </div>
+            </RadzenCard>
 
-            <main>
-                <div class="top-row px-4">
-                    <div class="user-info">
-                        <span class="greeting-text">
-                            <i class="bi bi-person-circle me-2"></i>
-                            Привет, @userContext.User.Identity?.Name!
-                        </span>
-                    </div>
-
+            <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.Gap" Style="flex: 1; padding: 1rem;">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Class="rz-p-3 rz-shadow-1 rz-border-radius">
+                    <span>
+                        <RadzenIcon Icon="account_circle" Class="rz-mr-2" />
+                        Привет, @userContext.User.Identity?.Name!
+                    </span>
                     <a href="https://www.cubytechnologies.com/" target="_blank">About</a>
-                </div>
+                </RadzenStack>
 
-                <article class="content">
+                <RadzenCard Style="flex: 1;">
                     @Body
-                </article>
-            </main>
-        </div>
+                </RadzenCard>
+            </RadzenStack>
+        </RadzenStack>
 
-
-        @* Notification container for toast notifications *@
         <NotificationContainer />
-
-        @* Real-time notifications *@
         <RealTimeNotificationComponent />
-        
-        @* Radzen Components for interactive features *@
+
+        <RadzenNotificationBridge />
         <RadzenComponents @rendermode="InteractiveAuto" />
     </Authorized>
     <NotAuthorized>
         <Inventory.UI.Pages.Login />
     </NotAuthorized>
 </AuthorizeView>
+

@@ -4,7 +4,7 @@
 @inject IUINotificationService NotificationService
 @inject IJSRuntime JSRuntime
 
-<AuthorizeView Roles="Admin">
+<AuthorizeView Roles="Admin" Context="authState">
     <Authorized>
         <div class="reference-data-widget">
             <div class="widget-header">

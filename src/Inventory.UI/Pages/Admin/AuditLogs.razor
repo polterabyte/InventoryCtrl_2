@@ -138,123 +138,88 @@
                     else if (auditLogs?.Any() == true)
                     {
                         <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Timestamp</th>
-                                        <th>Action</th>
-                                        <th>Entity</th>
-                                        <th>User</th>
-                                        <th>IP Address</th>
-                                        <th>Status</th>
-                                        <th>Response Time</th>
-                                        <th>Details</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var log in auditLogs)
-                                    {
-                                        <tr class="@GetRowClass(log)">
-                                            <td>
-                                                <small class="text-muted">@log.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</small>
-                                            </td>
-                                            <td>
-                                                <span class="badge @GetActionBadgeClass(log.ActionType.ToString())">
-                                                    @log.ActionType.ToString()
-                                                </span>
-                                            </td>
-                                            <td>
-                                                @if (!string.IsNullOrEmpty(log.EntityType))
-                                                {
-                                                    <span class="badge bg-secondary">@log.EntityType</span>
-                                                }
-                                                @if (!string.IsNullOrEmpty(log.EntityId))
-                                                {
-                                                    <small class="text-muted">ID: @log.EntityId</small>
-                                                }
-                                            </td>
-                                            <td>
-                                                @if (!string.IsNullOrEmpty(log.Username))
-                                                {
-                                                    <span class="fw-bold">@log.Username</span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="text-muted">Anonymous</span>
-                                                }
-                                            </td>
-                                            <td>
-                                                <small class="text-muted">@log.IpAddress</small>
-                                            </td>
-                                            <td>
-                                                @if (log.IsSuccess)
-                                                {
-                                                    <span class="badge bg-success">Success</span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="badge bg-danger">Failed</span>
-                                                }
-                                            </td>
-                                            <td>
-                                                @if (log.Duration > 0)
-                                                {
-                                                    <span class="text-muted">@log.Duration ms</span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="text-muted">-</span>
-                                                }
-                                            </td>
-                                            <td>
-                                                <button class="btn btn-sm btn-outline-info" @onclick="() => ShowLogDetails(log)">
-                                                    <i class="fas fa-eye"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
+                            <RadzenDataGrid TItem="AuditLogDto"
+                                             Data="@auditLogs"
+                                             Count="@totalLogs"
+                                             AllowPaging="true"
+                                             PageSize="@pageSize"
+                                             LoadData="@OnGridLoad"
+                                             AllowSorting="true"
+                                             Responsive="true">
+                                <Columns>
+                                    <RadzenDataGridColumn TItem="AuditLogDto" Title="Timestamp" Property="Timestamp">
+                                        <Template Context="log">
+                                            <small class="rz-text-secondary">@log.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</small>
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="AuditLogDto" Title="Action">
+                                        <Template Context="log">
+                                            <RadzenBadge Text="@log.ActionType.ToString()" Style="info" />
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="AuditLogDto" Title="Entity">
+                                        <Template Context="log">
+                                            @if (!string.IsNullOrEmpty(log.EntityType))
+                                            {
+                                                <RadzenBadge Text="@log.EntityType" Style="secondary" />
+                                            }
+                                            @if (!string.IsNullOrEmpty(log.EntityId))
+                                            {
+                                                <span class="rz-text-secondary">ID: @log.EntityId</span>
+                                            }
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="AuditLogDto" Title="User">
+                                        <Template Context="log">
+                                            @if (!string.IsNullOrEmpty(log.Username))
+                                            {
+                                                <strong>@log.Username</strong>
+                                            }
+                                            else
+                                            {
+                                                <span class="rz-text-secondary">Anonymous</span>
+                                            }
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="AuditLogDto" Title="IP Address">
+                                        <Template Context="log">
+                                            <small class="rz-text-secondary">@log.IpAddress</small>
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="AuditLogDto" Title="Status">
+                                        <Template Context="log">
+                                            @if (log.IsSuccess)
+                                            {
+                                                <RadzenBadge Text="Success" Style="success" />
+                                            }
+                                            else
+                                            {
+                                                <RadzenBadge Text="Failed" Style="danger" />
+                                            }
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="AuditLogDto" Title="Response Time">
+                                        <Template Context="log">
+                                            @if (log.Duration > 0)
+                                            {
+                                                <span class="rz-text-secondary">@log.Duration ms</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="rz-text-secondary">-</span>
+                                            }
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="AuditLogDto" Title="Details">
+                                        <Template Context="log">
+                                            <RadzenButton Icon="visibility" Size="ButtonSize.Small" Variant="Variant.Text" @onclick="(() => ShowLogDetails(log))" />
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                </Columns>
+                            </RadzenDataGrid>
                         </div>
 
-                        <!-- Pagination -->
-                        @if (totalPages > 1)
-                        {
-                            <div class="card-footer">
-                                <nav aria-label="Audit logs pagination">
-                                    <ul class="pagination justify-content-center mb-0">
-                                        <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                                            <button class="page-link" @onclick="() => ChangePage(1)" disabled="@(currentPage == 1)">
-                                                <i class="fas fa-angle-double-left"></i>
-                                            </button>
-                                        </li>
-                                        <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                                            <button class="page-link" @onclick="() => ChangePage(currentPage - 1)" disabled="@(currentPage == 1)">
-                                                <i class="fas fa-angle-left"></i>
-                                            </button>
-                                        </li>
-                                        
-                                        @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(totalPages, currentPage + 2); i++)
-                                        {
-                                            <li class="page-item @(i == currentPage ? "active" : "")">
-                                                <button class="page-link" @onclick="() => ChangePage(i)">@i</button>
-                                            </li>
-                                        }
-                                        
-                                        <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                                            <button class="page-link" @onclick="() => ChangePage(currentPage + 1)" disabled="@(currentPage == totalPages)">
-                                                <i class="fas fa-angle-right"></i>
-                                            </button>
-                                        </li>
-                                        <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                                            <button class="page-link" @onclick="() => ChangePage(totalPages)" disabled="@(currentPage == totalPages)">
-                                                <i class="fas fa-angle-double-right"></i>
-                                            </button>
-                                        </li>
-                                    </ul>
-                                </nav>
-                            </div>
-                        }
+                        
                     }
                     else
                     {
@@ -270,119 +235,113 @@
     </div>
 </div>
 
-<!-- Log Details Modal -->
-@if (selectedLog != null)
-{
-    <div class="modal fade show" style="display: block;" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="fas fa-info-circle me-2"></i>Audit Log Details
-                    </h5>
-                    <button type="button" class="btn-close" @onclick="CloseLogDetails"></button>
+<RadzenDialog Visible="@(selectedLog != null)"
+              Title="Audit Log Details"
+              Close="CloseLogDetails"
+              Width="760px">
+    <ChildContent>
+        @if (selectedLog != null)
+        {
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Basic Information</h6>
+                    <table class="table table-sm">
+                        <tr>
+                            <td><strong>Timestamp:</strong></td>
+                            <td>@selectedLog.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff")</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Action Type:</strong></td>
+                            <td><span class="badge @GetActionBadgeClass(selectedLog.ActionType.ToString())">@selectedLog.ActionType.ToString()</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Entity Type:</strong></td>
+                            <td>@(selectedLog.EntityType ?? "N/A")</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Entity ID:</strong></td>
+                            <td>@(selectedLog.EntityId ?? "N/A")</td>
+                        </tr>
+                        <tr>
+                            <td><strong>User:</strong></td>
+                            <td>@(selectedLog.Username ?? "Anonymous")</td>
+                        </tr>
+                        <tr>
+                            <td><strong>IP Address:</strong></td>
+                            <td>@selectedLog.IpAddress</td>
+                        </tr>
+                        <tr>
+                            <td><strong>User Agent:</strong></td>
+                            <td><small class="text-muted">@selectedLog.UserAgent</small></td>
+                        </tr>
+                    </table>
                 </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6>Basic Information</h6>
-                            <table class="table table-sm">
-                                <tr>
-                                    <td><strong>Timestamp:</strong></td>
-                                    <td>@selectedLog.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff")</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Action Type:</strong></td>
-                                    <td><span class="badge @GetActionBadgeClass(selectedLog.ActionType.ToString())">@selectedLog.ActionType.ToString()</span></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Entity Type:</strong></td>
-                                    <td>@(selectedLog.EntityType ?? "N/A")</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Entity ID:</strong></td>
-                                    <td>@(selectedLog.EntityId ?? "N/A")</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>User:</strong></td>
-                                    <td>@(selectedLog.Username ?? "Anonymous")</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>IP Address:</strong></td>
-                                    <td>@selectedLog.IpAddress</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>User Agent:</strong></td>
-                                    <td><small class="text-muted">@selectedLog.UserAgent</small></td>
-                                </tr>
-                            </table>
-                        </div>
-                        <div class="col-md-6">
-                            <h6>Request Details</h6>
-                            <table class="table table-sm">
-                                <tr>
-                                    <td><strong>Method:</strong></td>
-                                    <td><span class="badge bg-primary">@selectedLog.HttpMethod</span></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>URL:</strong></td>
-                                    <td><code>@selectedLog.Url</code></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Status Code:</strong></td>
-                                    <td><span class="badge @GetStatusCodeBadgeClass(selectedLog.StatusCode ?? 0)">@selectedLog.StatusCode</span></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Response Time:</strong></td>
-                                    <td>@(selectedLog.Duration?.ToString() ?? "N/A") ms</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Success:</strong></td>
-                                    <td>
-                                        @if (selectedLog.IsSuccess)
-                                        {
-                                            <span class="badge bg-success">Yes</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge bg-danger">No</span>
-                                        }
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Request ID:</strong></td>
-                                    <td><code>@(selectedLog.RequestId ?? "N/A")</code></td>
-                                </tr>
-                            </table>
-                        </div>
-                    </div>
-                    
-                    @if (!string.IsNullOrEmpty(selectedLog.Changes))
-                    {
-                        <div class="mt-3">
-                            <h6>Changes</h6>
-                            <pre class="bg-light p-3 rounded"><code>@selectedLog.Changes</code></pre>
-                        </div>
-                    }
-                    
-                    @if (!string.IsNullOrEmpty(selectedLog.ErrorMessage))
-                    {
-                        <div class="mt-3">
-                            <h6>Error Message</h6>
-                            <div class="alert alert-danger">
-                                <code>@selectedLog.ErrorMessage</code>
-                            </div>
-                        </div>
-                    }
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="CloseLogDetails">Close</button>
+                <div class="col-md-6">
+                    <h6>Request Details</h6>
+                    <table class="table table-sm">
+                        <tr>
+                            <td><strong>Method:</strong></td>
+                            <td><span class="badge bg-primary">@selectedLog.HttpMethod</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>URL:</strong></td>
+                            <td><code>@selectedLog.Url</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Status Code:</strong></td>
+                            <td><span class="badge @GetStatusCodeBadgeClass(selectedLog.StatusCode ?? 0)">@selectedLog.StatusCode</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Response Time:</strong></td>
+                            <td>@(selectedLog.Duration?.ToString() ?? "N/A") ms</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Success:</strong></td>
+                            <td>
+                                @if (selectedLog.IsSuccess)
+                                {
+                                    <span class="badge bg-success">Yes</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">No</span>
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Request ID:</strong></td>
+                            <td><code>@(selectedLog.RequestId ?? "N/A")</code></td>
+                        </tr>
+                    </table>
                 </div>
             </div>
-        </div>
-    </div>
-    <div class="modal-backdrop fade show"></div>
-}
+
+            @if (!string.IsNullOrEmpty(selectedLog.Changes))
+            {
+                <div class="mt-3">
+                    <h6>Changes</h6>
+                    <pre class="bg-light p-3 rounded"><code>@selectedLog.Changes</code></pre>
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(selectedLog.ErrorMessage))
+            {
+                <div class="mt-3">
+                    <h6>Error Message</h6>
+                    <div class="alert alert-danger">
+                        <code>@selectedLog.ErrorMessage</code>
+                    </div>
+                </div>
+            }
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.75rem" class="rz-mt-3">
+                <RadzenButton Text="Close"
+                              ButtonStyle="ButtonStyle.Light"
+                              Variant="Variant.Outlined"
+                              Click="@(args => CloseLogDetails())" />
+            </RadzenStack>
+        }
+    </ChildContent>
+</RadzenDialog>
 
 @code {
     private List<AuditLogDto>? auditLogs;
@@ -404,6 +363,18 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadAuditLogs();
+    }
+
+    private async Task OnGridLoad(Radzen.LoadDataArgs args)
+    {
+        var top = args.Top ?? pageSize;
+        var skip = args.Skip ?? 0;
+        if (top > 0)
+        {
+            pageSize = top;
+        }
+        currentPage = (skip / pageSize) + 1;
         await LoadAuditLogs();
     }
 

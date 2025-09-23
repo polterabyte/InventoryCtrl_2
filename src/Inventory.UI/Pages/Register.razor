@@ -1,74 +1,68 @@
 @page "/register"
 @using Inventory.Shared.DTOs
 @using Inventory.Shared.Interfaces
+@using Radzen
+@using Radzen.Blazor
 @inject IAuthService AuthService
 @inject NavigationManager Navigation
 
-<h3>Регистрация</h3>
+<RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="1.5rem" Style="margin-top: 2rem;">
+    <RadzenText TextStyle="TextStyle.H4" class="rz-text-primary">Регистрация</RadzenText>
 
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Создать новый аккаунт</h5>
-                    
-                    <EditForm Model="@registerModel" OnValidSubmit="@HandleRegister">
-                        <DataAnnotationsValidator />
-                        
-                        <div class="mb-3">
-                            <label for="username" class="form-label">Имя пользователя:</label>
-                            <InputText @bind-Value="registerModel.Username" class="form-control" id="username" />
-                            <ValidationMessage For="@(() => registerModel.Username)" />
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email:</label>
-                            <InputText @bind-Value="registerModel.Email" type="email" class="form-control" id="email" />
-                            <ValidationMessage For="@(() => registerModel.Email)" />
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="password" class="form-label">Пароль:</label>
-                            <InputText @bind-Value="registerModel.Password" type="password" class="form-control" id="password" />
-                            <ValidationMessage For="@(() => registerModel.Password)" />
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="confirmPassword" class="form-label">Подтверждение пароля:</label>
-                            <InputText @bind-Value="registerModel.ConfirmPassword" type="password" class="form-control" id="confirmPassword" />
-                            <ValidationMessage For="@(() => registerModel.ConfirmPassword)" />
-                        </div>
-                        
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary" disabled="@isLoading">
-                                @if (isLoading)
-                                {
-                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                                }
-                                Зарегистрироваться
-                            </button>
-                        </div>
-                    </EditForm>
-                    
-                    @if (!string.IsNullOrEmpty(errorMessage))
-                    {
-                        <div class="alert alert-danger mt-3">@errorMessage</div>
-                    }
-                    
-                    @if (!string.IsNullOrEmpty(successMessage))
-                    {
-                        <div class="alert alert-success mt-3">@successMessage</div>
-                    }
-                    
-                    <div class="mt-3 text-center">
-                        <p>Уже есть аккаунт? <a href="/login" @onclick="NavigateToLogin" style="cursor: pointer;">Войти</a></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+    <RadzenCard Style="max-width: 520px; width: 100%;">
+        <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+            <RadzenText TextStyle="TextStyle.H5" class="rz-text-primary">Создать новый аккаунт</RadzenText>
+
+            <RadzenTemplateForm Data="@registerModel" Submit="@(async (RegisterRequest model) => await HandleRegister(model))">
+                <RadzenFormField Text="Имя пользователя:">
+                    <RadzenTextBox @bind-Value="registerModel.Username" Name="username" />
+                    <RadzenRequiredValidator Component="username" Text="Имя пользователя обязательно" />
+                </RadzenFormField>
+
+                <RadzenFormField Text="Email:">
+                    <RadzenTextBox @bind-Value="registerModel.Email" Name="email" />
+                    <RadzenRequiredValidator Component="email" Text="Email обязателен" />
+                    <RadzenEmailValidator Component="email" Text="Неверный формат email" />
+                </RadzenFormField>
+
+                <RadzenFormField Text="Пароль:">
+                    <RadzenPassword @bind-Value="registerModel.Password" Name="password" />
+                    <RadzenRequiredValidator Component="password" Text="Пароль обязателен" />
+                </RadzenFormField>
+
+                <RadzenFormField Text="Подтверждение пароля:">
+                    <RadzenPassword @bind-Value="registerModel.ConfirmPassword" Name="confirmPassword" />
+                    <RadzenRequiredValidator Component="confirmPassword" Text="Подтверждение пароля обязательно" />
+                </RadzenFormField>
+
+                <RadzenButton Text="Зарегистрироваться"
+                              ButtonType="ButtonType.Submit"
+                              ButtonStyle="ButtonStyle.Primary"
+                              Disabled="@isLoading" />
+            </RadzenTemplateForm>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Danger" class="rz-mt-3" ShowIcon="true">
+                    @errorMessage
+                </RadzenAlert>
+            }
+
+            @if (!string.IsNullOrEmpty(successMessage))
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Success" class="rz-mt-3" ShowIcon="true">
+                    @successMessage
+                </RadzenAlert>
+            }
+
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center">
+                <RadzenText class="rz-text-secondary">
+                    Уже есть аккаунт? <a href="/login" @onclick="NavigateToLogin" class="rz-text-primary" style="cursor: pointer;">Войти</a>
+                </RadzenText>
+            </RadzenStack>
+        </RadzenStack>
+    </RadzenCard>
+</RadzenStack>
 
 @code {
     private RegisterRequest registerModel = new() { Username = string.Empty, Email = string.Empty, Password = string.Empty, ConfirmPassword = string.Empty };
@@ -76,7 +70,7 @@
     private string errorMessage = string.Empty;
     private string successMessage = string.Empty;
 
-    private async Task HandleRegister()
+    private async Task HandleRegister(RegisterRequest _)
     {
         isLoading = true;
         errorMessage = string.Empty;
@@ -84,14 +78,13 @@
 
         try
         {
-            // Валидация паролей
             if (registerModel.Password != registerModel.ConfirmPassword)
             {
                 errorMessage = "Пароли не совпадают";
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(registerModel.Username) || 
+            if (string.IsNullOrWhiteSpace(registerModel.Username) ||
                 string.IsNullOrWhiteSpace(registerModel.Password) ||
                 string.IsNullOrWhiteSpace(registerModel.Email))
             {
@@ -100,13 +93,12 @@
             }
 
             var result = await AuthService.RegisterAsync(registerModel);
-            
+
             if (result.Success)
             {
                 successMessage = "Пользователь успешно создан! Теперь вы можете войти в систему.";
                 registerModel = new() { Username = string.Empty, Email = string.Empty, Password = string.Empty, ConfirmPassword = string.Empty };
-                
-                // Автоматический переход на страницу входа через 3 секунды
+
                 await Task.Delay(3000);
                 Navigation.NavigateTo("/login");
             }
