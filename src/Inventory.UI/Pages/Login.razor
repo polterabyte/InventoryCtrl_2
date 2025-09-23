@@ -16,7 +16,7 @@
             <p class="mt-3 text-muted">You are already logged in. Redirecting...</p>
         </div>
     </Authorized>
-    <NotAuthorized Context="authContext">
+    <NotAuthorized Context="notAuthContext">
         <div class="text-center mb-5">
             <h2 class="fw-bold text-primary">Inventory Control System</h2>
             <p class="lead text-muted">Manage your inventory efficiently</p>
@@ -33,16 +33,17 @@
                             </div>
                             
                             <RadzenTemplateForm Data="@loginModel" Submit="@(async (LoginRequest model) => await HandleLogin())">
-                                <div @onkeypress="@OnKeyPress"></div>
+                                <ChildContent Context="formContext">
+                                    <div @onkeypress="@OnKeyPress"></div>
                                 
                                 <div class="mb-3">
-                                    <RadzenFormField Text="Username:" class="mb-3">
+                                    <Radzen.Blazor.RadzenFormField Text="Username:" class="mb-3">
                                         <RadzenTextBox @bind-Value="loginModel.Username" 
                                                       @oninput="OnUsernameChanged"
                                                       class="@GetUsernameClass()" 
                                                       Name="username" />
                                         <RadzenRequiredValidator Component="username" Text="Username is required" />
-                                    </RadzenFormField>
+                                    </Radzen.Blazor.RadzenFormField>
                                 </div>
                                 
                                 <div class="mb-3">
@@ -63,6 +64,7 @@
                                                  Disabled="@(isLoading || isRedirecting)"
                                                  class="fw-semibold py-3" />
                                 </div>
+                                </ChildContent>
                             </RadzenTemplateForm>
                             
                             @if (!string.IsNullOrEmpty(errorMessage))

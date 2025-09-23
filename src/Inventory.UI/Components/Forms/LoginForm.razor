@@ -2,8 +2,7 @@
 @using System.Net.Http.Json
 @using Inventory.Shared.DTOs
 @using Inventory.Shared.Interfaces
-@using Radzen
-@using Radzen.Blazor
+
 @inject HttpClient Http
 @inject IAuthService AuthService
 
@@ -13,16 +12,16 @@
     <DataAnnotationsValidator />
     <ValidationSummary />
     <div class="mb-3">
-        <RadzenFormField Text="Логин:" class="rz-mb-3">
-            <RadzenTextBox @bind-Value="loginModel.Username" Name="username" />
+        <Radzen.Blazor.RadzenFormField Text="Логин:" class="rz-mb-3">
+            <RadzenTextBox @bind-Value="loginModel.Username" @bind-Value:event="oninput" Name="username" />
             <RadzenRequiredValidator Component="username" Text="Логин обязателен" />
-        </RadzenFormField>
+        </Radzen.Blazor.RadzenFormField>
     </div>
     <div class="mb-3">
-        <RadzenFormField Text="Пароль:" class="rz-mb-3">
-            <RadzenPassword @bind-Value="loginModel.Password" Name="password" />
+        <Radzen.Blazor.RadzenFormField Text="Пароль:" class="rz-mb-3">
+            <RadzenPassword @bind-Value="loginModel.Password" @bind-Value:event="oninput" Name="password" />
             <RadzenRequiredValidator Component="password" Text="Пароль обязателен" />
-        </RadzenFormField>
+        </Radzen.Blazor.RadzenFormField>
     </div>
     <div class="mb-3">
         <RadzenButton Text="@(isLoading ? "Вход..." : "Войти")"
@@ -34,7 +33,9 @@
 
 @if (!string.IsNullOrEmpty(errorMessage))
 {
-    <RadzenAlert AlertStyle="AlertStyle.Danger" ShowIcon="true" class="rz-mt-3">
+    <RadzenAlert AlertStyle="AlertStyle.Danger"
+                 ShowIcon="true"
+                 class="rz-mt-3">
         @errorMessage
     </RadzenAlert>
 }

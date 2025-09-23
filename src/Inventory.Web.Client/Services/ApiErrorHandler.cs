@@ -2,6 +2,9 @@ using Inventory.Shared.DTOs;
 using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Components;
+using Inventory.Shared.Interfaces;
+using Inventory.Shared.Services;
 
 namespace Inventory.Web.Client.Services;
 
@@ -11,10 +14,20 @@ namespace Inventory.Web.Client.Services;
 public class ApiErrorHandler : IApiErrorHandler
 {
     private readonly ILogger<ApiErrorHandler> _logger;
+    private readonly ITokenManagementService _tokenManagementService;
+    private readonly NavigationManager _navigationManager;
+    private readonly IUINotificationService _notificationService;
 
-    public ApiErrorHandler(ILogger<ApiErrorHandler> logger)
+    public ApiErrorHandler(
+        ILogger<ApiErrorHandler> logger,
+        ITokenManagementService tokenManagementService,
+        NavigationManager navigationManager,
+        IUINotificationService notificationService)
     {
         _logger = logger;
+        _tokenManagementService = tokenManagementService;
+        _navigationManager = navigationManager;
+        _notificationService = notificationService;
     }
 
     public async Task<ApiResponse<T>> HandleResponseAsync<T>(HttpResponseMessage response)
@@ -98,6 +111,12 @@ public class ApiErrorHandler : IApiErrorHandler
         
         _logger.LogWarning("API request failed. Status: {StatusCode}, Error: {Error}", statusCode, errorMessage);
         
+        // Специальная обработка 401 ошибок
+        if (statusCode == HttpStatusCode.Unauthorized)
+        {
+            return await HandleUnauthorizedResponseAsync<T>(response);
+        }
+        
         return new ApiResponse<T> 
         { 
             Success = false, 
@@ -178,5 +197,65 @@ public class ApiErrorHandler : IApiErrorHandler
             InvalidOperationException => "Operation cannot be completed at this time.",
             _ => "An unexpected error occurred. Please try again later."
         };
+    }
+
+    /// <summary>
+    /// Обрабатывает 401 Unauthorized ошибки с попыткой обновления токена
+    /// </summary>
+    private async Task<ApiResponse<T>> HandleUnauthorizedResponseAsync<T>(HttpResponseMessage response)
+    {
+        _logger.LogInformation("Handling 401 Unauthorized response - attempting token refresh");
+        
+        try
+        {
+            // Пытаемся обновить токен
+            var refreshSuccess = await _tokenManagementService.TryRefreshTokenAsync();
+            
+            if (refreshSuccess)
+            {
+                _logger.LogInformation("Token refresh successful, returning retry indication");
+                
+                // Возвращаем специальный ответ, указывающий что нужно повторить запрос
+                return new ApiResponse<T>
+                {
+                    Success = false,
+                    ErrorMessage = "TOKEN_REFRESHED", // Специальный код для повторного запроса
+                    Data = default(T)
+                };
+            }
+            else
+            {
+                _logger.LogWarning("Token refresh failed, redirecting to login");
+                
+                // Очищаем токены и перенаправляем на логин
+                await _tokenManagementService.ClearTokensAsync();
+                
+                // Показываем уведомление пользователю
+                _notificationService.ShowError("Сессия истекла", "Пожалуйста, войдите снова.");
+                
+                // Перенаправляем на страницу входа
+                _navigationManager.NavigateTo("/login", true);
+                
+                return new ApiResponse<T>
+                {
+                    Success = false,
+                    ErrorMessage = "Session expired. Please log in again."
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling 401 response");
+            
+            // В случае ошибки также перенаправляем на логин
+            await _tokenManagementService.ClearTokensAsync();
+            _navigationManager.NavigateTo("/login", true);
+            
+            return new ApiResponse<T>
+            {
+                Success = false,
+                ErrorMessage = "Authentication error. Please log in again."
+            };
+        }
     }
 }

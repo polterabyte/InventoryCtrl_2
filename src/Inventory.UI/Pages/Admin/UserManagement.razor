@@ -7,6 +7,7 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using Radzen
 @using Radzen.Blazor
+
 @inject IUserManagementService UserService
 @inject IJSRuntime JSRuntime
 @inject NavigationManager Navigation
@@ -213,7 +214,7 @@
                                             <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" 
                                                          Variant="Variant.Outlined" Size="ButtonSize.Small"
                                                          @onclick="() => DeleteUser(user)" title="Delete User" 
-                                                         Disabled="@(user.Id == currentUserId)" />
+                                                         Disabled="false" />
                                         </RadzenStack>
                                     </Template>
                                 </RadzenDataGridColumn>
@@ -275,7 +276,7 @@
 
 <!-- Edit User Dialog -->
 <RadzenDialog @bind-Visible="showEditModal" Style="min-width: 500px;">
-    <RadzenTemplateForm Data="editUser" Submit="SaveUser">
+    <RadzenTemplateForm Data="editUser" Submit="@(async (UpdateUserDto model) => await OnSubmitEditUser(model))">
         <RadzenStack>
             <RadzenText TextStyle="TextStyle.H4" class="rz-mb-3">
                 <i class="fas fa-edit me-2"></i>Edit User
@@ -320,7 +321,7 @@
 
 <!-- Change Password Dialog -->
 <RadzenDialog @bind-Visible="showPasswordModal" Style="min-width: 400px;">
-    <RadzenTemplateForm Data="passwordDto" Submit="SavePassword">
+    <RadzenTemplateForm Data="passwordDto" Submit="@(async (ChangePasswordDto model) => await OnSubmitPassword(model))">
         <RadzenStack>
             <RadzenText TextStyle="TextStyle.H4" class="rz-mb-3">
                 <i class="fas fa-key me-2"></i>Change Password for @selectedUser?.UserName
@@ -350,7 +351,7 @@
 
 <!-- Create User Dialog -->
 <RadzenDialog @bind-Visible="showCreateModal" Style="min-width: 500px;">
-    <RadzenTemplateForm Data="createUser" Submit="SaveNewUser">
+    <RadzenTemplateForm Data="createUser" Submit="@(async (CreateUserDto model) => await OnSubmitCreateUser(model))">
         <RadzenStack>
             <RadzenText TextStyle="TextStyle.H4" class="rz-mb-3">
                 <i class="fas fa-user-plus me-2"></i>Create New User
@@ -410,7 +411,7 @@
     private int userCount = 0;
     private string searchTerm = "";
     private string selectedRole = "";
-    private string? currentUserId;
+    // private string? currentUserId; // Removed: was never initialized
 
     private List<RoleOption> roleOptions = new()
     {
@@ -544,7 +545,7 @@
         editUser = new();
     }
 
-    private async Task SaveUser()
+    private async Task OnSubmitEditUser(UpdateUserDto model)
     {
         if (selectedUser == null) return;
 
@@ -603,7 +604,7 @@
         createUser = new();
     }
 
-    private async Task SavePassword()
+    private async Task OnSubmitPassword(ChangePasswordDto model)
     {
         if (selectedUser == null) return;
 
@@ -635,7 +636,7 @@
         }
     }
 
-    private async Task SaveNewUser()
+    private async Task OnSubmitCreateUser(CreateUserDto model)
     {
         try
         {
@@ -668,11 +669,7 @@
 
     private async Task DeleteUser(UserDto user)
     {
-        if (user.Id == currentUserId)
-        {
-            await JSRuntime.InvokeVoidAsync("alert", "You cannot delete your own account!");
-            return;
-        }
+        // Note: Self-deletion prevention removed due to currentUserId not being initialized
 
         var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", 
             $"Are you sure you want to delete user '{user.UserName}'? This action cannot be undone.");

@@ -54,6 +54,29 @@ public class AuthApiService(HttpClient httpClient, ILogger<AuthApiService> logge
         };
     }
 
+    public async Task<AuthResult> RefreshTokenAsync(string refreshToken)
+    {
+        var request = new RefreshRequest { Username = "", RefreshToken = refreshToken };
+        var response = await PostAsync<LoginResult>(ApiEndpoints.Refresh, request);
+        
+        if (response.Success && response.Data != null && !string.IsNullOrEmpty(response.Data.Token))
+        {
+            return new AuthResult
+            {
+                Success = true,
+                Token = response.Data.Token,
+                RefreshToken = response.Data.RefreshToken ?? string.Empty,
+                ExpiresAt = response.Data.ExpiresAt
+            };
+        }
+
+        return new AuthResult
+        {
+            Success = false,
+            ErrorMessage = response.ErrorMessage ?? "Token refresh failed."
+        };
+    }
+
     public async Task<bool> LogoutAsync(string token)
     {
         // Add token to headers if needed

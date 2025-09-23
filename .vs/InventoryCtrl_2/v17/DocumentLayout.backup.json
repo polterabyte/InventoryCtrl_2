@@ -1,0 +1,35 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\rec\\prg\\repo\\InventoryCtrl_2\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{963E3CDA-41C9-4E54-9D54-9E68EC49EEF9}|src\\Inventory.Web.Client\\Inventory.Web.Client.csproj|c:\\rec\\prg\\repo\\inventoryctrl_2\\src\\inventory.web.client\\app.razor||{93FA4DC3-61EC-47AF-B0BA-50CAD3CAF049}",
+      "RelativeMoniker": "D:0:0:{963E3CDA-41C9-4E54-9D54-9E68EC49EEF9}|src\\Inventory.Web.Client\\Inventory.Web.Client.csproj|solutionrelative:src\\inventory.web.client\\app.razor||{93FA4DC3-61EC-47AF-B0BA-50CAD3CAF049}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "App.razor",
+              "DocumentMoniker": "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Web.Client\\App.razor",
+              "RelativeDocumentMoniker": "src\\Inventory.Web.Client\\App.razor",
+              "ToolTip": "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Web.Client\\App.razor",
+              "RelativeToolTip": "src\\Inventory.Web.Client\\App.razor",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-09-22T18:26:45.181Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

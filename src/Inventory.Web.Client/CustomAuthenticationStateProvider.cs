@@ -9,39 +9,71 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components.Authorization;
 using Blazored.LocalStorage;
 using Inventory.Shared.Interfaces;
+using Inventory.Web.Client.Services;
 
 namespace Inventory.Web.Client
 {
-    public class CustomAuthenticationStateProvider(HttpClient httpClient, ILocalStorageService localStorage) 
+    public class CustomAuthenticationStateProvider(
+        HttpClient httpClient, 
+        ILocalStorageService localStorage,
+        ITokenManagementService tokenManagementService) 
         : AuthenticationStateProvider, ICustomAuthenticationStateProvider
     {
         private readonly HttpClient _httpClient = httpClient;
         private readonly ILocalStorageService _localStorage = localStorage;
+        private readonly ITokenManagementService _tokenManagementService = tokenManagementService;
 
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
-            // Попробуем получить токен из LocalStorage
-            var token = await _localStorage.GetItemAsStringAsync("authToken");
-            var identity = new ClaimsIdentity();
-            _httpClient.DefaultRequestHeaders.Authorization = null;
-
-            if (!string.IsNullOrEmpty(token))
+            try
             {
-                identity = new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt");
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
+                // Получаем токен через TokenManagementService
+                var token = await _tokenManagementService.GetStoredTokenAsync();
+                var identity = new ClaimsIdentity();
+                _httpClient.DefaultRequestHeaders.Authorization = null;
 
-            var user = new ClaimsPrincipal(identity);
-            return new AuthenticationState(user);
+                if (!string.IsNullOrEmpty(token))
+                {
+                    // Проверяем, не истекает ли токен в ближайшее время
+                    if (await _tokenManagementService.IsTokenExpiringSoonAsync())
+                    {
+                        // Пытаемся обновить токен
+                        var refreshSuccess = await _tokenManagementService.TryRefreshTokenAsync();
+                        if (refreshSuccess)
+                        {
+                            // Получаем обновленный токен
+                            token = await _tokenManagementService.GetStoredTokenAsync();
+                        }
+                        else
+                        {
+                            // Если не удалось обновить, очищаем токены
+                            await _tokenManagementService.ClearTokensAsync();
+                            token = null;
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(token))
+                    {
+                        identity = new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt");
+                        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    }
+                }
+
+                var user = new ClaimsPrincipal(identity);
+                return new AuthenticationState(user);
+            }
+            catch (Exception ex)
+            {
+                // В случае ошибки возвращаем неаутентифицированное состояние
+                Console.WriteLine($"Error in GetAuthenticationStateAsync: {ex.Message}");
+                return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+            }
         }
 
         public async Task MarkUserAsAuthenticatedAsync(string token)
         {
-            // Сохраняем токен в LocalStorage
-            await _localStorage.SetItemAsStringAsync("authToken", token);
-            
-            // Обновляем заголовок авторизации в HTTP клиенте
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            // Сохраняем токен через TokenManagementService
+            await _tokenManagementService.SaveTokensAsync(token, "");
             
             var authenticatedUser = new ClaimsPrincipal(new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt"));
             var authState = Task.FromResult(new AuthenticationState(authenticatedUser));
@@ -50,8 +82,8 @@ namespace Inventory.Web.Client
 
         public async Task MarkUserAsLoggedOutAsync()
         {
-            // Очищаем токен из LocalStorage
-            await _localStorage.RemoveItemAsync("authToken");
+            // Очищаем токены через TokenManagementService
+            await _tokenManagementService.ClearTokensAsync();
             
             var anonymousUser = new ClaimsPrincipal(new ClaimsIdentity());
             var authState = Task.FromResult(new AuthenticationState(anonymousUser));

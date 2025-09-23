@@ -127,6 +127,26 @@ public abstract class WebBaseApiService(
                     ? await customResponseHandler(response)
                     : await HandleStandardResponseAsync<T>(response);
             }
+            catch (TokenRefreshedException)
+            {
+                // Токен был обновлен, повторяем запрос
+                Logger.LogInformation("Token was refreshed, retrying {Method} request to {FullUrl}", method, fullUrl);
+                
+                // Создаем новый запрос с обновленным токеном
+                var retryRequest = new HttpRequestMessage(method, fullUrl);
+                if (data != null && (method == HttpMethod.Post || method == HttpMethod.Put))
+                {
+                    retryRequest.Content = JsonContent.Create(data);
+                }
+                
+                var retryResponse = await HttpClient.SendAsync(retryRequest);
+                Logger.LogDebug("Retry response with status {StatusCode} for {Method} {FullUrl}", 
+                    retryResponse.StatusCode, method, fullUrl);
+                
+                return customResponseHandler != null 
+                    ? await customResponseHandler(retryResponse)
+                    : await HandleStandardResponseAsync<T>(retryResponse);
+            }
             catch (HttpRequestException ex)
             {
                 Logger.LogError(ex, "HTTP request failed for {Method} {FullUrl}: {Message}", 
@@ -160,6 +180,13 @@ public abstract class WebBaseApiService(
             
             if (!apiResponse.Success)
             {
+                // Проверяем, нужно ли повторить запрос после обновления токена
+                if (apiResponse.ErrorMessage == "TOKEN_REFRESHED")
+                {
+                    Logger.LogInformation("Token was refreshed, retrying original request");
+                    throw new TokenRefreshedException("Token was refreshed, retry required");
+                }
+                
                 Logger.LogError("API request failed: {ErrorMessage}", apiResponse.ErrorMessage);
                 throw new HttpRequestException($"API request failed: {apiResponse.ErrorMessage}");
             }

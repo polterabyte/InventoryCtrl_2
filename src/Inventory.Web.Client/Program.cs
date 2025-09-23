@@ -23,6 +23,10 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 builder.Services.Configure<ApiConfiguration>(
     builder.Configuration.GetSection(ApiConfiguration.SectionName));
 
+// Configure Token settings
+builder.Services.Configure<TokenConfiguration>(
+    builder.Configuration.GetSection(TokenConfiguration.SectionName));
+
 // Register API URL service
 builder.Services.AddScoped<Inventory.Web.Client.Services.IApiUrlService, Inventory.Web.Client.Services.ApiUrlService>();
 
@@ -44,11 +48,19 @@ builder.Services.AddScoped<IApiHealthService, ApiHealthService>();
 // Register resilient API service
 builder.Services.AddScoped<IResilientApiService, ResilientApiService>();
 
-// Configure API HTTP client - will be configured dynamically via JavaScript
+// Register token management service
+builder.Services.AddScoped<ITokenManagementService, TokenManagementService>();
+
+// Register HTTP interceptor
+builder.Services.AddScoped<IHttpInterceptor, JwtHttpInterceptor>();
+
+// Configure API HTTP client with interceptor support
 builder.Services.AddScoped<HttpClient>(sp =>
 {
-    // Create HttpClient without BaseAddress - URLs will be constructed in services
-    var httpClient = new HttpClient();
+    var interceptor = sp.GetRequiredService<IHttpInterceptor>();
+    var logger = sp.GetRequiredService<ILogger<InterceptedHttpClient>>();
+    
+    var httpClient = new InterceptedHttpClient(interceptor, logger);
     httpClient.DefaultRequestHeaders.Add("X-Requested-With", "XMLHttpRequest");
     
     return httpClient;
