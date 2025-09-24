@@ -1,17 +1,17 @@
 ﻿@using Inventory.Shared.DTOs
 @using Inventory.UI.Utilities
 
-<RadzenCard Style="flex:1 1 220px;">
-    <RadzenStack Orientation="Orientation.Horizontal" Gap="@RadzenUi.Gap" AlignItems="AlignItems.Center">
-        <RadzenIcon Icon="@IconClass" Style="@($"font-size:2.5rem; color:{GetIconColor()};")" />
-        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex:1;">
-            <RadzenText TextStyle="TextStyle.H4">@Value</RadzenText>
-            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary);">@Label</RadzenText>
-            @if (!string.IsNullOrEmpty(SubLabel))
-            {
-                <RadzenText TextStyle="TextStyle.Caption" Style="@($"color:{GetIconColor()};")">@SubLabel</RadzenText>
-            }
-        </RadzenStack>
+<RadzenCard class="@($"stats-widget border-{CardClass}")">
+    <div class="stats-widget__icon">
+        <RadzenIcon Icon="@Icon" Style="@($"font-size:2rem; color:{GetAccentColor()};")" />
+    </div>
+    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" class="stats-widget__content">
+        <span class="stats-value">@Value</span>
+        <span class="stats-label">@Label</span>
+        @if (!string.IsNullOrEmpty(SubLabel))
+        {
+            <span class="stats-sublabel">@SubLabel</span>
+        }
     </RadzenStack>
 </RadzenCard>
 
@@ -19,10 +19,10 @@
     [Parameter] public string Label { get; set; } = string.Empty;
     [Parameter] public int Value { get; set; }
     [Parameter] public string? SubLabel { get; set; }
-    [Parameter] public string IconClass { get; set; } = "insights";
+    [Parameter] public string Icon { get; set; } = "insights";
     [Parameter] public string CardClass { get; set; } = "primary";
 
-    private string GetIconColor() => CardClass switch
+    private string GetAccentColor() => CardClass switch
     {
         "success" => "var(--rz-success)",
         "warning" => "var(--rz-warning)",

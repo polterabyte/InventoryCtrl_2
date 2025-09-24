@@ -1,6 +1,8 @@
-﻿@page "/"
+@page "/"
 @attribute [Authorize]
 
+@using System.Security.Claims
+@using Inventory.UI.Utilities
 
 @inject IDashboardService DashboardService
 @inject NavigationManager NavigationManager
@@ -9,99 +11,137 @@
 
 <AuthorizeView Context="authState">
     <Authorized Context="authContext">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-12">
-                    @* <h1 class="display-4 text-primary mb-4">Добро пожаловать в систему управления складом!</h1> *@
-                    @* <p class="lead text-secondary">Привет, <strong class="text-primary">@authContext.User.Identity?.Name</strong>!</p>
-                    <p class="text-muted">Вы успешно авторизованы в системе.</p> *@
-                    
-                    <!-- Dashboard Statistics -->
-                    <div class="row mt-4">
-                        <StatsWidget Label="Всего товаров" Value="@dashboardStats.TotalProducts" 
-                                     IconClass="bi bi-box-seam" CardClass="primary" />
-                        <StatsWidget Label="Категории" Value="@dashboardStats.TotalCategories" 
-                                     IconClass="bi bi-tags" CardClass="info" />
-                        <StatsWidget Label="Производители" Value="@dashboardStats.TotalManufacturers" 
-                                     IconClass="bi bi-building" CardClass="success" />
-                        <StatsWidget Label="Склады" Value="@dashboardStats.TotalWarehouses" 
-                                     IconClass="bi bi-house" CardClass="primary" />
-                    </div>
+        <div class="dashboard-container">
+            <RadzenStack Orientation="Orientation.Vertical"
+                         Gap="@RadzenUi.GapLarge"
+                         class="dashboard-layout">
+                <RadzenCard class="welcome-card">
+                    <RadzenStack Orientation="Orientation.Horizontal"
+                                 AlignItems="AlignItems.Center"
+                                 Gap="@RadzenUi.Gap">
+                        <RadzenIcon Icon="dashboard"
+                                    Style="font-size:2.5rem; color:var(--rz-primary);" />
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                            <RadzenText TextStyle="TextStyle.H5">
+                                Привет, @GetUserDisplayName(authContext.User)!
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2"
+                                        Style="color: var(--rz-text-secondary);">
+                                Следите за ключевыми показателями и управляйте складом в режиме реального времени.
+                            </RadzenText>
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenCard>
 
-                    <!-- Alerts Row -->
-                    <div class="row mt-4">
-                        <div class="col-md-6">
-                            <StatsWidget Label="Низкий остаток" Value="@dashboardStats.LowStockProducts" 
-                                         SubLabel="требуют пополнения" IconClass="bi bi-exclamation-triangle" CardClass="warning" />
-                        </div>
-                        <div class="col-md-6">
-                            <StatsWidget Label="Нет в наличии" Value="@dashboardStats.OutOfStockProducts" 
-                                         SubLabel="нужно заказать" IconClass="bi bi-x-circle" CardClass="danger" />
-                        </div>
-                    </div>
+                <section class="dashboard-section">
+                    <RadzenStack Orientation="Orientation.Horizontal"
+                                 AlignItems="AlignItems.Center"
+                                 JustifyContent="JustifyContent.SpaceBetween"
+                                 class="section-header">
+                        <RadzenText TextStyle="TextStyle.H6">Ключевые показатели</RadzenText>
+                    </RadzenStack>
 
-                    <!-- Recent Activity and Low Stock Alerts -->
-                    <div class="row mt-4">
-                        <div class="col-md-8">
-                            <RecentActivity />
-                        </div>
-                        <div class="col-md-4">
-                            <LowStockAlert />
-                        </div>
-                    </div>
+                    <RadzenRow Class="dashboard-kpi-grid g-3">
+                        <RadzenColumn Size="12" SizeSm="6" SizeLg="4">
+                            <StatsWidget Label="Всего товаров"
+                                         Value="@dashboardStats.TotalProducts"
+                                         Icon="inventory_2"
+                                         CardClass="primary" />
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeSm="6" SizeLg="4">
+                            <StatsWidget Label="Категории"
+                                         Value="@dashboardStats.TotalCategories"
+                                         Icon="category"
+                                         CardClass="info" />
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeSm="6" SizeLg="4">
+                            <StatsWidget Label="Производители"
+                                         Value="@dashboardStats.TotalManufacturers"
+                                         Icon="precision_manufacturing"
+                                         CardClass="success" />
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeSm="6" SizeLg="4">
+                            <StatsWidget Label="Склады"
+                                         Value="@dashboardStats.TotalWarehouses"
+                                         Icon="storefront"
+                                         CardClass="primary" />
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeSm="6" SizeLg="4">
+                            <StatsWidget Label="Низкий остаток"
+                                         Value="@dashboardStats.LowStockProducts"
+                                         SubLabel="требуют пополнения"
+                                         Icon="warning_amber"
+                                         CardClass="warning" />
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeSm="6" SizeLg="4">
+                            <StatsWidget Label="Нет в наличии"
+                                         Value="@dashboardStats.OutOfStockProducts"
+                                         SubLabel="нужно заказать"
+                                         Icon="remove_shopping_cart"
+                                         CardClass="danger" />
+                        </RadzenColumn>
+                    </RadzenRow>
+                </section>
 
-                    <!-- Quick Actions -->
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <RadzenCard>
-                                <RadzenText TextStyle="TextStyle.H5" class="rz-mb-3">
-                                    <i class="bi bi-lightning me-2"></i>Быстрые действия
-                                </RadzenText>
-                                <RadzenStack>
-                                    <div class="row">
-                                        <div class="col-md-3 mb-3">
-                                            <RadzenButton Text="Добавить товар" 
-                                                         Icon="add_circle" 
-                                                         ButtonStyle="ButtonStyle.Primary" 
-                                                         Variant="Variant.Outlined"
-                                                         Size="ButtonSize.Large"
-                                                         class="w-100"
-                                                         @onclick="NavigateToProducts" />
-                                        </div>
-                                        <div class="col-md-3 mb-3">
-                                            <RadzenButton Text="Приход товара" 
-                                                         Icon="arrow_downward" 
-                                                         ButtonStyle="ButtonStyle.Success" 
-                                                         Variant="Variant.Outlined"
-                                                         Size="ButtonSize.Large"
-                                                         class="w-100"
-                                                         @onclick="NavigateToProducts" />
-                                        </div>
-                                        <div class="col-md-3 mb-3">
-                                            <RadzenButton Text="Расход товара" 
-                                                         Icon="arrow_upward" 
-                                                         ButtonStyle="ButtonStyle.Warning" 
-                                                         Variant="Variant.Outlined"
-                                                         Size="ButtonSize.Large"
-                                                         class="w-100"
-                                                         @onclick="NavigateToProducts" />
-                                        </div>
-                                        <div class="col-md-3 mb-3">
-                                            <RadzenButton Text="Отчеты" 
-                                                         Icon="description" 
-                                                         ButtonStyle="ButtonStyle.Info" 
-                                                         Variant="Variant.Outlined"
-                                                         Size="ButtonSize.Large"
-                                                         class="w-100"
-                                                         Disabled="true" />
-                                        </div>
-                                    </div>
-                                </RadzenStack>
-                            </RadzenCard>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                <RadzenRow Class="g-3">
+                    <RadzenColumn Size="12" SizeLg="8">
+                        <RecentActivity />
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeLg="4">
+                        <LowStockAlert />
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenCard class="quick-actions-card">
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.Gap">
+                        <RadzenStack Orientation="Orientation.Horizontal"
+                                     AlignItems="AlignItems.Center"
+                                     Gap="0.5rem">
+                            <RadzenIcon Icon="bolt" Style="color:var(--rz-primary);" />
+                            <RadzenText TextStyle="TextStyle.H6">Быстрые действия</RadzenText>
+                        </RadzenStack>
+
+                        <RadzenRow Class="quick-actions-grid g-3">
+                            <RadzenColumn Size="12" SizeSm="6" SizeLg="3">
+                                <RadzenButton Text="Добавить товар"
+                                              Icon="add_circle"
+                                              ButtonStyle="ButtonStyle.Primary"
+                                              Variant="Variant.Filled"
+                                              Size="ButtonSize.Large"
+                                              class="w-100"
+                                              @onclick="NavigateToProducts" />
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeSm="6" SizeLg="3">
+                                <RadzenButton Text="Приход товара"
+                                              Icon="arrow_downward"
+                                              ButtonStyle="ButtonStyle.Success"
+                                              Variant="Variant.Filled"
+                                              Size="ButtonSize.Large"
+                                              class="w-100"
+                                              @onclick="NavigateToProducts" />
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeSm="6" SizeLg="3">
+                                <RadzenButton Text="Расход товара"
+                                              Icon="arrow_upward"
+                                              ButtonStyle="ButtonStyle.Warning"
+                                              Variant="Variant.Filled"
+                                              Size="ButtonSize.Large"
+                                              class="w-100"
+                                              @onclick="NavigateToProducts" />
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeSm="6" SizeLg="3">
+                                <RadzenButton Text="Отчеты"
+                                              Icon="description"
+                                              ButtonStyle="ButtonStyle.Info"
+                                              Variant="Variant.Filled"
+                                              Size="ButtonSize.Large"
+                                              class="w-100"
+                                              Disabled="true" />
+                            </RadzenColumn>
+                        </RadzenRow>
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenStack>
         </div>
     </Authorized>
 </AuthorizeView>
@@ -112,6 +152,12 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadDashboardStats();
+    }
+
+    private static string GetUserDisplayName(ClaimsPrincipal user)
+    {
+        var name = user.Identity?.Name;
+        return string.IsNullOrWhiteSpace(name) ? "администратор" : name!;
     }
 
     private void NavigateToProducts()

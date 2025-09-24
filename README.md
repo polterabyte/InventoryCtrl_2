@@ -57,7 +57,7 @@ InventoryCtrl_2/
 
 **Frontend:**
 - Blazor WebAssembly
-- Bootstrap для UI
+- Radzen для UI
 - Blazored.LocalStorage
 - Компонентная архитектура
 - Microsoft.AspNetCore.SignalR.Client (C# клиент для SignalR в Blazor WASM)

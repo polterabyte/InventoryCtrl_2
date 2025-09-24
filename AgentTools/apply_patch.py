@@ -1,6 +1,8 @@
 from enum import Enum
 from typing import Optional
 
+import argparse
+
 from pydantic import BaseModel, Field
 
 
@@ -464,8 +466,38 @@ def remove_file(path: str) -> None:
     os.remove(path)
 
 
+def build_parser() -> argparse.ArgumentParser:
+    """Create CLI parser for apply_patch utility."""
+    description = (
+        "Applies Codex-style *** Begin Patch/*** End Patch instructions to project files."
+    )
+    commands_hint = (
+        "Supported patch commands:\n"
+        "  *** Update File: <path>  - replace content of an existing file\n"
+        "  *** Delete File: <path>  - remove a file\n"
+        "  *** Add File: <path>     - create a new file\n"
+        "  *** End Patch            - mark the end of the patch"
+    )
+    usage_hint = (
+        "Read patch data from stdin.\n"
+        "Examples:\n"
+        "  python AgentTools/apply_patch.py < patch.diff\n"
+        "  type patch.diff | python AgentTools/apply_patch.py"
+    )
+    parser = argparse.ArgumentParser(
+        prog="apply_patch.py",
+        description=description,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.epilog = f"{commands_hint}\n\n{usage_hint}"
+    return parser
+
+
 def main():
     import sys
+
+    parser = build_parser()
+    parser.parse_args()
 
     patch_text = sys.stdin.read()
     if not patch_text:
