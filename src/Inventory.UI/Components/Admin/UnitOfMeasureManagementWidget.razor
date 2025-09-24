@@ -1,208 +1,172 @@
 @using Inventory.Shared.Services
+@using System.Linq
+@using Inventory.UI.Utilities
 
-@inject IUnitOfMeasureApiService UnitOfMeasureService
-@inject IUINotificationService NotificationService
-@inject IJSRuntime JSRuntime
-
-<AuthorizeView Roles="Admin" Context="authState">
+<AuthorizeView Roles="Admin">
     <Authorized>
-        <div class="reference-data-widget">
-            <div class="widget-header">
-                <h4><i class="fas fa-ruler"></i> Units of Measure Management</h4>
-                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                    <RadzenButton Text="Add New Unit"
-                                 Icon="add"
-                                 ButtonStyle="ButtonStyle.Primary"
-                                 Size="ButtonSize.Small"
-                                 @onclick="ShowCreateModal" />
-                    <RadzenButton Text="Refresh"
-                                 Icon="refresh"
-                                 ButtonStyle="ButtonStyle.Secondary"
-                                 Variant="Variant.Outlined"
-                                 Size="ButtonSize.Small"
-                                 @onclick="RefreshData" />
+        <RadzenCard Style="width:100%;">
+            <ChildContent>
+                <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.GapLarge">
+                    <RadzenStack Orientation="Orientation.Horizontal"
+                                 JustifyContent="JustifyContent.SpaceBetween"
+                                 AlignItems="AlignItems.Center"
+                                 Wrap="true"
+                                 Gap="@RadzenUi.Gap">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="straighten" />
+                            <RadzenText TextStyle="TextStyle.H5">Units of Measure Management</RadzenText>
+                        </RadzenStack>
+
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem">
+                            <RadzenButton Icon="add"
+                                          Text="Add"
+                                          ButtonStyle="ButtonStyle.Primary"
+                                          Click="ShowCreateModal" />
+                            <RadzenButton Icon="refresh"
+                                          Text="Refresh"
+                                          Variant="Variant.Outlined"
+                                          ButtonStyle="ButtonStyle.Secondary"
+                                          Click="RefreshData" />
+                        </RadzenStack>
+                    </RadzenStack>
+
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="@RadzenUi.Gap" Wrap="true">
+                        <RadzenTextBox @bind-Value="searchTerm"
+                                       Placeholder="Search units..."
+                                       Style="min-width:220px;"
+                                       @onkeyup="OnSearchKeyUp" />
+
+                        <RadzenDropDown Data="@statusFilterOptions"
+                                       TextProperty="Text"
+                                       ValueProperty="Value"
+                                       @bind-Value="isActiveFilter"
+                                       Placeholder="Filter by status"
+                                       Style="min-width:180px;"
+                                       Change="@(args => OnFilterChanged())" />
+
+                        <RadzenDropDown Data="@pageSizeOptions"
+                                       @bind-Value="pageSize"
+                                       Style="min-width:160px;"
+                                       Change="@(args => OnPageSizeChanged(args))" />
+                    </RadzenStack>
+
+                    <RadzenBusyIndicator IsBusy="@isLoading">
+                        @if (data?.Any() == true)
+                        {
+                            <RadzenDataGrid TItem="UnitOfMeasureDto"
+                                             Data="@data"
+                                             AllowPaging="true"
+                                             PageSize="@pageSize"
+                                             AllowSorting="true"
+                                             FilterMode="FilterMode.Advanced"
+                                             Responsive="true">
+                                <Columns>
+                                    <RadzenDataGridColumn TItem="UnitOfMeasureDto" Title="Name" Property="Name">
+                                        <Template Context="item">
+                                            <RadzenText>@item.Name</RadzenText>
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="UnitOfMeasureDto" Title="Symbol" Property="Symbol">
+                                        <Template Context="item">
+                                            <RadzenBadge Text="@item.Symbol" Style="secondary" />
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="UnitOfMeasureDto" Title="Description" Property="Description">
+                                        <Template Context="item">@(item.Description ?? "-")</Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="UnitOfMeasureDto" Title="Status">
+                                        <Template Context="item">
+                                            @if (item.IsActive)
+                                            {
+                                                <RadzenBadge Text="Active" Style="success" />
+                                            }
+                                            else
+                                            {
+                                                <RadzenBadge Text="Inactive" Style="secondary" />
+                                            }
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="UnitOfMeasureDto" Title="Created" Property="CreatedAt">
+                                        <Template Context="item">@item.CreatedAt.ToString("MMM dd, yyyy")</Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="UnitOfMeasureDto" Title="Actions">
+                                        <Template Context="item">
+                                            <RadzenButton Icon="edit" Size="ButtonSize.Small" Variant="Variant.Text" Click="@(args => EditItem(item))" />
+                                            <RadzenButton Icon="delete" Size="ButtonSize.Small" Variant="Variant.Text" ButtonStyle="ButtonStyle.Danger" Click="@(args => DeleteItem(item))" />
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                </Columns>
+                            </RadzenDataGrid>
+                        }
+                        else
+                        {
+                            <RadzenStack Orientation="Orientation.Vertical"
+                                         AlignItems="AlignItems.Center"
+                                         Gap="0.5rem"
+                                         Style="padding: 1.5rem;">
+                                <RadzenIcon Icon="straighten" Style="font-size:32px; color: var(--rz-text-secondary);" />
+                                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary);">No units found</RadzenText>
+                            </RadzenStack>
+                        }
+                    </RadzenBusyIndicator>
                 </RadzenStack>
-            </div>
+            </ChildContent>
+        </RadzenCard>
 
-            <div class="widget-filters">
-                <div class="row">
-                    <div class="col-md-4">
-                        <RadzenTextBox @bind-Value="searchTerm" @onkeyup="OnSearchKeyUp" 
-                                       Placeholder="Search units..." Name="searchTerm" />
-                    </div>
-                    <div class="col-md-2">
-                        <RadzenDropDown @bind-Value="isActiveFilter" 
-                                       Data="@statusOptions" 
-                                       ValueProperty="Value" 
-                                       TextProperty="Text"
-                                       Placeholder="All"
-                                       Name="isActiveFilter" />
-                    </div>
-                    <div class="col-md-2">
-                        <RadzenDropDown @bind-Value="pageSize" 
-                                       Data="@pageSizeOptions" 
-                                       ValueProperty="Value" 
-                                       TextProperty="Text"
-                                       Name="pageSize" />
-                    </div>
-                </div>
-            </div>
+        <RadzenDialog Visible="@showModal"
+                      Title="@(isEditing ? "Edit" : "Create") Unit"
+                      Close="@(args => CloseModal())"
+                      Width="560px">
+            <ChildContent>
+                <RadzenTemplateForm Data="@currentItem" Submit="@(async (CreateUnitOfMeasureDto model) => await OnSubmit(model))">
+                    <ChildContent Context="formContext">
+                        <DataAnnotationsValidator />
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.Gap">
+                            <RadzenStack Orientation="Orientation.Horizontal" Wrap="true" Gap="@RadzenUi.Gap">
+                                <RadzenStack Orientation="Orientation.Vertical" Style="flex:1 1 240px;">
+                                    <RadzenFormField Text="Name *">
+                                        <RadzenTextBox @bind-Value="currentItem.Name" Name="unitName" />
+                                        <RadzenRequiredValidator Component="unitName" Text="Name is required" />
+                                    </RadzenFormField>
+                                </RadzenStack>
+                                <RadzenStack Orientation="Orientation.Vertical" Style="flex:1 1 200px;">
+                                    <RadzenFormField Text="Symbol *">
+                                        <RadzenTextBox @bind-Value="currentItem.Symbol" Name="unitSymbol" />
+                                        <RadzenRequiredValidator Component="unitSymbol" Text="Symbol is required" />
+                                    </RadzenFormField>
+                                </RadzenStack>
+                            </RadzenStack>
 
-            <div class="widget-content">
-                @if (isLoading)
-                {
-                    <div class="text-center p-4">
-                        <div class="spinner-border" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
-                }
-                else if (data?.Any() == true)
-                {
-                    <RadzenDataGrid Data="@data" TItem="UnitOfMeasureDto" AllowPaging="true" PageSize="10" 
-                                   AllowSorting="true" FilterMode="FilterMode.Advanced" 
-                                   class="rz-datagrid-custom">
-                        <Columns>
-                            <RadzenDataGridColumn TItem="UnitOfMeasureDto" Property="Name" Title="Name" Width="150px">
-                                <Template Context="item">
-                                    <strong>@item.Name</strong>
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="UnitOfMeasureDto" Property="Symbol" Title="Symbol" Width="100px">
-                                <Template Context="item">
-                                    <span class="badge bg-secondary">@item.Symbol</span>
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="UnitOfMeasureDto" Property="Description" Title="Description" Width="200px">
-                                <Template Context="item">
-                                    @(item.Description ?? "-")
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="UnitOfMeasureDto" Property="IsActive" Title="Status" Width="100px">
-                                <Template Context="item">
-                                    @if (item.IsActive)
-                                    {
-                                        <span class="badge bg-success">Active</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-secondary">Inactive</span>
-                                    }
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="UnitOfMeasureDto" Property="CreatedAt" Title="Created" Width="120px">
-                                <Template Context="item">
-                                    @item.CreatedAt.ToString("MMM dd, yyyy")
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="UnitOfMeasureDto" Title="Actions" Width="120px" Sortable="false" Filterable="false">
-                                <Template Context="item">
-                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
-                                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" 
-                                                     Variant="Variant.Outlined" Size="ButtonSize.Small"
-                                                     @onclick="() => EditItem(item)" title="Edit" />
-                                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" 
-                                                     Variant="Variant.Outlined" Size="ButtonSize.Small"
-                                                     @onclick="() => DeleteItem(item)" title="Delete" />
-                                    </RadzenStack>
-                                </Template>
-                            </RadzenDataGridColumn>
-                        </Columns>
-                    </RadzenDataGrid>
+                            <RadzenFormField Text="Description">
+                                <RadzenTextArea @bind-Value="currentItem.Description" Rows="3" Name="unitDescription" />
+                            </RadzenFormField>
 
-                    @if (totalPages > 1)
-                    {
-                        <nav aria-label="Page navigation">
-                            <ul class="pagination justify-content-center">
-                                <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                                    <button class="page-link" @onclick="() => ChangePage(1)">First</button>
-                                </li>
-                                <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                                    <button class="page-link" @onclick="() => ChangePage(currentPage - 1)">Previous</button>
-                                </li>
-                                
-                                @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(totalPages, currentPage + 2); i++)
-                                {
-                                    <li class="page-item @(i == currentPage ? "active" : "")">
-                                        <button class="page-link" @onclick="() => ChangePage(i)">@i</button>
-                                    </li>
-                                }
-                                
-                                <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                                    <button class="page-link" @onclick="() => ChangePage(currentPage + 1)">Next</button>
-                                </li>
-                                <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                                    <button class="page-link" @onclick="() => ChangePage(totalPages)">Last</button>
-                                </li>
-                            </ul>
-                        </nav>
-                    }
-                }
-                else
-                {
-                    <div class="text-center p-4">
-                        <p class="text-muted">No units of measure found</p>
-                    </div>
-                }
-            </div>
-        </div>
-
-        <!-- Create/Edit Dialog -->
-        <RadzenDialog @bind-Visible="showModal" Style="min-width: 500px;">
-            <RadzenTemplateForm Data="@currentItem" Submit="@(async (CreateUnitOfMeasureDto model) => await OnSubmit(model))">
-                <ChildContent Context="formContext">
-                    <RadzenStack>
-                    <RadzenText TextStyle="TextStyle.H4" class="rz-mb-3">
-                        @(isEditing ? "Edit" : "Create") Unit of Measure
-                    </RadzenText>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <RadzenFormField Text="Name *" class="rz-mb-3">
-                                            <RadzenTextBox @bind-Value="currentItem.Name" Name="unitOfMeasureName" />
-                                            <RadzenRequiredValidator Component="unitOfMeasureName" Text="Name is required" />
-                                        </RadzenFormField>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <RadzenFormField Text="Symbol *" class="rz-mb-3">
-                                            <RadzenTextBox @bind-Value="currentItem.Symbol" Name="unitOfMeasureSymbol" />
-                                            <RadzenRequiredValidator Component="unitOfMeasureSymbol" Text="Symbol is required" />
-                                        </RadzenFormField>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <RadzenFormField Text="Description" class="rz-mb-3">
-                                    <RadzenTextArea @bind-Value="currentItem.Description" Rows="3" Name="unitOfMeasureDescription" />
-                                </RadzenFormField>
-                            </div>
                             @if (isEditing)
                             {
-                                <div class="mb-3">
-                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center">
-                                        <RadzenCheckBox @bind-Value="isActive" Name="isActive" />
-                                        <RadzenLabel Text="Active" For="isActive" />
-                                    </RadzenStack>
-                                </div>
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                    <RadzenCheckBox @bind-Value="isActive" Name="isActive" />
+                                    <RadzenLabel Text="Active" For="isActive" />
+                                </RadzenStack>
                             }
-                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
-                        <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" 
-                                     Variant="Variant.Outlined" @onclick="CloseModal" />
-                        <RadzenButton Text="@(isSaving ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update" : "Create"))" 
-                                     ButtonStyle="ButtonStyle.Primary" 
-                                     type="submit" 
-                                     Disabled="@isSaving" />
-                    </RadzenStack>
-                    </RadzenStack>
-                </ChildContent>
-            </RadzenTemplateForm>
+
+                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.75rem">
+                                <RadzenButton Text="Cancel"
+                                              ButtonStyle="ButtonStyle.Light"
+                                              Variant="Variant.Outlined"
+                                              Click="@(args => CloseModal())" />
+                                <RadzenButton Text="@(isSaving ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update" : "Create"))"
+                                              ButtonStyle="ButtonStyle.Primary"
+                                              ButtonType="ButtonType.Submit"
+                                              Disabled="@isSaving" />
+                            </RadzenStack>
+                        </RadzenStack>
+                    </ChildContent>
+                </RadzenTemplateForm>
+            </ChildContent>
         </RadzenDialog>
     </Authorized>
     <NotAuthorized>
         <RadzenAlert AlertStyle="AlertStyle.Danger" ShowIcon="true">
-            <i class="fas fa-exclamation-triangle"></i>
             Access denied. Administrator role required.
         </RadzenAlert>
     </NotAuthorized>
@@ -225,31 +189,16 @@
     private UnitOfMeasureDto? selectedItem = null;
     private bool isActive = true;
 
-    private List<StatusOption> statusOptions = new()
+    private readonly FilterOption[] statusFilterOptions = new[]
     {
-        new() { Value = "", Text = "All" },
-        new() { Value = "true", Text = "Active" },
-        new() { Value = "false", Text = "Inactive" }
+        new FilterOption("", "All statuses"),
+        new FilterOption("true", "Active"),
+        new FilterOption("false", "Inactive")
     };
 
-    private List<PageSizeOption> pageSizeOptions = new()
-    {
-        new() { Value = 10, Text = "10 per page" },
-        new() { Value = 25, Text = "25 per page" },
-        new() { Value = 50, Text = "50 per page" }
-    };
+    private readonly int[] pageSizeOptions = new[] { 10, 25, 50 };
 
-    public class StatusOption
-    {
-        public string Value { get; set; } = "";
-        public string Text { get; set; } = "";
-    }
-
-    public class PageSizeOption
-    {
-        public int Value { get; set; }
-        public string Text { get; set; } = "";
-    }
+    private record FilterOption(string Value, string Text);
 
     protected override async Task OnInitializedAsync()
     {
@@ -311,6 +260,22 @@
         if (page >= 1 && page <= totalPages && page != currentPage)
         {
             currentPage = page;
+            await LoadData();
+        }
+    }
+
+    private async Task OnFilterChanged()
+    {
+        currentPage = 1;
+        await LoadData();
+    }
+
+    private async Task OnPageSizeChanged(object? value)
+    {
+        if (value is int size && size > 0)
+        {
+            pageSize = size;
+            currentPage = 1;
             await LoadData();
         }
     }

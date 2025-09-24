@@ -1,66 +1,69 @@
 @using Inventory.Shared.DTOs
+@using Inventory.UI.Utilities
 @inject IDashboardService DashboardService
 
-<div class="card border-warning">
-    <div class="card-header bg-warning bg-opacity-10">
-        <h5 class="mb-0 text-warning">
-            <i class="bi bi-exclamation-triangle me-2"></i>Товары с низким остатком
-        </h5>
-    </div>
-    <div class="card-body">
-        @if (isLoading)
-        {
-            <div class="text-center py-4">
-                <div class="spinner-border text-warning" role="status">
-                    <span class="visually-hidden">Загрузка...</span>
-                </div>
-            </div>
-        }
-        else if (lowStockProducts?.Any() == true)
-        {
-            <div class="low-stock-list">
-                @foreach (var product in lowStockProducts.Take(5))
+<RadzenCard Style="width:100%;">
+    <ChildContent>
+        <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.Gap">
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                <RadzenIcon Icon="warning" Style="color: #f59f00;" />
+                <RadzenText TextStyle="TextStyle.H6" Style="color:#f59f00;">Товары с низким остатком</RadzenText>
+            </RadzenStack>
+
+            <RadzenBusyIndicator IsBusy="@isLoading">
+                @if (lowStockProducts?.Any() == true)
                 {
-                    <div class="low-stock-item">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-shrink-0">
-                                <i class="bi bi-box-seam text-warning" style="font-size: 1.5rem;"></i>
-                            </div>
-                            <div class="flex-grow-1 ms-3">
-                                <div class="fw-semibold">@product.Name</div>
-                                <div class="text-muted small">@product.SKU • @product.CategoryName</div>
-                            </div>
-                            <div class="flex-shrink-0 text-end">
-                                <div class="fw-bold text-warning">@product.CurrentQuantity @product.UnitOfMeasureSymbol</div>
-                                <div class="text-muted small">мин: @product.MinStock</div>
-                            </div>
-                        </div>
-                        <div class="progress mt-2" style="height: 4px;">
-                            <div class="progress-bar bg-warning" 
-                                 style="width: @GetStockPercentage(product.CurrentQuantity, product.MinStock)%"></div>
-                        </div>
-                    </div>
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.Gap">
+                        @foreach (var product in lowStockProducts.Take(5))
+                        {
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" Style="padding:0.75rem; border:1px solid var(--rz-border); border-radius:var(--rz-border-radius);">
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="@RadzenUi.Gap" AlignItems="AlignItems.Center">
+                                    <RadzenIcon Icon="inventory_2" Style="color:#f59f00; font-size: 1.5rem;" />
+                                    <RadzenStack Orientation="Orientation.Vertical" Style="flex:1;">
+                                        <RadzenText TextStyle="TextStyle.Body1">@product.Name</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary);">
+                                            @product.SKU • @product.CategoryName
+                                        </RadzenText>
+                                    </RadzenStack>
+                                    <RadzenStack Orientation="Orientation.Vertical" Style="text-align:right;">
+                                        <RadzenText TextStyle="TextStyle.Body1" Style="color:#f59f00; font-weight:600;">
+                                            @product.CurrentQuantity @product.UnitOfMeasureSymbol
+                                        </RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary);">
+                                            мин: @product.MinStock
+                                        </RadzenText>
+                                    </RadzenStack>
+                                </RadzenStack>
+
+                                <RadzenProgressBar Value="@GetStockPercentage(product.CurrentQuantity, product.MinStock)"
+                                                   Style="height:6px;"
+                                                   ShowValue="false"
+                                                   Mode="ProgressBarMode.Determinate"
+                                                   Color="#f59f00" />
+                            </RadzenStack>
+                        }
+
+                        @if (lowStockProducts.Count > 5)
+                        {
+                            <RadzenButton Text=$"Показать все ({lowStockProducts.Count})"
+                                          ButtonStyle="ButtonStyle.Secondary"
+                                          Variant="Variant.Outlined"
+                                          Icon="list"
+                                          Size="ButtonSize.Small" />
+                        }
+                    </RadzenStack>
                 }
-            </div>
-            
-            @if (lowStockProducts.Count > 5)
-            {
-                <div class="text-center mt-3">
-                    <button class="btn btn-sm btn-outline-warning">
-                        Показать все (@lowStockProducts.Count)
-                    </button>
-                </div>
-            }
-        }
-        else
-        {
-            <div class="text-center py-4 text-success">
-                <i class="bi bi-check-circle" style="font-size: 2rem;"></i>
-                <p class="mt-2 mb-0">Все товары в норме</p>
-            </div>
-        }
-    </div>
-</div>
+                else
+                {
+                    <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.5rem" Style="padding:1rem; color: var(--rz-success);">
+                        <RadzenIcon Icon="check_circle" Style="font-size:2rem;" />
+                        <RadzenText TextStyle="TextStyle.Body1">Все товары в норме</RadzenText>
+                    </RadzenStack>
+                }
+            </RadzenBusyIndicator>
+        </RadzenStack>
+    </ChildContent>
+</RadzenCard>
 
 @code {
     private List<LowStockProductDto>? lowStockProducts;

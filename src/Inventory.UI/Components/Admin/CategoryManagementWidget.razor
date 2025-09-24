@@ -6,143 +6,158 @@
 @inject ICategoryService CategoryService
 @inject IUINotificationService NotificationService
 @inject IJSRuntime JSRuntime
+@using Inventory.UI.Utilities
+@using System.Linq
 
-<AuthorizeView Roles="Admin" Context="authState">
+<AuthorizeView Roles="Admin">
     <Authorized>
-        <div class="reference-data-widget">
-            <div class="widget-header">
-                <h4><i class="fas fa-tags"></i> Categories Management</h4>
-                <div class="widget-actions">
-                    <button class="btn btn-primary btn-sm" @onclick="ShowCreateModal">
-                        <i class="fas fa-plus"></i> Add New Category
-                    </button>
-                    <button class="btn btn-outline-secondary btn-sm" @onclick="RefreshData">
-                        <i class="fas fa-refresh"></i> Refresh
-                    </button>
-                </div>
-            </div>
+        <RadzenCard Style="width:100%;">
+            <ChildContent>
+                <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.GapLarge">
+                    <RadzenStack Orientation="Orientation.Horizontal"
+                                 JustifyContent="JustifyContent.SpaceBetween"
+                                 AlignItems="AlignItems.Center"
+                                 Wrap="true"
+                                 Gap="@RadzenUi.Gap">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="category" />
+                            <RadzenText TextStyle="TextStyle.H5">Categories Management</RadzenText>
+                        </RadzenStack>
 
-            <div class="widget-filters">
-                <div class="row">
-                    <div class="col-md-4">
-                        <input type="text" class="form-control" placeholder="Search categories..." @bind="searchTerm" @onkeyup="OnSearchKeyUp" />
-                    </div>
-                    <div class="col-md-2">
-                        <select class="form-select" @bind="isActiveFilter">
-                            <option value="">All</option>
-                            <option value="true">Active</option>
-                            <option value="false">Inactive</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <select class="form-select" @bind="parentCategoryFilter">
-                            <option value="">All Categories</option>
-                            <option value="root">Root Categories Only</option>
-                            @foreach (var category in rootCategories)
-                            {
-                                <option value="@category.Id">@category.Name</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <select class="form-select" @bind="pageSize">
-                            <option value="10">10 per page</option>
-                            <option value="25">25 per page</option>
-                            <option value="50">50 per page</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem">
+                            <RadzenButton Icon="add"
+                                          Text="Add"
+                                          ButtonStyle="ButtonStyle.Primary"
+                                          Click="ShowCreateModal" />
+                            <RadzenButton Icon="refresh"
+                                          Text="Refresh"
+                                          Variant="Variant.Outlined"
+                                          ButtonStyle="ButtonStyle.Secondary"
+                                          Click="RefreshData" />
+                        </RadzenStack>
+                    </RadzenStack>
 
-            <div class="widget-content">
-                @if (isLoading)
-                {
-                    <div class="text-center p-4">
-                        <div class="spinner-border" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
-                }
-                else if (data?.Any() == true)
-                {
-                    <RadzenDataGrid TItem="CategoryDto"
-                                     Data="@data"
-                                     Count="@totalCount"
-                                     AllowPaging="true"
-                                     PageSize="@pageSize"
-                                     LoadData="@OnGridLoad"
-                                     AllowSorting="true"
-                                     Responsive="true">
-                        <Columns>
-                            <RadzenDataGridColumn TItem="CategoryDto" Title="Name" Property="Name">
-                                <Template Context="item">
-                                    <strong>@item.Name</strong>
-                                    @if (item.ParentCategoryId.HasValue)
-                                    {
-                                        <br />
-                                        <span class="rz-text-secondary" style="font-size: 0.8rem;">Subcategory</span>
-                                    }
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="CategoryDto" Title="Description">
-                                <Template Context="item">@(item.Description ?? "-")</Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="CategoryDto" Title="Parent Category">
-                                <Template Context="item">@(item.ParentCategoryName ?? "Root Category")</Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="CategoryDto" Title="Status">
-                                <Template Context="item">
-                                    @if (item.IsActive)
-                                    {
-                                        <RadzenBadge Text="Active" Style="success" />
-                                    }
-                                    else
-                                    {
-                                        <RadzenBadge Text="Inactive" Style="secondary" />
-                                    }
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="CategoryDto" Title="Created" Property="CreatedAt">
-                                <Template Context="item">@item.CreatedAt.ToString("MMM dd, yyyy")</Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="CategoryDto" Title="Actions">
-                                <Template Context="item">
-                                    <RadzenButton Icon="edit" Size="ButtonSize.Small" Variant="Variant.Text" @onclick="(() => EditItem(item))" />
-                                    <RadzenButton Icon="delete" Size="ButtonSize.Small" Variant="Variant.Text" ButtonStyle="ButtonStyle.Danger" @onclick="(() => DeleteItem(item))" />
-                                </Template>
-                            </RadzenDataGridColumn>
-                        </Columns>
-                    </RadzenDataGrid>
-                }
-                else
-                {
-                    <div class="text-center p-4">
-                        <p class="text-muted">No categories found</p>
-                    </div>
-                }
-            </div>
-        </div>
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="@RadzenUi.Gap" Wrap="true">
+                        <RadzenTextBox @bind-Value="searchTerm"
+                                       Placeholder="Search categories..."
+                                       Style="min-width:220px;"
+                                       @onkeyup="OnSearchKeyUp" />
+
+                        <RadzenDropDown Data="@statusFilterOptions"
+                                       TextProperty="Text"
+                                       ValueProperty="Value"
+                                       @bind-Value="isActiveFilter"
+                                       Placeholder="Filter by status"
+                                       Style="min-width:180px;"
+                                       Change="@(args => OnFilterChanged())" />
+
+                        <RadzenDropDown Data="@ParentCategoryFilterOptions"
+                                       TextProperty="Text"
+                                       ValueProperty="Value"
+                                       @bind-Value="parentCategoryFilter"
+                                       Placeholder="Parent category"
+                                       Style="min-width:200px;"
+                                       Change="@(args => OnFilterChanged())" />
+
+                        <RadzenDropDown Data="@pageSizeOptions"
+                                       @bind-Value="pageSize"
+                                       Style="min-width:160px;"
+                                       Change="@(args => OnPageSizeChanged(args))" />
+                    </RadzenStack>
+
+                    <RadzenBusyIndicator IsBusy="@isLoading">
+                        @if (data?.Any() == true)
+                        {
+                            <RadzenDataGrid TItem="CategoryDto"
+                                             Data="@data"
+                                             Count="@totalCount"
+                                             AllowPaging="true"
+                                             PageSize="@pageSize"
+                                             LoadData="@OnGridLoad"
+                                             AllowSorting="true"
+                                             Responsive="true">
+                                <Columns>
+                                    <RadzenDataGridColumn TItem="CategoryDto" Title="Name" Property="Name">
+                                        <Template Context="item">
+                                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                                                <RadzenText TextStyle="TextStyle.Body1">@item.Name</RadzenText>
+                                                @if (item.ParentCategoryId.HasValue)
+                                                {
+                                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary);">Subcategory</RadzenText>
+                                                }
+                                            </RadzenStack>
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="CategoryDto" Title="Description">
+                                        <Template Context="item">@(item.Description ?? "-")</Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="CategoryDto" Title="Parent Category">
+                                        <Template Context="item">@(item.ParentCategoryName ?? "Root Category")</Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="CategoryDto" Title="Status">
+                                        <Template Context="item">
+                                            @if (item.IsActive)
+                                            {
+                                                <RadzenBadge Text="Active" Style="success" />
+                                            }
+                                            else
+                                            {
+                                                <RadzenBadge Text="Inactive" Style="secondary" />
+                                            }
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="CategoryDto" Title="Created" Property="CreatedAt">
+                                        <Template Context="item">@item.CreatedAt.ToString("MMM dd, yyyy")</Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="CategoryDto" Title="Actions">
+                                        <Template Context="item">
+                                            <RadzenButton Icon="edit"
+                                                          Size="ButtonSize.Small"
+                                                          Variant="Variant.Text"
+                                                          Click="@(args => EditItem(item))" />
+                                            <RadzenButton Icon="delete"
+                                                          Size="ButtonSize.Small"
+                                                          Variant="Variant.Text"
+                                                          ButtonStyle="ButtonStyle.Danger"
+                                                          Click="@(args => DeleteItem(item))" />
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                </Columns>
+                            </RadzenDataGrid>
+                        }
+                        else
+                        {
+                            <RadzenStack Orientation="Orientation.Vertical"
+                                         AlignItems="AlignItems.Center"
+                                         Gap="0.5rem"
+                                         Style="padding: 1.5rem;">
+                                <RadzenIcon Icon="inbox" Style="font-size:32px; color: var(--rz-text-secondary);" />
+                                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary);">No categories found</RadzenText>
+                            </RadzenStack>
+                        }
+                    </RadzenBusyIndicator>
+                </RadzenStack>
+            </ChildContent>
+        </RadzenCard>
 
         <RadzenDialog Visible="@showModal"
-                      Title="@($"{(isEditing ? "Edit" : "Create")} Category")"
-                      Close="CloseModal"
+                      Title="@(isEditing ? "Edit" : "Create") Category"
+                      Close="@(args => CloseModal())"
                       Width="650px">
             <ChildContent>
                 <RadzenTemplateForm Data="@currentItem" Submit="@(async (CreateCategoryDto model) => await OnSubmit(model))">
                     <ChildContent Context="formContext">
                         <DataAnnotationsValidator />
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <RadzenFormField Text="Name *" class="rz-mb-3">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.Gap">
+                            <RadzenStack Orientation="Orientation.Horizontal" Wrap="true" Gap="@RadzenUi.Gap">
+                                <RadzenStack Orientation="Orientation.Vertical" Style="flex:1 1 260px;">
+                                    <RadzenFormField Text="Name *">
                                         <RadzenTextBox @bind-Value="currentItem.Name" Name="categoryName" />
                                         <RadzenRequiredValidator Component="categoryName" Text="Name is required" />
                                     </RadzenFormField>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <RadzenFormField Text="Parent Category" class="rz-mb-3">
+                                </RadzenStack>
+                                <RadzenStack Orientation="Orientation.Vertical" Style="flex:1 1 260px;">
+                                    <RadzenFormField Text="Parent Category">
                                         <RadzenDropDown @bind-Value="currentItem.ParentCategoryId"
                                                        Data="@parentCategoryOptions"
                                                        ValueProperty="Value"
@@ -150,32 +165,31 @@
                                                        Placeholder="Root Category"
                                                        Name="parentCategoryId" />
                                     </RadzenFormField>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <RadzenFormField Text="Description" class="rz-mb-3">
+                                </RadzenStack>
+                            </RadzenStack>
+
+                            <RadzenFormField Text="Description">
                                 <RadzenTextArea @bind-Value="currentItem.Description" Rows="3" Name="description" />
                             </RadzenFormField>
-                        </div>
-                        @if (isEditing)
-                        {
-                            <div class="mb-3">
-                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center">
+
+                            @if (isEditing)
+                            {
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                                     <RadzenCheckBox @bind-Value="isActive" Name="isActive" />
                                     <RadzenLabel Text="Active" For="isActive" />
                                 </RadzenStack>
-                            </div>
-                        }
-                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.75rem">
-                            <RadzenButton Text="Cancel"
-                                          ButtonStyle="ButtonStyle.Light"
-                                          Variant="Variant.Outlined"
-                                          Click="@(args => CloseModal())" />
-                            <RadzenButton Text="@(isSaving ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update" : "Create"))"
-                                          ButtonStyle="ButtonStyle.Primary"
-                                          ButtonType="ButtonType.Submit"
-                                          Disabled="@isSaving" />
+                            }
+
+                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.75rem">
+                                <RadzenButton Text="Cancel"
+                                              ButtonStyle="ButtonStyle.Light"
+                                              Variant="Variant.Outlined"
+                                              Click="@(args => CloseModal())" />
+                                <RadzenButton Text="@(isSaving ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update" : "Create"))"
+                                              ButtonStyle="ButtonStyle.Primary"
+                                              ButtonType="ButtonType.Submit"
+                                              Disabled="@isSaving" />
+                            </RadzenStack>
                         </RadzenStack>
                     </ChildContent>
                 </RadzenTemplateForm>
@@ -183,10 +197,9 @@
         </RadzenDialog>
     </Authorized>
     <NotAuthorized>
-        <div class="alert alert-danger">
-            <i class="fas fa-exclamation-triangle"></i>
+        <RadzenAlert AlertStyle="AlertStyle.Danger" ShowIcon="true">
             Access denied. Administrator role required.
-        </div>
+        </RadzenAlert>
     </NotAuthorized>
 </AuthorizeView>
 
@@ -209,6 +222,22 @@
     private CategoryDto? selectedItem = null;
     private bool isActive = true;
 
+    private readonly FilterOption[] statusFilterOptions = new[]
+    {
+        new FilterOption("", "All statuses"),
+        new FilterOption("true", "Active"),
+        new FilterOption("false", "Inactive")
+    };
+
+    private readonly int[] pageSizeOptions = new[] { 10, 25, 50 };
+
+    private IEnumerable<FilterOption> ParentCategoryFilterOptions =>
+        new[]
+        {
+            new FilterOption("", "All categories"),
+            new FilterOption("root", "Root categories only")
+        }.Concat(rootCategories.Select(c => new FilterOption(c.Id.ToString(), c.Name)));
+
     private List<ParentCategoryOption> parentCategoryOptions = new();
 
     public class ParentCategoryOption
@@ -216,6 +245,8 @@
         public int? Value { get; set; }
         public string Text { get; set; } = "";
     }
+
+    private record FilterOption(string Value, string Text);
 
     protected override async Task OnInitializedAsync()
     {
@@ -233,6 +264,22 @@
         }
         currentPage = (skip / pageSize) + 1;
         await LoadData();
+    }
+
+    private async Task OnFilterChanged()
+    {
+        currentPage = 1;
+        await LoadData();
+    }
+
+    private async Task OnPageSizeChanged(object? value)
+    {
+        if (value is int size && size > 0)
+        {
+            pageSize = size;
+            currentPage = 1;
+            await LoadData();
+        }
     }
 
     private async Task LoadRootCategories()

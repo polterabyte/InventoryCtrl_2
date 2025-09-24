@@ -3,113 +3,114 @@
 @using Inventory.Shared.Services
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
+@using Inventory.UI.Utilities
+@using System.Linq
 
-@inject IManufacturerService ManufacturerService
-@inject IUINotificationService NotificationService
-@inject IJSRuntime JSRuntime
-
-<AuthorizeView Roles="Admin" Context="authState">
+<AuthorizeView Roles="Admin">
     <Authorized>
-        <div class="reference-data-widget">
-            <div class="widget-header">
-                <h4><i class="fas fa-industry"></i> Manufacturers Management</h4>
-                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                    <RadzenButton Text="Add New Manufacturer"
-                                  Icon="add"
-                                  ButtonStyle="ButtonStyle.Primary"
-                                  Size="ButtonSize.Small"
-                                  @onclick="ShowCreateModal" />
-                    <RadzenButton Text="Refresh"
-                                  Icon="refresh"
-                                  ButtonStyle="ButtonStyle.Secondary"
-                                  Variant="Variant.Outlined"
-                                  Size="ButtonSize.Small"
-                                  @onclick="RefreshData" />
-                </RadzenStack>
-            </div>
+        <RadzenCard Style="width:100%;">
+            <ChildContent>
+                <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.GapLarge">
+                    <RadzenStack Orientation="Orientation.Horizontal"
+                                 JustifyContent="JustifyContent.SpaceBetween"
+                                 AlignItems="AlignItems.Center"
+                                 Wrap="true"
+                                 Gap="@RadzenUi.Gap">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="factory" />
+                            <RadzenText TextStyle="TextStyle.H5">Manufacturers Management</RadzenText>
+                        </RadzenStack>
 
-            <div class="widget-content">
-                @if (isLoading)
-                {
-                    <div class="text-center p-4">
-                        <div class="spinner-border" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
-                }
-                else if (data?.Any() == true)
-                {
-                    <RadzenDataGrid Data="@data" TItem="ManufacturerDto" AllowPaging="true" PageSize="10"
-                                   AllowSorting="true" FilterMode="FilterMode.Advanced"
-                                   class="rz-datagrid-custom">
-                        <Columns>
-                            <RadzenDataGridColumn TItem="ManufacturerDto" Property="Name" Title="Name" Width="200px">
-                                <Template Context="item">
-                                    <strong>@item.Name</strong>
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="ManufacturerDto" Property="CreatedAt" Title="Created" Width="150px">
-                                <Template Context="item">
-                                    @item.CreatedAt.ToString("MMM dd, yyyy")
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="ManufacturerDto" Property="UpdatedAt" Title="Updated" Width="150px">
-                                <Template Context="item">
-                                    @(item.UpdatedAt?.ToString("MMM dd, yyyy") ?? "-")
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="ManufacturerDto" Title="Actions" Width="120px" Sortable="false" Filterable="false">
-                                <Template Context="item">
-                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
-                                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary"
-                                                     Variant="Variant.Outlined" Size="ButtonSize.Small"
-                                                     @onclick="() => EditItem(item)" title="Edit" />
-                                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger"
-                                                     Variant="Variant.Outlined" Size="ButtonSize.Small"
-                                                     @onclick="() => DeleteItem(item)" title="Delete" />
-                                    </RadzenStack>
-                                </Template>
-                            </RadzenDataGridColumn>
-                        </Columns>
-                    </RadzenDataGrid>
-                }
-                else
-                {
-                    <div class="text-center p-4">
-                        <p class="text-muted">No manufacturers found</p>
-                    </div>
-                }
-            </div>
-        </div>
-
-        <!-- Create/Edit Dialog -->
-        <RadzenDialog @bind-Visible="showModal" @bind-Visible:event="onchange" Style="min-width: 500px;">
-                        <RadzenTemplateForm Data="@currentItem" Submit="@(async (CreateManufacturerDto model) => await OnSubmit(model))">
-                            <ChildContent Context="formContext">
-                                <RadzenStack>
-                    <RadzenText TextStyle="TextStyle.H4" class="rz-mb-3">
-                        @(isEditing ? "Edit" : "Create") Manufacturer
-                    </RadzenText>
-                    <RadzenFormField Text="Name *" class="rz-mb-3">
-                        <RadzenTextBox @bind-Value="currentItem.Name" Name="manufacturerName" />
-                        <RadzenRequiredValidator Component="manufacturerName" Text="Name is required" />
-                    </RadzenFormField>
-                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
-                        <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light"
-                                     Variant="Variant.Outlined" @onclick="CloseModal" />
-                        <RadzenButton Text="@(isSaving ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update" : "Create"))"
-                                     ButtonStyle="ButtonStyle.Primary"
-                                     type="submit"
-                                     Disabled="@isSaving" />
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem">
+                            <RadzenButton Icon="add"
+                                          Text="Add"
+                                          ButtonStyle="ButtonStyle.Primary"
+                                          Click="ShowCreateModal" />
+                            <RadzenButton Icon="refresh"
+                                          Text="Refresh"
+                                          Variant="Variant.Outlined"
+                                          ButtonStyle="ButtonStyle.Secondary"
+                                          Click="RefreshData" />
+                        </RadzenStack>
                     </RadzenStack>
-                                </RadzenStack>
-                            </ChildContent>
-                        </RadzenTemplateForm>
+
+                    <RadzenBusyIndicator IsBusy="@isLoading">
+                        @if (data?.Any() == true)
+                        {
+                            <RadzenDataGrid TItem="ManufacturerDto"
+                                             Data="@data"
+                                             AllowPaging="true"
+                                             PageSize="10"
+                                             AllowSorting="true"
+                                             FilterMode="FilterMode.Advanced">
+                                <Columns>
+                                    <RadzenDataGridColumn TItem="ManufacturerDto" Title="Name" Property="Name">
+                                        <Template Context="item">
+                                            <RadzenText>@item.Name</RadzenText>
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="ManufacturerDto" Title="Created" Property="CreatedAt">
+                                        <Template Context="item">@item.CreatedAt.ToString("MMM dd, yyyy")</Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="ManufacturerDto" Title="Updated" Property="UpdatedAt">
+                                        <Template Context="item">@(item.UpdatedAt?.ToString("MMM dd, yyyy") ?? "-")</Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="ManufacturerDto" Title="Actions">
+                                        <Template Context="item">
+                                            <RadzenButton Icon="edit" Size="ButtonSize.Small" Variant="Variant.Text" Click="@(args => EditItem(item))" />
+                                            <RadzenButton Icon="delete" Size="ButtonSize.Small" Variant="Variant.Text" ButtonStyle="ButtonStyle.Danger" Click="@(args => DeleteItem(item))" />
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                </Columns>
+                            </RadzenDataGrid>
+                        }
+                        else
+                        {
+                            <RadzenStack Orientation="Orientation.Vertical"
+                                         AlignItems="AlignItems.Center"
+                                         Gap="0.5rem"
+                                         Style="padding: 1.5rem;">
+                                <RadzenIcon Icon="store_mall_directory" Style="font-size:32px; color: var(--rz-text-secondary);" />
+                                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary);">No manufacturers found</RadzenText>
+                            </RadzenStack>
+                        }
+                    </RadzenBusyIndicator>
+                </RadzenStack>
+            </ChildContent>
+        </RadzenCard>
+
+        <RadzenDialog Visible="@showModal"
+                      Title="@(isEditing ? "Edit" : "Create") Manufacturer"
+                      Close="@(args => CloseModal())"
+                      Width="500px">
+            <ChildContent>
+                <RadzenTemplateForm Data="@currentItem" Submit="@(async (CreateManufacturerDto model) => await OnSubmit(model))">
+                    <ChildContent Context="formContext">
+                        <DataAnnotationsValidator />
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.Gap">
+                            <RadzenFormField Text="Name *">
+                                <RadzenTextBox @bind-Value="currentItem.Name" Name="manufacturerName" />
+                                <RadzenRequiredValidator Component="manufacturerName" Text="Name is required" />
+                            </RadzenFormField>
+
+                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.75rem">
+                                <RadzenButton Text="Cancel"
+                                              ButtonStyle="ButtonStyle.Light"
+                                              Variant="Variant.Outlined"
+                                              Click="@(args => CloseModal())" />
+                                <RadzenButton Text="@(isSaving ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update" : "Create"))"
+                                              ButtonStyle="ButtonStyle.Primary"
+                                              ButtonType="ButtonType.Submit"
+                                              Disabled="@isSaving" />
+                            </RadzenStack>
+                        </RadzenStack>
+                    </ChildContent>
+                </RadzenTemplateForm>
+            </ChildContent>
         </RadzenDialog>
     </Authorized>
     <NotAuthorized>
         <RadzenAlert AlertStyle="AlertStyle.Danger" ShowIcon="true">
-            <i class="fas fa-exclamation-triangle"></i>
             Access denied. Administrator role required.
         </RadzenAlert>
     </NotAuthorized>

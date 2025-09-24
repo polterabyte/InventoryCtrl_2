@@ -1,24 +1,21 @@
 @using Inventory.Shared.DTOs
+@using Inventory.UI.Utilities
 
-<div class="col-md-3 mb-4">
-    <div class="card stats-widget @GetCardClass()">
-        <div class="card-body">
-            <div class="d-flex align-items-center">
-                <div class="flex-shrink-0">
-                    <i class="@IconClass" style="font-size: 2.5rem;"></i>
-                </div>
-                <div class="flex-grow-1 ms-3">
-                    <div class="stats-value">@Value</div>
-                    <div class="stats-label">@Label</div>
-                    @if (!string.IsNullOrEmpty(SubLabel))
-                    {
-                        <div class="stats-sublabel">@SubLabel</div>
-                    }
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+<RadzenCard Style="flex:1 1 220px;">
+    <ChildContent>
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="@RadzenUi.Gap" AlignItems="AlignItems.Center">
+            <RadzenIcon Icon="@IconClass" Style="font-size:2.5rem; color:@GetIconColor();" />
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex:1;">
+                <RadzenText TextStyle="TextStyle.H4">@Value</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary);">@Label</RadzenText>
+                @if (!string.IsNullOrEmpty(SubLabel))
+                {
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color:@GetIconColor();">@SubLabel</RadzenText>
+                }
+            </RadzenStack>
+        </RadzenStack>
+    </ChildContent>
+</RadzenCard>
 
 @code {
     [Parameter] public string Label { get; set; } = string.Empty;
@@ -27,15 +24,15 @@
     [Parameter] public string IconClass { get; set; } = "bi bi-info-circle";
     [Parameter] public string CardClass { get; set; } = "primary";
 
-    private string GetCardClass()
+    private string GetIconColor()
     {
         return CardClass switch
         {
-            "success" => "border-success",
-            "warning" => "border-warning",
-            "danger" => "border-danger",
-            "info" => "border-info",
-            _ => "border-primary"
+            "success" => "var(--rz-success)",
+            "warning" => "var(--rz-warning)",
+            "danger" => "var(--rz-danger)",
+            "info" => "var(--rz-info)",
+            _ => "var(--rz-primary)"
         };
     }
 }
