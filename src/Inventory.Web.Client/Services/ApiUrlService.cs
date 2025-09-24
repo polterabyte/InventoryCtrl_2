@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Linq;
 
 namespace Inventory.Web.Client.Services;
 
@@ -106,6 +107,13 @@ public class ApiUrlService : IApiUrlService
 
         // 3. Fallback: построить URL из BaseUrl или относительный '/api'
         var fallbackUrl = _apiConfig.BaseUrl ?? "/api";
+
+        if (fallbackUrl.StartsWith("/"))
+        {
+            _logger.LogWarning("Using relative fallback API URL: {ApiUrl}", fallbackUrl);
+            return fallbackUrl;
+        }
+
         var absoluteUrl = await EnsureAbsoluteUrlAsync(fallbackUrl);
         _logger.LogWarning("Using fallback API URL: {ApiUrl}", absoluteUrl);
         return absoluteUrl;
@@ -117,8 +125,10 @@ public class ApiUrlService : IApiUrlService
         var envConfig = GetEnvironmentConfig();
         if (!string.IsNullOrEmpty(envConfig?.SignalRUrl))
         {
-            _logger.LogDebug("Using configured SignalR URL: {SignalRUrl}", envConfig.SignalRUrl);
-            return envConfig.SignalRUrl;
+            var configuredUrl = envConfig.SignalRUrl;
+            var absoluteConfiguredUrl = await EnsureAbsoluteUrlAsync(configuredUrl);
+            _logger.LogDebug("Using configured SignalR URL: {SignalRUrl}", absoluteConfiguredUrl);
+            return absoluteConfiguredUrl;
         }
 
         // 2. Fallback: построить на основе API URL
@@ -132,9 +142,10 @@ public class ApiUrlService : IApiUrlService
         }
         
         var signalRUrl = apiUrl.Replace("/api", "/notificationHub");
+        var absoluteSignalRUrl = await EnsureAbsoluteUrlAsync(signalRUrl);
         
-        _logger.LogDebug("Constructed SignalR URL from API URL: {SignalRUrl}", signalRUrl);
-        return signalRUrl;
+        _logger.LogDebug("Constructed SignalR URL from API URL: {SignalRUrl}", absoluteSignalRUrl);
+        return absoluteSignalRUrl;
     }
 
     private EnvironmentConfig? GetEnvironmentConfig()
@@ -146,6 +157,15 @@ public class ApiUrlService : IApiUrlService
         {
             _logger.LogDebug("Found environment config for: {Environment}", envName);
             return config;
+        }
+
+        var caseInsensitiveMatch = _apiConfig.Environments.FirstOrDefault(
+            kvp => string.Equals(kvp.Key, envName, System.StringComparison.OrdinalIgnoreCase));
+
+        if (!string.IsNullOrEmpty(caseInsensitiveMatch.Key))
+        {
+            _logger.LogDebug("Found environment config for: {Environment} (case-insensitive match)", caseInsensitiveMatch.Key);
+            return caseInsensitiveMatch.Value;
         }
         
         // Fallback: попробовать Development если текущее окружение не найдено
@@ -317,3 +337,5 @@ public class ApiUrlInfo
     public bool IsDevelopment { get; set; }
     public DateTime Timestamp { get; set; }
 }
+
+

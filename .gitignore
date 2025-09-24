@@ -151,4 +151,11 @@ env.*
 
 # Task files
 # tasks.json
-# tasks/ 
+# tasks/
+
+# Added by Claude Task Master
+tasks.json
+tasks/
+Agents.md
+.windsurfrules
+
