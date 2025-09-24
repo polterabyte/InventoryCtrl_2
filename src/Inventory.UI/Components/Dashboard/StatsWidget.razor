@@ -1,38 +1,33 @@
-@using Inventory.Shared.DTOs
+﻿@using Inventory.Shared.DTOs
 @using Inventory.UI.Utilities
 
 <RadzenCard Style="flex:1 1 220px;">
-    <ChildContent>
-        <RadzenStack Orientation="Orientation.Horizontal" Gap="@RadzenUi.Gap" AlignItems="AlignItems.Center">
-            <RadzenIcon Icon="@IconClass" Style="font-size:2.5rem; color:@GetIconColor();" />
-            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex:1;">
-                <RadzenText TextStyle="TextStyle.H4">@Value</RadzenText>
-                <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary);">@Label</RadzenText>
-                @if (!string.IsNullOrEmpty(SubLabel))
-                {
-                    <RadzenText TextStyle="TextStyle.Caption" Style="color:@GetIconColor();">@SubLabel</RadzenText>
-                }
-            </RadzenStack>
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="@RadzenUi.Gap" AlignItems="AlignItems.Center">
+        <RadzenIcon Icon="@IconClass" Style="@($"font-size:2.5rem; color:{GetIconColor()};")" />
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex:1;">
+            <RadzenText TextStyle="TextStyle.H4">@Value</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary);">@Label</RadzenText>
+            @if (!string.IsNullOrEmpty(SubLabel))
+            {
+                <RadzenText TextStyle="TextStyle.Caption" Style="@($"color:{GetIconColor()};")">@SubLabel</RadzenText>
+            }
         </RadzenStack>
-    </ChildContent>
+    </RadzenStack>
 </RadzenCard>
 
 @code {
     [Parameter] public string Label { get; set; } = string.Empty;
     [Parameter] public int Value { get; set; }
     [Parameter] public string? SubLabel { get; set; }
-    [Parameter] public string IconClass { get; set; } = "bi bi-info-circle";
+    [Parameter] public string IconClass { get; set; } = "insights";
     [Parameter] public string CardClass { get; set; } = "primary";
 
-    private string GetIconColor()
+    private string GetIconColor() => CardClass switch
     {
-        return CardClass switch
-        {
-            "success" => "var(--rz-success)",
-            "warning" => "var(--rz-warning)",
-            "danger" => "var(--rz-danger)",
-            "info" => "var(--rz-info)",
-            _ => "var(--rz-primary)"
-        };
-    }
+        "success" => "var(--rz-success)",
+        "warning" => "var(--rz-warning)",
+        "danger" => "var(--rz-danger)",
+        "info" => "var(--rz-info)",
+        _ => "var(--rz-primary)"
+    };
 }

@@ -1,16 +1,23 @@
 @using Inventory.Shared.Services
 @using System.Linq
 @using Inventory.UI.Utilities
+@using Inventory.Shared.DTOs
+@using Inventory.Shared.Interfaces
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@inject IWarehouseService WarehouseService
+@inject ILocationService LocationService
+@inject IUINotificationService UiNotificationService
+@inject IJSRuntime JSRuntime
 
 <AuthorizeView Roles="Admin">
-    <Authorized>
+    <Authorized Context="_">
         <RadzenCard Style="width:100%;">
-            <ChildContent>
-                <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.GapLarge">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.GapLarge">
                     <RadzenStack Orientation="Orientation.Horizontal"
                                  JustifyContent="JustifyContent.SpaceBetween"
                                  AlignItems="AlignItems.Center"
-                                 Wrap="true"
+                                 Wrap="FlexWrap.Wrap"
                                  Gap="@RadzenUi.Gap">
                         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                             <RadzenIcon Icon="warehouse" />
@@ -30,7 +37,7 @@
                         </RadzenStack>
                     </RadzenStack>
 
-                    <RadzenStack Orientation="Orientation.Horizontal" Gap="@RadzenUi.Gap" Wrap="true">
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="@RadzenUi.Gap" Wrap="FlexWrap.Wrap">
                         <RadzenTextBox @bind-Value="searchTerm"
                                        Placeholder="Search warehouses..."
                                        Style="min-width:220px;"
@@ -42,12 +49,12 @@
                                        @bind-Value="isActiveFilter"
                                        Placeholder="Filter by status"
                                        Style="min-width:180px;"
-                                       Change="@(args => OnFilterChanged())" />
+                                       Change="OnFilterChanged" />
 
                         <RadzenDropDown Data="@pageSizeOptions"
                                        @bind-Value="pageSize"
                                        Style="min-width:160px;"
-                                       Change="@(args => OnPageSizeChanged(args))" />
+                                       Change="OnPageSizeChanged" />
                     </RadzenStack>
 
                     <RadzenBusyIndicator IsBusy="@isLoading">
@@ -89,8 +96,8 @@
                                     </RadzenDataGridColumn>
                                     <RadzenDataGridColumn TItem="WarehouseDto" Title="Actions">
                                         <Template Context="item">
-                                            <RadzenButton Icon="edit" Size="ButtonSize.Small" Variant="Variant.Text" Click="@(args => EditItem(item))" />
-                                            <RadzenButton Icon="delete" Size="ButtonSize.Small" Variant="Variant.Text" ButtonStyle="ButtonStyle.Danger" Click="@(args => DeleteItem(item))" />
+                                            <RadzenButton Icon="edit" Size="ButtonSize.Small" Variant="Variant.Text" Click="@(() => EditItem(item))" />
+                                            <RadzenButton Icon="delete" Size="ButtonSize.Small" Variant="Variant.Text" ButtonStyle="ButtonStyle.Danger" Click="@(() => DeleteItem(item))" />
                                         </Template>
                                     </RadzenDataGridColumn>
                                 </Columns>
@@ -108,19 +115,16 @@
                         }
                     </RadzenBusyIndicator>
                 </RadzenStack>
-            </ChildContent>
         </RadzenCard>
 
         <RadzenDialog Visible="@showModal"
-                      Title="@(isEditing ? "Edit" : "Create") Warehouse"
-                      Close="@(args => CloseModal())"
+                      Title="@($"{(isEditing ? "Edit" : "Create")} Warehouse")"
+                      Close="CloseModal"
                       Width="680px">
-            <ChildContent>
-                <RadzenTemplateForm Data="@currentItem" Submit="@(async (CreateWarehouseDto model) => await OnSubmit(model))">
-                    <ChildContent Context="formContext">
-                        <DataAnnotationsValidator />
+            <RadzenTemplateForm TItem="CreateWarehouseDto" Data="@currentItem" Submit="OnSubmit">
+                    <DataAnnotationsValidator />
                         <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.Gap">
-                            <RadzenStack Orientation="Orientation.Horizontal" Wrap="true" Gap="@RadzenUi.Gap">
+                            <RadzenStack Orientation="Orientation.Horizontal" Wrap="FlexWrap.Wrap" Gap="@RadzenUi.Gap">
                                 <RadzenStack Orientation="Orientation.Vertical" Style="flex:1 1 260px;">
                                     <RadzenFormField Text="Name *">
                                         <RadzenTextBox @bind-Value="currentItem.Name" Name="warehouseName" />
@@ -160,16 +164,14 @@
                                 <RadzenButton Text="Cancel"
                                               ButtonStyle="ButtonStyle.Light"
                                               Variant="Variant.Outlined"
-                                              Click="@(args => CloseModal())" />
+                                              Click="CloseModal" />
                                 <RadzenButton Text="@(isSaving ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update" : "Create"))"
                                               ButtonStyle="ButtonStyle.Primary"
                                               ButtonType="ButtonType.Submit"
                                               Disabled="@isSaving" />
                             </RadzenStack>
                         </RadzenStack>
-                    </ChildContent>
                 </RadzenTemplateForm>
-            </ChildContent>
         </RadzenDialog>
     </Authorized>
     <NotAuthorized>
@@ -205,8 +207,10 @@
     private WarehouseDto? selectedItem = null;
     private bool isActive = true;
 
-    private record FilterOption(string Value, string Text);
-
+    private record FilterOption(string Value, string Text);
+
+
+
 protected override async Task OnInitializedAsync()
     {
         await LoadData();
@@ -249,7 +253,7 @@ protected override async Task OnInitializedAsync()
         }
         catch (Exception ex)
         {
-            NotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
+            UiNotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
             data = new();
         }
         finally
@@ -347,13 +351,13 @@ protected override async Task OnInitializedAsync()
                 var result = await WarehouseService.UpdateWarehouseAsync(selectedItem.Id, updateDto);
                 if (result != null)
                 {
-                    NotificationService.ShowSuccess("Success", "Warehouse updated successfully");
+                    UiNotificationService.ShowSuccess("Success", "Warehouse updated successfully");
                     CloseModal();
                     await RefreshData();
                 }
                 else
                 {
-                    NotificationService.ShowError("Error", "Failed to update warehouse");
+                    UiNotificationService.ShowError("Error", "Failed to update warehouse");
                 }
             }
             else
@@ -361,19 +365,19 @@ protected override async Task OnInitializedAsync()
                 var result = await WarehouseService.CreateWarehouseAsync(model);
                 if (result != null)
                 {
-                    NotificationService.ShowSuccess("Success", "Warehouse created successfully");
+                    UiNotificationService.ShowSuccess("Success", "Warehouse created successfully");
                     CloseModal();
                     await RefreshData();
                 }
                 else
                 {
-                    NotificationService.ShowError("Error", "Failed to create warehouse");
+                    UiNotificationService.ShowError("Error", "Failed to create warehouse");
                 }
             }
         }
         catch (Exception ex)
         {
-            NotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
+            UiNotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
         }
         finally
         {
@@ -391,17 +395,17 @@ protected override async Task OnInitializedAsync()
                 var success = await WarehouseService.DeleteWarehouseAsync(item.Id);
                 if (success)
                 {
-                    NotificationService.ShowSuccess("Success", "Warehouse deleted successfully");
+                    UiNotificationService.ShowSuccess("Success", "Warehouse deleted successfully");
                     await RefreshData();
                 }
                 else
                 {
-                    NotificationService.ShowError("Error", "Failed to delete warehouse");
+                    UiNotificationService.ShowError("Error", "Failed to delete warehouse");
                 }
             }
             catch (Exception ex)
             {
-                NotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
+                UiNotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
             }
         }
     }

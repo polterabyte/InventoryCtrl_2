@@ -5,16 +5,18 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using Inventory.UI.Utilities
 @using System.Linq
+@inject IManufacturerService ManufacturerService
+@inject IUINotificationService UiNotificationService
+@inject IJSRuntime JSRuntime
 
 <AuthorizeView Roles="Admin">
-    <Authorized>
+    <Authorized Context="_">
         <RadzenCard Style="width:100%;">
-            <ChildContent>
-                <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.GapLarge">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.GapLarge">
                     <RadzenStack Orientation="Orientation.Horizontal"
                                  JustifyContent="JustifyContent.SpaceBetween"
                                  AlignItems="AlignItems.Center"
-                                 Wrap="true"
+                                 Wrap="FlexWrap.Wrap"
                                  Gap="@RadzenUi.Gap">
                         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                             <RadzenIcon Icon="factory" />
@@ -57,8 +59,8 @@
                                     </RadzenDataGridColumn>
                                     <RadzenDataGridColumn TItem="ManufacturerDto" Title="Actions">
                                         <Template Context="item">
-                                            <RadzenButton Icon="edit" Size="ButtonSize.Small" Variant="Variant.Text" Click="@(args => EditItem(item))" />
-                                            <RadzenButton Icon="delete" Size="ButtonSize.Small" Variant="Variant.Text" ButtonStyle="ButtonStyle.Danger" Click="@(args => DeleteItem(item))" />
+                                            <RadzenButton Icon="edit" Size="ButtonSize.Small" Variant="Variant.Text" Click="@(() => EditItem(item))" />
+                                            <RadzenButton Icon="delete" Size="ButtonSize.Small" Variant="Variant.Text" ButtonStyle="ButtonStyle.Danger" Click="@(() => DeleteItem(item))" />
                                         </Template>
                                     </RadzenDataGridColumn>
                                 </Columns>
@@ -76,17 +78,14 @@
                         }
                     </RadzenBusyIndicator>
                 </RadzenStack>
-            </ChildContent>
         </RadzenCard>
 
         <RadzenDialog Visible="@showModal"
-                      Title="@(isEditing ? "Edit" : "Create") Manufacturer"
-                      Close="@(args => CloseModal())"
+                      Title="@($"{(isEditing ? "Edit" : "Create")} Manufacturer")"
+                      Close="CloseModal"
                       Width="500px">
-            <ChildContent>
-                <RadzenTemplateForm Data="@currentItem" Submit="@(async (CreateManufacturerDto model) => await OnSubmit(model))">
-                    <ChildContent Context="formContext">
-                        <DataAnnotationsValidator />
+            <RadzenTemplateForm TItem="CreateManufacturerDto" Data="@currentItem" Submit="OnSubmit">
+                    <DataAnnotationsValidator />
                         <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.Gap">
                             <RadzenFormField Text="Name *">
                                 <RadzenTextBox @bind-Value="currentItem.Name" Name="manufacturerName" />
@@ -97,16 +96,14 @@
                                 <RadzenButton Text="Cancel"
                                               ButtonStyle="ButtonStyle.Light"
                                               Variant="Variant.Outlined"
-                                              Click="@(args => CloseModal())" />
+                                              Click="CloseModal" />
                                 <RadzenButton Text="@(isSaving ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update" : "Create"))"
                                               ButtonStyle="ButtonStyle.Primary"
                                               ButtonType="ButtonType.Submit"
                                               Disabled="@isSaving" />
                             </RadzenStack>
                         </RadzenStack>
-                    </ChildContent>
                 </RadzenTemplateForm>
-            </ChildContent>
         </RadzenDialog>
     </Authorized>
     <NotAuthorized>
@@ -140,7 +137,7 @@
         }
         catch (Exception ex)
         {
-            NotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
+            UiNotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
             data = new();
         }
         finally
@@ -194,13 +191,13 @@
                 var result = await ManufacturerService.UpdateManufacturerAsync(selectedItem.Id, updateDto);
                 if (result != null)
                 {
-                    NotificationService.ShowSuccess("Success", "Manufacturer updated successfully");
+                    UiNotificationService.ShowSuccess("Success", "Manufacturer updated successfully");
                     CloseModal();
                     await RefreshData();
                 }
                 else
                 {
-                    NotificationService.ShowError("Error", "Failed to update manufacturer");
+                    UiNotificationService.ShowError("Error", "Failed to update manufacturer");
                 }
             }
             else
@@ -208,19 +205,19 @@
                 var result = await ManufacturerService.CreateManufacturerAsync(model);
                 if (result != null)
                 {
-                    NotificationService.ShowSuccess("Success", "Manufacturer created successfully");
+                    UiNotificationService.ShowSuccess("Success", "Manufacturer created successfully");
                     CloseModal();
                     await RefreshData();
                 }
                 else
                 {
-                    NotificationService.ShowError("Error", "Failed to create manufacturer");
+                    UiNotificationService.ShowError("Error", "Failed to create manufacturer");
                 }
             }
         }
         catch (Exception ex)
         {
-            NotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
+            UiNotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
         }
         finally
         {
@@ -238,17 +235,17 @@
                 var success = await ManufacturerService.DeleteManufacturerAsync(item.Id);
                 if (success)
                 {
-                    NotificationService.ShowSuccess("Success", "Manufacturer deleted successfully");
+                    UiNotificationService.ShowSuccess("Success", "Manufacturer deleted successfully");
                     await RefreshData();
                 }
                 else
                 {
-                    NotificationService.ShowError("Error", "Failed to delete manufacturer");
+                    UiNotificationService.ShowError("Error", "Failed to delete manufacturer");
                 }
             }
             catch (Exception ex)
             {
-                NotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
+                UiNotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
             }
         }
     }

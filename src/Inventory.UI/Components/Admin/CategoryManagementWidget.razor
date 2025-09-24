@@ -1,23 +1,22 @@
-@using Inventory.Shared.DTOs
+﻿@using Inventory.Shared.DTOs
 @using Inventory.Shared.Interfaces
 @using Inventory.Shared.Services
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @inject ICategoryService CategoryService
-@inject IUINotificationService NotificationService
+@inject IUINotificationService UiNotificationService
 @inject IJSRuntime JSRuntime
 @using Inventory.UI.Utilities
 @using System.Linq
 
 <AuthorizeView Roles="Admin">
-    <Authorized>
+    <Authorized Context="_">
         <RadzenCard Style="width:100%;">
-            <ChildContent>
-                <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.GapLarge">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.GapLarge">
                     <RadzenStack Orientation="Orientation.Horizontal"
                                  JustifyContent="JustifyContent.SpaceBetween"
                                  AlignItems="AlignItems.Center"
-                                 Wrap="true"
+                                 Wrap="FlexWrap.Wrap"
                                  Gap="@RadzenUi.Gap">
                         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                             <RadzenIcon Icon="category" />
@@ -37,7 +36,7 @@
                         </RadzenStack>
                     </RadzenStack>
 
-                    <RadzenStack Orientation="Orientation.Horizontal" Gap="@RadzenUi.Gap" Wrap="true">
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="@RadzenUi.Gap" Wrap="FlexWrap.Wrap">
                         <RadzenTextBox @bind-Value="searchTerm"
                                        Placeholder="Search categories..."
                                        Style="min-width:220px;"
@@ -49,7 +48,7 @@
                                        @bind-Value="isActiveFilter"
                                        Placeholder="Filter by status"
                                        Style="min-width:180px;"
-                                       Change="@(args => OnFilterChanged())" />
+                                       Change="OnFilterChanged" />
 
                         <RadzenDropDown Data="@ParentCategoryFilterOptions"
                                        TextProperty="Text"
@@ -57,12 +56,12 @@
                                        @bind-Value="parentCategoryFilter"
                                        Placeholder="Parent category"
                                        Style="min-width:200px;"
-                                       Change="@(args => OnFilterChanged())" />
+                                       Change="OnFilterChanged" />
 
                         <RadzenDropDown Data="@pageSizeOptions"
                                        @bind-Value="pageSize"
                                        Style="min-width:160px;"
-                                       Change="@(args => OnPageSizeChanged(args))" />
+                                       Change="OnPageSizeChanged" />
                     </RadzenStack>
 
                     <RadzenBusyIndicator IsBusy="@isLoading">
@@ -114,12 +113,12 @@
                                             <RadzenButton Icon="edit"
                                                           Size="ButtonSize.Small"
                                                           Variant="Variant.Text"
-                                                          Click="@(args => EditItem(item))" />
+                                                          Click="@(() => EditItem(item))" />
                                             <RadzenButton Icon="delete"
                                                           Size="ButtonSize.Small"
                                                           Variant="Variant.Text"
                                                           ButtonStyle="ButtonStyle.Danger"
-                                                          Click="@(args => DeleteItem(item))" />
+                                                          Click="@(() => DeleteItem(item))" />
                                         </Template>
                                     </RadzenDataGridColumn>
                                 </Columns>
@@ -137,19 +136,16 @@
                         }
                     </RadzenBusyIndicator>
                 </RadzenStack>
-            </ChildContent>
         </RadzenCard>
 
         <RadzenDialog Visible="@showModal"
-                      Title="@(isEditing ? "Edit" : "Create") Category"
-                      Close="@(args => CloseModal())"
+                      Title="@($"{(isEditing ? "Edit" : "Create")} Category")"
+                      Close="CloseModal"
                       Width="650px">
-            <ChildContent>
-                <RadzenTemplateForm Data="@currentItem" Submit="@(async (CreateCategoryDto model) => await OnSubmit(model))">
-                    <ChildContent Context="formContext">
-                        <DataAnnotationsValidator />
+            <RadzenTemplateForm TItem="CreateCategoryDto" Data="@currentItem" Submit="OnSubmit">
+                    <DataAnnotationsValidator />
                         <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.Gap">
-                            <RadzenStack Orientation="Orientation.Horizontal" Wrap="true" Gap="@RadzenUi.Gap">
+                            <RadzenStack Orientation="Orientation.Horizontal" Wrap="FlexWrap.Wrap" Gap="@RadzenUi.Gap">
                                 <RadzenStack Orientation="Orientation.Vertical" Style="flex:1 1 260px;">
                                     <RadzenFormField Text="Name *">
                                         <RadzenTextBox @bind-Value="currentItem.Name" Name="categoryName" />
@@ -184,16 +180,14 @@
                                 <RadzenButton Text="Cancel"
                                               ButtonStyle="ButtonStyle.Light"
                                               Variant="Variant.Outlined"
-                                              Click="@(args => CloseModal())" />
+                                              Click="CloseModal" />
                                 <RadzenButton Text="@(isSaving ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update" : "Create"))"
                                               ButtonStyle="ButtonStyle.Primary"
                                               ButtonType="ButtonType.Submit"
                                               Disabled="@isSaving" />
                             </RadzenStack>
                         </RadzenStack>
-                    </ChildContent>
                 </RadzenTemplateForm>
-            </ChildContent>
         </RadzenDialog>
     </Authorized>
     <NotAuthorized>
@@ -305,7 +299,7 @@
         }
         catch (Exception ex)
         {
-            NotificationService.ShowError("Error", $"Failed to load root categories: {ex.Message}");
+            UiNotificationService.ShowError("Error", $"Failed to load root categories: {ex.Message}");
         }
     }
 
@@ -361,7 +355,7 @@
         }
         catch (Exception ex)
         {
-            NotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
+            UiNotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
             data = new();
         }
         finally
@@ -447,13 +441,13 @@
                 var result = await CategoryService.UpdateCategoryAsync(selectedItem.Id, updateDto);
                 if (result != null)
                 {
-                    NotificationService.ShowSuccess("Success", "Category updated successfully");
+                    UiNotificationService.ShowSuccess("Success", "Category updated successfully");
                     CloseModal();
                     await RefreshData();
                 }
                 else
                 {
-                    NotificationService.ShowError("Error", "Failed to update category");
+                    UiNotificationService.ShowError("Error", "Failed to update category");
                 }
             }
             else
@@ -461,19 +455,19 @@
                 var result = await CategoryService.CreateCategoryAsync(model);
                 if (result != null)
                 {
-                    NotificationService.ShowSuccess("Success", "Category created successfully");
+                    UiNotificationService.ShowSuccess("Success", "Category created successfully");
                     CloseModal();
                     await RefreshData();
                 }
                 else
                 {
-                    NotificationService.ShowError("Error", "Failed to create category");
+                    UiNotificationService.ShowError("Error", "Failed to create category");
                 }
             }
         }
         catch (Exception ex)
         {
-            NotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
+            UiNotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
         }
         finally
         {
@@ -491,17 +485,17 @@
                 var success = await CategoryService.DeleteCategoryAsync(item.Id);
                 if (success)
                 {
-                    NotificationService.ShowSuccess("Success", "Category deleted successfully");
+                    UiNotificationService.ShowSuccess("Success", "Category deleted successfully");
                     await RefreshData();
                 }
                 else
                 {
-                    NotificationService.ShowError("Error", "Failed to delete category");
+                    UiNotificationService.ShowError("Error", "Failed to delete category");
                 }
             }
             catch (Exception ex)
             {
-                NotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
+                UiNotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
             }
         }
     }

@@ -1,16 +1,22 @@
 @using Inventory.Shared.Services
 @using System.Linq
 @using Inventory.UI.Utilities
+@using Inventory.Shared.DTOs
+@using Inventory.Shared.Interfaces
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@inject IUnitOfMeasureApiService UnitOfMeasureService
+@inject IUINotificationService UiNotificationService
+@inject IJSRuntime JSRuntime
 
 <AuthorizeView Roles="Admin">
-    <Authorized>
+    <Authorized Context="_">
         <RadzenCard Style="width:100%;">
-            <ChildContent>
-                <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.GapLarge">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.GapLarge">
                     <RadzenStack Orientation="Orientation.Horizontal"
                                  JustifyContent="JustifyContent.SpaceBetween"
                                  AlignItems="AlignItems.Center"
-                                 Wrap="true"
+                                 Wrap="FlexWrap.Wrap"
                                  Gap="@RadzenUi.Gap">
                         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                             <RadzenIcon Icon="straighten" />
@@ -30,7 +36,7 @@
                         </RadzenStack>
                     </RadzenStack>
 
-                    <RadzenStack Orientation="Orientation.Horizontal" Gap="@RadzenUi.Gap" Wrap="true">
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="@RadzenUi.Gap" Wrap="FlexWrap.Wrap">
                         <RadzenTextBox @bind-Value="searchTerm"
                                        Placeholder="Search units..."
                                        Style="min-width:220px;"
@@ -42,12 +48,12 @@
                                        @bind-Value="isActiveFilter"
                                        Placeholder="Filter by status"
                                        Style="min-width:180px;"
-                                       Change="@(args => OnFilterChanged())" />
+                                       Change="OnFilterChanged" />
 
                         <RadzenDropDown Data="@pageSizeOptions"
                                        @bind-Value="pageSize"
                                        Style="min-width:160px;"
-                                       Change="@(args => OnPageSizeChanged(args))" />
+                                       Change="OnPageSizeChanged" />
                     </RadzenStack>
 
                     <RadzenBusyIndicator IsBusy="@isLoading">
@@ -91,8 +97,8 @@
                                     </RadzenDataGridColumn>
                                     <RadzenDataGridColumn TItem="UnitOfMeasureDto" Title="Actions">
                                         <Template Context="item">
-                                            <RadzenButton Icon="edit" Size="ButtonSize.Small" Variant="Variant.Text" Click="@(args => EditItem(item))" />
-                                            <RadzenButton Icon="delete" Size="ButtonSize.Small" Variant="Variant.Text" ButtonStyle="ButtonStyle.Danger" Click="@(args => DeleteItem(item))" />
+                                            <RadzenButton Icon="edit" Size="ButtonSize.Small" Variant="Variant.Text" Click="@(() => EditItem(item))" />
+                                            <RadzenButton Icon="delete" Size="ButtonSize.Small" Variant="Variant.Text" ButtonStyle="ButtonStyle.Danger" Click="@(() => DeleteItem(item))" />
                                         </Template>
                                     </RadzenDataGridColumn>
                                 </Columns>
@@ -110,19 +116,16 @@
                         }
                     </RadzenBusyIndicator>
                 </RadzenStack>
-            </ChildContent>
         </RadzenCard>
 
         <RadzenDialog Visible="@showModal"
-                      Title="@(isEditing ? "Edit" : "Create") Unit"
-                      Close="@(args => CloseModal())"
+                      Title="@($"{(isEditing ? "Edit" : "Create")} Unit")"
+                      Close="CloseModal"
                       Width="560px">
-            <ChildContent>
-                <RadzenTemplateForm Data="@currentItem" Submit="@(async (CreateUnitOfMeasureDto model) => await OnSubmit(model))">
-                    <ChildContent Context="formContext">
-                        <DataAnnotationsValidator />
+            <RadzenTemplateForm TItem="CreateUnitOfMeasureDto" Data="@currentItem" Submit="OnSubmit">
+                    <DataAnnotationsValidator />
                         <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.Gap">
-                            <RadzenStack Orientation="Orientation.Horizontal" Wrap="true" Gap="@RadzenUi.Gap">
+                            <RadzenStack Orientation="Orientation.Horizontal" Wrap="FlexWrap.Wrap" Gap="@RadzenUi.Gap">
                                 <RadzenStack Orientation="Orientation.Vertical" Style="flex:1 1 240px;">
                                     <RadzenFormField Text="Name *">
                                         <RadzenTextBox @bind-Value="currentItem.Name" Name="unitName" />
@@ -153,16 +156,14 @@
                                 <RadzenButton Text="Cancel"
                                               ButtonStyle="ButtonStyle.Light"
                                               Variant="Variant.Outlined"
-                                              Click="@(args => CloseModal())" />
+                                              Click="CloseModal" />
                                 <RadzenButton Text="@(isSaving ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update" : "Create"))"
                                               ButtonStyle="ButtonStyle.Primary"
                                               ButtonType="ButtonType.Submit"
                                               Disabled="@isSaving" />
                             </RadzenStack>
                         </RadzenStack>
-                    </ChildContent>
                 </RadzenTemplateForm>
-            </ChildContent>
         </RadzenDialog>
     </Authorized>
     <NotAuthorized>
@@ -225,13 +226,13 @@
             }
             else
             {
-                NotificationService.ShowError("Error", response.ErrorMessage ?? "Failed to load data");
+                UiNotificationService.ShowError("Error", response.ErrorMessage ?? "Failed to load data");
                 data = new();
             }
         }
         catch (Exception ex)
         {
-            NotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
+            UiNotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
             data = new();
         }
         finally
@@ -335,7 +336,7 @@
 
             if (response.Success)
             {
-                NotificationService.ShowSuccess("Success", isEditing ? "Unit updated successfully" : "Unit created successfully");
+                UiNotificationService.ShowSuccess("Success", isEditing ? "Unit updated successfully" : "Unit created successfully");
                 CloseModal();
                 await RefreshData();
             }
@@ -347,12 +348,12 @@
                     var validationErrors = string.Join(", ", response.Errors);
                     errorMessage = $"{errorMessage}: {validationErrors}";
                 }
-                NotificationService.ShowError("Error", errorMessage);
+                UiNotificationService.ShowError("Error", errorMessage);
             }
         }
         catch (Exception ex)
         {
-            NotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
+            UiNotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
         }
         finally
         {
@@ -370,17 +371,17 @@
                 var response = await UnitOfMeasureService.DeleteAsync(item.Id);
                 if (response.Success)
                 {
-                    NotificationService.ShowSuccess("Success", "Unit deleted successfully");
+                    UiNotificationService.ShowSuccess("Success", "Unit deleted successfully");
                     await RefreshData();
                 }
                 else
                 {
-                    NotificationService.ShowError("Error", response.ErrorMessage ?? "Failed to delete unit");
+                    UiNotificationService.ShowError("Error", response.ErrorMessage ?? "Failed to delete unit");
                 }
             }
             catch (Exception ex)
             {
-                NotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
+                UiNotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
             }
         }
     }

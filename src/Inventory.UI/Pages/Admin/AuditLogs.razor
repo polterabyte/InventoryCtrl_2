@@ -239,8 +239,7 @@
               Title="Audit Log Details"
               Close="CloseLogDetails"
               Width="760px">
-    <ChildContent>
-        @if (selectedLog != null)
+    @if (selectedLog != null)
         {
             <div class="row">
                 <div class="col-md-6">
@@ -340,7 +339,6 @@
                               Click="@(args => CloseLogDetails())" />
             </RadzenStack>
         }
-    </ChildContent>
 </RadzenDialog>
 
 @code {

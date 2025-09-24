@@ -6,18 +6,17 @@
 @using System.Linq
 @using Inventory.UI.Utilities
 @inject ILocationService LocationService
-@inject IUINotificationService NotificationService
+@inject IUINotificationService UiNotificationService
 @inject IJSRuntime JSRuntime
 
 <AuthorizeView Roles="Admin">
-    <Authorized>
+    <Authorized Context="_">
         <RadzenCard Style="width:100%;">
-            <ChildContent>
-                <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.GapLarge">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.GapLarge">
                     <RadzenStack Orientation="Orientation.Horizontal"
                                  JustifyContent="JustifyContent.SpaceBetween"
                                  AlignItems="AlignItems.Center"
-                                 Wrap="true"
+                                 Wrap="FlexWrap.Wrap"
                                  Gap="@RadzenUi.Gap">
                         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                             <RadzenIcon Icon="location_on" />
@@ -37,7 +36,7 @@
                         </RadzenStack>
                     </RadzenStack>
 
-                    <RadzenStack Orientation="Orientation.Horizontal" Gap="@RadzenUi.Gap" Wrap="true">
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="@RadzenUi.Gap" Wrap="FlexWrap.Wrap">
                         <RadzenTextBox @bind-Value="searchTerm"
                                        Placeholder="Search locations..."
                                        Style="min-width:220px;"
@@ -49,7 +48,7 @@
                                        @bind-Value="isActiveFilter"
                                        Placeholder="Filter by status"
                                        Style="min-width:180px;"
-                                       Change="@(args => OnFilterChanged())" />
+                                       Change="OnFilterChanged" />
 
                         <RadzenDropDown Data="@ParentLocationFilterOptions"
                                        TextProperty="Text"
@@ -57,12 +56,12 @@
                                        @bind-Value="parentLocationFilter"
                                        Placeholder="Parent location"
                                        Style="min-width:200px;"
-                                       Change="@(args => OnFilterChanged())" />
+                                       Change="OnFilterChanged" />
 
                         <RadzenDropDown Data="@pageSizeOptions"
                                        @bind-Value="pageSize"
                                        Style="min-width:160px;"
-                                       Change="@(args => OnPageSizeChanged(args))" />
+                                       Change="OnPageSizeChanged" />
                     </RadzenStack>
 
                     <RadzenBusyIndicator IsBusy="@isLoading">
@@ -105,8 +104,8 @@
                                     </RadzenDataGridColumn>
                                     <RadzenDataGridColumn TItem="LocationDto" Title="Actions">
                                         <Template Context="item">
-                                            <RadzenButton Icon="edit" Size="ButtonSize.Small" Variant="Variant.Text" Click="@(args => EditItem(item))" />
-                                            <RadzenButton Icon="delete" Size="ButtonSize.Small" Variant="Variant.Text" ButtonStyle="ButtonStyle.Danger" Click="@(args => DeleteItem(item))" />
+                                            <RadzenButton Icon="edit" Size="ButtonSize.Small" Variant="Variant.Text" Click="@(() => EditItem(item))" />
+                                            <RadzenButton Icon="delete" Size="ButtonSize.Small" Variant="Variant.Text" ButtonStyle="ButtonStyle.Danger" Click="@(() => DeleteItem(item))" />
                                         </Template>
                                     </RadzenDataGridColumn>
                                 </Columns>
@@ -124,19 +123,16 @@
                         }
                     </RadzenBusyIndicator>
                 </RadzenStack>
-            </ChildContent>
         </RadzenCard>
 
         <RadzenDialog Visible="@showModal"
-                      Title="@(isEditing ? "Edit" : "Create") Location"
-                      Close="@(args => CloseModal())"
+                      Title="@($"{(isEditing ? "Edit" : "Create")} Location")"
+                      Close="CloseModal"
                       Width="620px">
-            <ChildContent>
-                <RadzenTemplateForm Data="@currentItem" Submit="@(async (CreateLocationDto model) => await OnSubmit(model))">
-                    <ChildContent Context="formContext">
-                        <DataAnnotationsValidator />
+            <RadzenTemplateForm TItem="CreateLocationDto" Data="@currentItem" Submit="OnSubmit">
+                    <DataAnnotationsValidator />
                         <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.Gap">
-                            <RadzenStack Orientation="Orientation.Horizontal" Wrap="true" Gap="@RadzenUi.Gap">
+                            <RadzenStack Orientation="Orientation.Horizontal" Wrap="FlexWrap.Wrap" Gap="@RadzenUi.Gap">
                                 <RadzenStack Orientation="Orientation.Vertical" Style="flex:1 1 260px;">
                                     <RadzenFormField Text="Name *">
                                         <RadzenTextBox @bind-Value="currentItem.Name" Name="locationName" />
@@ -171,16 +167,14 @@
                                 <RadzenButton Text="Cancel"
                                               ButtonStyle="ButtonStyle.Light"
                                               Variant="Variant.Outlined"
-                                              Click="@(args => CloseModal())" />
+                                              Click="CloseModal" />
                                 <RadzenButton Text="@(isSaving ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update" : "Create"))"
                                               ButtonStyle="ButtonStyle.Primary"
                                               ButtonType="ButtonType.Submit"
                                               Disabled="@isSaving" />
                             </RadzenStack>
                         </RadzenStack>
-                    </ChildContent>
                 </RadzenTemplateForm>
-            </ChildContent>
         </RadzenDialog>
     </Authorized>
     <NotAuthorized>
@@ -318,7 +312,7 @@
         }
         catch (Exception ex)
         {
-            NotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
+            UiNotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
             data = new();
         }
         finally
@@ -351,7 +345,7 @@
         }
         catch (Exception ex)
         {
-            NotificationService.ShowError("Error", $"Failed to load parent locations: {ex.Message}");
+            UiNotificationService.ShowError("Error", $"Failed to load parent locations: {ex.Message}");
             parentLocations = new();
             availableParentLocations = new();
         }
@@ -428,14 +422,14 @@
                 var result = await LocationService.UpdateLocationAsync(selectedItem.Id, updateDto);
                 if (result != null)
                 {
-                    NotificationService.ShowSuccess("Success", "Location updated successfully");
+                    UiNotificationService.ShowSuccess("Success", "Location updated successfully");
                     CloseModal();
                     await RefreshData();
                     await LoadParentLocations(); // Refresh parent locations list
                 }
                 else
                 {
-                    NotificationService.ShowError("Error", "Failed to update location");
+                    UiNotificationService.ShowError("Error", "Failed to update location");
                 }
             }
             else
@@ -443,20 +437,20 @@
                 var result = await LocationService.CreateLocationAsync(model);
                 if (result != null)
                 {
-                    NotificationService.ShowSuccess("Success", "Location created successfully");
+                    UiNotificationService.ShowSuccess("Success", "Location created successfully");
                     CloseModal();
                     await RefreshData();
                     await LoadParentLocations(); // Refresh parent locations list
                 }
                 else
                 {
-                    NotificationService.ShowError("Error", "Failed to create location");
+                    UiNotificationService.ShowError("Error", "Failed to create location");
                 }
             }
         }
         catch (Exception ex)
         {
-            NotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
+            UiNotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
         }
         finally
         {
@@ -474,18 +468,18 @@
                 var success = await LocationService.DeleteLocationAsync(item.Id);
                 if (success)
                 {
-                    NotificationService.ShowSuccess("Success", "Location deleted successfully");
+                    UiNotificationService.ShowSuccess("Success", "Location deleted successfully");
                     await RefreshData();
                     await LoadParentLocations(); // Refresh parent locations list
                 }
                 else
                 {
-                    NotificationService.ShowError("Error", "Failed to delete location. Make sure the location has no sub-locations.");
+                    UiNotificationService.ShowError("Error", "Failed to delete location. Make sure the location has no sub-locations.");
                 }
             }
             catch (Exception ex)
             {
-                NotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
+                UiNotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
             }
         }
     }
