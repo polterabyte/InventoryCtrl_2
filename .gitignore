@@ -158,4 +158,5 @@ tasks.json
 tasks/
 Agents.md
 .windsurfrules
+.ai-temp/
 
