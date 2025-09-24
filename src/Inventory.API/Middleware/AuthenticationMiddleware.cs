@@ -20,6 +20,13 @@ public class AuthenticationMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
+        // Skip authentication for non-API routes (serving Blazor UI)
+        if (!context.Request.Path.StartsWithSegments("/api"))
+        {
+            await _next(context);
+            return;
+        }
+
         // Пропускаем проверку для публичных эндпоинтов
         if (IsPublicEndpoint(context.Request.Path))
         {

@@ -173,16 +173,24 @@ public class ApiUrlService : IApiUrlService
                 return fallback;
             }
 
-            var port = await GetCurrentPortAsync();
-            var apiPort = DetermineApiPort(port);
-            
-            _logger.LogDebug("Dynamic URL construction - Origin: {Origin}, ClientPort: {ClientPort}, ApiPort: {ApiPort}", 
-                origin, port ?? "null", apiPort);
-            
-            var dynamicUrl = $"{origin.Replace($":{port}", $":{apiPort}")}/api";
-            _logger.LogDebug("Constructed dynamic URL: {DynamicUrl}", dynamicUrl);
-            
-            return dynamicUrl;
+
+var port = await GetCurrentPortAsync();
+var originUri = new Uri(origin);
+var apiPort = DetermineApiPort(port, originUri.Scheme, originUri.Port);
+
+_logger.LogDebug("Dynamic URL construction - Origin: {Origin}, ClientPort: {ClientPort}, ApiPort: {ApiPort}",
+    origin, port ?? "null", apiPort);
+
+var builder = new UriBuilder(originUri)
+{
+    Port = apiPort
+};
+
+var authority = builder.Uri.GetLeftPart(UriPartial.Authority);
+var dynamicUrl = $"{authority}/api";
+_logger.LogDebug("Constructed dynamic URL: {DynamicUrl}", dynamicUrl);
+
+return dynamicUrl;
         }
         catch (Exception ex)
         {
@@ -217,16 +225,35 @@ public class ApiUrlService : IApiUrlService
         }
     }
 
-    private string DetermineApiPort(string? clientPort)
+
+private int DetermineApiPort(string? clientPort, string scheme, int originPort)
+{
+    if (int.TryParse(clientPort, out var parsedPort) && parsedPort > 0)
     {
-        return clientPort switch
-        {
-            "5001" => _apiConfig.Fallback.DefaultPorts.Https.ToString(), // HTTPS development
-            "5000" => _apiConfig.Fallback.DefaultPorts.Http.ToString(),  // HTTP development
-            "" or null => _apiConfig.Fallback.DefaultPorts.Https.ToString(), // Default HTTPS port (443)
-            _ => _apiConfig.Fallback.DefaultPorts.Https.ToString()       // Default to HTTPS
-        };
+        return MapClientPort(parsedPort);
     }
+
+    if (originPort > 0 && originPort != 80 && originPort != 443)
+    {
+        return originPort;
+    }
+
+    var isHttps = scheme.Equals("https", StringComparison.OrdinalIgnoreCase);
+    var fallbackPort = isHttps ? _apiConfig.Fallback.DefaultPorts.Https : _apiConfig.Fallback.DefaultPorts.Http;
+    return fallbackPort > 0 ? fallbackPort : (isHttps ? 443 : 80);
+}
+
+private int MapClientPort(int clientPort)
+{
+    return clientPort switch
+    {
+        5001 or 7001 => _apiConfig.Fallback.DefaultPorts.Https,
+        5000 => _apiConfig.Fallback.DefaultPorts.Http,
+        80 => _apiConfig.Fallback.DefaultPorts.Http > 0 ? _apiConfig.Fallback.DefaultPorts.Http : 80,
+        443 => _apiConfig.Fallback.DefaultPorts.Https > 0 ? _apiConfig.Fallback.DefaultPorts.Https : 443,
+        _ => clientPort
+    };
+}
 
     private string EnsureAbsoluteUrl(string url)
     {
