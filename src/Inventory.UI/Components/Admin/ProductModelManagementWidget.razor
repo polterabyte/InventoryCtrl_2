@@ -182,17 +182,17 @@
         });
     }
 
-        private async Task EditItem(ProductModelDto item)
+    private async Task EditItem(ProductModelDto item)
     {
         selectedItem = item;
         currentItem = new CreateProductModelDto
         {
             Name = item.Name,
-            Description = item.Description
+            ManufacturerId = item.ManufacturerId
         };
         isActive = item.IsActive;
         isEditing = true;
-        
+
         await DialogService.OpenAsync("Edit Product Model", ds => CreateProductModelDialog(ds), new DialogOptions
         {
             Width = "500px",
@@ -200,10 +200,6 @@
             CloseDialogOnOverlayClick = true,
             CloseDialogOnEsc = true
         });
-    };
-        isActive = item.IsActive;
-        isEditing = true;
-        showModal = true;
     }
 
         private void CloseModal(DialogService ds)
@@ -293,7 +289,7 @@
         }
     }
 
-    private async Task OnGridLoad(Radzen.LoadDataArgs args)
+    private async Task OnGridLoad(LoadDataArgs args)
     {
         isLoading = true;
         StateHasChanged();
@@ -367,14 +363,21 @@
                 builder3.CloseComponent();
 
                 builder3.OpenComponent<RadzenFormField>(2);
-                builder3.AddAttribute(4, "Text", "Description");
+                builder3.AddAttribute(4, "Text", "Manufacturer *");
                 builder3.AddAttribute(5, "ChildContent", (RenderFragment)((builder4) =>
                 {
-                    builder4.OpenComponent<RadzenTextArea>(0);
-                    builder4.AddAttribute(1, "Value", currentItem.Description);
-                    builder4.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<string>(this, (value) => currentItem.Description = value));
-                    builder4.AddAttribute(3, "Name", "productmodelDescription");
-                    builder4.AddAttribute(4, "Rows", 3);
+                    builder4.OpenComponent<RadzenDropDown<int>>(0);
+                    builder4.AddAttribute(1, "Data", manufacturerOptions);
+                    builder4.AddAttribute(2, "Value", currentItem.ManufacturerId);
+                    builder4.AddAttribute(3, "ValueChanged", EventCallback.Factory.Create<int>(this, (value) => currentItem.ManufacturerId = value));
+                    builder4.AddAttribute(4, "TextProperty", "Text");
+                    builder4.AddAttribute(5, "ValueProperty", "Value");
+                    builder4.AddAttribute(6, "Name", "manufacturerId");
+                    builder4.CloseComponent();
+
+                    builder4.OpenComponent<RadzenRequiredValidator>(1);
+                    builder4.AddAttribute(2, "Component", "manufacturerId");
+                    builder4.AddAttribute(3, "Text", "Manufacturer is required");
                     builder4.CloseComponent();
                 }));
                 builder3.CloseComponent();

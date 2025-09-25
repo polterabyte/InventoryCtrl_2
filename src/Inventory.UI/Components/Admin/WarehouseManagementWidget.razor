@@ -261,17 +261,19 @@ protected override async Task OnInitializedAsync()
         });
     }
 
-        private async Task EditItem(WarehouseDto item)
+    private async Task EditItem(WarehouseDto item)
     {
         selectedItem = item;
         currentItem = new CreateWarehouseDto
         {
             Name = item.Name,
-            Description = item.Description
+            Description = item.Description,
+            LocationId = item.LocationId,
+            ContactInfo = item.ContactInfo
         };
         isActive = item.IsActive;
         isEditing = true;
-        
+
         await DialogService.OpenAsync("Edit Warehouse", ds => CreateWarehouseDialog(ds), new DialogOptions
         {
             Width = "500px",
@@ -279,10 +281,6 @@ protected override async Task OnInitializedAsync()
             CloseDialogOnOverlayClick = true,
             CloseDialogOnEsc = true
         });
-    };
-        isActive = item.IsActive;
-        isEditing = true;
-        showModal = true;
     }
 
         private void CloseModal(DialogService ds)
@@ -442,8 +440,40 @@ protected override async Task OnInitializedAsync()
                 builder3.CloseComponent();
 
                 builder3.OpenComponent<RadzenFormField>(3);
-                builder3.AddAttribute(6, "Text", "Status");
+                builder3.AddAttribute(6, "Text", "Location *");
                 builder3.AddAttribute(7, "ChildContent", (RenderFragment)((builder4) =>
+                {
+                    builder4.OpenComponent<RadzenDropDown<int>>(0);
+                    builder4.AddAttribute(1, "Data", locations);
+                    builder4.AddAttribute(2, "Value", currentItem.LocationId);
+                    builder4.AddAttribute(3, "ValueChanged", EventCallback.Factory.Create<int>(this, (value) => currentItem.LocationId = value));
+                    builder4.AddAttribute(4, "TextProperty", "Name");
+                    builder4.AddAttribute(5, "ValueProperty", "Id");
+                    builder4.AddAttribute(6, "Name", "locationId");
+                    builder4.CloseComponent();
+
+                    builder4.OpenComponent<RadzenRequiredValidator>(1);
+                    builder4.AddAttribute(2, "Component", "locationId");
+                    builder4.AddAttribute(3, "Text", "Location is required");
+                    builder4.CloseComponent();
+                }));
+                builder3.CloseComponent();
+
+                builder3.OpenComponent<RadzenFormField>(4);
+                builder3.AddAttribute(8, "Text", "Contact Info");
+                builder3.AddAttribute(9, "ChildContent", (RenderFragment)((builder4) =>
+                {
+                    builder4.OpenComponent<RadzenTextBox>(0);
+                    builder4.AddAttribute(1, "Value", currentItem.ContactInfo);
+                    builder4.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<string>(this, (value) => currentItem.ContactInfo = value));
+                    builder4.AddAttribute(3, "Name", "contactInfo");
+                    builder4.CloseComponent();
+                }));
+                builder3.CloseComponent();
+
+                builder3.OpenComponent<RadzenFormField>(5);
+                builder3.AddAttribute(10, "Text", "Status");
+                builder3.AddAttribute(11, "ChildContent", (RenderFragment)((builder4) =>
                 {
                     builder4.OpenComponent<RadzenCheckBox<bool>>(0);
                     builder4.AddAttribute(1, "Value", isActive);
