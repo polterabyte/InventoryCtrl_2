@@ -458,7 +458,7 @@
         builder.OpenComponent<RadzenTemplateForm<CreateLocationDto>>(0);
         builder.AddAttribute(1, "Data", currentItem);
         builder.AddAttribute(2, "Submit", EventCallback.Factory.Create<CreateLocationDto>(this, async (model) => await OnSubmit(model, ds)));
-        builder.AddAttribute(3, "ChildContent", (RenderFragment)((builder2) =>
+        builder.AddAttribute(3, "ChildContent", (RenderFragment<EditContext>)((editContext) => (builder2) =>
         {
             builder2.OpenComponent<DataAnnotationsValidator>(0);
             builder2.CloseComponent();
@@ -568,7 +568,7 @@
                     builder4.AddAttribute(1, "Text", "Cancel");
                     builder4.AddAttribute(2, "ButtonStyle", ButtonStyle.Light);
                     builder4.AddAttribute(3, "Variant", Variant.Outlined);
-                    builder4.AddAttribute(4, "Click", EventCallback.Factory.Create(this, () => CloseModal(ds)));
+                    builder4.AddAttribute(4, "Click", EventCallback.Factory.Create<MouseEventArgs>(this, (args) => CloseModal(ds)));
                     builder4.CloseComponent();
 
                     builder4.OpenComponent<RadzenButton>(1);
