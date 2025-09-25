@@ -36,9 +36,30 @@ public class ApiErrorHandler : IApiErrorHandler
         {
             if (response.IsSuccessStatusCode)
             {
-                var data = await response.Content.ReadFromJsonAsync<T>();
-                _logger.LogDebug("API request successful. Status: {StatusCode}", response.StatusCode);
-                return new ApiResponse<T> { Success = true, Data = data };
+                try
+                {
+                    var data = await response.Content.ReadFromJsonAsync<T>();
+                    _logger.LogDebug("API request successful. Status: {StatusCode}", response.StatusCode);
+                    return new ApiResponse<T> { Success = true, Data = data };
+                }
+                catch (System.Text.Json.JsonException jsonEx)
+                {
+                    _logger.LogWarning(jsonEx, "Failed to deserialize response as {Type}. Response content: {Content}", 
+                        typeof(T).Name, await response.Content.ReadAsStringAsync());
+                    
+                    // For DELETE operations, if we can't deserialize, assume success
+                    if (typeof(T) == typeof(bool))
+                    {
+                        _logger.LogInformation("Assuming success for boolean response that couldn't be deserialized");
+                        return new ApiResponse<T> { Success = true, Data = (T)(object)true };
+                    }
+                    
+                    return new ApiResponse<T> 
+                    { 
+                        Success = false, 
+                        ErrorMessage = "Failed to deserialize response data"
+                    };
+                }
             }
 
             return await HandleErrorResponseAsync<T>(response);

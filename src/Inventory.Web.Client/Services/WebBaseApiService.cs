@@ -279,20 +279,25 @@ public abstract class WebBaseApiService(
     {
         try
         {
-            return await ExecuteHttpRequestAsync<ApiResponse<bool>>(HttpMethod.Delete, endpoint,
-                async (HttpResponseMessage response) =>
-                {
-                    if (response.IsSuccessStatusCode)
-                    {
-                        Logger.LogDebug("DELETE request successful for {StatusCode}", response.StatusCode);
-                        return ApiResponse<bool>.CreateSuccess(true);
-                    }
-                    else
-                    {
-                        var errorResponse = await ErrorHandler.HandleResponseAsync<bool>(response);
-                        return ApiResponse<bool>.CreateFailure(errorResponse.ErrorMessage ?? "Delete operation failed");
-                    }
-                });
+            var fullUrl = await BuildFullUrlAsync(endpoint);
+            var request = new HttpRequestMessage(HttpMethod.Delete, fullUrl);
+            
+            Logger.LogDebug("Making DELETE request to {FullUrl}", fullUrl);
+            
+            var response = await HttpClient.SendAsync(request);
+            Logger.LogDebug("Received response with status {StatusCode} for DELETE {FullUrl}", 
+                response.StatusCode, fullUrl);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                Logger.LogDebug("DELETE request successful for {StatusCode}", response.StatusCode);
+                return ApiResponse<bool>.CreateSuccess(true);
+            }
+            else
+            {
+                var errorResponse = await ErrorHandler.HandleResponseAsync<bool>(response);
+                return ApiResponse<bool>.CreateFailure(errorResponse.ErrorMessage ?? "Delete operation failed");
+            }
         }
         catch (Exception ex)
         {

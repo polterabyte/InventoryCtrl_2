@@ -152,7 +152,8 @@ public class ApiUrlService : IApiUrlService
     {
         var envName = _environment.Environment;
         _logger.LogDebug("Current environment: {Environment}", envName);
-        
+        _logger.LogDebug("Available environments: {Environments}", string.Join(", ", _apiConfig.Environments.Keys));
+
         if (_apiConfig.Environments.TryGetValue(envName, out var config))
         {
             _logger.LogDebug("Found environment config for: {Environment}", envName);
@@ -164,18 +165,33 @@ public class ApiUrlService : IApiUrlService
 
         if (!string.IsNullOrEmpty(caseInsensitiveMatch.Key))
         {
-            _logger.LogDebug("Found environment config for: {Environment} (case-insensitive match)", caseInsensitiveMatch.Key);
+            _logger.LogDebug("Found environment config for: {Environment} (case-insensitive match)", caseInsensitiveMatch.Key);                                                                                                               
             return caseInsensitiveMatch.Value;
         }
-        
-        // Fallback: попробовать Development если текущее окружение не найдено
+
+        // Fallback: попробовать Development если текущее окружение не найдено 
         if (envName != "Development" && _apiConfig.Environments.TryGetValue("Development", out var devConfig))
         {
-            _logger.LogWarning("Environment {Environment} not found, falling back to Development config", envName);
+            _logger.LogWarning("Environment {Environment} not found, falling back to Development config", envName);    
             return devConfig;
         }
-        
-        _logger.LogWarning("No environment config found for: {Environment}", envName);
+
+        // Fallback: попробовать Staging если текущее окружение не найдено 
+        if (envName != "Staging" && _apiConfig.Environments.TryGetValue("Staging", out var stagingConfig))
+        {
+            _logger.LogWarning("Environment {Environment} not found, falling back to Staging config", envName);    
+            return stagingConfig;
+        }
+
+        // Fallback: попробовать Production если текущее окружение не найдено 
+        if (envName != "Production" && _apiConfig.Environments.TryGetValue("Production", out var prodConfig))
+        {
+            _logger.LogWarning("Environment {Environment} not found, falling back to Production config", envName);    
+            return prodConfig;
+        }
+
+        _logger.LogWarning("No environment config found for: {Environment}. Available configs: {AvailableConfigs}", 
+            envName, string.Join(", ", _apiConfig.Environments.Keys));
         return null;
     }
 
