@@ -77,6 +77,18 @@ public static class ManufacturerValidators
             }
         }
 
+        // Валидация LocationId
+        if (dto.LocationId <= 0)
+        {
+            errors.Add(new ValidationError
+            {
+                PropertyName = nameof(dto.LocationId),
+                Message = "Location is required and must be a valid location ID",
+                AttemptedValue = dto.LocationId,
+                ErrorCode = "INVALID_LOCATION_ID"
+            });
+        }
+
         result.IsValid = errors.Count == 0;
         result.Errors = errors;
         return result;
@@ -96,7 +108,8 @@ public static class ManufacturerValidators
             Name = dto.Name,
             Description = dto.Description,
             ContactInfo = dto.ContactInfo,
-            Website = dto.Website
+            Website = dto.Website,
+            LocationId = dto.LocationId
         };
 
         var createValidation = ValidateCreateManufacturer(createDto, context);

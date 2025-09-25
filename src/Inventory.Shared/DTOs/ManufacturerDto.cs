@@ -10,6 +10,12 @@ public class ManufacturerDto
     public string? ContactInfo { get; set; }
     public string? Website { get; set; }
     public bool IsActive { get; set; } = true;
+    
+    // Связь с Location (обязательная)
+    public int LocationId { get; set; }
+    public string LocationName { get; set; } = string.Empty;
+    public string LocationFullPath { get; set; } = string.Empty; // Полный путь локации
+    
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 }
@@ -29,6 +35,11 @@ public class CreateManufacturerDto
     [Url(ErrorMessage = "Invalid website URL format")]
     [StringLength(200, ErrorMessage = "Website URL must not exceed 200 characters")]
     public string? Website { get; set; }
+    
+    // Связь с Location (обязательная)
+    [Required(ErrorMessage = "Location is required")]
+    [Range(1, int.MaxValue, ErrorMessage = "Location ID must be greater than 0")]
+    public int LocationId { get; set; }
 }
 
 public class UpdateManufacturerDto
@@ -48,4 +59,9 @@ public class UpdateManufacturerDto
     public string? Website { get; set; }
     
     public bool IsActive { get; set; } = true;
+    
+    // Связь с Location (обязательная)
+    [Required(ErrorMessage = "Location is required")]
+    [Range(1, int.MaxValue, ErrorMessage = "Location ID must be greater than 0")]
+    public int LocationId { get; set; }
 }

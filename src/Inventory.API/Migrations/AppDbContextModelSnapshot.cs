@@ -263,6 +263,9 @@ namespace Inventory.API.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("LocationId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -271,6 +274,8 @@ namespace Inventory.API.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("LocationId");
 
                     b.ToTable("Manufacturers");
                 });
@@ -407,6 +412,47 @@ namespace Inventory.API.Migrations
                     b.ToTable("ProductHistories");
                 });
 
+            modelBuilder.Entity("Inventory.API.Models.ProductInstalledView", b =>
+                {
+                    b.Property<DateTime?>("FirstInstallDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("first_install_date");
+
+                    b.Property<int>("InstalledQty")
+                        .HasColumnType("integer")
+                        .HasColumnName("installed_qty");
+
+                    b.Property<DateTime?>("LastInstallDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_install_date");
+
+                    b.Property<int?>("LocationId")
+                        .HasColumnType("integer")
+                        .HasColumnName("location_id");
+
+                    b.Property<string>("LocationName")
+                        .HasColumnType("text")
+                        .HasColumnName("location_name");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer")
+                        .HasColumnName("product_id");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("product_name");
+
+                    b.Property<string>("SKU")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("sku");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("vw_product_installed", (string)null);
+                });
+
             modelBuilder.Entity("Inventory.API.Models.ProductModel", b =>
                 {
                     b.Property<int>("Id")
@@ -436,6 +482,64 @@ namespace Inventory.API.Migrations
                     b.HasIndex("ManufacturerId");
 
                     b.ToTable("ProductModels");
+                });
+
+            modelBuilder.Entity("Inventory.API.Models.ProductOnHandView", b =>
+                {
+                    b.Property<int>("OnHandQty")
+                        .HasColumnType("integer")
+                        .HasColumnName("on_hand_qty");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer")
+                        .HasColumnName("product_id");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("product_name");
+
+                    b.Property<string>("SKU")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("sku");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("vw_product_on_hand", (string)null);
+                });
+
+            modelBuilder.Entity("Inventory.API.Models.ProductPendingView", b =>
+                {
+                    b.Property<DateTime?>("FirstPendingDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("first_pending_date");
+
+                    b.Property<DateTime?>("LastPendingDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_pending_date");
+
+                    b.Property<int>("PendingQty")
+                        .HasColumnType("integer")
+                        .HasColumnName("pending_qty");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer")
+                        .HasColumnName("product_id");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("product_name");
+
+                    b.Property<string>("SKU")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("sku");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("vw_product_pending", (string)null);
                 });
 
             modelBuilder.Entity("Inventory.API.Models.ProductTag", b =>
@@ -1292,6 +1396,17 @@ namespace Inventory.API.Migrations
                         .HasForeignKey("ParentLocationId");
 
                     b.Navigation("ParentLocation");
+                });
+
+            modelBuilder.Entity("Inventory.API.Models.Manufacturer", b =>
+                {
+                    b.HasOne("Inventory.API.Models.Location", "Location")
+                        .WithMany()
+                        .HasForeignKey("LocationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Location");
                 });
 
             modelBuilder.Entity("Inventory.API.Models.Product", b =>

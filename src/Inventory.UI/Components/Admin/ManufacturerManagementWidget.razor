@@ -6,6 +6,7 @@
 @using Inventory.UI.Utilities
 @using System.Linq
 @inject IManufacturerService ManufacturerService
+@inject ILocationService LocationService
 @inject IUINotificationService UiNotificationService
 @inject IJSRuntime JSRuntime
 @inject DialogService DialogService
@@ -52,6 +53,13 @@
                                             <RadzenText>@item.Name</RadzenText>
                                         </Template>
                                     </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="ManufacturerDto" Title="Location" Property="LocationName">
+                                        <Template Context="item">
+                                            <RadzenTooltip Text="@item.LocationFullPath">
+                                                <RadzenText>@item.LocationName</RadzenText>
+                                            </RadzenTooltip>
+                                        </Template>
+                                    </RadzenDataGridColumn>
                                     <RadzenDataGridColumn TItem="ManufacturerDto" Title="Created" Property="CreatedAt">
                                         <Template Context="item">@item.CreatedAt.ToString("MMM dd, yyyy")</Template>
                                     </RadzenDataGridColumn>
@@ -91,6 +99,7 @@
 
 @code {
     private List<ManufacturerDto> data = new();
+    private List<LocationDto> locations = new();
     private bool isLoading = false;
     private bool isEditing = false;
     private bool isSaving = false;
@@ -109,11 +118,13 @@
         try
         {
             data = await ManufacturerService.GetAllManufacturersAsync();
+            locations = (await LocationService.GetAllLocationsAsync()).ToList();
         }
         catch (Exception ex)
         {
             UiNotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
             data = new();
+            locations = new();
         }
         finally
         {
@@ -145,7 +156,11 @@
         selectedItem = item;
         currentItem = new CreateManufacturerDto
         {
-            Name = item.Name
+            Name = item.Name,
+            Description = item.Description,
+            ContactInfo = item.ContactInfo,
+            Website = item.Website,
+            LocationId = item.LocationId
         };
         isEditing = true;
         
@@ -175,7 +190,12 @@
             {
                 var updateDto = new UpdateManufacturerDto
                 {
-                    Name = model.Name
+                    Name = model.Name,
+                    Description = model.Description,
+                    ContactInfo = model.ContactInfo,
+                    Website = model.Website,
+                    IsActive = true,
+                    LocationId = model.LocationId
                 };
                 var result = await ManufacturerService.UpdateManufacturerAsync(selectedItem.Id, updateDto);
                 if (result != null)
@@ -250,7 +270,7 @@
         builder.OpenComponent<RadzenTemplateForm<CreateManufacturerDto>>(0);
         builder.AddAttribute(1, "Data", currentItem);
         builder.AddAttribute(2, "Submit", EventCallback.Factory.Create<CreateManufacturerDto>(this, async (model) => await OnSubmit(model, ds)));
-        builder.AddAttribute(3, "ChildContent", (RenderFragment<EditContext>)((editContext) => (builder2) =>
+        builder.AddAttribute(3, "ChildContent", (RenderFragment<EditContext>)((editContext) => (RenderFragment)((builder2) =>
         {
             builder2.OpenComponent<DataAnnotationsValidator>(0);
             builder2.CloseComponent();
@@ -286,11 +306,70 @@
                 }));
                 builder3.CloseComponent();
 
-                builder3.OpenComponent<RadzenStack>(2);
-                builder3.AddAttribute(4, "Orientation", Orientation.Horizontal);
-                builder3.AddAttribute(5, "JustifyContent", JustifyContent.End);
-                builder3.AddAttribute(6, "Gap", "0.75rem");
+                builder3.OpenComponent<RadzenFormField>(2);
+                builder3.AddAttribute(4, "Text", "Description");
+                builder3.AddAttribute(5, "ChildContent", (RenderFragment)((builder4) =>
+                {
+                    builder4.OpenComponent<RadzenTextBox>(0);
+                    builder4.AddAttribute(1, "Value", currentItem.Description);
+                    builder4.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<string>(this, (value) => currentItem.Description = value));
+                    builder4.AddAttribute(3, "Name", "manufacturerDescription");
+                    builder4.AddAttribute(4, "Multiline", true);
+                    builder4.AddAttribute(5, "Rows", 3);
+                    builder4.CloseComponent();
+                }));
+                builder3.CloseComponent();
+
+                builder3.OpenComponent<RadzenFormField>(3);
+                builder3.AddAttribute(6, "Text", "Contact Info");
                 builder3.AddAttribute(7, "ChildContent", (RenderFragment)((builder4) =>
+                {
+                    builder4.OpenComponent<RadzenTextBox>(0);
+                    builder4.AddAttribute(1, "Value", currentItem.ContactInfo);
+                    builder4.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<string>(this, (value) => currentItem.ContactInfo = value));
+                    builder4.AddAttribute(3, "Name", "manufacturerContactInfo");
+                    builder4.CloseComponent();
+                }));
+                builder3.CloseComponent();
+
+                builder3.OpenComponent<RadzenFormField>(4);
+                builder3.AddAttribute(8, "Text", "Website");
+                builder3.AddAttribute(9, "ChildContent", (RenderFragment)((builder4) =>
+                {
+                    builder4.OpenComponent<RadzenTextBox>(0);
+                    builder4.AddAttribute(1, "Value", currentItem.Website);
+                    builder4.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<string>(this, (value) => currentItem.Website = value));
+                    builder4.AddAttribute(3, "Name", "manufacturerWebsite");
+                    builder4.CloseComponent();
+                }));
+                builder3.CloseComponent();
+
+                builder3.OpenComponent<RadzenFormField>(5);
+                builder3.AddAttribute(10, "Text", "Location *");
+                builder3.AddAttribute(11, "ChildContent", (RenderFragment)((builder4) =>
+                {
+                    builder4.OpenComponent<RadzenDropDown<int>>(0);
+                    builder4.AddAttribute(1, "Data", locations);
+                    builder4.AddAttribute(2, "Value", currentItem.LocationId);
+                    builder4.AddAttribute(3, "ValueChanged", EventCallback.Factory.Create<int>(this, (value) => currentItem.LocationId = value));
+                    builder4.AddAttribute(4, "ValueProperty", "Id");
+                    builder4.AddAttribute(5, "TextProperty", "Name");
+                    builder4.AddAttribute(6, "Name", "manufacturerLocation");
+                    builder4.AddAttribute(7, "Placeholder", "Select location...");
+                    builder4.CloseComponent();
+
+                    builder4.OpenComponent<RadzenRequiredValidator>(1);
+                    builder4.AddAttribute(2, "Component", "manufacturerLocation");
+                    builder4.AddAttribute(3, "Text", "Location is required");
+                    builder4.CloseComponent();
+                }));
+                builder3.CloseComponent();
+
+                builder3.OpenComponent<RadzenStack>(6);
+                builder3.AddAttribute(12, "Orientation", Orientation.Horizontal);
+                builder3.AddAttribute(13, "JustifyContent", JustifyContent.End);
+                builder3.AddAttribute(14, "Gap", "0.75rem");
+                builder3.AddAttribute(15, "ChildContent", (RenderFragment)((builder4) =>
                 {
                     builder4.OpenComponent<RadzenButton>(0);
                     builder4.AddAttribute(1, "Text", "Cancel");
@@ -309,7 +388,7 @@
                 builder3.CloseComponent();
             }));
             builder2.CloseComponent();
-        }));
+        })));
         builder.CloseComponent();
     };
 }
