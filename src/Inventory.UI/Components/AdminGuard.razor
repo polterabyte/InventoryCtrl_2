@@ -1,19 +1,21 @@
 @using Microsoft.AspNetCore.Components
-
+@using Radzen
+@using Radzen.Blazor
 
 @inject IAuthenticationService AuthenticationService
 @inject NavigationManager Navigation
 
 @if (isLoading)
 {
-    <div class="d-flex justify-content-center align-items-center min-vh-100">
-        <div class="text-center">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <p class="mt-2">Проверка прав администратора...</p>
-        </div>
-    </div>
+    <RadzenStack Orientation="Orientation.Vertical"
+                 AlignItems="AlignItems.Center"
+                 JustifyContent="JustifyContent.Center"
+                 Style="min-height: 100vh;">
+        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        <RadzenText TextStyle="TextStyle.Body1" Style="margin-top: 1rem;">
+            Проверка прав администратора...
+        </RadzenText>
+    </RadzenStack>
 }
 else if (isAuthorized)
 {
@@ -21,33 +23,38 @@ else if (isAuthorized)
 }
 else
 {
-    <div class="container-fluid">
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <RadzenCard class="mt-5">
-                    <RadzenStack AlignItems="AlignItems.Center" class="text-center">
-                        <i class="fas fa-shield-alt fa-4x text-danger mb-4"></i>
-                        <RadzenText TextStyle="TextStyle.H3" class="text-danger">Доступ запрещен</RadzenText>
-                        <RadzenText class="rz-mb-4">
-                            У вас нет прав для доступа к этой странице. 
+    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="container-fluid">
+        <RadzenRow JustifyContent="JustifyContent.Center">
+            <RadzenColumn Size="12" SizeMd="6">
+                <RadzenCard>
+                    <RadzenStack Orientation="Orientation.Vertical"
+                                AlignItems="AlignItems.Center"
+                                Gap="1rem"
+                                Style="text-align: center; padding: 2rem;">
+                        <RadzenIcon Icon="security" Style="font-size: 4rem; color: var(--rz-danger);" />
+                        <RadzenText TextStyle="TextStyle.H4" Style="color: var(--rz-danger);">
+                            Доступ запрещен
+                        </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body1">
+                            У вас нет прав для доступа к этой странице.
                             Требуется роль администратора.
                         </RadzenText>
-                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" class="rz-mt-4">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
                             <RadzenButton Text="На главную"
-                                          Icon="home"
-                                          ButtonStyle="ButtonStyle.Primary"
-                                          @onclick="GoHome" />
+                                         Icon="home"
+                                         ButtonStyle="ButtonStyle.Primary"
+                                         Click="GoHome" />
                             <RadzenButton Text="Назад"
-                                          Icon="arrow_back"
-                                          ButtonStyle="ButtonStyle.Secondary"
-                                          Variant="Variant.Outlined"
-                                          @onclick="GoBack" />
+                                         Icon="arrow_back"
+                                         ButtonStyle="ButtonStyle.Light"
+                                         Variant="Variant.Outlined"
+                                         Click="GoBack" />
                         </RadzenStack>
                     </RadzenStack>
                 </RadzenCard>
-            </div>
-        </div>
-    </div>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenStack>
 }
 
 @code {

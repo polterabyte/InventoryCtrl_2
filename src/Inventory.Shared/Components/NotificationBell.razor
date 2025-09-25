@@ -1,162 +1,100 @@
 @using Inventory.Shared.Services
 @using Microsoft.JSInterop
+@using Radzen
+@using Radzen.Blazor
 @inject INotificationApiService NotificationApiService
 @inject IJSRuntime JSRuntime
 
-<div class="notification-bell position-relative">
-    <button class="btn btn-outline-secondary position-relative" @onclick="ToggleNotificationCenter">
-        <i class="fas fa-bell"></i>
+<div class="notification-bell">
+    <RadzenButton Icon="notifications"
+                 ButtonStyle="ButtonStyle.Light"
+                 Variant="Variant.Outlined"
+                 Click="ToggleNotificationCenter"
+                 Style="position: relative;">
         @if (unreadCount > 0)
         {
-            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                @unreadCount
-                <span class="visually-hidden">unread notifications</span>
-            </span>
+            <RadzenBadge Text="@unreadCount.ToString()"
+                        BadgeStyle="BadgeStyle.Danger"
+                        Style="position: absolute; top: -8px; right: -8px; min-width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; padding: 0;" />
         }
-    </button>
+    </RadzenButton>
 
     @if (showNotificationCenter)
     {
-        <div class="notification-dropdown">
-            <div class="notification-header">
-                <h6 class="mb-0">Notifications</h6>
+        <RadzenCard Style="position: absolute; top: 100%; right: 0; width: 350px; z-index: 1000; margin-top: 0.5rem;">
+            <!-- Header -->
+            <RadzenStack Orientation="Orientation.Horizontal"
+                        AlignItems="AlignItems.Center"
+                        JustifyContent="JustifyContent.SpaceBetween"
+                        Gap="1rem"
+                        Style="padding: 1rem; border-bottom: 1px solid var(--rz-border-light); background: var(--rz-background-light);">
+                <RadzenText TextStyle="TextStyle.H6">Notifications</RadzenText>
                 @if (unreadCount > 0)
                 {
-                    <button class="btn btn-sm btn-outline-primary" @onclick="MarkAllAsRead">
-                        Mark All Read
-                    </button>
+                    <RadzenButton Text="Mark All Read"
+                                 Size="ButtonSize.Small"
+                                 ButtonStyle="ButtonStyle.Primary"
+                                 Variant="Variant.Outlined"
+                                 Click="MarkAllAsRead" />
                 }
-            </div>
-            
-            <div class="notification-list">
+            </RadzenStack>
+
+            <!-- Notifications List -->
+            <RadzenStack Orientation="Orientation.Vertical" Style="max-height: 300px; overflow-y: auto;">
                 @if (notifications.Any())
                 {
                     @foreach (var notification in notifications.Take(5))
                     {
-                        <div class="notification-item @(notification.IsRead ? "read" : "unread")" @onclick="() => MarkAsRead(notification.Id)">
-                            <div class="notification-content">
-                                <div class="notification-title">
-                                    @notification.Title
+                        <RadzenCard Style="@GetNotificationItemStyle(notification)"
+                                   class="notification-item"
+                                   Click="() => MarkAsRead(notification.Id)">
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; flex-grow: 1;">
+                                        @notification.Title
+                                    </RadzenText>
                                     @if (!notification.IsRead)
                                     {
-                                        <span class="unread-dot"></span>
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Info" Style="width: 6px; height: 6px; min-width: 6px;" />
                                     }
-                                </div>
-                                <div class="notification-message">@notification.Message</div>
-                                <div class="notification-time">
+                                </RadzenStack>
+
+                                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary); line-height: 1.3;">
+                                    @notification.Message
+                                </RadzenText>
+
+                                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary);">
                                     @GetRelativeTime(notification.CreatedAt)
-                                </div>
-                            </div>
-                        </div>
+                                </RadzenText>
+                            </RadzenStack>
+                        </RadzenCard>
                     }
-                    
+
                     @if (notifications.Count > 5)
                     {
-                        <div class="text-center">
-                            <a href="/notifications" class="btn btn-sm btn-outline-secondary">
-                                View All (@notifications.Count)
-                            </a>
-                        </div>
+                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" Style="padding: 1rem;">
+                            <RadzenButton Text="View All (@notifications.Count)"
+                                         Size="ButtonSize.Small"
+                                         ButtonStyle="ButtonStyle.Light"
+                                         Variant="Variant.Outlined"
+                                         Style="width: 100%;" />
+                        </RadzenStack>
                     }
                 }
                 else
                 {
-                    <div class="text-center text-muted py-3">
-                        <i class="fas fa-bell-slash"></i>
-                        <p class="mb-0">No notifications</p>
-                    </div>
+                    <RadzenStack Orientation="Orientation.Vertical"
+                                AlignItems="AlignItems.Center"
+                                Gap="1rem"
+                                Style="padding: 2rem; color: var(--rz-text-secondary);">
+                        <RadzenIcon Icon="notifications_off" Style="font-size: 2rem;" />
+                        <RadzenText TextStyle="TextStyle.Body2">No notifications</RadzenText>
+                    </RadzenStack>
                 }
-            </div>
-        </div>
+            </RadzenStack>
+        </RadzenCard>
     }
 </div>
-
-<style>
-    .notification-bell {
-        display: inline-block;
-    }
-
-    .notification-dropdown {
-        position: absolute;
-        top: 100%;
-        right: 0;
-        width: 350px;
-        background: white;
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        z-index: 1000;
-        margin-top: 0.5rem;
-    }
-
-    .notification-header {
-        padding: 1rem;
-        border-bottom: 1px solid #dee2e6;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background: #f8f9fa;
-        border-radius: 8px 8px 0 0;
-    }
-
-    .notification-list {
-        max-height: 300px;
-        overflow-y: auto;
-    }
-
-    .notification-item {
-        padding: 0.75rem 1rem;
-        border-bottom: 1px solid #f1f3f4;
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
-
-    .notification-item:hover {
-        background-color: #f8f9fa;
-    }
-
-    .notification-item.unread {
-        background-color: #e3f2fd;
-        border-left: 3px solid #2196f3;
-    }
-
-    .notification-title {
-        font-weight: 600;
-        font-size: 0.9rem;
-        margin-bottom: 0.25rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .unread-dot {
-        width: 6px;
-        height: 6px;
-        background-color: #2196f3;
-        border-radius: 50%;
-    }
-
-    .notification-message {
-        color: #6c757d;
-        font-size: 0.85rem;
-        margin-bottom: 0.25rem;
-        line-height: 1.3;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-
-    .notification-time {
-        font-size: 0.75rem;
-        color: #adb5bd;
-    }
-
-    .badge {
-        font-size: 0.7rem;
-        padding: 0.25em 0.5em;
-    }
-</style>
 
 @code {
     private bool showNotificationCenter = false;
@@ -241,7 +179,7 @@
     private string GetRelativeTime(DateTime dateTime)
     {
         var timeSpan = DateTime.UtcNow - dateTime;
-        
+
         if (timeSpan.TotalMinutes < 1)
             return "Just now";
         if (timeSpan.TotalMinutes < 60)
@@ -250,7 +188,16 @@
             return $"{(int)timeSpan.TotalHours}h ago";
         if (timeSpan.TotalDays < 7)
             return $"{(int)timeSpan.TotalDays}d ago";
-        
+
         return dateTime.ToString("MMM dd");
+    }
+
+    private string GetNotificationItemStyle(NotificationDto notification)
+    {
+        if (!notification.IsRead)
+        {
+            return "background-color: var(--rz-info-lighter); border-left: 3px solid var(--rz-info);";
+        }
+        return "";
     }
 }

@@ -1,67 +1,69 @@
 @using Inventory.Shared.DTOs
 @using Inventory.Shared.Interfaces
 @using Inventory.Shared.Services
+@using Radzen
+@using Radzen.Blazor
 @inject IProductService ProductService
 @inject IErrorHandlingService ErrorHandlingService
 @inject IUINotificationService NotificationService
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h3>Товары</h3>
-    <button class="btn btn-primary" @onclick="OnAddProduct">
-        <i class="bi bi-plus-circle"></i> Добавить товар
-    </button>
-</div>
+<RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+    <!-- Header with title and add button -->
+    <RadzenStack Orientation="Orientation.Horizontal"
+                 AlignItems="AlignItems.Center"
+                 JustifyContent="JustifyContent.SpaceBetween">
+        <RadzenText TextStyle="TextStyle.H5">Товары</RadzenText>
+        <RadzenButton Text="Добавить товар"
+                      Icon="add_circle"
+                      ButtonStyle="ButtonStyle.Primary"
+                      Click="OnAddProduct" />
+    </RadzenStack>
 
-@if (isLoading)
-{
-    <div class="text-center">
-        <div class="spinner-border" role="status">
-            <span class="visually-hidden">Загрузка...</span>
-        </div>
-    </div>
-}
-else if (products.Any())
-{
-    <div class="row">
-        @foreach (var product in products)
-        {
-            <div class="col-md-6 col-lg-4 mb-3">
-                <ProductCard Product="product" 
-                             OnEdit="EditProduct" 
-                             OnDelete="DeleteProduct" />
-            </div>
-        }
-    </div>
-    
-    @if (ShowPagination && totalPages > 1)
+    @if (isLoading)
     {
-        <nav aria-label="Навигация по страницам">
-            <ul class="pagination justify-content-center">
-                <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                    <a class="page-link" href="#" @onclick="() => ChangePage(currentPage - 1)">Предыдущая</a>
-                </li>
-                
-                @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(totalPages, currentPage + 2); i++)
-                {
-                    <li class="page-item @(i == currentPage ? "active" : "")">
-                        <a class="page-link" href="#" @onclick="() => ChangePage(i)">@i</a>
-                    </li>
-                }
-                
-                <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                    <a class="page-link" href="#" @onclick="() => ChangePage(currentPage + 1)">Следующая</a>
-                </li>
-            </ul>
-        </nav>
+        <!-- Loading spinner -->
+        <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="1rem">
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary);">Загрузка...</RadzenText>
+        </RadzenStack>
     }
-}
-else
-{
-    <div class="alert alert-info" role="alert">
-        <i class="bi bi-info-circle"></i>
-        Товары не найдены. <a href="#" @onclick="OnAddProduct">Добавить первый товар</a>
-    </div>
-}
+    else if (products.Any())
+    {
+        <!-- Products grid -->
+        <RadzenRow Gap="1rem">
+            @foreach (var product in products)
+            {
+                <RadzenColumn Size="12" SizeSm="6" SizeLg="4">
+                    <ProductCard Product="product"
+                                 OnEdit="EditProduct"
+                                 OnDelete="DeleteProduct" />
+                </RadzenColumn>
+            }
+        </RadzenRow>
+
+        @if (ShowPagination && totalPages > 1)
+        {
+            <!-- Pagination -->
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center">
+                <RadzenPager ShowPagingSummary="true"
+                            PageSize="@PageSize"
+                            Count="@(products.Count)"
+                            PageChanged="@((args) => ChangePage(args))" />
+            </RadzenStack>
+        }
+    }
+    else
+    {
+        <!-- Empty state -->
+        <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 2rem;">
+            <RadzenIcon Icon="info" Style="font-size: 3rem; color: var(--rz-text-secondary);" />
+            <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-text-secondary);">Товары не найдены</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary);">
+                Попробуйте изменить фильтры или <a href="#" @onclick="OnAddProduct" style="cursor: pointer;">добавить первый товар</a>
+            </RadzenText>
+        </RadzenStack>
+    }
+</RadzenStack>
 
 @code {
     [Parameter] public bool ShowPagination { get; set; } = true;
@@ -133,12 +135,9 @@ else
         await OnProductAdd.InvokeAsync();
     }
 
-    private async Task ChangePage(int page)
+    private async Task ChangePage(PagerEventArgs args)
     {
-        if (page >= 1 && page <= totalPages)
-        {
-            currentPage = page;
-            await LoadProducts();
-        }
+        currentPage = args.PageIndex + 1; // Radzen uses 0-based indexing
+        await LoadProducts();
     }
 }

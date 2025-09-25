@@ -1,49 +1,67 @@
 @using Inventory.Shared.DTOs
+@using Radzen
+@using Radzen.Blazor
 
-<div class="card mb-3">
-    <div class="card-body">
-        <div class="row">
-            <div class="col-md-8">
-                <h5 class="card-title">@Product.Name</h5>
-                <p class="card-text">
-                    <strong>SKU:</strong> @Product.SKU<br/>
-                    <strong>Категория:</strong> @Product.CategoryName<br/>
+<RadzenCard class="mb-3">
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
+        <!-- Product info section -->
+        <RadzenStack Orientation="Orientation.Vertical" class="flex-grow-1">
+            <RadzenText TextStyle="TextStyle.H6" Style="font-weight: bold;">@Product.Name</RadzenText>
+
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                <RadzenText TextStyle="TextStyle.Body2">
+                    <strong>SKU:</strong> @Product.SKU
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2">
+                    <strong>Категория:</strong> @Product.CategoryName
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2">
                     <strong>Производитель:</strong> @Product.ManufacturerName
-                </p>
-                @if (!string.IsNullOrEmpty(Product.Description))
+                </RadzenText>
+            </RadzenStack>
+
+            @if (!string.IsNullOrEmpty(Product.Description))
+            {
+                <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary); margin-top: 0.5rem;">
+                    @Product.Description
+                </RadzenText>
+            }
+        </RadzenStack>
+
+        <!-- Stock and actions section -->
+        <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.End" Gap="0.5rem">
+            <RadzenBadge Text="@($"{Product.Quantity} {Product.UnitOfMeasureSymbol}")"
+                        BadgeStyle="@GetStockBadgeStyle()"
+                        Style="font-size: 0.875rem;" />
+
+            @if (Product.MinStock > 0 || Product.MaxStock > 0)
+            {
+                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary);">
+                    Мин: @Product.MinStock | Макс: @Product.MaxStock
+                </RadzenText>
+            }
+
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
+                <RadzenButton Icon="edit"
+                             ButtonStyle="ButtonStyle.Primary"
+                             Variant="Variant.Outlined"
+                             Size="ButtonSize.Small"
+                             Click="() => OnEdit.InvokeAsync(Product)"
+                             title="Изменить" />
+
+                @if (ShowDeleteButton)
                 {
-                    <p class="card-text">@Product.Description</p>
+                    <RadzenButton Icon="delete"
+                                 ButtonStyle="ButtonStyle.Danger"
+                                 Variant="Variant.Outlined"
+                                 Size="ButtonSize.Small"
+                                 Click="() => OnDelete.InvokeAsync(Product)"
+                                 title="Удалить" />
                 }
-            </div>
-            <div class="col-md-4">
-                <div class="text-end">
-                    <div class="mb-2">
-                        <span class="badge @GetStockBadgeClass() fs-6">
-                            @Product.Quantity @Product.UnitOfMeasureSymbol
-                        </span>
-                    </div>
-                    @if (Product.MinStock > 0 || Product.MaxStock > 0)
-                    {
-                        <small class="text-muted">
-                            Мин: @Product.MinStock | Макс: @Product.MaxStock
-                        </small>
-                    }
-                    <div class="mt-2">
-                        <button class="btn btn-sm btn-outline-primary" @onclick="() => OnEdit.InvokeAsync(Product)">
-                            <i class="bi bi-pencil"></i> Изменить
-                        </button>
-                        @if (ShowDeleteButton)
-                        {
-                            <button class="btn btn-sm btn-outline-danger ms-1" @onclick="() => OnDelete.InvokeAsync(Product)">
-                                <i class="bi bi-trash"></i> Удалить
-                            </button>
-                        }
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+            </RadzenStack>
+        </RadzenStack>
+    </RadzenStack>
+</RadzenCard>
 
 @code {
     [Parameter] public ProductDto Product { get; set; } = new();
@@ -51,12 +69,12 @@
     [Parameter] public EventCallback<ProductDto> OnEdit { get; set; }
     [Parameter] public EventCallback<ProductDto> OnDelete { get; set; }
 
-    private string GetStockBadgeClass()
+    private BadgeStyle GetStockBadgeStyle()
     {
         if (Product.Quantity <= Product.MinStock)
-            return "bg-danger";
+            return BadgeStyle.Danger;
         if (Product.Quantity >= Product.MaxStock)
-            return "bg-warning";
-        return "bg-success";
+            return BadgeStyle.Warning;
+        return BadgeStyle.Success;
     }
 }

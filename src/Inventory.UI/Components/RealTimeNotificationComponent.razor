@@ -5,74 +5,112 @@
 @using Blazored.LocalStorage
 @using Microsoft.AspNetCore.Components.Authorization
 @using Inventory.Shared.Interfaces
+@using Radzen
+@using Radzen.Blazor
 @inject IJSRuntime JSRuntime
 @inject ILogger<RealTimeNotificationComponent> Logger
 @inject ILocalStorageService LocalStorage
 @inject AuthenticationStateProvider AuthStateProvider
 @inject ISignalRService SignalRService
 
-<div class="real-time-notifications">
+<RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+    <!-- Connection Status -->
     @if (IsConnected)
     {
-        <div class="connection-status connected">
-            <i class="fas fa-circle text-success"></i>
-            <span>Real-time notifications active</span>
-        </div>
+        <RadzenAlert AlertStyle="AlertStyle.Success"
+                    ShowIcon="true"
+                    AllowClose="false">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenIcon Icon="wifi" Style="color: var(--rz-success);" />
+                <RadzenText TextStyle="TextStyle.Body2">Real-time notifications active</RadzenText>
+            </RadzenStack>
+        </RadzenAlert>
     }
     else if (IsReconnecting)
     {
-        <div class="connection-status reconnecting">
-            <i class="fas fa-circle text-warning"></i>
-            <span>Reconnecting...</span>
-        </div>
+        <RadzenAlert AlertStyle="AlertStyle.Warning"
+                    ShowIcon="true"
+                    AllowClose="false">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Small" />
+                <RadzenText TextStyle="TextStyle.Body2">Reconnecting...</RadzenText>
+            </RadzenStack>
+        </RadzenAlert>
     }
     else
     {
         @if (ShowSignInBanner && string.IsNullOrEmpty(accessToken))
         {
-            <div class="connection-status disconnected sign-in-banner">
-                <i class="fas fa-circle text-danger"></i>
-                <span>Sign in to enable notifications</span>
-                <button class="btn-close ms-auto" @onclick="DismissSignInBanner" title="Dismiss"></button>
-            </div>
+            <RadzenAlert AlertStyle="AlertStyle.Danger"
+                        ShowIcon="true"
+                        AllowClose="true"
+                        Close="DismissSignInBanner">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="wifi_off" Style="color: var(--rz-danger);" />
+                    <RadzenText TextStyle="TextStyle.Body2">Sign in to enable notifications</RadzenText>
+                </RadzenStack>
+            </RadzenAlert>
         }
         else if (!string.IsNullOrEmpty(accessToken))
         {
-            <div class="connection-status disconnected">
-                <i class="fas fa-circle text-danger"></i>
-                <span>Real-time notifications offline</span>
-            </div>
+            <RadzenAlert AlertStyle="AlertStyle.Danger"
+                        ShowIcon="true"
+                        AllowClose="false">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="wifi_off" Style="color: var(--rz-danger);" />
+                    <RadzenText TextStyle="TextStyle.Body2">Real-time notifications offline</RadzenText>
+                </RadzenStack>
+            </RadzenAlert>
         }
     }
 
+    <!-- Notifications -->
     @if (ShowNotifications)
     {
-        <div class="notifications-container">
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
             @foreach (var notification in Notifications.Take(MaxVisibleNotifications))
             {
-                <div class="notification-item @GetNotificationClass(notification.Type)" 
-                     data-notification-id="@notification.Id">
-                    <div class="notification-content">
-                        <div class="notification-header">
-                            <h6 class="notification-title">@notification.Title</h6>
-                            <button class="btn-close" @onclick="() => DismissNotification(notification.Id)"></button>
-                        </div>
-                        <p class="notification-message">@notification.Message</p>
+                <RadzenCard Style="@GetNotificationCardStyle(notification.Type)">
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                        <!-- Header -->
+                        <RadzenStack Orientation="Orientation.Horizontal"
+                                   AlignItems="AlignItems.Center"
+                                   JustifyContent="JustifyContent.SpaceBetween">
+                            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">
+                                @notification.Title
+                            </RadzenText>
+                            <RadzenButton Icon="close"
+                                         Size="ButtonSize.Small"
+                                         ButtonStyle="ButtonStyle.Light"
+                                         Variant="Variant.Text"
+                                         Click="() => DismissNotification(notification.Id)" />
+                        </RadzenStack>
+
+                        <!-- Message -->
+                        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary);">
+                            @notification.Message
+                        </RadzenText>
+
+                        <!-- Action Button -->
                         @if (!string.IsNullOrEmpty(notification.ActionUrl) && !string.IsNullOrEmpty(notification.ActionText))
                         {
-                            <a href="@notification.ActionUrl" class="btn btn-sm btn-outline-primary notification-action">
-                                @notification.ActionText
-                            </a>
+                            <RadzenButton Text="@notification.ActionText"
+                                         Size="ButtonSize.Small"
+                                         ButtonStyle="ButtonStyle.Primary"
+                                         Variant="Variant.Outlined"
+                                         Style="align-self: flex-start;" />
                         }
-                    </div>
-                    <div class="notification-meta">
-                        <small class="text-muted">@notification.CreatedAt.ToString("HH:mm")</small>
-                    </div>
-                </div>
+
+                        <!-- Meta -->
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary); align-self: flex-end;">
+                            @notification.CreatedAt.ToString("HH:mm")
+                        </RadzenText>
+                    </RadzenStack>
+                </RadzenCard>
             }
-        </div>
+        </RadzenStack>
     }
-</div>
+</RadzenStack>
 
 @code {
     [Parameter] public bool ShowNotifications { get; set; } = true;
@@ -326,6 +364,18 @@
         };
     }
 
+    private string GetNotificationCardStyle(string type)
+    {
+        return type?.ToUpper() switch
+        {
+            "SUCCESS" => "border-left: 4px solid var(--rz-success);",
+            "WARNING" => "border-left: 4px solid var(--rz-warning);",
+            "ERROR" => "border-left: 4px solid var(--rz-danger);",
+            "INFO" => "border-left: 4px solid var(--rz-info);",
+            _ => "border-left: 4px solid var(--rz-info);"
+        };
+    }
+
     public async Task SubscribeToNotificationType(string notificationType)
     {
         try
@@ -368,4 +418,3 @@
         }
     }
 }
-

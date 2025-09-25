@@ -1,40 +1,34 @@
 @using Inventory.Shared.Models
 @using Inventory.Shared.Services
+@using Radzen
+@using Radzen.Blazor
 @inject IUINotificationService NotificationService
 
-<div class="toast-notification @GetTypeClass() @GetAnimationClass()" role="alert">
-    <div class="toast-header">
-        <div class="toast-icon">
-            @GetIcon()
-        </div>
-        <div class="toast-content">
-            <h6 class="toast-title">@Notification.Title</h6>
-            <p class="toast-message">@Notification.Message</p>
-        </div>
-        @if (Notification.IsDismissible)
+<RadzenAlert AlertStyle="@GetAlertStyle()"
+             ShowIcon="true"
+             AllowClose="@Notification.IsDismissible"
+             Close="@Dismiss"
+             Style="@GetAnimationStyle()">
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
+        <RadzenStack Orientation="Orientation.Vertical" class="flex-grow-1" Gap="0.25rem">
+            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">
+                @Notification.Title
+            </RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2">
+                @Notification.Message
+            </RadzenText>
+        </RadzenStack>
+
+        @if (Notification.OnRetry != null)
         {
-            <button type="button" class="btn-close" @onclick="Dismiss" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
+            <RadzenButton Text="@(Notification.RetryText ?? "Retry")"
+                         Size="ButtonSize.Small"
+                         ButtonStyle="ButtonStyle.Light"
+                         Variant="Variant.Outlined"
+                         Click="Retry" />
         }
-    </div>
-    
-    @if (Notification.OnRetry != null)
-    {
-        <div class="toast-actions">
-            <button type="button" class="btn btn-sm btn-outline-light" @onclick="Retry">
-                @(Notification.RetryText ?? "Retry")
-            </button>
-        </div>
-    }
-    
-    @if (Notification.Duration > 0)
-    {
-        <div class="toast-progress">
-            <div class="toast-progress-bar" style="animation-duration: @(Notification.Duration)ms;"></div>
-        </div>
-    }
-</div>
+    </RadzenStack>
+</RadzenAlert>
 
 @code {
     [Parameter] public Notification Notification { get; set; } = new();
@@ -92,5 +86,23 @@
     {
         Notification.OnRetry?.Invoke();
         await OnRetry.InvokeAsync();
+    }
+
+    private AlertStyle GetAlertStyle()
+    {
+        return Notification.Type switch
+        {
+            NotificationType.Success => AlertStyle.Success,
+            NotificationType.Error => AlertStyle.Danger,
+            NotificationType.Warning => AlertStyle.Warning,
+            NotificationType.Info => AlertStyle.Info,
+            NotificationType.Debug => AlertStyle.Secondary,
+            _ => AlertStyle.Info
+        };
+    }
+
+    private string GetAnimationStyle()
+    {
+        return _isAnimating ? "animation: toast-enter 0.3s ease-out;" : "animation: toast-exit 0.3s ease-in;";
     }
 }
