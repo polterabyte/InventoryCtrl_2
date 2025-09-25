@@ -13,11 +13,77 @@ namespace Inventory.API.Controllers;
 public class ProductGroupController(AppDbContext context, ILogger<ProductGroupController> logger) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetProductGroups()
+    public async Task<IActionResult> GetProductGroups(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? search = null,
+        [FromQuery] bool? isActive = null)
+    {
+        try
+        {
+            var query = context.ProductGroups.AsQueryable();
+
+            // Apply filters
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(pg => pg.Name.Contains(search));
+            }
+
+            if (isActive.HasValue)
+            {
+                query = query.Where(pg => pg.IsActive == isActive.Value);
+            }
+
+            // Get total count
+            var totalCount = await query.CountAsync();
+
+            // Apply pagination
+            var productGroups = await query
+                .OrderBy(pg => pg.Name)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(pg => new ProductGroupDto
+                {
+                    Id = pg.Id,
+                    Name = pg.Name,
+                    IsActive = pg.IsActive,
+                    CreatedAt = pg.CreatedAt,
+                    UpdatedAt = pg.UpdatedAt
+                })
+                .ToListAsync();
+
+            var pagedResponse = new PagedResponse<ProductGroupDto>
+            {
+                Items = productGroups,
+                TotalCount = totalCount,
+                PageNumber = page,
+                PageSize = pageSize
+            };
+
+            return Ok(new PagedApiResponse<ProductGroupDto>
+            {
+                Success = true,
+                Data = pagedResponse
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving product groups");
+            return StatusCode(500, new PagedApiResponse<ProductGroupDto>
+            {
+                Success = false,
+                ErrorMessage = "Failed to retrieve product groups"
+            });
+        }
+    }
+
+    [HttpGet("all")]
+    public async Task<IActionResult> GetAllProductGroups()
     {
         try
         {
             var productGroups = await context.ProductGroups
+                .OrderBy(pg => pg.Name)
                 .Select(pg => new ProductGroupDto
                 {
                     Id = pg.Id,
@@ -36,7 +102,7 @@ public class ProductGroupController(AppDbContext context, ILogger<ProductGroupCo
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error retrieving product groups");
+            logger.LogError(ex, "Error retrieving all product groups");
             return StatusCode(500, new ApiResponse<List<ProductGroupDto>>
             {
                 Success = false,

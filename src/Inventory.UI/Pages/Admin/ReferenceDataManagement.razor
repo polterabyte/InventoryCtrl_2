@@ -24,7 +24,7 @@
 
     <RadzenCard Style="width: 100%;">
         <ChildContent>
-            <RadzenTabs @bind-SelectedIndex="activeTabIndex">
+            <RadzenTabs>
                 <Tabs>
                     <RadzenTabsItem Text="Categories" Icon="category">
                         <CategoryManagementWidget />
@@ -54,5 +54,4 @@
 </RadzenStack>
 
 @code {
-    private int activeTabIndex;
 }

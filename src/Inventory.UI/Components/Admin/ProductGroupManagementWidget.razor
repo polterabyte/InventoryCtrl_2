@@ -1,10 +1,10 @@
-@using Inventory.Shared.DTOs
-@using Inventory.Shared.Interfaces
 @using Inventory.Shared.Services
-@using Microsoft.AspNetCore.Authorization
-@using Microsoft.AspNetCore.Components.Authorization
 @using System.Linq
 @using Inventory.UI.Utilities
+@using Inventory.Shared.DTOs
+@using Inventory.Shared.Interfaces
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 @inject IProductGroupService ProductGroupService
 @inject IUINotificationService UiNotificationService
 @inject IJSRuntime JSRuntime
@@ -20,7 +20,7 @@
                                  Wrap="FlexWrap.Wrap"
                                  Gap="@RadzenUi.Gap">
                         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                            <RadzenIcon Icon="layers" />
+                            <RadzenIcon Icon="category" />
                             <RadzenText TextStyle="TextStyle.H5">Product Groups Management</RadzenText>
                         </RadzenStack>
 
@@ -37,17 +37,35 @@
                         </RadzenStack>
                     </RadzenStack>
 
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="@RadzenUi.Gap" Wrap="FlexWrap.Wrap">
+                        <RadzenTextBox @bind-Value="searchTerm"
+                                       Placeholder="Search product groups..."
+                                       Style="min-width:220px;"
+                                       @onkeyup="OnSearchKeyUp" />
+
+                        <RadzenDropDown Data="@statusFilterOptions"
+                                       TextProperty="Text"
+                                       ValueProperty="Value"
+                                       @bind-Value="isActiveFilter"
+                                       Placeholder="Filter by status"
+                                       Style="min-width:180px;"
+                                       Change="OnFilterChanged" />
+
+                        <RadzenDropDown Data="@pageSizeOptions"
+                                       @bind-Value="pageSize"
+                                       Style="min-width:160px;"
+                                       Change="OnPageSizeChanged" />
+                    </RadzenStack>
+
                     <RadzenBusyIndicator IsBusy="@isLoading">
-                        @if (pagedGroups?.Any() == true)
+                        @if (data?.Any() == true)
                         {
                             <RadzenDataGrid TItem="ProductGroupDto"
-                                             @ref="grid"
-                                             Data="@pagedGroups"
-                                             Count="@totalCount"
+                                             Data="@data"
                                              AllowPaging="true"
                                              PageSize="@pageSize"
-                                             LoadData="@OnGridLoad"
                                              AllowSorting="true"
+                                             FilterMode="FilterMode.Advanced"
                                              Responsive="true">
                                 <Columns>
                                     <RadzenDataGridColumn TItem="ProductGroupDto" Title="Name" Property="Name">
@@ -70,9 +88,6 @@
                                     <RadzenDataGridColumn TItem="ProductGroupDto" Title="Created" Property="CreatedAt">
                                         <Template Context="item">@item.CreatedAt.ToString("MMM dd, yyyy")</Template>
                                     </RadzenDataGridColumn>
-                                    <RadzenDataGridColumn TItem="ProductGroupDto" Title="Updated" Property="UpdatedAt">
-                                        <Template Context="item">@(item.UpdatedAt?.ToString("MMM dd, yyyy") ?? "-")</Template>
-                                    </RadzenDataGridColumn>
                                     <RadzenDataGridColumn TItem="ProductGroupDto" Title="Actions">
                                         <Template Context="item">
                                             <RadzenButton Icon="edit" Size="ButtonSize.Small" Variant="Variant.Text" Click="@(() => EditItem(item))" />
@@ -88,7 +103,7 @@
                                          AlignItems="AlignItems.Center"
                                          Gap="0.5rem"
                                          Style="padding: 1.5rem;">
-                                <RadzenIcon Icon="groups" Style="font-size:32px; color: var(--rz-text-secondary);" />
+                                <RadzenIcon Icon="category" Style="font-size:32px; color: var(--rz-text-secondary);" />
                                 <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary);">No product groups found</RadzenText>
                             </RadzenStack>
                         }
@@ -96,6 +111,7 @@
                 </RadzenStack>
         </RadzenCard>
 
+        
     </Authorized>
     <NotAuthorized>
         <RadzenAlert AlertStyle="AlertStyle.Danger" ShowIcon="true">
@@ -105,28 +121,109 @@
 </AuthorizeView>
 
 @code {
-    private RadzenDataGrid<ProductGroupDto>? grid;
-    private List<ProductGroupDto> pagedGroups = new();
-    private int totalCount = 0;
-    private int pageSize = 10;
+    private List<ProductGroupDto> data = new();
     private bool isLoading = false;
     private bool isEditing = false;
     private bool isSaving = false;
+    private string searchTerm = "";
+    private string isActiveFilter = "";
+    private int currentPage = 1;
+    private int pageSize = 10;
+    private int totalPages = 0;
+    private int totalCount = 0;
 
     private CreateProductGroupDto currentItem = new();
     private ProductGroupDto? selectedItem = null;
     private bool isActive = true;
 
-    protected override void OnInitialized()
+    private readonly FilterOption[] statusFilterOptions = new[]
     {
-        // Grid handles data loading via OnGridLoad
+        new FilterOption("", "All statuses"),
+        new FilterOption("true", "Active"),
+        new FilterOption("false", "Inactive")
+    };
+
+    private readonly int[] pageSizeOptions = new[] { 10, 25, 50 };
+
+    private record FilterOption(string Value, string Text);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        try
+        {
+            var response = await ProductGroupService.GetPagedAsync(
+                currentPage, 
+                pageSize, 
+                string.IsNullOrEmpty(searchTerm) ? null : searchTerm,
+                string.IsNullOrEmpty(isActiveFilter) ? null : bool.Parse(isActiveFilter)
+            );
+
+            if (response.Success && response.Data != null)
+            {
+                data = response.Data.Items;
+                totalCount = response.Data.TotalCount;
+                totalPages = response.Data.TotalPages;
+            }
+            else
+            {
+                UiNotificationService.ShowError("Error", response.ErrorMessage ?? "Failed to load data");
+                data = new();
+            }
+        }
+        catch (Exception ex)
+        {
+            UiNotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
+            data = new();
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 
     private async Task RefreshData()
     {
-        if (grid != null)
+        currentPage = 1;
+        await LoadData();
+    }
+
+    private async Task OnSearchKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
         {
-            await grid.Reload();
+            currentPage = 1;
+            await LoadData();
+        }
+    }
+
+    private async Task ChangePage(int page)
+    {
+        if (page >= 1 && page <= totalPages && page != currentPage)
+        {
+            currentPage = page;
+            await LoadData();
+        }
+    }
+
+    private async Task OnFilterChanged()
+    {
+        currentPage = 1;
+        await LoadData();
+    }
+
+    private async Task OnPageSizeChanged(object? value)
+    {
+        if (value is int size && size > 0)
+        {
+            pageSize = size;
+            currentPage = 1;
+            await LoadData();
         }
     }
 
@@ -177,6 +274,8 @@
         isSaving = true;
         try
         {
+            ProductGroupDto response;
+            
             if (isEditing && selectedItem != null)
             {
                 var updateDto = new UpdateProductGroupDto
@@ -184,37 +283,25 @@
                     Name = model.Name,
                     IsActive = isActive
                 };
-                var result = await ProductGroupService.UpdateProductGroupAsync(selectedItem.Id, updateDto);
-                if (result != null)
-                {
-                    UiNotificationService.ShowSuccess("Success", "Product group updated successfully");
-                    ds.Close();
-                    currentItem = new CreateProductGroupDto();
-                    selectedItem = null;
-                    isEditing = false;
-                    await RefreshData();
-                }
-                else
-                {
-                    UiNotificationService.ShowError("Error", "Failed to update product group");
-                }
+                response = await ProductGroupService.UpdateProductGroupAsync(selectedItem.Id, updateDto) ?? throw new InvalidOperationException("Failed to update product group");
             }
             else
             {
-                var result = await ProductGroupService.CreateProductGroupAsync(model);
-                if (result != null)
-                {
-                    UiNotificationService.ShowSuccess("Success", "Product group created successfully");
-                    ds.Close();
-                    currentItem = new CreateProductGroupDto();
-                    selectedItem = null;
-                    isEditing = false;
-                    await RefreshData();
-                }
-                else
-                {
-                    UiNotificationService.ShowError("Error", "Failed to create product group");
-                }
+                response = await ProductGroupService.CreateProductGroupAsync(model);
+            }
+
+            if (response != null)
+            {
+                UiNotificationService.ShowSuccess("Success", isEditing ? "Product group updated successfully" : "Product group created successfully");
+                ds.Close();
+                currentItem = new CreateProductGroupDto();
+                selectedItem = null;
+                isEditing = false;
+                await RefreshData();
+            }
+            else
+            {
+                UiNotificationService.ShowError("Error", "Failed to save product group");
             }
         }
         catch (Exception ex)
@@ -249,37 +336,6 @@
             {
                 UiNotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
             }
-        }
-    }
-    private async Task OnGridLoad(Radzen.LoadDataArgs args)
-    {
-        isLoading = true;
-        StateHasChanged();
-
-        try
-        {
-            var top = args.Top ?? pageSize;
-            if (top > 0)
-            {
-                pageSize = top;
-            }
-
-            var skip = args.Skip ?? 0;
-
-            var allGroups = await ProductGroupService.GetAllProductGroupsAsync();
-            totalCount = allGroups.Count;
-            pagedGroups = allGroups.Skip(skip).Take(pageSize).ToList();
-        }
-        catch (Exception ex)
-        {
-            UiNotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
-            pagedGroups = new();
-            totalCount = 0;
-        }
-        finally
-        {
-            isLoading = false;
-            StateHasChanged();
         }
     }
 
@@ -323,6 +379,7 @@
                     builder4.CloseComponent();
                 }));
                 builder3.CloseComponent();
+
 
                 builder3.OpenComponent<RadzenFormField>(2);
                 builder3.AddAttribute(4, "Text", "Status");

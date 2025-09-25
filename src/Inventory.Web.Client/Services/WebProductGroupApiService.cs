@@ -19,8 +19,29 @@ public class WebProductGroupApiService : WebBaseApiService, IProductGroupService
 
     public async Task<List<ProductGroupDto>> GetAllProductGroupsAsync()
     {
-        var response = await GetAsync<List<ProductGroupDto>>(ApiEndpoints.ProductGroups);
-        return response?.Data ?? new List<ProductGroupDto>();
+        Logger.LogInformation("GetAllProductGroupsAsync called, requesting from: {Endpoint}", ApiEndpoints.ProductGroupAll);
+        var response = await GetAsync<List<ProductGroupDto>>(ApiEndpoints.ProductGroupAll);
+        var productGroups = response?.Data ?? new List<ProductGroupDto>();
+        Logger.LogInformation("GetAllProductGroupsAsync returned {Count} product groups", productGroups.Count);
+        return productGroups;
+    }
+
+    public async Task<PagedApiResponse<ProductGroupDto>> GetPagedAsync(int page = 1, int pageSize = 10, string? search = null, bool? isActive = null)
+    {
+        Logger.LogInformation("GetPagedAsync called, requesting from: {Endpoint} with page={Page}, pageSize={PageSize}, search={Search}, isActive={IsActive}", 
+            ApiEndpoints.ProductGroups, page, pageSize, search, isActive);
+        
+        var queryParams = new List<string>();
+        if (page > 1) queryParams.Add($"page={page}");
+        if (pageSize != 10) queryParams.Add($"pageSize={pageSize}");
+        if (!string.IsNullOrEmpty(search)) queryParams.Add($"search={Uri.EscapeDataString(search)}");
+        if (isActive.HasValue) queryParams.Add($"isActive={isActive.Value}");
+        
+        var queryString = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "";
+        var response = await GetPagedAsync<ProductGroupDto>($"{ApiEndpoints.ProductGroups}{queryString}");
+        
+        Logger.LogInformation("GetPagedAsync returned {Count} product groups", response?.Data?.Items?.Count ?? 0);
+        return response;
     }
 
     public async Task<ProductGroupDto?> GetProductGroupByIdAsync(int id)

@@ -313,7 +313,8 @@ protected override async Task OnInitializedAsync()
                     ds.Close();
                     currentItem = new CreateWarehouseDto();
                     selectedItem = null;
-                    isEditing = false;await RefreshData();
+                    isEditing = false;
+                    await RefreshData();
                 }
                 else
                 {
@@ -329,7 +330,8 @@ protected override async Task OnInitializedAsync()
                     ds.Close();
                     currentItem = new CreateWarehouseDto();
                     selectedItem = null;
-                    isEditing = false;await RefreshData();
+                    isEditing = false;
+                    await RefreshData();
                 }
                 else
                 {
@@ -443,10 +445,10 @@ protected override async Task OnInitializedAsync()
                 builder3.AddAttribute(6, "Text", "Location *");
                 builder3.AddAttribute(7, "ChildContent", (RenderFragment)((builder4) =>
                 {
-                    builder4.OpenComponent<RadzenDropDown<int>>(0);
+                    builder4.OpenComponent<RadzenDropDown<int?>>(0);
                     builder4.AddAttribute(1, "Data", locations);
                     builder4.AddAttribute(2, "Value", currentItem.LocationId);
-                    builder4.AddAttribute(3, "ValueChanged", EventCallback.Factory.Create<int>(this, (value) => currentItem.LocationId = value));
+                    builder4.AddAttribute(3, "ValueChanged", EventCallback.Factory.Create<int?>(this, (value) => currentItem.LocationId = value));
                     builder4.AddAttribute(4, "TextProperty", "Name");
                     builder4.AddAttribute(5, "ValueProperty", "Id");
                     builder4.AddAttribute(6, "Name", "locationId");

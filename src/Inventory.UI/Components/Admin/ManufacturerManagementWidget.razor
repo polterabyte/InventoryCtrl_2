@@ -55,9 +55,7 @@
                                     </RadzenDataGridColumn>
                                     <RadzenDataGridColumn TItem="ManufacturerDto" Title="Location" Property="LocationName">
                                         <Template Context="item">
-                                            <RadzenTooltip Text="@item.LocationFullPath">
-                                                <RadzenText>@item.LocationName</RadzenText>
-                                            </RadzenTooltip>
+                                            <div title="@item.LocationFullPath">@item.LocationName</div>
                                         </Template>
                                     </RadzenDataGridColumn>
                                     <RadzenDataGridColumn TItem="ManufacturerDto" Title="Created" Property="CreatedAt">
@@ -139,7 +137,10 @@
 
     private async Task ShowCreateModal()
     {
-        currentItem = new CreateManufacturerDto();
+        currentItem = new CreateManufacturerDto
+        {
+            LocationId = locations.FirstOrDefault()?.Id ?? 1 // Инициализируем с первым доступным location
+        };
         isEditing = false;
         
         await DialogService.OpenAsync("Create Manufacturer", ds => CreateManufacturerDialog(ds), new DialogOptions

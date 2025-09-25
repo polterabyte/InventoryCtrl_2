@@ -12,18 +12,21 @@ public class UserManagementService : IUserManagementService
     private readonly HttpClient _httpClient;
     private readonly IAuthenticationService _authService;
     private readonly IJSRuntime _jsRuntime;
-    private readonly IApiUrlService _apiUrlService;
+    private readonly IUrlBuilderService _urlBuilderService;
+    private readonly ILogger<UserManagementService> _logger;
 
     public UserManagementService(
         HttpClient httpClient,
         IAuthenticationService authService,
         IJSRuntime jsRuntime,
-        IApiUrlService apiUrlService)
+        IUrlBuilderService urlBuilderService,
+        ILogger<UserManagementService> logger)
     {
         _httpClient = httpClient;
         _authService = authService;
         _jsRuntime = jsRuntime;
-        _apiUrlService = apiUrlService;
+        _urlBuilderService = urlBuilderService;
+        _logger = logger;
     }
 
     private async Task<HttpClient> GetAuthenticatedClientAsync()
@@ -39,8 +42,7 @@ public class UserManagementService : IUserManagementService
 
     private async Task<string> GetFullApiUrlAsync(string endpoint)
     {
-        var apiBaseUrl = await _apiUrlService.GetApiBaseUrlAsync();
-        return $"{apiBaseUrl.TrimEnd('/')}/{endpoint.TrimStart('/')}";
+        return await _urlBuilderService.BuildFullUrlAsync(endpoint);
     }
 
     public async Task<PagedApiResponse<UserDto>?> GetUsersAsync(int page = 1, int pageSize = 10, string? search = null, string? role = null)
@@ -56,24 +58,37 @@ public class UserManagementService : IUserManagementService
             if (!string.IsNullOrEmpty(role)) queryParams.Add($"role={Uri.EscapeDataString(role)}");
 
             var queryString = queryParams.Any() ? "?" + string.Join("&", queryParams) : "";
-            var fullUrl = await GetFullApiUrlAsync($"user{queryString}");
+            var fullUrl = await GetFullApiUrlAsync($"/user{queryString}");
+            
+            _logger.LogDebug("Making request to: {FullUrl}", fullUrl);
             var response = await client.GetAsync(fullUrl);
 
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
-                return JsonSerializer.Deserialize<PagedApiResponse<UserDto>>(content, new JsonSerializerOptions
+                _logger.LogDebug("Received response content: {Content}", content);
+                
+                try
                 {
-                    PropertyNameCaseInsensitive = true
-                });
+                    return JsonSerializer.Deserialize<PagedApiResponse<UserDto>>(content, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+                }
+                catch (JsonException ex)
+                {
+                    _logger.LogError(ex, "Failed to deserialize JSON response. Content: {Content}", content);
+                    return null;
+                }
             }
 
-            await _jsRuntime.InvokeVoidAsync("console.error", $"Error getting users: {response.StatusCode}");
+            var errorContent = await response.Content.ReadAsStringAsync();
+            _logger.LogError("Error getting users: {StatusCode}, Content: {Content}", response.StatusCode, errorContent);
             return null;
         }
         catch (Exception ex)
         {
-            await _jsRuntime.InvokeVoidAsync("console.error", "Error getting users:", ex.Message);
+            _logger.LogError(ex, "Error getting users");
             return null;
         }
     }
@@ -83,7 +98,7 @@ public class UserManagementService : IUserManagementService
         try
         {
             var client = await GetAuthenticatedClientAsync();
-            var fullUrl = await GetFullApiUrlAsync($"user/{id}");
+            var fullUrl = await GetFullApiUrlAsync($"/user/{id}");
             var response = await client.GetAsync(fullUrl);
 
             if (response.IsSuccessStatusCode)
@@ -95,12 +110,12 @@ public class UserManagementService : IUserManagementService
                 });
             }
 
-            await _jsRuntime.InvokeVoidAsync("console.error", $"Error getting user: {response.StatusCode}");
+            _logger.LogError("Error getting user: {StatusCode}", response.StatusCode);
             return null;
         }
         catch (Exception ex)
         {
-            await _jsRuntime.InvokeVoidAsync("console.error", "Error getting user:", ex.Message);
+            _logger.LogError(ex, "Error getting user");
             return null;
         }
     }
@@ -110,11 +125,11 @@ public class UserManagementService : IUserManagementService
         try
         {
             var client = await GetAuthenticatedClientAsync();
-            var fullUrl = await GetFullApiUrlAsync("user");
+            var fullUrl = await GetFullApiUrlAsync("/user");
             var json = JsonSerializer.Serialize(user);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            await _jsRuntime.InvokeVoidAsync("console.log", $"Creating user at URL: {fullUrl}");
+            _logger.LogDebug("Creating user at URL: {FullUrl}", fullUrl);
             
             var response = await client.PostAsync(fullUrl, content);
 
@@ -126,14 +141,14 @@ public class UserManagementService : IUserManagementService
 
             if (!response.IsSuccessStatusCode)
             {
-                await _jsRuntime.InvokeVoidAsync("console.error", $"Error creating user: {response.StatusCode}, Response: {responseContent}");
+                _logger.LogError("Error creating user: {StatusCode}, Response: {ResponseContent}", response.StatusCode, responseContent);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            await _jsRuntime.InvokeVoidAsync("console.error", "Error creating user:", ex.Message);
+            _logger.LogError(ex, "Error creating user");
             return new ApiResponse<UserDto>
             {
                 Success = false,
@@ -150,7 +165,7 @@ public class UserManagementService : IUserManagementService
             var json = JsonSerializer.Serialize(user);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var fullUrl = await GetFullApiUrlAsync($"user/{id}");
+            var fullUrl = await GetFullApiUrlAsync($"/user/{id}");
             var response = await client.PutAsync(fullUrl, content);
 
             var responseContent = await response.Content.ReadAsStringAsync();
@@ -161,14 +176,14 @@ public class UserManagementService : IUserManagementService
 
             if (!response.IsSuccessStatusCode)
             {
-                await _jsRuntime.InvokeVoidAsync("console.error", $"Error updating user: {response.StatusCode}");
+                _logger.LogError("Error updating user: {StatusCode}", response.StatusCode);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            await _jsRuntime.InvokeVoidAsync("console.error", "Error updating user:", ex.Message);
+            _logger.LogError(ex, "Error updating user");
             return new ApiResponse<UserDto>
             {
                 Success = false,
@@ -182,7 +197,7 @@ public class UserManagementService : IUserManagementService
         try
         {
             var client = await GetAuthenticatedClientAsync();
-            var fullUrl = await GetFullApiUrlAsync($"user/{id}");
+            var fullUrl = await GetFullApiUrlAsync($"/user/{id}");
             var response = await client.DeleteAsync(fullUrl);
 
             var responseContent = await response.Content.ReadAsStringAsync();
@@ -193,14 +208,14 @@ public class UserManagementService : IUserManagementService
 
             if (!response.IsSuccessStatusCode)
             {
-                await _jsRuntime.InvokeVoidAsync("console.error", $"Error deleting user: {response.StatusCode}");
+                _logger.LogError("Error deleting user: {StatusCode}", response.StatusCode);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            await _jsRuntime.InvokeVoidAsync("console.error", "Error deleting user:", ex.Message);
+            _logger.LogError(ex, "Error deleting user");
             return new ApiResponse<object>
             {
                 Success = false,
@@ -217,7 +232,7 @@ public class UserManagementService : IUserManagementService
             var json = JsonSerializer.Serialize(passwordDto);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var fullUrl = await GetFullApiUrlAsync($"user/{id}/change-password");
+            var fullUrl = await GetFullApiUrlAsync($"/user/{id}/change-password");
             var response = await client.PostAsync(fullUrl, content);
 
             var responseContent = await response.Content.ReadAsStringAsync();
@@ -228,14 +243,14 @@ public class UserManagementService : IUserManagementService
 
             if (!response.IsSuccessStatusCode)
             {
-                await _jsRuntime.InvokeVoidAsync("console.error", $"Error changing password: {response.StatusCode}");
+                _logger.LogError("Error changing password: {StatusCode}", response.StatusCode);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            await _jsRuntime.InvokeVoidAsync("console.error", "Error changing password:", ex.Message);
+            _logger.LogError(ex, "Error changing password");
             return new ApiResponse<object>
             {
                 Success = false,
@@ -255,7 +270,7 @@ public class UserManagementService : IUserManagementService
             if (!string.IsNullOrEmpty(role)) queryParams.Add($"role={Uri.EscapeDataString(role)}");
 
             var queryString = queryParams.Any() ? "?" + string.Join("&", queryParams) : "";
-            var fullUrl = await GetFullApiUrlAsync($"user/export{queryString}");
+            var fullUrl = await GetFullApiUrlAsync($"/user/export{queryString}");
             var response = await client.GetAsync(fullUrl);
 
             if (response.IsSuccessStatusCode)
@@ -268,12 +283,12 @@ public class UserManagementService : IUserManagementService
                 return true;
             }
 
-            await _jsRuntime.InvokeVoidAsync("console.error", $"Error exporting users: {response.StatusCode}");
+            _logger.LogError("Error exporting users: {StatusCode}", response.StatusCode);
             return false;
         }
         catch (Exception ex)
         {
-            await _jsRuntime.InvokeVoidAsync("console.error", "Error exporting users:", ex.Message);
+            _logger.LogError(ex, "Error exporting users");
             return false;
         }
     }

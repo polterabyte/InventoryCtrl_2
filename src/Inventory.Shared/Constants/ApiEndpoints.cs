@@ -34,6 +34,7 @@ public static class ApiEndpoints
     // ProductGroup endpoints
     public const string ProductGroups = "/ProductGroup";
     public const string ProductGroupById = $"{ProductGroups}/{{id}}";
+    public const string ProductGroupAll = $"{ProductGroups}/all";
     
     // ProductModel endpoints
     public const string ProductModels = "/ProductModel";

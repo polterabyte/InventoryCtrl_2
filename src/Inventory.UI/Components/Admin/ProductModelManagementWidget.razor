@@ -169,7 +169,10 @@
 
         private async Task ShowCreateModal()
     {
-        currentItem = new CreateProductModelDto();
+        currentItem = new CreateProductModelDto
+        {
+            ManufacturerId = manufacturerOptions.FirstOrDefault()?.Value ?? 1 // Инициализируем с первым доступным manufacturer
+        };
         isActive = true;
         isEditing = false;
         
