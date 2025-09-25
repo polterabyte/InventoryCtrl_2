@@ -8,25 +8,47 @@
 
 <AuthorizeView>
     <Authorized Context="userContext">
-        <RadzenStack Orientation="Orientation.Horizontal" Gap="@RadzenUi.Gap" Style="min-height: 100vh;">
-            <RadzenCard Style="width: 260px; margin: 0; border-radius: 0;">
-                <NavMenu />
-            </RadzenCard>
+        <div class="app-shell">
+            <aside class="app-sidebar @(sidebarExpanded ? "expanded" : "collapsed")">
+                <div class="sidebar-inner">
+                    <div class="sidebar-brand">
+                        <RadzenIcon Icon="warehouse" />
+                        <span>Inventory Control</span>
+                    </div>
+                    <NavMenu />
+                </div>
+            </aside>
 
-            <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.Gap" Style="flex: 1; padding: 1rem;">
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Class="rz-p-3 rz-shadow-1 rz-border-radius">
-                    <span>
-                        <RadzenIcon Icon="account_circle" Class="rz-mr-2" />
-                        Привет, @userContext.User.Identity?.Name!
-                    </span>
-                    <a href="https://www.cubytechnologies.com/" target="_blank">About</a>
+            <div class="sidebar-backdrop @(sidebarExpanded ? "is-visible" : string.Empty)" @onclick="ToggleSidebar"></div>
+
+            <main class="app-main @(sidebarExpanded ? "shifted" : "full")">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.Gap" class="main-column">
+                    <RadzenStack Orientation="Orientation.Horizontal"
+                                 AlignItems="AlignItems.Center"
+                                 JustifyContent="JustifyContent.SpaceBetween"
+                                 class="top-bar">
+                        <RadzenButton Icon="@SidebarToggleIcon"
+                                      ButtonStyle="ButtonStyle.Light"
+                                      Variant="Variant.Text"
+                                      Size="ButtonSize.Medium"
+                                      Class="sidebar-toggle"
+                                      AriaLabel="Переключить меню"
+                                      Click="ToggleSidebar" />
+
+                        <span class="top-bar__greeting">
+                            <RadzenIcon Icon="account_circle" Class="rz-mr-2" />
+                            Привет, @userContext.User.Identity?.Name!
+                        </span>
+
+                        <a class="top-bar__link" href="https://www.cubytechnologies.com/" target="_blank">About</a>
+                    </RadzenStack>
+
+                    <RadzenCard Style="flex: 1;" class="content-card">
+                        @Body
+                    </RadzenCard>
                 </RadzenStack>
-
-                <RadzenCard Style="flex: 1;">
-                    @Body
-                </RadzenCard>
-            </RadzenStack>
-        </RadzenStack>
+            </main>
+        </div>
 
         <NotificationContainer />
         <RealTimeNotificationComponent />
@@ -38,4 +60,16 @@
         <Inventory.UI.Pages.Login />
     </NotAuthorized>
 </AuthorizeView>
+
+@code {
+    private bool sidebarExpanded = true;
+
+    private string SidebarToggleIcon => sidebarExpanded ? "menu_open" : "menu";
+
+    private void ToggleSidebar()
+    {
+        sidebarExpanded = !sidebarExpanded;
+    }
+
+}
 

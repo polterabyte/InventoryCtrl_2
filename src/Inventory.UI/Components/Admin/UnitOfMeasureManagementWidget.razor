@@ -8,6 +8,7 @@
 @inject IUnitOfMeasureApiService UnitOfMeasureService
 @inject IUINotificationService UiNotificationService
 @inject IJSRuntime JSRuntime
+@inject DialogService DialogService
 
 <AuthorizeView Roles="Admin">
     <Authorized Context="_">
@@ -118,53 +119,7 @@
                 </RadzenStack>
         </RadzenCard>
 
-        <RadzenDialog Visible="@showModal"
-                      Title="@($"{(isEditing ? "Edit" : "Create")} Unit")"
-                      Close="CloseModal"
-                      Width="560px">
-            <RadzenTemplateForm TItem="CreateUnitOfMeasureDto" Data="@currentItem" Submit="OnSubmit">
-                    <DataAnnotationsValidator />
-                        <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.Gap">
-                            <RadzenStack Orientation="Orientation.Horizontal" Wrap="FlexWrap.Wrap" Gap="@RadzenUi.Gap">
-                                <RadzenStack Orientation="Orientation.Vertical" Style="flex:1 1 240px;">
-                                    <RadzenFormField Text="Name *">
-                                        <RadzenTextBox @bind-Value="currentItem.Name" Name="unitName" />
-                                        <RadzenRequiredValidator Component="unitName" Text="Name is required" />
-                                    </RadzenFormField>
-                                </RadzenStack>
-                                <RadzenStack Orientation="Orientation.Vertical" Style="flex:1 1 200px;">
-                                    <RadzenFormField Text="Symbol *">
-                                        <RadzenTextBox @bind-Value="currentItem.Symbol" Name="unitSymbol" />
-                                        <RadzenRequiredValidator Component="unitSymbol" Text="Symbol is required" />
-                                    </RadzenFormField>
-                                </RadzenStack>
-                            </RadzenStack>
-
-                            <RadzenFormField Text="Description">
-                                <RadzenTextArea @bind-Value="currentItem.Description" Rows="3" Name="unitDescription" />
-                            </RadzenFormField>
-
-                            @if (isEditing)
-                            {
-                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                    <RadzenCheckBox @bind-Value="isActive" Name="isActive" />
-                                    <RadzenLabel Text="Active" For="isActive" />
-                                </RadzenStack>
-                            }
-
-                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.75rem">
-                                <RadzenButton Text="Cancel"
-                                              ButtonStyle="ButtonStyle.Light"
-                                              Variant="Variant.Outlined"
-                                              Click="CloseModal" />
-                                <RadzenButton Text="@(isSaving ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update" : "Create"))"
-                                              ButtonStyle="ButtonStyle.Primary"
-                                              ButtonType="ButtonType.Submit"
-                                              Disabled="@isSaving" />
-                            </RadzenStack>
-                        </RadzenStack>
-                </RadzenTemplateForm>
-        </RadzenDialog>
+        
     </Authorized>
     <NotAuthorized>
         <RadzenAlert AlertStyle="AlertStyle.Danger" ShowIcon="true">
@@ -176,7 +131,6 @@
 @code {
     private List<UnitOfMeasureDto> data = new();
     private bool isLoading = false;
-    private bool showModal = false;
     private bool isEditing = false;
     private bool isSaving = false;
     private string searchTerm = "";
@@ -281,15 +235,22 @@
         }
     }
 
-    private void ShowCreateModal()
+    private async Task ShowCreateModal()
     {
         currentItem = new CreateUnitOfMeasureDto();
         isActive = true;
         isEditing = false;
-        showModal = true;
+        
+        await DialogService.OpenAsync("Create Unit of Measure", ds => CreateUnitOfMeasureDialog(ds), new DialogOptions
+        {
+            Width = "500px",
+            Height = "auto",
+            CloseDialogOnOverlayClick = true,
+            CloseDialogOnEsc = true
+        });
     }
 
-    private void EditItem(UnitOfMeasureDto item)
+    private async Task EditItem(UnitOfMeasureDto item)
     {
         selectedItem = item;
         currentItem = new CreateUnitOfMeasureDto
@@ -300,18 +261,25 @@
         };
         isActive = item.IsActive;
         isEditing = true;
-        showModal = true;
+        
+        await DialogService.OpenAsync("Edit Unit of Measure", ds => CreateUnitOfMeasureDialog(ds), new DialogOptions
+        {
+            Width = "500px",
+            Height = "auto",
+            CloseDialogOnOverlayClick = true,
+            CloseDialogOnEsc = true
+        });
     }
 
-    private void CloseModal()
+    private void CloseModal(DialogService ds)
     {
-        showModal = false;
+        ds.Close();
         currentItem = new CreateUnitOfMeasureDto();
         selectedItem = null;
         isEditing = false;
     }
 
-    private async Task OnSubmit(CreateUnitOfMeasureDto model)
+    private async Task OnSubmit(CreateUnitOfMeasureDto model, DialogService ds)
     {
         isSaving = true;
         try
@@ -337,7 +305,10 @@
             if (response.Success)
             {
                 UiNotificationService.ShowSuccess("Success", isEditing ? "Unit updated successfully" : "Unit created successfully");
-                CloseModal();
+                ds.Close();
+                currentItem = new CreateUnitOfMeasureDto();
+                selectedItem = null;
+                isEditing = false;
                 await RefreshData();
             }
             else
@@ -385,4 +356,115 @@
             }
         }
     }
+
+    private RenderFragment CreateUnitOfMeasureDialog(DialogService ds) => builder =>
+    {
+        builder.OpenComponent<RadzenTemplateForm<CreateUnitOfMeasureDto>>(0);
+        builder.AddAttribute(1, "Data", currentItem);
+        builder.AddAttribute(2, "Submit", EventCallback.Factory.Create<CreateUnitOfMeasureDto>(this, async (model) => await OnSubmit(model, ds)));
+        builder.AddAttribute(3, "ChildContent", (RenderFragment)((builder2) =>
+        {
+            builder2.OpenComponent<DataAnnotationsValidator>(0);
+            builder2.CloseComponent();
+
+            builder2.OpenComponent<RadzenStack>(1);
+            builder2.AddAttribute(2, "Orientation", Orientation.Vertical);
+            builder2.AddAttribute(3, "Gap", RadzenUi.Gap);
+            builder2.AddAttribute(4, "ChildContent", (RenderFragment)((builder3) =>
+            {
+                builder3.OpenComponent<RadzenText>(0);
+                builder3.AddAttribute(1, "TextStyle", TextStyle.H4);
+                builder3.AddAttribute(2, "class", "rz-mb-3");
+                builder3.AddAttribute(3, "ChildContent", (RenderFragment)((builder4) =>
+                {
+                    builder4.AddContent(0, $"{(isEditing ? "Edit" : "Create")} Unit of Measure");
+                }));
+                builder3.CloseComponent();
+
+                builder3.OpenComponent<RadzenFormField>(1);
+                builder3.AddAttribute(2, "Text", "Name *");
+                builder3.AddAttribute(3, "ChildContent", (RenderFragment)((builder4) =>
+                {
+                    builder4.OpenComponent<RadzenTextBox>(0);
+                    builder4.AddAttribute(1, "Value", currentItem.Name);
+                    builder4.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<string>(this, (value) => currentItem.Name = value));
+                    builder4.AddAttribute(3, "Name", "unitName");
+                    builder4.CloseComponent();
+
+                    builder4.OpenComponent<RadzenRequiredValidator>(1);
+                    builder4.AddAttribute(2, "Component", "unitName");
+                    builder4.AddAttribute(3, "Text", "Name is required");
+                    builder4.CloseComponent();
+                }));
+                builder3.CloseComponent();
+
+                builder3.OpenComponent<RadzenFormField>(2);
+                builder3.AddAttribute(4, "Text", "Symbol *");
+                builder3.AddAttribute(5, "ChildContent", (RenderFragment)((builder4) =>
+                {
+                    builder4.OpenComponent<RadzenTextBox>(0);
+                    builder4.AddAttribute(1, "Value", currentItem.Symbol);
+                    builder4.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<string>(this, (value) => currentItem.Symbol = value));
+                    builder4.AddAttribute(3, "Name", "unitSymbol");
+                    builder4.CloseComponent();
+
+                    builder4.OpenComponent<RadzenRequiredValidator>(1);
+                    builder4.AddAttribute(2, "Component", "unitSymbol");
+                    builder4.AddAttribute(3, "Text", "Symbol is required");
+                    builder4.CloseComponent();
+                }));
+                builder3.CloseComponent();
+
+                builder3.OpenComponent<RadzenFormField>(3);
+                builder3.AddAttribute(6, "Text", "Description");
+                builder3.AddAttribute(7, "ChildContent", (RenderFragment)((builder4) =>
+                {
+                    builder4.OpenComponent<RadzenTextArea>(0);
+                    builder4.AddAttribute(1, "Value", currentItem.Description);
+                    builder4.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<string>(this, (value) => currentItem.Description = value));
+                    builder4.AddAttribute(3, "Name", "unitDescription");
+                    builder4.AddAttribute(4, "Rows", 3);
+                    builder4.CloseComponent();
+                }));
+                builder3.CloseComponent();
+
+                builder3.OpenComponent<RadzenFormField>(4);
+                builder3.AddAttribute(8, "Text", "Status");
+                builder3.AddAttribute(9, "ChildContent", (RenderFragment)((builder4) =>
+                {
+                    builder4.OpenComponent<RadzenCheckBox<bool>>(0);
+                    builder4.AddAttribute(1, "Value", isActive);
+                    builder4.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<bool>(this, (value) => isActive = value));
+                    builder4.AddAttribute(3, "Name", "isActive");
+                    builder4.CloseComponent();
+                    builder4.AddMarkupContent(4, "<span class=\"rz-form-text\">Active</span>");
+                }));
+                builder3.CloseComponent();
+
+                builder3.OpenComponent<RadzenStack>(5);
+                builder3.AddAttribute(10, "Orientation", Orientation.Horizontal);
+                builder3.AddAttribute(11, "JustifyContent", JustifyContent.End);
+                builder3.AddAttribute(12, "Gap", "0.75rem");
+                builder3.AddAttribute(13, "ChildContent", (RenderFragment)((builder4) =>
+                {
+                    builder4.OpenComponent<RadzenButton>(0);
+                    builder4.AddAttribute(1, "Text", "Cancel");
+                    builder4.AddAttribute(2, "ButtonStyle", ButtonStyle.Light);
+                    builder4.AddAttribute(3, "Variant", Variant.Outlined);
+                    builder4.AddAttribute(4, "Click", EventCallback.Factory.Create(this, () => CloseModal(ds)));
+                    builder4.CloseComponent();
+
+                    builder4.OpenComponent<RadzenButton>(1);
+                    builder4.AddAttribute(2, "Text", isSaving ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update" : "Create"));
+                    builder4.AddAttribute(3, "ButtonStyle", ButtonStyle.Primary);
+                    builder4.AddAttribute(4, "ButtonType", ButtonType.Submit);
+                    builder4.AddAttribute(5, "Disabled", isSaving);
+                    builder4.CloseComponent();
+                }));
+                builder3.CloseComponent();
+            }));
+            builder2.CloseComponent();
+        }));
+        builder.CloseComponent();
+    };
 }

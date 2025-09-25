@@ -11,7 +11,6 @@
 
 <AuthorizeView Context="authState">
     <Authorized Context="authContext">
-        <div class="dashboard-container">
             <RadzenStack Orientation="Orientation.Vertical"
                          Gap="@RadzenUi.GapLarge"
                          class="dashboard-layout">
@@ -33,61 +32,60 @@
                     </RadzenStack>
                 </RadzenCard>
 
-                <section class="dashboard-section">
-                    <RadzenStack Orientation="Orientation.Horizontal"
-                                 AlignItems="AlignItems.Center"
-                                 JustifyContent="JustifyContent.SpaceBetween"
-                                 class="section-header">
-                        <RadzenText TextStyle="TextStyle.H6">Ключевые показатели</RadzenText>
-                    </RadzenStack>
+                <RadzenStack Orientation="Orientation.Horizontal"
+                                AlignItems="AlignItems.Center"
+                                JustifyContent="JustifyContent.SpaceBetween"
+                                class="section-header">
+                    <RadzenText TextStyle="TextStyle.H6">Ключевые показатели</RadzenText>
+                </RadzenStack>
 
-                    <RadzenRow Class="dashboard-kpi-grid g-3">
-                        <RadzenColumn Size="12" SizeSm="6" SizeLg="4">
-                            <StatsWidget Label="Всего товаров"
-                                         Value="@dashboardStats.TotalProducts"
-                                         Icon="inventory_2"
-                                         CardClass="primary" />
-                        </RadzenColumn>
-                        <RadzenColumn Size="12" SizeSm="6" SizeLg="4">
-                            <StatsWidget Label="Категории"
-                                         Value="@dashboardStats.TotalCategories"
-                                         Icon="category"
-                                         CardClass="info" />
-                        </RadzenColumn>
-                        <RadzenColumn Size="12" SizeSm="6" SizeLg="4">
-                            <StatsWidget Label="Производители"
-                                         Value="@dashboardStats.TotalManufacturers"
-                                         Icon="precision_manufacturing"
-                                         CardClass="success" />
-                        </RadzenColumn>
-                        <RadzenColumn Size="12" SizeSm="6" SizeLg="4">
-                            <StatsWidget Label="Склады"
-                                         Value="@dashboardStats.TotalWarehouses"
-                                         Icon="storefront"
-                                         CardClass="primary" />
-                        </RadzenColumn>
-                        <RadzenColumn Size="12" SizeSm="6" SizeLg="4">
-                            <StatsWidget Label="Низкий остаток"
-                                         Value="@dashboardStats.LowStockProducts"
-                                         SubLabel="требуют пополнения"
-                                         Icon="warning_amber"
-                                         CardClass="warning" />
-                        </RadzenColumn>
-                        <RadzenColumn Size="12" SizeSm="6" SizeLg="4">
-                            <StatsWidget Label="Нет в наличии"
-                                         Value="@dashboardStats.OutOfStockProducts"
-                                         SubLabel="нужно заказать"
-                                         Icon="remove_shopping_cart"
-                                         CardClass="danger" />
-                        </RadzenColumn>
-                    </RadzenRow>
-                </section>
+                <RadzenRow Class="dashboard-kpi-grid g-3">
+                    <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnThirdSize">
+                        <StatsWidget Label="Всего товаров"
+                                        Value="@dashboardStats.TotalProducts"
+                                        Icon="inventory_2"
+                                        CardClass="primary" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnThirdSize">
+                        <StatsWidget Label="Категории"
+                                        Value="@dashboardStats.TotalCategories"
+                                        Icon="category"
+                                        CardClass="info" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnThirdSize">
+                        <StatsWidget Label="Производители"
+                                        Value="@dashboardStats.TotalManufacturers"
+                                        Icon="precision_manufacturing"
+                                        CardClass="success" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnThirdSize">
+                        <StatsWidget Label="Склады"
+                                        Value="@dashboardStats.TotalWarehouses"
+                                        Icon="storefront"
+                                        CardClass="primary" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnThirdSize">
+                        <StatsWidget Label="Низкий остаток"
+                                        Value="@dashboardStats.LowStockProducts"
+                                        SubLabel="требуют пополнения"
+                                        Icon="warning_amber"
+                                        CardClass="warning" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnThirdSize">
+                        <StatsWidget Label="Нет в наличии"
+                                        Value="@dashboardStats.OutOfStockProducts"
+                                        SubLabel="нужно заказать"
+                                        Icon="remove_shopping_cart"
+                                        CardClass="danger" />
+                    </RadzenColumn>
+                </RadzenRow>
+
 
                 <RadzenRow Class="g-3">
-                    <RadzenColumn Size="12" SizeLg="8">
+                    <RadzenColumn Size="@ColumnFullSize" SizeLg="@ColumnLargeSize">
                         <RecentActivity />
                     </RadzenColumn>
-                    <RadzenColumn Size="12" SizeLg="4">
+                    <RadzenColumn Size="@ColumnFullSize" SizeLg="@ColumnThirdSize">
                         <LowStockAlert />
                     </RadzenColumn>
                 </RadzenRow>
@@ -102,7 +100,7 @@
                         </RadzenStack>
 
                         <RadzenRow Class="quick-actions-grid g-3">
-                            <RadzenColumn Size="12" SizeSm="6" SizeLg="3">
+                            <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnQuarterSize">
                                 <RadzenButton Text="Добавить товар"
                                               Icon="add_circle"
                                               ButtonStyle="ButtonStyle.Primary"
@@ -111,7 +109,7 @@
                                               class="w-100"
                                               @onclick="NavigateToProducts" />
                             </RadzenColumn>
-                            <RadzenColumn Size="12" SizeSm="6" SizeLg="3">
+                            <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnQuarterSize">
                                 <RadzenButton Text="Приход товара"
                                               Icon="arrow_downward"
                                               ButtonStyle="ButtonStyle.Success"
@@ -120,7 +118,7 @@
                                               class="w-100"
                                               @onclick="NavigateToProducts" />
                             </RadzenColumn>
-                            <RadzenColumn Size="12" SizeSm="6" SizeLg="3">
+                            <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnQuarterSize">
                                 <RadzenButton Text="Расход товара"
                                               Icon="arrow_upward"
                                               ButtonStyle="ButtonStyle.Warning"
@@ -129,7 +127,7 @@
                                               class="w-100"
                                               @onclick="NavigateToProducts" />
                             </RadzenColumn>
-                            <RadzenColumn Size="12" SizeSm="6" SizeLg="3">
+                            <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnQuarterSize">
                                 <RadzenButton Text="Отчеты"
                                               Icon="description"
                                               ButtonStyle="ButtonStyle.Info"
@@ -142,11 +140,16 @@
                     </RadzenStack>
                 </RadzenCard>
             </RadzenStack>
-        </div>
     </Authorized>
 </AuthorizeView>
 
 @code {
+    private const int ColumnFullSize = 12;
+    private const int ColumnLargeSize = 8;
+    private const int ColumnHalfSize = 6;
+    private const int ColumnThirdSize = 4;
+    private const int ColumnQuarterSize = 3;
+
     private DashboardStatsDto dashboardStats = new();
 
     protected override async Task OnInitializedAsync()

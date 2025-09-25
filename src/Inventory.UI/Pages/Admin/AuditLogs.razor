@@ -235,111 +235,6 @@
     </div>
 </div>
 
-<RadzenDialog Visible="@(selectedLog != null)"
-              Title="Audit Log Details"
-              Close="CloseLogDetails"
-              Width="760px">
-    @if (selectedLog != null)
-        {
-            <div class="row">
-                <div class="col-md-6">
-                    <h6>Basic Information</h6>
-                    <table class="table table-sm">
-                        <tr>
-                            <td><strong>Timestamp:</strong></td>
-                            <td>@selectedLog.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff")</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Action Type:</strong></td>
-                            <td><span class="badge @GetActionBadgeClass(selectedLog.ActionType.ToString())">@selectedLog.ActionType.ToString()</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Entity Type:</strong></td>
-                            <td>@(selectedLog.EntityType ?? "N/A")</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Entity ID:</strong></td>
-                            <td>@(selectedLog.EntityId ?? "N/A")</td>
-                        </tr>
-                        <tr>
-                            <td><strong>User:</strong></td>
-                            <td>@(selectedLog.Username ?? "Anonymous")</td>
-                        </tr>
-                        <tr>
-                            <td><strong>IP Address:</strong></td>
-                            <td>@selectedLog.IpAddress</td>
-                        </tr>
-                        <tr>
-                            <td><strong>User Agent:</strong></td>
-                            <td><small class="text-muted">@selectedLog.UserAgent</small></td>
-                        </tr>
-                    </table>
-                </div>
-                <div class="col-md-6">
-                    <h6>Request Details</h6>
-                    <table class="table table-sm">
-                        <tr>
-                            <td><strong>Method:</strong></td>
-                            <td><span class="badge bg-primary">@selectedLog.HttpMethod</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>URL:</strong></td>
-                            <td><code>@selectedLog.Url</code></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Status Code:</strong></td>
-                            <td><span class="badge @GetStatusCodeBadgeClass(selectedLog.StatusCode ?? 0)">@selectedLog.StatusCode</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Response Time:</strong></td>
-                            <td>@(selectedLog.Duration?.ToString() ?? "N/A") ms</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Success:</strong></td>
-                            <td>
-                                @if (selectedLog.IsSuccess)
-                                {
-                                    <span class="badge bg-success">Yes</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-danger">No</span>
-                                }
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Request ID:</strong></td>
-                            <td><code>@(selectedLog.RequestId ?? "N/A")</code></td>
-                        </tr>
-                    </table>
-                </div>
-            </div>
-
-            @if (!string.IsNullOrEmpty(selectedLog.Changes))
-            {
-                <div class="mt-3">
-                    <h6>Changes</h6>
-                    <pre class="bg-light p-3 rounded"><code>@selectedLog.Changes</code></pre>
-                </div>
-            }
-
-            @if (!string.IsNullOrEmpty(selectedLog.ErrorMessage))
-            {
-                <div class="mt-3">
-                    <h6>Error Message</h6>
-                    <div class="alert alert-danger">
-                        <code>@selectedLog.ErrorMessage</code>
-                    </div>
-                </div>
-            }
-            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.75rem" class="rz-mt-3">
-                <RadzenButton Text="Close"
-                              ButtonStyle="ButtonStyle.Light"
-                              Variant="Variant.Outlined"
-                              Click="@(args => CloseLogDetails())" />
-            </RadzenStack>
-        }
-</RadzenDialog>
 
 @code {
     private List<AuditLogDto>? auditLogs;
@@ -352,6 +247,7 @@
     private int failedRequests = 0;
     private double averageResponseTime = 0;
     private AuditLogDto? selectedLog;
+    private bool showLogDetails = false;
 
     private AuditLogFilters filters = new()
     {
@@ -485,11 +381,13 @@
     private void ShowLogDetails(AuditLogDto log)
     {
         selectedLog = log;
+        showLogDetails = true;
     }
 
     private void CloseLogDetails()
     {
         selectedLog = null;
+        showLogDetails = false;
     }
 
     private string GetRowClass(AuditLogDto log)

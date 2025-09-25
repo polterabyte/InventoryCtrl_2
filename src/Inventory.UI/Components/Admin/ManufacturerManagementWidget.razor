@@ -8,6 +8,7 @@
 @inject IManufacturerService ManufacturerService
 @inject IUINotificationService UiNotificationService
 @inject IJSRuntime JSRuntime
+@inject DialogService DialogService
 
 <AuthorizeView Roles="Admin">
     <Authorized Context="_">
@@ -80,31 +81,6 @@
                 </RadzenStack>
         </RadzenCard>
 
-        <RadzenDialog Visible="@showModal"
-                      Title="@($"{(isEditing ? "Edit" : "Create")} Manufacturer")"
-                      Close="CloseModal"
-                      Width="500px">
-            <RadzenTemplateForm TItem="CreateManufacturerDto" Data="@currentItem" Submit="OnSubmit">
-                    <DataAnnotationsValidator />
-                        <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.Gap">
-                            <RadzenFormField Text="Name *">
-                                <RadzenTextBox @bind-Value="currentItem.Name" Name="manufacturerName" />
-                                <RadzenRequiredValidator Component="manufacturerName" Text="Name is required" />
-                            </RadzenFormField>
-
-                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.75rem">
-                                <RadzenButton Text="Cancel"
-                                              ButtonStyle="ButtonStyle.Light"
-                                              Variant="Variant.Outlined"
-                                              Click="CloseModal" />
-                                <RadzenButton Text="@(isSaving ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update" : "Create"))"
-                                              ButtonStyle="ButtonStyle.Primary"
-                                              ButtonType="ButtonType.Submit"
-                                              Disabled="@isSaving" />
-                            </RadzenStack>
-                        </RadzenStack>
-                </RadzenTemplateForm>
-        </RadzenDialog>
     </Authorized>
     <NotAuthorized>
         <RadzenAlert AlertStyle="AlertStyle.Danger" ShowIcon="true">
@@ -116,7 +92,6 @@
 @code {
     private List<ManufacturerDto> data = new();
     private bool isLoading = false;
-    private bool showModal = false;
     private bool isEditing = false;
     private bool isSaving = false;
 
@@ -151,14 +126,21 @@
         await LoadData();
     }
 
-    private void ShowCreateModal()
+    private async Task ShowCreateModal()
     {
         currentItem = new CreateManufacturerDto();
         isEditing = false;
-        showModal = true;
+        
+        await DialogService.OpenAsync("Create Manufacturer", ds => CreateManufacturerDialog(ds), new DialogOptions
+        {
+            Width = "500px",
+            Height = "auto",
+            CloseDialogOnOverlayClick = true,
+            CloseDialogOnEsc = true
+        });
     }
 
-    private void EditItem(ManufacturerDto item)
+    private async Task EditItem(ManufacturerDto item)
     {
         selectedItem = item;
         currentItem = new CreateManufacturerDto
@@ -166,18 +148,25 @@
             Name = item.Name
         };
         isEditing = true;
-        showModal = true;
+        
+        await DialogService.OpenAsync("Edit Manufacturer", ds => CreateManufacturerDialog(ds), new DialogOptions
+        {
+            Width = "500px",
+            Height = "auto",
+            CloseDialogOnOverlayClick = true,
+            CloseDialogOnEsc = true
+        });
     }
 
-    private void CloseModal()
+    private void CloseModal(DialogService ds)
     {
-        showModal = false;
+        ds.Close();
         currentItem = new CreateManufacturerDto();
         selectedItem = null;
         isEditing = false;
     }
 
-    private async Task OnSubmit(CreateManufacturerDto model)
+    private async Task OnSubmit(CreateManufacturerDto model, DialogService ds)
     {
         isSaving = true;
         try
@@ -192,7 +181,10 @@
                 if (result != null)
                 {
                     UiNotificationService.ShowSuccess("Success", "Manufacturer updated successfully");
-                    CloseModal();
+                    ds.Close();
+                    currentItem = new CreateManufacturerDto();
+                    selectedItem = null;
+                    isEditing = false;
                     await RefreshData();
                 }
                 else
@@ -206,7 +198,10 @@
                 if (result != null)
                 {
                     UiNotificationService.ShowSuccess("Success", "Manufacturer created successfully");
-                    CloseModal();
+                    ds.Close();
+                    currentItem = new CreateManufacturerDto();
+                    selectedItem = null;
+                    isEditing = false;
                     await RefreshData();
                 }
                 else
@@ -249,4 +244,72 @@
             }
         }
     }
+
+    private RenderFragment CreateManufacturerDialog(DialogService ds) => builder =>
+    {
+        builder.OpenComponent<RadzenTemplateForm<CreateManufacturerDto>>(0);
+        builder.AddAttribute(1, "Data", currentItem);
+        builder.AddAttribute(2, "Submit", EventCallback.Factory.Create<CreateManufacturerDto>(this, async (model) => await OnSubmit(model, ds)));
+        builder.AddAttribute(3, "ChildContent", (RenderFragment)((builder2) =>
+        {
+            builder2.OpenComponent<DataAnnotationsValidator>(0);
+            builder2.CloseComponent();
+
+            builder2.OpenComponent<RadzenStack>(1);
+            builder2.AddAttribute(2, "Orientation", Orientation.Vertical);
+            builder2.AddAttribute(3, "Gap", RadzenUi.Gap);
+            builder2.AddAttribute(4, "ChildContent", (RenderFragment)((builder3) =>
+            {
+                builder3.OpenComponent<RadzenText>(0);
+                builder3.AddAttribute(1, "TextStyle", TextStyle.H4);
+                builder3.AddAttribute(2, "class", "rz-mb-3");
+                builder3.AddAttribute(3, "ChildContent", (RenderFragment)((builder4) =>
+                {
+                    builder4.AddContent(0, $"{(isEditing ? "Edit" : "Create")} Manufacturer");
+                }));
+                builder3.CloseComponent();
+
+                builder3.OpenComponent<RadzenFormField>(1);
+                builder3.AddAttribute(2, "Text", "Name *");
+                builder3.AddAttribute(3, "ChildContent", (RenderFragment)((builder4) =>
+                {
+                    builder4.OpenComponent<RadzenTextBox>(0);
+                    builder4.AddAttribute(1, "Value", currentItem.Name);
+                    builder4.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<string>(this, (value) => currentItem.Name = value));
+                    builder4.AddAttribute(3, "Name", "manufacturerName");
+                    builder4.CloseComponent();
+
+                    builder4.OpenComponent<RadzenRequiredValidator>(1);
+                    builder4.AddAttribute(2, "Component", "manufacturerName");
+                    builder4.AddAttribute(3, "Text", "Name is required");
+                    builder4.CloseComponent();
+                }));
+                builder3.CloseComponent();
+
+                builder3.OpenComponent<RadzenStack>(2);
+                builder3.AddAttribute(4, "Orientation", Orientation.Horizontal);
+                builder3.AddAttribute(5, "JustifyContent", JustifyContent.End);
+                builder3.AddAttribute(6, "Gap", "0.75rem");
+                builder3.AddAttribute(7, "ChildContent", (RenderFragment)((builder4) =>
+                {
+                    builder4.OpenComponent<RadzenButton>(0);
+                    builder4.AddAttribute(1, "Text", "Cancel");
+                    builder4.AddAttribute(2, "ButtonStyle", ButtonStyle.Light);
+                    builder4.AddAttribute(3, "Variant", Variant.Outlined);
+                    builder4.AddAttribute(4, "Click", EventCallback.Factory.Create(this, () => CloseModal(ds)));
+                    builder4.CloseComponent();
+
+                    builder4.OpenComponent<RadzenButton>(1);
+                    builder4.AddAttribute(2, "Text", isSaving ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update" : "Create"));
+                    builder4.AddAttribute(3, "ButtonStyle", ButtonStyle.Primary);
+                    builder4.AddAttribute(4, "ButtonType", ButtonType.Submit);
+                    builder4.AddAttribute(5, "Disabled", isSaving);
+                    builder4.CloseComponent();
+                }));
+                builder3.CloseComponent();
+            }));
+            builder2.CloseComponent();
+        }));
+        builder.CloseComponent();
+    };
 }

@@ -1,34 +1,74 @@
 @using Blazored.LocalStorage
 @using Radzen
 @using Radzen.Blazor
+@using Microsoft.AspNetCore.Components.Routing
 
 @inject AuthenticationStateProvider AuthStateProvider
 @inject IAuthService AuthService
 @inject NavigationManager Navigation
 @inject ILocalStorageService LocalStorage
 
-<RadzenMenu Class="rz-border-0" Orientation="Orientation.Vertical">
-    <RadzenMenuItem Text="Главная" Icon="home" Path="/" />
-    <RadzenMenuItem Text="Товары" Icon="inventory_2" Path="products" />
-    <RadzenMenuItem Text="Склады" Icon="warehouse" Path="warehouses" />
-    <RadzenMenuItem Text="Отчеты" Icon="insights" Path="reports" />
+<div class="sidebar-nav-container">
+    <div class="sidebar-scroll">
+        <nav class="sidebar-nav">
+            @foreach (var link in mainLinks)
+            {
+                <NavLink class="sidebar-link"
+                         href="@link.Path"
+                         Match="@link.Match">
+                    <RadzenIcon Icon="@link.Icon" class="sidebar-link__icon" />
+                    <span>@link.Text</span>
+                </NavLink>
+            }
+        </nav>
 
-    <AuthorizeView Roles="Admin">
-        <Authorized>
-            <RadzenMenuItem Text="Администрирование" Icon="admin_panel_settings">
-                <RadzenMenuItem Text="Справочники" Icon="settings" Path="admin/reference-data" />
-                <RadzenMenuItem Text="Пользователи" Icon="group" Path="admin/users" />
-                <RadzenMenuItem Text="Аудит" Icon="list_alt" Path="admin/audit-logs" />
-                <RadzenMenuItem Text="Отладка" Icon="bug_report" Path="debug" />
-            </RadzenMenuItem>
-        </Authorized>
-    </AuthorizeView>
+        <AuthorizeView Roles="Admin">
+            <Authorized>
+                <div class="sidebar-section">
+                    <span class="sidebar-section__title">Администрирование</span>
+                    <nav class="sidebar-nav sidebar-nav--sub">
+                        @foreach (var link in adminLinks)
+                        {
+                            <NavLink class="sidebar-link sidebar-link--sub"
+                                     href="@link.Path"
+                                     Match="@link.Match">
+                                <RadzenIcon Icon="@link.Icon" class="sidebar-link__icon" />
+                                <span>@link.Text</span>
+                            </NavLink>
+                        }
+                    </nav>
+                </div>
+            </Authorized>
+        </AuthorizeView>
+    </div>
 
-    <RadzenMenuItem Text="Выйти" Icon="logout" Click="@(() => LogoutAsync())" />
-</RadzenMenu>
+    <div class="sidebar-footer">
+        <RadzenButton Text="Выйти"
+                      Icon="logout"
+                      ButtonStyle="ButtonStyle.Danger"
+                      Variant="Variant.Outlined"
+                      Size="ButtonSize.Medium"
+                      Class="sidebar-logout"
+                      Click="LogoutAsync" />
+    </div>
+</div>
 
 @code {
-    private List<NavMenuItem> MenuItems { get; set; } = new();
+    private readonly NavLinkItem[] mainLinks =
+    {
+        new("Главная", "home", "/", NavLinkMatch.All),
+        new("Товары", "inventory_2", "products"),
+        new("Склады", "warehouse", "warehouses"),
+        new("Отчеты", "insights", "reports")
+    };
+
+    private readonly NavLinkItem[] adminLinks =
+    {
+        new("Справочники", "settings", "admin/reference-data"),
+        new("Пользователи", "group", "admin/users"),
+        new("Аудит", "list_alt", "admin/audit-logs"),
+        new("Отладка", "bug_report", "debug")
+    };
 
     private async Task LogoutAsync()
     {
@@ -61,10 +101,6 @@
         }
     }
 
-    protected override void OnInitialized()
-    {
-        // Reserved for future dynamic menu generation
-        MenuItems = new();
-    }
+    private sealed record NavLinkItem(string Text, string Icon, string Path, NavLinkMatch Match = NavLinkMatch.Prefix);
 }
 
