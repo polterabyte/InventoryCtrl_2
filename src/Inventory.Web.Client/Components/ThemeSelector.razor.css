@@ -1,0 +1,117 @@
+.theme-selector {
+    position: relative;
+    z-index: 1000;
+}
+
+.theme-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    gap: 12px;
+    min-height: 40px;
+}
+
+.theme-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+
+.theme-name {
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 1.2;
+}
+
+.theme-category {
+    font-size: 11px;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.7;
+}
+
+.category-light {
+    color: var(--rz-warning-dark, #f59e0b);
+}
+
+.category-dark {
+    color: var(--rz-info-dark, #2563eb);
+}
+
+.theme-preview {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.color-sample {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--rz-border-color, #e5e7eb);
+    transition: all 0.2s ease;
+}
+
+.light-sample {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #e2e8f0 100%);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.dark-sample {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.theme-option:hover .color-sample {
+    transform: scale(1.1);
+    border-color: var(--rz-primary, #3b82f6);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .theme-selector {
+        min-width: 150px;
+    }
+    
+    .theme-option {
+        padding: 6px 8px;
+        gap: 8px;
+    }
+    
+    .theme-name {
+        font-size: 13px;
+    }
+    
+    .theme-category {
+        font-size: 10px;
+    }
+    
+    .color-sample {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+    .color-sample,
+    .theme-option:hover .color-sample {
+        transition: none;
+        transform: none;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .color-sample {
+        border-width: 3px;
+    }
+    
+    .theme-category {
+        opacity: 1;
+        font-weight: 600;
+    }
+}
