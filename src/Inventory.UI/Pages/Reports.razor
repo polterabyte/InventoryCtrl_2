@@ -1,8 +1,22 @@
 @page "/reports"
-
+@attribute [Authorize]
+@using Inventory.Shared.Components
+@using Inventory.Shared.Resources
+@using Microsoft.Extensions.Localization
+@inherits LocalizedComponentBase
 
 @inject NavigationManager Navigation
 
-<PageTitle>Reports</PageTitle>
+<PageTitle>@GetString("Navigation.Reports")</PageTitle>
 
-<h1>Reports in progress</h1>
+<RadzenCard class="page-placeholder">
+    <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="2rem">
+        <RadzenIcon Icon="construction" Style="font-size: 4rem; color: var(--rz-warning);" />
+        <RadzenText TextStyle="TextStyle.H4" Class="text-center">
+            @GetString("Page.ReportsInProgress")
+        </RadzenText>
+        <RadzenText TextStyle="TextStyle.Body1" Class="text-center" Style="color: var(--rz-text-secondary);">
+            This page is currently under development. Please check back later.
+        </RadzenText>
+    </RadzenStack>
+</RadzenCard>

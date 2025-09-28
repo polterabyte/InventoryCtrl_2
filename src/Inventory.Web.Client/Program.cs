@@ -14,6 +14,8 @@ using Microsoft.AspNetCore.Components;
 using Inventory.Web.Client.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Localization;
+using System.Globalization;
 using Radzen;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -141,8 +143,17 @@ builder.Services.AddScoped<ISignalRService, SignalRService>();
 // Register Radzen services
 builder.Services.AddRadzenComponents();
 
+// Configure Localization
+builder.Services.AddLocalization();
+
+// Configure supported cultures (for WebAssembly client)
+var supportedCultures = new[] { "en-US", "ru-RU" };
+
 // Register Theme service
-builder.Services.AddScoped<Inventory.Web.Client.Services.Interfaces.IThemeService, Inventory.Web.Client.Services.ThemeService>();
+builder.Services.AddScoped<IThemeService, Inventory.Web.Client.Services.ThemeService>();
+
+// Register Culture service
+builder.Services.AddScoped<ICultureService, CultureService>();
 
 await builder.Build().RunAsync();
 

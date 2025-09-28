@@ -140,6 +140,7 @@ env.*
 !env.example
 # Editor directories and files
 .idea
+.vs
 .vscode
 *.ntvs*
 *.njsproj

@@ -1,0 +1,90 @@
+@using Inventory.Shared.Resources
+@using Microsoft.Extensions.Localization
+@using Radzen.Blazor
+@inject IStringLocalizer<SharedResources> Localizer
+
+@if (HasErrors)
+{
+    <div class="validation-summary @CssClass">
+        @if (ShowErrorSummary)
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Danger" Size="AlertSize.Small" class="mb-3">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                    <RadzenText TextStyle="TextStyle.Body2" class="fw-bold">
+                        @Localizer["Validation.ErrorSummary"]
+                    </RadzenText>
+                    @if (ErrorMessages?.Any() == true)
+                    {
+                        <ul class="mb-0">
+                            @foreach (var error in ErrorMessages)
+                            {
+                                <li><RadzenText TextStyle="TextStyle.Body2">@error</RadzenText></li>
+                            }
+                        </ul>
+                    }
+                </RadzenStack>
+            </RadzenAlert>
+        }
+        
+        @if (ShowFieldErrors && FieldErrors?.Any() == true)
+        {
+            @foreach (var fieldError in FieldErrors)
+            {
+                <div class="field-error mb-2">
+                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-danger);">
+                        @GetLocalizedFieldError(fieldError.Key, fieldError.Value)
+                    </RadzenText>
+                </div>
+            }
+        }
+    </div>
+}
+
+@code {
+    /// <summary>
+    /// List of general error messages
+    /// </summary>
+    [Parameter] public IEnumerable<string>? ErrorMessages { get; set; }
+    
+    /// <summary>
+    /// Dictionary of field-specific errors (field name -> error message)
+    /// </summary>
+    [Parameter] public Dictionary<string, string>? FieldErrors { get; set; }
+    
+    /// <summary>
+    /// Whether to show the error summary
+    /// </summary>
+    [Parameter] public bool ShowErrorSummary { get; set; } = true;
+    
+    /// <summary>
+    /// Whether to show field-specific errors
+    /// </summary>
+    [Parameter] public bool ShowFieldErrors { get; set; } = true;
+    
+    /// <summary>
+    /// Additional CSS class for the validation container
+    /// </summary>
+    [Parameter] public string? CssClass { get; set; }
+    
+    private bool HasErrors => 
+        (ErrorMessages?.Any() == true) || (FieldErrors?.Any() == true);
+    
+    private string GetLocalizedFieldError(string fieldName, string errorMessage)
+    {
+        // Try to get localized field name
+        var localizedFieldName = Localizer[$"Field.{fieldName}"];
+        
+        // If localization key doesn't exist, use the original field name
+        var displayFieldName = localizedFieldName.ResourceNotFound 
+            ? fieldName 
+            : localizedFieldName.Value;
+        
+        // Try to get localized error message
+        var localizedError = Localizer[$"Validation.{errorMessage}"];
+        var displayError = localizedError.ResourceNotFound 
+            ? errorMessage 
+            : localizedError.Value;
+        
+        return $"{displayFieldName}: {displayError}";
+    }
+}

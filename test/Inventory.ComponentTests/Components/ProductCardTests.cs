@@ -1,6 +1,7 @@
 using Bunit;
 using FluentAssertions;
 using Inventory.UI.Components;
+using Inventory.UI.Components.Products;
 using Inventory.Shared.DTOs;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;

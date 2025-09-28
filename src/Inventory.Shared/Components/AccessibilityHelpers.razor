@@ -1,0 +1,186 @@
+@using Inventory.Shared.Interfaces
+@using System.Globalization
+@using Microsoft.JSInterop
+@inject ICultureService CultureService
+@inject IJSRuntime JSRuntime
+
+@* 
+    Accessibility helper component that provides language and direction attributes
+    This component automatically sets the correct lang and dir attributes based on current culture
+*@
+
+@code {
+    /// <summary>
+    /// Renders the appropriate lang attribute for the current culture
+    /// </summary>
+    /// <returns>HTML lang attribute</returns>
+    private string GetLangAttribute()
+    {
+        return CultureService.CurrentCulture.Name;
+    }
+    
+    /// <summary>
+    /// Renders the appropriate dir attribute for the current culture
+    /// </summary>
+    /// <returns>HTML dir attribute (ltr or rtl)</returns>
+    private string GetDirAttribute()
+    {
+        return CultureService.CurrentCulture.TextInfo.IsRightToLeft ? "rtl" : "ltr";
+    }
+    
+    /// <summary>
+    /// Gets ARIA label for language selector
+    /// </summary>
+    /// <returns>Localized ARIA label</returns>
+    private string GetLanguageSelectorAriaLabel()
+    {
+        var culture = CultureService.CurrentCulture.Name;
+        return culture switch
+        {
+            "ru-RU" => "Выбрать язык интерфейса",
+            "de-DE" => "Sprache der Benutzeroberfläche auswählen",
+            _ => "Select interface language"
+        };
+    }
+    
+    /// <summary>
+    /// Gets ARIA live region announcement for language changes
+    /// </summary>
+    /// <param name="newLanguage">The new language name</param>
+    /// <returns>Localized announcement</returns>
+    private string GetLanguageChangeAnnouncement(string newLanguage)
+    {
+        var culture = CultureService.CurrentCulture.Name;
+        return culture switch
+        {
+            "ru-RU" => $"Язык интерфейса изменён на {newLanguage}",
+            "de-DE" => $"Sprache der Benutzeroberfläche wurde auf {newLanguage} geändert",
+            _ => $"Interface language changed to {newLanguage}"
+        };
+    }
+    
+    /// <summary>
+    /// Gets screen reader announcement for loading states
+    /// </summary>
+    /// <returns>Localized loading announcement</returns>
+    private string GetLoadingAnnouncement()
+    {
+        var culture = CultureService.CurrentCulture.Name;
+        return culture switch
+        {
+            "ru-RU" => "Загрузка, пожалуйста подождите",
+            "de-DE" => "Wird geladen, bitte warten",
+            _ => "Loading, please wait"
+        };
+    }
+    
+    /// <summary>
+    /// Gets screen reader announcement for form validation errors
+    /// </summary>
+    /// <param name="errorCount">Number of errors</param>
+    /// <returns>Localized error announcement</returns>
+    private string GetValidationErrorAnnouncement(int errorCount)
+    {
+        var culture = CultureService.CurrentCulture.Name;
+        return culture switch
+        {
+            "ru-RU" => errorCount == 1 ? "Обнаружена 1 ошибка в форме" : $"Обнаружено {errorCount} ошибок в форме",
+            "de-DE" => errorCount == 1 ? "1 Fehler im Formular gefunden" : $"{errorCount} Fehler im Formular gefunden",
+            _ => errorCount == 1 ? "1 error found in form" : $"{errorCount} errors found in form"
+        };
+    }
+    
+    /// <summary>
+    /// Gets appropriate role for navigation elements
+    /// </summary>
+    /// <returns>ARIA role</returns>
+    private static string GetNavigationRole() => "navigation";
+    
+    /// <summary>
+    /// Gets appropriate role for main content
+    /// </summary>
+    /// <returns>ARIA role</returns>
+    private static string GetMainRole() => "main";
+    
+    /// <summary>
+    /// Gets appropriate role for complementary content
+    /// </summary>
+    /// <returns>ARIA role</returns>
+    private static string GetComplementaryRole() => "complementary";
+    
+    /// <summary>
+    /// Gets keyboard navigation hints based on culture
+    /// </summary>
+    /// <returns>Localized keyboard hints</returns>
+    private string GetKeyboardNavigationHints()
+    {
+        var culture = CultureService.CurrentCulture.Name;
+        return culture switch
+        {
+            "ru-RU" => "Используйте клавиши со стрелками для навигации по меню",
+            "de-DE" => "Verwenden Sie die Pfeiltasten zur Navigation im Menü",
+            _ => "Use arrow keys to navigate the menu"
+        };
+    }
+}
+
+@* ARIA live region for announcements *@
+<div aria-live="polite" 
+     aria-atomic="true" 
+     class="sr-only" 
+     id="accessibility-announcements">
+</div>
+
+@* ARIA live region for important alerts *@
+<div aria-live="assertive" 
+     aria-atomic="true" 
+     class="sr-only" 
+     id="accessibility-alerts">
+</div>
+
+<style>
+    .sr-only {
+        position: absolute !important;
+        width: 1px !important;
+        height: 1px !important;
+        padding: 0 !important;
+        margin: -1px !important;
+        overflow: hidden !important;
+        clip: rect(0, 0, 0, 0) !important;
+        white-space: nowrap !important;
+        border: 0 !important;
+    }
+</style>
+
+@code {
+    /// <summary>
+    /// Announces text to screen readers using ARIA live regions
+    /// </summary>
+    /// <param name="message">Message to announce</param>
+    /// <param name="isUrgent">Whether to use assertive (urgent) or polite announcement</param>
+    public async Task AnnounceAsync(string message, bool isUrgent = false)
+    {
+        var elementId = isUrgent ? "accessibility-alerts" : "accessibility-announcements";
+        var escapedMessage = message.Replace("'", "\\'")
+                                   .Replace("\n", "\\n")
+                                   .Replace("\r", "\\r");
+        
+        var script = $@"
+            const element = document.getElementById('{elementId}');
+            if (element) {{
+                element.textContent = '';
+                setTimeout(() => {{
+                    element.textContent = '{escapedMessage}';
+                }}, 100);
+            }}";
+        
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("eval", script);
+        }
+        catch
+        {
+            // Silently handle errors - accessibility enhancements should not break functionality
+        }
+    }
+}

@@ -1,0 +1,100 @@
+@using Inventory.Shared.Interfaces
+@using Inventory.Shared.Resources
+@using Microsoft.Extensions.Localization
+@using Radzen
+@using Radzen.Blazor
+@using System.Globalization
+
+@inject ICultureService CultureService
+@inject IStringLocalizer<SharedResources> Localizer
+@implements IDisposable
+
+<RadzenDropDown @bind-Value="@_selectedCultureName"
+                Data="@_availableCultures"
+                TextProperty="DisplayName"
+                ValueProperty="Name"
+                Placeholder="@Localizer["Language.Select"]"
+                Change="@OnCultureChanged"
+                Style="min-width: 150px;"
+                class="culture-selector">
+    <Template Context="culture">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+            <span class="culture-flag">@GetCultureFlag(culture.Name)</span>
+            <span>@culture.DisplayName</span>
+        </RadzenStack>
+    </Template>
+</RadzenDropDown>
+
+@code {
+    private string _selectedCultureName = "en-US";
+    private readonly List<CultureDisplayInfo> _availableCultures = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Subscribe to culture changes
+        CultureService.CultureChanged += OnCultureServiceChanged;
+        
+        // Load available cultures
+        foreach (var culture in CultureService.GetSupportedCultures())
+        {
+            _availableCultures.Add(new CultureDisplayInfo(culture.Name, GetCultureDisplayName(culture)));
+        }
+
+        // Set current culture
+        _selectedCultureName = CultureService.CurrentCulture.Name;
+    }
+
+    private async Task OnCultureChanged(object value)
+    {
+        if (value is string cultureName && !string.IsNullOrWhiteSpace(cultureName))
+        {
+            await CultureService.SetCultureAsync(cultureName);
+        }
+    }
+
+    private void OnCultureServiceChanged(object? sender, CultureInfo newCulture)
+    {
+        _selectedCultureName = newCulture.Name;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private static string GetCultureDisplayName(CultureInfo culture)
+    {
+        return culture.Name switch
+        {
+            "en-US" => "English",
+            "ru-RU" => "Русский",
+            _ => culture.DisplayName
+        };
+    }
+
+    private static string GetCultureFlag(string cultureName)
+    {
+        return cultureName switch
+        {
+            "en-US" => "🇺🇸",
+            "ru-RU" => "🇷🇺",
+            _ => "🌐"
+        };
+    }
+
+    public void Dispose()
+    {
+        CultureService.CultureChanged -= OnCultureServiceChanged;
+    }
+
+    private record CultureDisplayInfo(string Name, string DisplayName);
+}
+
+<style>
+    .culture-selector .rz-dropdown-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .culture-flag {
+        font-size: 1.2em;
+        line-height: 1;
+    }
+</style>
