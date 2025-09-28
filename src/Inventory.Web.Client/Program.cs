@@ -17,7 +17,6 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Localization;
 using System.Globalization;
 using Radzen;
-using Microsoft.AspNetCore.Localization;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -147,14 +146,8 @@ builder.Services.AddRadzenComponents();
 // Configure Localization
 builder.Services.AddLocalization();
 
-// Configure supported cultures
+// Configure supported cultures (for WebAssembly client)
 var supportedCultures = new[] { "en-US", "ru-RU" };
-builder.Services.Configure<RequestLocalizationOptions>(options =>
-{
-    options.SetDefaultCulture(supportedCultures[0])
-           .AddSupportedCultures(supportedCultures)
-           .AddSupportedUICultures(supportedCultures);
-});
 
 // Register Theme service
 builder.Services.AddScoped<IThemeService, Inventory.Web.Client.Services.ThemeService>();
