@@ -140,6 +140,7 @@ env.*
 !env.example
 # Editor directories and files
 .idea
+.vs
 .vscode
 *.ntvs*
 *.njsproj
@@ -147,6 +148,14 @@ env.*
 *.sw?
 # OS specific
 
+# Added by Claude Task Master
+
+# Added by Claude Task Master
+Agents.md
+.windsurfrules
+.ai-temp/
+
+
 # Task files
-tasks.json
-tasks/ 
+# tasks.json
+# tasks/ 

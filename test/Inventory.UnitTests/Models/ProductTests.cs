@@ -17,7 +17,7 @@ public class ProductTests
         product.SKU.Should().BeEmpty();
         product.UnitOfMeasureId.Should().Be(0);
         product.IsActive.Should().BeTrue();
-        product.Quantity.Should().Be(0);
+        product.CurrentQuantity.Should().Be(0);
         product.MinStock.Should().Be(0);
         product.MaxStock.Should().Be(0);
         product.Transactions.Should().NotBeNull();
@@ -33,7 +33,7 @@ public class ProductTests
             Name = "Test Product",
             SKU = "TEST-001",
             Description = "Test Description",
-            Quantity = 100,
+            CurrentQuantity = 100,
                 UnitOfMeasureId = 1,
             IsActive = true,
             MinStock = 10,
@@ -45,7 +45,7 @@ public class ProductTests
         product.Name.Should().Be("Test Product");
         product.SKU.Should().Be("TEST-001");
         product.Description.Should().Be("Test Description");
-        product.Quantity.Should().Be(100);
+        product.CurrentQuantity.Should().Be(100);
         product.UnitOfMeasureId.Should().Be(1);
         product.IsActive.Should().BeTrue();
         product.MinStock.Should().Be(10);

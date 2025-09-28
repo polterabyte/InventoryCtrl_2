@@ -1,10 +1,13 @@
+using System.Text.Json.Serialization;
+
 namespace Inventory.API.Models;
 
 public enum TransactionType
 {
-    Income,
-    Outcome,
-    Install
+    Income = 0,
+    Outcome = 1,
+    Install = 2,
+    Pending = 3
 }
 
 public class InventoryTransaction
@@ -21,6 +24,15 @@ public class InventoryTransaction
     public User User { get; set; } = null!;
     public int? LocationId { get; set; }
     public Location? Location { get; set; }
+    public int? RequestId { get; set; }
+    
+    /// <summary>
+    /// Navigation property to request. JsonIgnore prevents circular reference during serialization.
+    /// </summary>
+    [JsonIgnore]
+    public Request? Request { get; set; }
+    public decimal? UnitPrice { get; set; }
+    public decimal? TotalPrice { get; set; }
     public string? Description { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }

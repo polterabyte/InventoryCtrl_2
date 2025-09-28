@@ -258,11 +258,11 @@ public class AuditControllerTests : IClassFixture<WebApplicationFactory<Program>
         await _context.SaveChangesAsync();
     }
 
-    private async Task<string> GetAdminToken()
+    private Task<string> GetAdminToken()
     {
         // This is a simplified token generation for testing
         // In a real scenario, you would use the actual authentication endpoint
-        return "test-admin-token";
+        return Task.FromResult("test-admin-token");
     }
 }
 

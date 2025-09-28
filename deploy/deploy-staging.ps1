@@ -8,6 +8,7 @@ param(
     [string]$Domain,
     [string]$BaseDomain,
     [switch]$SkipVapidCheck,
+    [switch]$SkipHealthCheck,
     [int]$HealthCheckTimeout
 )
 
@@ -21,6 +22,13 @@ if ($ComposeFile) { $params.ComposeFile = $ComposeFile }
 if ($Domain) { $params.Domain = $Domain }
 if ($BaseDomain) { $params.BaseDomain = $BaseDomain }
 if ($SkipVapidCheck) { $params.SkipVapidCheck = $true }
+if ($SkipHealthCheck) { $params.SkipHealthCheck = $true }
 if ($HealthCheckTimeout) { $params.HealthCheckTimeout = $HealthCheckTimeout }
 
-& ".\deploy\deploy.ps1" @params
+$deployScript = Join-Path $PSScriptRoot 'deploy.ps1'
+
+if (-not (Test-Path $deployScript)) {
+    throw "Universal deployment script not found at $deployScript"
+}
+
+& $deployScript @params

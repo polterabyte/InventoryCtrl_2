@@ -1,0 +1,87 @@
+@baseUrl = http://localhost:5000
+@token = {{YOUR_JWT_TOKEN}}
+
+### List requests (paged)
+GET {{baseUrl}}/api/requests?page=1&pageSize=10
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Create request
+POST {{baseUrl}}/api/requests
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "New Laptop Batch",
+  "description": "Procure 10 laptops for engineering team"
+}
+
+### Get request by id
+@requestId = {{last_response.body.$.id}}
+GET {{baseUrl}}/api/requests/{{requestId}}
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Add pending item
+POST {{baseUrl}}/api/requests/{{requestId}}/items
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "warehouseId": 1,
+  "quantity": 10,
+  "locationId": null,
+  "unitPrice": 1200.00,
+  "description": "ThinkPad T-Series"
+}
+
+### Submit request
+POST {{baseUrl}}/api/requests/{{requestId}}/submit
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "comment": "Submitting for approval" }
+
+### Approve request
+POST {{baseUrl}}/api/requests/{{requestId}}/approve
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "comment": "Approved by manager" }
+
+### Mark items received (Pending -> Income)
+POST {{baseUrl}}/api/requests/{{requestId}}/received
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "comment": "Stock received at main warehouse" }
+
+### Mark items installed
+POST {{baseUrl}}/api/requests/{{requestId}}/installed
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "comment": "Devices installed at desks" }
+
+### Complete request
+POST {{baseUrl}}/api/requests/{{requestId}}/complete
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "comment": "Workflow completed" }
+
+### Cancel request (only valid for Draft/Submitted/Approved/InProgress)
+POST {{baseUrl}}/api/requests/{{requestId}}/cancel
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "comment": "Cancelling due to scope change" }
+
+### Reject request (only valid for Submitted)
+POST {{baseUrl}}/api/requests/{{requestId}}/reject
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "comment": "Rejected due to budget constraints" }
+

@@ -430,17 +430,23 @@ public abstract class IntegrationTestBase : IClassFixture<WebApplicationFactory<
         await Context.SaveChangesAsync();
 
         // Create test warehouses
+        // Create locations for warehouses
+        var locationA = new Location { Name = "Building A", IsActive = true, CreatedAt = DateTime.UtcNow };
+        var locationB = new Location { Name = "Building B", IsActive = true, CreatedAt = DateTime.UtcNow };
+        Context.Locations.AddRange(locationA, locationB);
+        await Context.SaveChangesAsync();
+
         var mainWarehouse = new Warehouse
         {
             Name = "Main Warehouse",
-            Address = "Building A",
+            LocationId = locationA.Id,
             IsActive = true
         };
 
         var secondaryWarehouse = new Warehouse
         {
             Name = "Secondary Warehouse", 
-            Address = "Building B",
+            LocationId = locationB.Id,
             IsActive = true
         };
 
@@ -466,7 +472,7 @@ public abstract class IntegrationTestBase : IClassFixture<WebApplicationFactory<
             Name = "iPhone 15",
             SKU = "IPHONE15-001",
             Description = "Latest iPhone model",
-            Quantity = 50,
+            CurrentQuantity = 50,
                 UnitOfMeasureId = unitOfMeasure.Id,
             IsActive = true,
             CategoryId = smartphonesCategory.Id,
@@ -484,7 +490,7 @@ public abstract class IntegrationTestBase : IClassFixture<WebApplicationFactory<
             Name = "Samsung Galaxy S24",
             SKU = "GALAXYS24-001", 
             Description = "Latest Samsung Galaxy model",
-            Quantity = 30,
+            CurrentQuantity = 30,
                 UnitOfMeasureId = unitOfMeasure.Id,
             IsActive = true,
             CategoryId = smartphonesCategory.Id,

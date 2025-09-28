@@ -1,92 +1,59 @@
-/* Quick Actions Styling (Ultra Calm Theme) */
-.quick-action-btn {
-    transition: all 0.3s ease;
-    border: 2px solid;
-    min-height: 120px;
-    background-color: var(--color-bg-card);
-    color: var(--color-text-primary);
-    border-color: var(--color-border-light);
+.dashboard-container {
+    padding: 1.5rem 1rem 2.5rem;
+    background-color: var(--rz-base-100);
 }
 
-.quick-action-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    background-color: var(--color-bg-card-hover);
+.dashboard-layout {
+    gap: 1.5rem;
 }
 
-.quick-action-btn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-    background-color: var(--color-bg-tertiary);
+.welcome-card {
+    border: 1px solid var(--rz-border);
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.08), rgba(79, 70, 229, 0.02));
 }
 
-.quick-action-btn:disabled:hover {
-    transform: none;
-    box-shadow: none;
-    background-color: var(--color-bg-tertiary);
+.welcome-card .rz-text {
+    margin: 0;
 }
 
-/* Stats Widgets Animation */
-.stats-widget {
-    animation: fadeInUp 0.6s ease-out;
+.dashboard-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.section-header {
+    margin-bottom: 0.25rem;
 }
 
-/* Stagger animation for stats widgets */
-.stats-widget:nth-child(1) { animation-delay: 0.1s; }
-.stats-widget:nth-child(2) { animation-delay: 0.2s; }
-.stats-widget:nth-child(3) { animation-delay: 0.3s; }
-.stats-widget:nth-child(4) { animation-delay: 0.4s; }
-
-/* Dashboard Cards (Calm Theme) */
-.dashboard-card {
-    transition: all 0.3s ease;
-    background-color: var(--color-bg-card);
-    border: 1px solid var(--color-border-light);
+.dashboard-kpi-grid > .rz-column {
+    display: flex;
 }
 
-.dashboard-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    background-color: var(--color-bg-card-hover);
+.dashboard-kpi-grid > .rz-column > .rz-card,
+.dashboard-kpi-grid > .rz-column > .stats-widget {
+    width: 100%;
 }
 
-/* Dark theme support (Ultra Calm) */
-[data-bs-theme="dark"] .quick-action-btn {
-    background-color: var(--color-bg-card);
-    border-color: var(--color-border-light);
-    color: var(--color-text-primary);
+.quick-actions-card {
+    border: 1px solid var(--rz-border);
 }
 
-[data-bs-theme="dark"] .quick-action-btn:hover {
-    background-color: var(--color-bg-card-hover);
-    border-color: var(--color-primary);
+.quick-actions-grid > .rz-column {
+    display: flex;
 }
 
-[data-bs-theme="dark"] .quick-action-btn:disabled {
-    background-color: var(--color-bg-tertiary);
-    opacity: 0.4;
-    color: var(--color-text-muted);
+.quick-actions-grid .rz-button {
+    width: 100%;
+    height: 100%;
 }
 
-/* Responsive design */
 @media (max-width: 768px) {
-    .quick-action-btn {
-        min-height: 100px;
-        font-size: 0.9rem;
+    .dashboard-container {
+        padding: 1rem;
     }
-    
-    .stats-widget {
-        margin-bottom: 1rem;
+
+    .dashboard-section {
+        gap: 0.75rem;
     }
 }

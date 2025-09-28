@@ -1,0 +1,104 @@
+@using Inventory.Shared.Components
+@using Radzen
+@using Radzen.Blazor
+@inherits LocalizedComponentBase
+
+<RadzenButton Text="@GetButtonText()"
+              Icon="@Icon"
+              ButtonStyle="@ButtonStyle"
+              Variant="@Variant"
+              Size="@Size"
+              Class="@CssClass"
+              Style="@Style"
+              Disabled="@Disabled"
+              Click="@OnClick"
+              title="@GetTooltipText()" />
+
+@code {
+    /// <summary>
+    /// Resource key for the button text
+    /// </summary>
+    [Parameter] public string? TextKey { get; set; }
+    
+    /// <summary>
+    /// Direct text (used if TextKey is not provided)
+    /// </summary>
+    [Parameter] public string? Text { get; set; }
+    
+    /// <summary>
+    /// Format arguments for the text
+    /// </summary>
+    [Parameter] public object[]? TextArguments { get; set; }
+    
+    /// <summary>
+    /// Resource key for the tooltip
+    /// </summary>
+    [Parameter] public string? TooltipKey { get; set; }
+    
+    /// <summary>
+    /// Direct tooltip text
+    /// </summary>
+    [Parameter] public string? Tooltip { get; set; }
+    
+    /// <summary>
+    /// Material Design icon name
+    /// </summary>
+    [Parameter] public string? Icon { get; set; }
+    
+    /// <summary>
+    /// Button style
+    /// </summary>
+    [Parameter] public ButtonStyle ButtonStyle { get; set; } = ButtonStyle.Primary;
+    
+    /// <summary>
+    /// Button variant
+    /// </summary>
+    [Parameter] public Variant Variant { get; set; } = Variant.Filled;
+    
+    /// <summary>
+    /// Button size
+    /// </summary>
+    [Parameter] public ButtonSize Size { get; set; } = ButtonSize.Medium;
+    
+    /// <summary>
+    /// Additional CSS classes
+    /// </summary>
+    [Parameter] public string? CssClass { get; set; }
+    
+    /// <summary>
+    /// Additional inline styles
+    /// </summary>
+    [Parameter] public string? Style { get; set; }
+    
+    /// <summary>
+    /// Whether the button is disabled
+    /// </summary>
+    [Parameter] public bool Disabled { get; set; }
+    
+    /// <summary>
+    /// Click event handler
+    /// </summary>
+    [Parameter] public EventCallback OnClick { get; set; }
+
+    private string GetButtonText()
+    {
+        if (!string.IsNullOrWhiteSpace(TextKey))
+        {
+            return TextArguments?.Length > 0 
+                ? GetString(TextKey, TextArguments) 
+                : GetString(TextKey);
+        }
+        
+        return Text ?? string.Empty;
+    }
+    
+    private string GetTooltipText()
+    {
+        if (!string.IsNullOrWhiteSpace(TooltipKey))
+        {
+            return GetString(TooltipKey);
+        }
+        
+        return Tooltip ?? string.Empty;
+    }
+}

@@ -1,110 +1,159 @@
-﻿@page "/"
+@page "/"
 @attribute [Authorize]
+@using System.Security.Claims
+@using Inventory.UI.Utilities
+@using Inventory.Shared.Components
+@using Inventory.Shared.Resources
+@using Inventory.Shared.DTOs
+@using Inventory.Shared.Interfaces
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components
+@using Microsoft.Extensions.Localization
+@using Radzen
+@using Radzen.Blazor
+@inherits LocalizedComponentBase
 
 @inject IDashboardService DashboardService
+@inject NavigationManager NavigationManager
 
-<PageTitle>Home</PageTitle>
+<PageTitle>@GetString("Navigation.Home")</PageTitle>
 
-<AuthorizeView>
-    <Authorized Context="authContext">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-12">
-                    <h1 class="display-4 text-primary mb-4">Добро пожаловать в систему управления складом!</h1>
-                    <p class="lead text-secondary">Привет, <strong class="text-primary">@authContext.User.Identity?.Name</strong>!</p>
-                    <p class="text-muted">Вы успешно авторизованы в системе.</p>
-                    
-                    <!-- Dashboard Statistics -->
-                    <div class="row mt-4">
-                        <StatsWidget Label="Всего товаров" Value="@dashboardStats.TotalProducts" 
-                                     IconClass="bi bi-box-seam" CardClass="primary" />
-                        <StatsWidget Label="Категории" Value="@dashboardStats.TotalCategories" 
-                                     IconClass="bi bi-tags" CardClass="info" />
-                        <StatsWidget Label="Производители" Value="@dashboardStats.TotalManufacturers" 
-                                     IconClass="bi bi-building" CardClass="success" />
-                        <StatsWidget Label="Склады" Value="@dashboardStats.TotalWarehouses" 
-                                     IconClass="bi bi-house" CardClass="primary" />
-                    </div>
+<RadzenStack Orientation="Orientation.Vertical"
+                Gap="@RadzenUi.GapLarge"
+                class="dashboard-layout">
 
-                    <!-- Alerts Row -->
-                    <div class="row mt-4">
-                        <div class="col-md-6">
-                            <StatsWidget Label="Низкий остаток" Value="@dashboardStats.LowStockProducts" 
-                                         SubLabel="требуют пополнения" IconClass="bi bi-exclamation-triangle" CardClass="warning" />
-                        </div>
-                        <div class="col-md-6">
-                            <StatsWidget Label="Нет в наличии" Value="@dashboardStats.OutOfStockProducts" 
-                                         SubLabel="нужно заказать" IconClass="bi bi-x-circle" CardClass="danger" />
-                        </div>
-                    </div>
+    <RadzenStack Orientation="Orientation.Horizontal"
+                    AlignItems="AlignItems.Center"
+                    JustifyContent="JustifyContent.SpaceBetween"
+                    class="section-header">
+        <RadzenText TextStyle="TextStyle.H6">@GetString("Dashboard.KeyMetrics")</RadzenText>
+    </RadzenStack>
 
-                    <!-- Recent Activity and Low Stock Alerts -->
-                    <div class="row mt-4">
-                        <div class="col-md-8">
-                            <RecentActivity />
-                        </div>
-                        <div class="col-md-4">
-                            <LowStockAlert />
-                        </div>
-                    </div>
+    <RadzenRow Class="dashboard-kpi-grid g-3">
+        <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnThirdSize">
+            <StatsWidget Label="@GetString("Stats.TotalProducts")"
+                            Value="@dashboardStats.TotalProducts"
+                            Icon="inventory_2"
+                            CardClass="primary" />
+        </RadzenColumn>
+        <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnThirdSize">
+            <StatsWidget Label="@GetString("Stats.Categories")"
+                            Value="@dashboardStats.TotalCategories"
+                            Icon="category"
+                            CardClass="info" />
+        </RadzenColumn>
+        <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnThirdSize">
+            <StatsWidget Label="@GetString("Stats.Manufacturers")"
+                            Value="@dashboardStats.TotalManufacturers"
+                            Icon="precision_manufacturing"
+                            CardClass="success" />
+        </RadzenColumn>
+        <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnThirdSize">
+            <StatsWidget Label="@GetString("Stats.Warehouses")"
+                            Value="@dashboardStats.TotalWarehouses"
+                            Icon="storefront"
+                            CardClass="primary" />
+        </RadzenColumn>
+        <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnThirdSize">
+            <StatsWidget Label="@GetString("Stats.LowStock")"
+                            Value="@dashboardStats.LowStockProducts"
+                            SubLabel="@GetString("Stats.LowStockSubLabel")"
+                            Icon="warning_amber"
+                            CardClass="warning" />
+        </RadzenColumn>
+        <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnThirdSize">
+            <StatsWidget Label="@GetString("Stats.OutOfStock")"
+                            Value="@dashboardStats.OutOfStockProducts"
+                            SubLabel="@GetString("Stats.OutOfStockSubLabel")"
+                            Icon="remove_shopping_cart"
+                            CardClass="danger" />
+        </RadzenColumn>
+    </RadzenRow>
 
-                    <!-- Quick Actions -->
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5 class="mb-0">
-                                        <i class="bi bi-lightning me-2"></i>Быстрые действия
-                                    </h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-md-3 mb-3">
-                                            <a href="/products" class="btn btn-outline-primary btn-lg w-100 quick-action-btn d-flex flex-column justify-content-center">
-                                                <i class="bi bi-plus-circle mb-2" style="font-size: 1.5rem;"></i>
-                                                <span>Добавить товар</span>
-                                            </a>
-                                        </div>
-                                        <div class="col-md-3 mb-3">
-                                            <a href="/products" class="btn btn-outline-success btn-lg w-100 quick-action-btn d-flex flex-column justify-content-center">
-                                                <i class="bi bi-arrow-down-circle mb-2" style="font-size: 1.5rem;"></i>
-                                                <span>Приход товара</span>
-                                            </a>
-                                        </div>
-                                        <div class="col-md-3 mb-3">
-                                            <a href="/products" class="btn btn-outline-warning btn-lg w-100 quick-action-btn d-flex flex-column justify-content-center">
-                                                <i class="bi bi-arrow-up-circle mb-2" style="font-size: 1.5rem;"></i>
-                                                <span>Расход товара</span>
-                                            </a>
-                                        </div>
-                                        <div class="col-md-3 mb-3">
-                                            <button class="btn btn-outline-info btn-lg w-100 quick-action-btn d-flex flex-column justify-content-center" disabled>
-                                                <i class="bi bi-file-earmark-text mb-2" style="font-size: 1.5rem;"></i>
-                                                <span>Отчеты</span>
-                                                <small class="text-muted">Скоро</small>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </Authorized>
-    
-    <NotAuthorized>
-        <RedirectToLogin />
-    </NotAuthorized>
-</AuthorizeView>
+
+    <RadzenRow Class="g-3">
+        <RadzenColumn Size="@ColumnFullSize" SizeLg="@ColumnLargeSize">
+            <RecentActivity />
+        </RadzenColumn>
+        <RadzenColumn Size="@ColumnFullSize" SizeLg="@ColumnThirdSize">
+            <LowStockAlert />
+        </RadzenColumn>
+    </RadzenRow>
+
+    <RadzenCard class="quick-actions-card">
+        <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.Gap">
+            <RadzenStack Orientation="Orientation.Horizontal"
+                            AlignItems="AlignItems.Center"
+                            Gap="0.5rem">
+                <RadzenIcon Icon="bolt" Style="color:var(--rz-primary);" />
+                <RadzenText TextStyle="TextStyle.H6">@GetString("Dashboard.QuickActions")</RadzenText>
+            </RadzenStack>
+
+            <RadzenRow Class="quick-actions-grid g-3">
+                <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnQuarterSize">
+                    <RadzenButton Text="@GetString("Action.AddProduct")"
+                                    Icon="add_circle"
+                                    ButtonStyle="ButtonStyle.Primary"
+                                    Variant="Variant.Filled"
+                                    Size="ButtonSize.Large"
+                                    class="w-100"
+                                    @onclick="NavigateToProducts" />
+                </RadzenColumn>
+                <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnQuarterSize">
+                    <RadzenButton Text="@GetString("Action.ProductIncome")"
+                                    Icon="arrow_downward"
+                                    ButtonStyle="ButtonStyle.Success"
+                                    Variant="Variant.Filled"
+                                    Size="ButtonSize.Large"
+                                    class="w-100"
+                                    @onclick="NavigateToProducts" />
+                </RadzenColumn>
+                <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnQuarterSize">
+                    <RadzenButton Text="@GetString("Action.ProductExpense")"
+                                    Icon="arrow_upward"
+                                    ButtonStyle="ButtonStyle.Warning"
+                                    Variant="Variant.Filled"
+                                    Size="ButtonSize.Large"
+                                    class="w-100"
+                                    @onclick="NavigateToProducts" />
+                </RadzenColumn>
+                <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnQuarterSize">
+                    <RadzenButton Text="@GetString("Action.Reports")"
+                                    Icon="description"
+                                    ButtonStyle="ButtonStyle.Info"
+                                    Variant="Variant.Filled"
+                                    Size="ButtonSize.Large"
+                                    class="w-100"
+                                    Disabled="true" />
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenStack>
+    </RadzenCard>
+</RadzenStack>
 
 @code {
+    private const int ColumnFullSize = 12;
+    private const int ColumnLargeSize = 8;
+    private const int ColumnHalfSize = 6;
+    private const int ColumnThirdSize = 4;
+    private const int ColumnQuarterSize = 3;
+
     private DashboardStatsDto dashboardStats = new();
 
     protected override async Task OnInitializedAsync()
     {
         await LoadDashboardStats();
+    }
+
+    private static string GetUserDisplayName(ClaimsPrincipal user)
+    {
+        var name = user.Identity?.Name;
+        return string.IsNullOrWhiteSpace(name) ? "administrator" : name!;
+    }
+
+    private void NavigateToProducts()
+    {
+        NavigationManager.NavigateTo("/products");
     }
 
     private async Task LoadDashboardStats()

@@ -1,0 +1,296 @@
+@using Inventory.Shared.DTOs
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenStack Gap="1rem">
+    <RadzenText TextStyle="TextStyle.H6" Class="rz-m-0">@Title</RadzenText>
+    
+    @if (HistoryItems == null || !HistoryItems.Any())
+    {
+        <RadzenCard Class="rz-p-4">
+            <RadzenStack AlignItems="AlignItems.Center" Gap="1rem">
+                <RadzenIcon Icon="history" Style="font-size: 2rem; color: var(--rz-text-disabled)" />
+                <RadzenText TextStyle="TextStyle.Body1" Class="rz-text-secondary">No history available</RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+    }
+    else
+    {
+        <div class="timeline-container">
+            @for (int i = 0; i < HistoryItems.Count; i++)
+            {
+                var item = HistoryItems[i];
+                var isLast = i == HistoryItems.Count - 1;
+                
+                <div class="timeline-item @(isLast ? "timeline-item-last" : "")">
+                    <div class="timeline-marker">
+                        <div class="timeline-marker-icon @GetStatusClass(item.NewStatus)">
+                            <RadzenIcon Icon="@GetStatusIcon(item.NewStatus)" Style="color: white; font-size: 1rem;" />
+                        </div>
+                        @if (!isLast)
+                        {
+                            <div class="timeline-line"></div>
+                        }
+                    </div>
+                    
+                    <RadzenCard Class="timeline-content rz-p-3">
+                        <RadzenStack Gap="0.75rem">
+                            @* Status Change Header *@
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                    @if (!string.Equals(item.OldStatus, item.NewStatus, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <RadzenText TextStyle="TextStyle.Subtitle1" Class="rz-m-0">
+                                            @GetStatusDisplayName(item.OldStatus) → @GetStatusDisplayName(item.NewStatus)
+                                        </RadzenText>
+                                    }
+                                    else
+                                    {
+                                        <RadzenText TextStyle="TextStyle.Subtitle1" Class="rz-m-0">
+                                            @GetStatusDisplayName(item.NewStatus)
+                                        </RadzenText>
+                                    }
+                                </RadzenStack>
+                                <RadzenText TextStyle="TextStyle.Caption" Class="rz-text-secondary rz-m-0">
+                                    @GetRelativeTime(item.ChangedAt)
+                                </RadzenText>
+                            </RadzenStack>
+                            
+                            @* User and Timestamp *@
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <RadzenIcon Icon="person" Style="font-size: 0.9rem; color: var(--rz-text-secondary);" />
+                                    <RadzenText TextStyle="TextStyle.Body2" Class="rz-text-secondary rz-m-0">
+                                        @item.ChangedByUserId
+                                    </RadzenText>
+                                </RadzenStack>
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <RadzenIcon Icon="schedule" Style="font-size: 0.9rem; color: var(--rz-text-secondary);" />
+                                    <RadzenText TextStyle="TextStyle.Body2" Class="rz-text-secondary rz-m-0">
+                                        @item.ChangedAt.ToString("MMM dd, yyyy 'at' HH:mm")
+                                    </RadzenText>
+                                </RadzenStack>
+                            </RadzenStack>
+                            
+                            @* Comment *@
+                            @if (!string.IsNullOrEmpty(item.Comment))
+                            {
+                                <RadzenStack Gap="0.25rem">
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="rz-text-secondary rz-m-0">Comment:</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Class="rz-m-0 timeline-comment">
+                                        @item.Comment
+                                    </RadzenText>
+                                </RadzenStack>
+                            }
+                        </RadzenStack>
+                    </RadzenCard>
+                </div>
+            }
+        </div>
+    }
+</RadzenStack>
+
+<style>
+    .timeline-container {
+        position: relative;
+        padding-left: 1rem;
+    }
+
+    .timeline-item {
+        position: relative;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .timeline-item-last {
+        margin-bottom: 0;
+    }
+
+    .timeline-marker {
+        position: relative;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 1;
+    }
+
+    .timeline-marker-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 3px solid white;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .timeline-line {
+        width: 2px;
+        height: 2rem;
+        background-color: var(--rz-border);
+        margin-top: 0.5rem;
+    }
+
+    .timeline-content {
+        flex: 1;
+        margin-top: 0.125rem;
+        border: 1px solid var(--rz-border);
+        border-radius: var(--rz-border-radius);
+        background-color: var(--rz-base-0);
+        position: relative;
+    }
+
+    .timeline-content::before {
+        content: '';
+        position: absolute;
+        top: 1rem;
+        left: -8px;
+        width: 0;
+        height: 0;
+        border-top: 8px solid transparent;
+        border-bottom: 8px solid transparent;
+        border-right: 8px solid var(--rz-border);
+    }
+
+    .timeline-content::after {
+        content: '';
+        position: absolute;
+        top: 1rem;
+        left: -7px;
+        width: 0;
+        height: 0;
+        border-top: 8px solid transparent;
+        border-bottom: 8px solid transparent;
+        border-right: 8px solid var(--rz-base-0);
+    }
+
+    .timeline-comment {
+        padding: 0.5rem;
+        background-color: var(--rz-base-100);
+        border-radius: var(--rz-border-radius);
+        border-left: 3px solid var(--rz-primary);
+        font-style: italic;
+    }
+
+    /* Status-specific colors */
+    .status-draft {
+        background-color: #757575;
+    }
+
+    .status-submitted {
+        background-color: #2196F3;
+    }
+
+    .status-approved {
+        background-color: #4CAF50;
+    }
+
+    .status-inprogress {
+        background-color: #FF9800;
+    }
+
+    .status-itemsreceived {
+        background-color: #9C27B0;
+    }
+
+    .status-itemsinstalled {
+        background-color: #3F51B5;
+    }
+
+    .status-completed {
+        background-color: #388E3C;
+    }
+
+    .status-cancelled,
+    .status-rejected {
+        background-color: #F44336;
+    }
+
+    /* Responsive adjustments */
+    @@media (max-width: 768px) {
+        .timeline-container {
+            padding-left: 0.5rem;
+        }
+
+        .timeline-item {
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .timeline-marker-icon {
+            width: 2rem;
+            height: 2rem;
+        }
+
+        .timeline-content::before,
+        .timeline-content::after {
+            display: none;
+        }
+    }
+</style>
+
+@code {
+    [Parameter] public string Title { get; set; } = "Request Timeline";
+    [Parameter] public List<HistoryRow>? HistoryItems { get; set; }
+    [Parameter] public bool ShowRelativeTime { get; set; } = true;
+
+    private string GetStatusClass(string status)
+    {
+        return $"status-{status.ToLowerInvariant().Replace(" ", "")}";
+    }
+
+    private string GetStatusIcon(string status)
+    {
+        return status.ToLowerInvariant() switch
+        {
+            "draft" => "edit",
+            "submitted" => "send",
+            "approved" => "check_circle",
+            "inprogress" => "play_circle",
+            "itemsreceived" => "inventory",
+            "itemsinstalled" => "build",
+            "completed" => "done_all",
+            "cancelled" => "cancel",
+            "rejected" => "block",
+            _ => "circle"
+        };
+    }
+
+    private string GetStatusDisplayName(string status)
+    {
+        return status switch
+        {
+            "Draft" => "Draft",
+            "Submitted" => "Submitted",
+            "Approved" => "Approved", 
+            "InProgress" => "In Progress",
+            "ItemsReceived" => "Items Received",
+            "ItemsInstalled" => "Items Installed",
+            "Completed" => "Completed",
+            "Cancelled" => "Cancelled",
+            "Rejected" => "Rejected",
+            _ => status
+        };
+    }
+
+    private string GetRelativeTime(DateTime dateTime)
+    {
+        if (!ShowRelativeTime) return dateTime.ToString("MMM dd, yyyy 'at' HH:mm");
+
+        var timeSpan = DateTime.UtcNow - dateTime.ToUniversalTime();
+        
+        return timeSpan switch
+        {
+            { TotalMinutes: < 1 } => "Just now",
+            { TotalMinutes: < 60 } => $"{(int)timeSpan.TotalMinutes} min ago",
+            { TotalHours: < 24 } => $"{(int)timeSpan.TotalHours} hr ago",
+            { TotalDays: < 7 } => $"{(int)timeSpan.TotalDays} day{((int)timeSpan.TotalDays == 1 ? "" : "s")} ago",
+            { TotalDays: < 30 } => $"{(int)(timeSpan.TotalDays / 7)} week{((int)(timeSpan.TotalDays / 7) == 1 ? "" : "s")} ago",
+            _ => dateTime.ToString("MMM dd, yyyy")
+        };
+    }
+}

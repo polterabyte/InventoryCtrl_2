@@ -19,13 +19,14 @@
     <PackageReference Include="Swashbuckle.AspNetCore.Swagger" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
-    <PackageReference Include="Microsoft.AspNetCore.SignalR" />
+    <!-- Microsoft.AspNetCore.SignalR functionality is built into .NET 8 framework -->
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />
     <PackageReference Include="WebPush" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Inventory.Shared\Inventory.Shared.csproj" />
+    <ProjectReference Include="..\Inventory.Web.Client\Inventory.Web.Client.csproj" />
   </ItemGroup>
 
 </Project>

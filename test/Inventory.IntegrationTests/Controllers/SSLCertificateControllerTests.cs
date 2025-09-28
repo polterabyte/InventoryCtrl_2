@@ -13,7 +13,7 @@ namespace Inventory.IntegrationTests.Controllers
     {
         private readonly WebApplicationFactory<Program> _factory;
         private readonly HttpClient _client;
-        private Mock<ISSLCertificateService> _mockSslService;
+        private Mock<ISSLCertificateService> _mockSslService = null!;
 
         public SSLCertificateControllerTests(WebApplicationFactory<Program> factory)
         {

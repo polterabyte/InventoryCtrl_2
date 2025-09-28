@@ -333,7 +333,7 @@ public class TransactionControllerTests : IDisposable
         
         // Verify product quantity was updated
         var updatedProduct = await _context.Products.FindAsync(product.Id);
-        updatedProduct!.Quantity.Should().Be(110); // 100 + 10
+        updatedProduct!.CurrentQuantity.Should().Be(110); // 100 + 10
     }
 
     [Fact]
@@ -370,7 +370,7 @@ public class TransactionControllerTests : IDisposable
         
         // Verify product quantity was updated
         var updatedProduct = await _context.Products.FindAsync(product.Id);
-        updatedProduct!.Quantity.Should().Be(95); // 100 - 5
+        updatedProduct!.CurrentQuantity.Should().Be(95); // 100 - 5
     }
 
     [Fact]
@@ -385,7 +385,7 @@ public class TransactionControllerTests : IDisposable
             ProductId = product.Id,
             WarehouseId = warehouse.Id,
             Type = "Outcome",
-            Quantity = product.Quantity + 100, // More than available
+            Quantity = product.CurrentQuantity + 100, // More than available
             Description = "Test insufficient stock transaction"
         };
 
@@ -495,7 +495,7 @@ public class TransactionControllerTests : IDisposable
         await SeedTestDataAsync();
         var product = _context.Products.First();
         var warehouse = _context.Warehouses.First();
-        var originalQuantity = product.Quantity;
+        var originalQuantity = product.CurrentQuantity;
         var request = new CreateInventoryTransactionDto
         {
             ProductId = product.Id,
@@ -518,7 +518,7 @@ public class TransactionControllerTests : IDisposable
         
         // Verify product quantity was not changed for Install type
         var updatedProduct = await _context.Products.FindAsync(product.Id);
-        updatedProduct!.Quantity.Should().Be(originalQuantity);
+        updatedProduct!.CurrentQuantity.Should().Be(originalQuantity);
     }
 
     private async Task SeedTestDataAsync()
@@ -528,7 +528,10 @@ public class TransactionControllerTests : IDisposable
         // Create test data
         var category = new Category { Name = "Test Category", IsActive = true, CreatedAt = DateTime.UtcNow };
         var manufacturer = new Manufacturer { Name = "Test Manufacturer", CreatedAt = DateTime.UtcNow };
-        var warehouse = new Warehouse { Name = "Test Warehouse", Address = "Test Location", IsActive = true, CreatedAt = DateTime.UtcNow };
+        var loc = new Location { Name = "Test Location", IsActive = true, CreatedAt = DateTime.UtcNow };
+        _context.Locations.Add(loc);
+        await _context.SaveChangesAsync();
+        var warehouse = new Warehouse { Name = "Test Warehouse", LocationId = loc.Id, IsActive = true, CreatedAt = DateTime.UtcNow };
         var user = new User { Id = _testUserId, UserName = "testuser", Email = "test@example.com", Role = "Admin" };
         var productGroup = new ProductGroup { Name = "Test Product Group", IsActive = true, CreatedAt = DateTime.UtcNow };
         
@@ -547,7 +550,7 @@ public class TransactionControllerTests : IDisposable
         {
             Name = "Test Product",
             SKU = "TEST001",
-            Quantity = 100,
+            CurrentQuantity = 100,
             CategoryId = category.Id,
             ManufacturerId = manufacturer.Id,
             ProductGroupId = productGroup.Id,
@@ -593,7 +596,10 @@ public class TransactionControllerTests : IDisposable
         // Create test data without transactions
         var category = new Category { Name = "Test Category", IsActive = true, CreatedAt = DateTime.UtcNow };
         var manufacturer = new Manufacturer { Name = "Test Manufacturer", CreatedAt = DateTime.UtcNow };
-        var warehouse = new Warehouse { Name = "Test Warehouse", Address = "Test Location", IsActive = true, CreatedAt = DateTime.UtcNow };
+        var loc = new Location { Name = "Test Location", IsActive = true, CreatedAt = DateTime.UtcNow };
+        _context.Locations.Add(loc);
+        await _context.SaveChangesAsync();
+        var warehouse = new Warehouse { Name = "Test Warehouse", LocationId = loc.Id, IsActive = true, CreatedAt = DateTime.UtcNow };
         var user = new User { Id = _testUserId, UserName = "testuser", Email = "test@example.com", Role = "Admin" };
         var productGroup = new ProductGroup { Name = "Test Product Group", IsActive = true, CreatedAt = DateTime.UtcNow };
         
@@ -612,7 +618,7 @@ public class TransactionControllerTests : IDisposable
         {
             Name = "Test Product",
             SKU = "TEST001",
-            Quantity = 100,
+            CurrentQuantity = 100,
             CategoryId = category.Id,
             ManufacturerId = manufacturer.Id,
             ProductGroupId = productGroup.Id,

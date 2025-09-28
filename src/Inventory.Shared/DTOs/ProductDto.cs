@@ -8,6 +8,7 @@ public class ProductDto
     public string Name { get; set; } = string.Empty;
     public string SKU { get; set; } = string.Empty;
     public string? Description { get; set; }
+    // This quantity is now populated from ProductOnHandView for data consistency
     public int Quantity { get; set; }
     public int UnitOfMeasureId { get; set; }
     public string UnitOfMeasureName { get; set; } = string.Empty;

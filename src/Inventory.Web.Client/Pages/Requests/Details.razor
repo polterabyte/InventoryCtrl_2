@@ -1,0 +1,419 @@
+@page "/requests/{Id:int}"
+
+@using Microsoft.AspNetCore.Authorization
+@using Inventory.Shared.DTOs
+@using Inventory.Shared.Interfaces
+@using Inventory.Web.Client.Components.Shared
+@using Inventory.Web.Client.Services
+@using Microsoft.JSInterop
+@using Radzen
+@using Radzen.Blazor
+
+@inject IRequestApiService RequestService
+@inject NavigationManager Navigation
+@inject NotificationService NotificationService
+@inject ISignalRService SignalRService
+@inject ITokenManagementService TokenManagement
+@implements IAsyncDisposable
+
+@attribute [Authorize]
+
+<PageTitle>Request Details - Inventory Control</PageTitle>
+
+<div class="content-card">
+    @if (loading)
+    {
+        <RadzenStack AlignItems="AlignItems.Center" Gap="1rem" Class="rz-p-8">
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+            <RadzenText TextStyle="TextStyle.Body1">Loading request details...</RadzenText>
+        </RadzenStack>
+    }
+    else if (errorMessage != null)
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Danger" Shade="Shade.Lighter" Variant="Variant.Flat" Size="AlertSize.Large">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenIcon Icon="error" />
+                <RadzenText TextStyle="TextStyle.Body1"><strong>Error:</strong> @errorMessage</RadzenText>
+            </RadzenStack>
+        </RadzenAlert>
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Class="rz-mt-4">
+            <RadzenButton Text="Retry" Icon="refresh" ButtonStyle="ButtonStyle.Primary" Click="@LoadRequestDetails" />
+            <RadzenButton Text="Back to Requests" Icon="arrow_back" ButtonStyle="ButtonStyle.Light" Click="@(() => Navigation.NavigateTo("/requests"))" />
+        </RadzenStack>
+    }
+    else if (request == null)
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Warning" Shade="Shade.Lighter" Variant="Variant.Flat" Size="AlertSize.Large">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenIcon Icon="warning" />
+                <RadzenText TextStyle="TextStyle.Body1">Request not found.</RadzenText>
+            </RadzenStack>
+        </RadzenAlert>
+        <RadzenButton Text="Back to Requests" Icon="arrow_back" ButtonStyle="ButtonStyle.Primary" Click="@(() => Navigation.NavigateTo("/requests"))" Class="rz-mt-4" />
+    }
+    else
+    {
+        <RadzenStack Gap="2rem">
+            @* Header Section *@
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.SpaceBetween" Class="request-header">
+                <RadzenStack Gap="1rem">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.H4" Class="rz-m-0">Request #@request.Id</RadzenText>
+                        <RequestStatusBadge Status="@request.Status" />
+                    </RadzenStack>
+                    <RadzenText TextStyle="TextStyle.H6" Class="rz-m-0 rz-text-secondary">@request.Title</RadzenText>
+                    @if (!string.IsNullOrEmpty(request.Description))
+                    {
+                        <RadzenText TextStyle="TextStyle.Body1" Class="rz-m-0">@request.Description</RadzenText>
+                    }
+                </RadzenStack>
+                
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                    <RadzenButton Text="Edit" Icon="edit" ButtonStyle="ButtonStyle.Secondary" 
+                                  Click="@(() => Navigation.NavigateTo($"/requests/{Id}/edit"))"
+                                  Disabled="@(!CanEdit())" />
+                    <RadzenButton Text="Back" Icon="arrow_back" ButtonStyle="ButtonStyle.Light" 
+                                  Click="@(() => Navigation.NavigateTo("/requests"))" />
+                </RadzenStack>
+            </RadzenStack>
+
+            @* Request Information *@
+            <RadzenCard Class="rz-p-4">
+                <RadzenStack Gap="1rem">
+                    <RadzenText TextStyle="TextStyle.H6" Class="rz-m-0">Request Information</RadzenText>
+                    <RadzenRow Gap="2rem">
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenStack Gap="0.75rem">
+                                <RadzenStack Gap="0.25rem">
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="rz-text-secondary rz-m-0">Created</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body1" Class="rz-m-0">@request.CreatedAt.ToString("MMMM dd, yyyy 'at' HH:mm")</RadzenText>
+                                </RadzenStack>
+                                @if (request.UpdatedAt.HasValue)
+                                {
+                                    <RadzenStack Gap="0.25rem">
+                                        <RadzenText TextStyle="TextStyle.Caption" Class="rz-text-secondary rz-m-0">Last Updated</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body1" Class="rz-m-0">@request.UpdatedAt.Value.ToString("MMMM dd, yyyy 'at' HH:mm")</RadzenText>
+                                    </RadzenStack>
+                                }
+                            </RadzenStack>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenStack Gap="0.75rem">
+                                <RadzenStack Gap="0.25rem">
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="rz-text-secondary rz-m-0">Created By</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body1" Class="rz-m-0">@request.CreatedByUserId</RadzenText>
+                                </RadzenStack>
+                            </RadzenStack>
+                        </RadzenColumn>
+                    </RadzenRow>
+                </RadzenStack>
+            </RadzenCard>
+
+            @* Status Actions *@
+            @if (HasAvailableActions())
+            {
+                <RadzenCard Class="rz-p-4">
+                    <RadzenStack Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.H6" Class="rz-m-0">Actions</RadzenText>
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Wrap="FlexWrap.Wrap">
+                            @if (CanSubmit())
+                            {
+                                <RadzenButton Text="Submit Request" Icon="send" ButtonStyle="ButtonStyle.Success" 
+                                              Click="@(() => HandleStatusAction("Submitted", "Request submitted for approval"))" />
+                            }
+                            @if (CanApprove())
+                            {
+                                <RadzenButton Text="Approve" Icon="check_circle" ButtonStyle="ButtonStyle.Success" 
+                                              Click="@(() => HandleStatusAction("Approved", "Request approved"))" />
+                            }
+                            @if (CanMarkReceived())
+                            {
+                                <RadzenButton Text="Mark Items Received" Icon="inventory" ButtonStyle="ButtonStyle.Primary" 
+                                              Click="@(() => HandleStatusAction("ItemsReceived", "Items received"))" />
+                            }
+                            @if (CanMarkInstalled())
+                            {
+                                <RadzenButton Text="Mark Items Installed" Icon="build" ButtonStyle="ButtonStyle.Primary" 
+                                              Click="@(() => HandleStatusAction("ItemsInstalled", "Items installed"))" />
+                            }
+                            @if (CanComplete())
+                            {
+                                <RadzenButton Text="Complete Request" Icon="done_all" ButtonStyle="ButtonStyle.Success" 
+                                              Click="@(() => HandleStatusAction("Completed", "Request completed"))" />
+                            }
+                            @if (CanCancel())
+                            {
+                                <RadzenButton Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Secondary" 
+                                              Click="@(() => HandleStatusAction("Cancelled", "Request cancelled"))" />
+                            }
+                            @if (CanReject())
+                            {
+                                <RadzenButton Text="Reject" Icon="block" ButtonStyle="ButtonStyle.Danger" 
+                                              Click="@(() => HandleStatusAction("Rejected", "Request rejected"))" />
+                            }
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenCard>
+            }
+
+            @* Request Items *@
+            @if (request.Transactions?.Count > 0)
+            {
+                <RadzenCard Class="rz-p-4">
+                    <RadzenStack Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.H6" Class="rz-m-0">Request Items</RadzenText>
+                        <RadzenDataGrid Data="@request.Transactions" TItem="TransactionRow" AllowPaging="true" PageSize="10">
+                            <Columns>
+                                <RadzenDataGridColumn TItem="TransactionRow" Property="Type" Title="Type" Width="100px" />
+                                <RadzenDataGridColumn TItem="TransactionRow" Property="Quantity" Title="Quantity" Width="100px" />
+                                <RadzenDataGridColumn TItem="TransactionRow" Property="Date" Title="Date" FormatString="{0:MMM dd, yyyy}" Width="120px" />
+                                <RadzenDataGridColumn TItem="TransactionRow" Property="Description" Title="Description" />
+                                <RadzenDataGridColumn TItem="TransactionRow" Title="Product" Width="100px">
+                                    <Template Context="transaction">
+                                        @if (transaction.ProductId.HasValue)
+                                        {
+                                            <RadzenButton Text="View" Icon="visibility" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                                                          Click="@(() => Navigation.NavigateTo($"/products/{transaction.ProductId}"))" />
+                                        }
+                                        else
+                                        {
+                                            <RadzenText TextStyle="TextStyle.Body2" Class="rz-text-secondary">N/A</RadzenText>
+                                        }
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="TransactionRow" Title="Warehouse" Width="100px">
+                                    <Template Context="transaction">
+                                        @if (transaction.WarehouseId.HasValue)
+                                        {
+                                            <RadzenButton Text="View" Icon="visibility" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                                                          Click="@(() => Navigation.NavigateTo($"/warehouses/{transaction.WarehouseId}"))" />
+                                        }
+                                        else
+                                        {
+                                            <RadzenText TextStyle="TextStyle.Body2" Class="rz-text-secondary">N/A</RadzenText>
+                                        }
+                                    </Template>
+                                </RadzenDataGridColumn>
+                            </Columns>
+                        </RadzenDataGrid>
+                    </RadzenStack>
+                </RadzenCard>
+            }
+
+            @* Request History Timeline *@
+            @if (request.History?.Count > 0)
+            {
+                <RadzenCard Class="rz-p-4">
+                    <RequestTimeline HistoryItems="@request.History" Title="Status History" />
+                </RadzenCard>
+            }
+        </RadzenStack>
+    }
+</div>
+
+<style>
+    .request-header {
+        border-bottom: 1px solid var(--rz-border);
+        padding-bottom: 1.5rem;
+    }
+
+    .status-actions {
+        border: 1px solid var(--rz-border);
+        border-radius: var(--rz-border-radius);
+        padding: 1rem;
+        background-color: var(--rz-base-50);
+    }
+</style>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private RequestDetailsDto? request;
+    private bool loading = true;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await InitializeSignalR();
+        await LoadRequestDetails();
+    }
+
+    private async Task InitializeSignalR()
+    {
+        try
+        {
+            var token = await TokenManagement.GetStoredTokenAsync();
+            if (!string.IsNullOrEmpty(token))
+            {
+                var dotNetRef = DotNetObjectReference.Create(this);
+                var connected = await SignalRService.InitializeConnectionAsync(token, dotNetRef);
+                if (connected)
+                {
+                    await SignalRService.SubscribeToNotificationTypeAsync("REQUEST");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"SignalR initialization error: {ex.Message}");
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnRequestStatusChanged(int requestId, string newStatus)
+    {
+        try
+        {
+            if (request?.Id == requestId)
+            {
+                // Reload the request details to get the latest data
+                await LoadRequestDetails();
+                
+                NotificationService.Notify(new Radzen.NotificationMessage
+                {
+                    Severity = NotificationSeverity.Info,
+                    Summary = "Real-time Update",
+                    Detail = $"Request status changed to {newStatus}",
+                    Duration = 3000
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error handling real-time status update: {ex.Message}");
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (request?.Id != Id)
+        {
+            await LoadRequestDetails();
+        }
+    }
+
+    private async Task LoadRequestDetails()
+    {
+        loading = true;
+        errorMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            var response = await RequestService.GetRequestByIdAsync(Id);
+            
+            if (response.Success && response.Data != null)
+            {
+                request = response.Data;
+            }
+            else
+            {
+                errorMessage = response.ErrorMessage ?? "Failed to load request details";
+                request = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An error occurred while loading request details: {ex.Message}";
+            request = null;
+        }
+        finally
+        {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleStatusAction(string newStatus, string comment)
+    {
+        if (request == null) return;
+
+        loading = true;
+        StateHasChanged();
+
+        try
+        {
+            ApiResponse<RequestDetailsDto>? response = newStatus switch
+            {
+                "Submitted" => await RequestService.SubmitRequestAsync(request.Id, comment),
+                "Approved" => await RequestService.ApproveRequestAsync(request.Id, comment),
+                "ItemsReceived" => await RequestService.MarkItemsReceivedAsync(request.Id, comment),
+                "ItemsInstalled" => await RequestService.MarkItemsInstalledAsync(request.Id, comment),
+                "Completed" => await RequestService.CompleteRequestAsync(request.Id, comment),
+                "Cancelled" => await RequestService.CancelRequestAsync(request.Id, comment),
+                "Rejected" => await RequestService.RejectRequestAsync(request.Id, comment),
+                _ => null
+            };
+
+            if (response?.Success == true && response.Data != null)
+            {
+                request = response.Data; // Update with the latest data
+                
+                NotificationService.Notify(new Radzen.NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Status Updated",
+                    Detail = $"Request status changed to {newStatus}",
+                    Duration = 4000
+                });
+            }
+            else
+            {
+                NotificationService.Notify(new Radzen.NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Status Update Failed",
+                    Detail = response?.ErrorMessage ?? "Failed to update request status",
+                    Duration = 4000
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new Radzen.NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"An error occurred: {ex.Message}",
+                Duration = 4000
+            });
+        }
+        finally
+        {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+
+    // Permission and state checking methods
+    private bool CanEdit() => request?.Status?.Equals("Draft", StringComparison.OrdinalIgnoreCase) == true;
+    private bool CanSubmit() => request?.Status?.Equals("Draft", StringComparison.OrdinalIgnoreCase) == true;
+    private bool CanApprove() => request?.Status?.Equals("Submitted", StringComparison.OrdinalIgnoreCase) == true;
+    private bool CanMarkReceived() => request?.Status?.Equals("Approved", StringComparison.OrdinalIgnoreCase) == true || 
+                                      request?.Status?.Equals("InProgress", StringComparison.OrdinalIgnoreCase) == true;
+    private bool CanMarkInstalled() => request?.Status?.Equals("ItemsReceived", StringComparison.OrdinalIgnoreCase) == true ||
+                                       request?.Status?.Equals("InProgress", StringComparison.OrdinalIgnoreCase) == true;
+    private bool CanComplete() => request?.Status?.Equals("ItemsInstalled", StringComparison.OrdinalIgnoreCase) == true ||
+                                  request?.Status?.Equals("ItemsReceived", StringComparison.OrdinalIgnoreCase) == true ||
+                                  request?.Status?.Equals("InProgress", StringComparison.OrdinalIgnoreCase) == true;
+    private bool CanCancel() => !string.Equals(request?.Status, "Completed", StringComparison.OrdinalIgnoreCase) &&
+                               !string.Equals(request?.Status, "Cancelled", StringComparison.OrdinalIgnoreCase) &&
+                               !string.Equals(request?.Status, "Rejected", StringComparison.OrdinalIgnoreCase);
+    private bool CanReject() => request?.Status?.Equals("Submitted", StringComparison.OrdinalIgnoreCase) == true;
+
+    private bool HasAvailableActions() => CanSubmit() || CanApprove() || CanMarkReceived() || CanMarkInstalled() || 
+                                         CanComplete() || CanCancel() || CanReject();
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            await SignalRService.UnsubscribeFromNotificationTypeAsync("REQUEST");
+            await SignalRService.DisconnectAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error disposing SignalR: {ex.Message}");
+        }
+    }
+}

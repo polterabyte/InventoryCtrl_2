@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace Inventory.API.Models;
 
 public class Product
@@ -6,7 +8,8 @@ public class Product
     public string Name { get; set; } = string.Empty;
     public string SKU { get; set; } = string.Empty;
     public string? Description { get; set; }
-    public int Quantity { get; set; }
+    // Quantity removed - use CurrentQuantity computed property instead
+    // public int Quantity { get; set; } // Removed to prevent data duplication with ProductOnHandView
     public int UnitOfMeasureId { get; set; }
     public UnitOfMeasure UnitOfMeasure { get; set; } = null!;
     public bool IsActive { get; set; } = true;
@@ -23,6 +26,11 @@ public class Product
     public string? Note { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    
+    // Computed property for current quantity from ProductOnHandView
+    // This replaces the direct Quantity field to ensure data consistency
+    [NotMapped]
+    public int CurrentQuantity { get; set; }
     public ICollection<InventoryTransaction> Transactions { get; set; } = new List<InventoryTransaction>();
     public ICollection<ProductTag> ProductTags { get; set; } = new List<ProductTag>();
 }

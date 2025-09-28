@@ -14,14 +14,14 @@ public class StatsWidgetTests : ComponentTestBase
         // Arrange
         const string label = "Total Products";
         const int value = 150;
-        const string iconClass = "bi bi-box";
+        const string icon = "inventory_2";
         const string cardClass = "primary";
 
         // Act
         var component = RenderComponent<StatsWidget>(parameters => parameters
             .Add(p => p.Label, label)
             .Add(p => p.Value, value)
-            .Add(p => p.IconClass, iconClass)
+            .Add(p => p.Icon, icon)
             .Add(p => p.CardClass, cardClass)
         );
 
@@ -32,7 +32,7 @@ public class StatsWidgetTests : ComponentTestBase
         // Check if stats are displayed
         component.Markup.Should().Contain("150"); // Value
         component.Markup.Should().Contain("Total Products"); // Label
-        component.Markup.Should().Contain("bi bi-box"); // IconClass
+        component.Markup.Should().Contain(icon); // Icon
     }
 
     [Fact]
@@ -82,9 +82,9 @@ public class StatsWidgetTests : ComponentTestBase
         );
 
         // Assert
-        component.Find(".stats-widget").Should().NotBeNull();
-        component.Find(".card").Should().NotBeNull();
-        component.Find(".card-body").Should().NotBeNull();
-        component.Markup.Should().Contain("border-success");
+        var root = component.Find(".stats-widget");
+        root.Should().NotBeNull();
+        root.ClassList.Should().Contain("border-success");
+        root.ClassList.Should().Contain("rz-card");
     }
 }

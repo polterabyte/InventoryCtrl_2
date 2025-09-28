@@ -1,39 +1,46 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using Inventory.Shared.DTOs
 @using Inventory.Shared.Interfaces
+
 @inject IAuthService AuthService
 
 <h3>@Title</h3>
 
-<EditForm Model="registerModel" OnValidSubmit="HandleRegister">
+<RadzenTemplateForm Data="@registerModel" Submit="@(async (RegisterRequest model) => await HandleRegister())">
     <DataAnnotationsValidator />
     <ValidationSummary />
     <div class="mb-3">
-        <label class="form-label">Логин:</label>
-        <InputText class="form-control" @bind-Value="registerModel.Username" />
+        <RadzenFormField Text="Логин:" class="rz-mb-3">
+            <RadzenTextBox @bind-Value="registerModel.Username" Name="username" />
+            <RadzenRequiredValidator Component="username" Text="Логин обязателен" />
+        </RadzenFormField>
     </div>
     <div class="mb-3">
-        <label class="form-label">Email:</label>
-        <InputText class="form-control" @bind-Value="registerModel.Email" type="email" />
+        <RadzenFormField Text="Email:" class="rz-mb-3">
+            <RadzenTextBox @bind-Value="registerModel.Email" Name="email" />
+            <RadzenRequiredValidator Component="email" Text="Email обязателен" />
+            <RadzenEmailValidator Component="email" Text="Неверный формат email" />
+        </RadzenFormField>
     </div>
     <div class="mb-3">
-        <label class="form-label">Пароль:</label>
-        <InputText class="form-control" @bind-Value="registerModel.Password" type="password" />
+        <RadzenFormField Text="Пароль:" class="rz-mb-3">
+            <RadzenPassword @bind-Value="registerModel.Password" Name="password" />
+            <RadzenRequiredValidator Component="password" Text="Пароль обязателен" />
+        </RadzenFormField>
     </div>
     <div class="mb-3">
-        <label class="form-label">Подтверждение пароля:</label>
-        <InputText class="form-control" @bind-Value="registerModel.ConfirmPassword" type="password" />
+        <RadzenFormField Text="Подтверждение пароля:" class="rz-mb-3">
+            <RadzenPassword @bind-Value="registerModel.ConfirmPassword" Name="confirmPassword" />
+            <RadzenRequiredValidator Component="confirmPassword" Text="Подтверждение пароля обязательно" />
+        </RadzenFormField>
     </div>
     <div class="mb-3">
-        <button type="submit" class="btn btn-primary" disabled="@isLoading">
-            @if (isLoading)
-            {
-                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-            }
-            Зарегистрироваться
-        </button>
+        <RadzenButton Text="@(isLoading ? "Регистрация..." : "Зарегистрироваться")"
+                      ButtonType="ButtonType.Submit"
+                      ButtonStyle="ButtonStyle.Primary"
+                      Disabled="@isLoading" />
     </div>
-</EditForm>
+</RadzenTemplateForm>
 
 @if (ShowLoginLink)
 {
@@ -42,12 +49,16 @@
 
 @if (!string.IsNullOrEmpty(errorMessage))
 {
-    <div class="alert alert-danger" role="alert">@errorMessage</div>
+    <RadzenAlert AlertStyle="AlertStyle.Danger" ShowIcon="true" class="rz-mt-3">
+        @errorMessage
+    </RadzenAlert>
 }
 
 @if (!string.IsNullOrEmpty(successMessage))
 {
-    <div class="alert alert-success" role="alert">@successMessage</div>
+    <RadzenAlert AlertStyle="AlertStyle.Success" ShowIcon="true" class="rz-mt-3">
+        @successMessage
+    </RadzenAlert>
 }
 
 @code {

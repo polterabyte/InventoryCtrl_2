@@ -4,25 +4,28 @@
 param(
     [Parameter(Mandatory=$true)]
     [string]$Environment,
-    
+
     [Parameter(Mandatory=$false)]
     [string]$EnvFile,
-    
+
     [Parameter(Mandatory=$false)]
     [string]$ComposeFile,
-    
+
     [Parameter(Mandatory=$false)]
     [string]$Domain,
-    
+
     [Parameter(Mandatory=$false)]
     [string]$BaseDomain = "warehouse.cuby",
-    
+
     [Parameter(Mandatory=$false)]
     [switch]$SkipVapidCheck,
-    
+
+    [Parameter(Mandatory=$false)]
+    [switch]$SkipHealthCheck,
+
     [Parameter(Mandatory=$false)]
     [int]$HealthCheckTimeout = 30,
-    
+
     [Parameter(Mandatory=$false)]
     [switch]$DryRun
 )
@@ -33,18 +36,18 @@ function Get-DefaultFileNames {
         [string]$Env,
         [string]$BaseDomainName
     )
-    
+
     # Generate domain name based on environment
-    $domain = if ($Env -eq "production") { 
-        $BaseDomainName 
-    } else { 
-        "$Env.$BaseDomainName" 
+    $domain = if ($Env -eq "production") {
+        $BaseDomainName
+    } else {
+        "$Env.$BaseDomainName"
     }
-    
+
     # Generate standardized file names
     $envFile = "deploy/env.$Env"
     $composeFile = "docker-compose.$Env.yml"
-    
+
     return @{
         Domain = $domain
         EnvFile = $envFile
@@ -74,9 +77,10 @@ Write-Host "  Domain: $Domain" -ForegroundColor White
 Write-Host "  Env File: $EnvFile" -ForegroundColor White
 Write-Host "  Compose File: $ComposeFile" -ForegroundColor White
 Write-Host "  Base Domain: $BaseDomain" -ForegroundColor White
-Write-Host "  Skip VAPID Check: $SkipVapidCheck" -ForegroundColor White
+Write-Host "  Skip VAPID Check: $($SkipVapidCheck.IsPresent)" -ForegroundColor White
+Write-Host "  Skip Health Check: $($SkipHealthCheck.IsPresent)" -ForegroundColor White
 Write-Host "  Health Check Timeout: $HealthCheckTimeout seconds" -ForegroundColor White
-Write-Host "  Dry Run: $DryRun" -ForegroundColor White
+Write-Host "  Dry Run: $($DryRun.IsPresent)" -ForegroundColor White
 Write-Host ""
 
 # Check if files exist
@@ -89,11 +93,24 @@ if (-not (Test-Path $ComposeFile)) {
     exit 1
 }
 
+$deployScript = Join-Path $PSScriptRoot 'deploy.ps1'
+
+if (-not (Test-Path $deployScript)) {
+    throw "Universal deployment script not found at $deployScript"
+}
+
 if ($DryRun) {
     Write-Host "Dry run mode - would execute:" -ForegroundColor Yellow
-    Write-Host "  .\deploy\deploy.ps1 -Environment $Environment -EnvFile `"$EnvFile`" -ComposeFile `"$ComposeFile`" -Domain `"$Domain`" -BaseDomain `"$BaseDomain`"" -ForegroundColor White
+    Write-Host "  & $deployScript -Environment $Environment" -ForegroundColor White
+    Write-Host "    -EnvFile $EnvFile" -ForegroundColor White
+    Write-Host "    -ComposeFile $ComposeFile" -ForegroundColor White
+    Write-Host "    -Domain $Domain" -ForegroundColor White
+    Write-Host "    -BaseDomain $BaseDomain" -ForegroundColor White
     if ($SkipVapidCheck) {
         Write-Host "    -SkipVapidCheck" -ForegroundColor White
+    }
+    if ($SkipHealthCheck) {
+        Write-Host "    -SkipHealthCheck" -ForegroundColor White
     }
     Write-Host "    -HealthCheckTimeout $HealthCheckTimeout" -ForegroundColor White
     Write-Host "`nDry run completed. No changes made." -ForegroundColor Green
@@ -113,5 +130,6 @@ $params = @{
 }
 
 if ($SkipVapidCheck) { $params.SkipVapidCheck = $true }
+if ($SkipHealthCheck) { $params.SkipHealthCheck = $true }
 
-& ".\deploy.ps1" @params
+& $deployScript @params

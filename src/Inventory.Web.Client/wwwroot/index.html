@@ -7,11 +7,13 @@
     <meta name="blazor-environment" content="Staging" />
     <title>Inventory.Web.Client</title>
     <base href="/" />
-    <link rel="stylesheet" href="_content/Inventory.Web.Assets/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="_content/Inventory.Web.Assets/css/compact-ui.css" />
-    <link rel="stylesheet" href="_content/Inventory.Web.Assets/css/app.css" />
     <link rel="icon" type="image/png" href="_content/Inventory.Web.Assets/favicon.png" />
     <link href="Inventory.Web.Client.styles.css" rel="stylesheet" />
+    <link rel="stylesheet" href="_content/Inventory.Web.Assets/css/app.css" />
+    <!-- Base Radzen styles (always needed) -->
+    <link rel="stylesheet" href="_content/Radzen.Blazor/css/dark.css">
+    <!-- Dynamic theme CSS will be loaded by App.razor -->
+    <link rel="stylesheet" id="radzen-theme-css" href="_content/Radzen.Blazor/css/default.css" />
 </head>
 
 <body>
@@ -22,16 +24,10 @@
         </svg>
         <div class="loading-progress-text"></div>
     </div>
-
-    <div id="blazor-error-ui">
-        An unhandled error has occurred.
-        <a href="." class="reload">Reload</a>
-        <span class="dismiss">🗙</span>
-    </div>
-    <script src="_content/Inventory.Web.Assets/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="_framework/blazor.webassembly.js"></script>
+    <script src="_content/Radzen.Blazor/Radzen.Blazor.js"></script>
+    
     <!-- SignalR scripts removed: using C# client -->
-    <!-- Web Push (VAPID) removed -->
     <script src="_content/Inventory.Web.Assets/js/file-download.js?v=20250921-3"></script>
     
     <script>
@@ -80,7 +76,7 @@
                     <div class="toast-body">
                         ${message}
                     </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close" style="background: none; border: none; color: white; font-size: 1.2em; cursor: pointer;">&times;</button>
                 </div>
             `;
             

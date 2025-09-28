@@ -24,6 +24,8 @@ The main deployment script that handles all environments with flexible configura
 - `ComposeFile` (Optional): Custom Docker Compose file path
 - `Domain` (Optional): Custom domain name
 - `BaseDomain` (Optional): Base domain for environment subdomains (default: "warehouse.cuby")
+- `SkipVapidCheck` (Optional): Skip legacy VAPID configuration validation (Web Push support removed)
+- `SkipHealthCheck` (Optional): Skip runtime health verification (use with caution)
 - `HealthCheckTimeout` (Optional): Health check timeout in seconds (default: 30)
 
 **Examples:**
@@ -57,7 +59,7 @@ These are wrapper scripts that call the universal deployment script with all the
 
 # With custom parameters
 .\deploy-staging.ps1 -EnvFile "custom.env" -Domain "staging.myapp.com"
-.\deploy-production.ps1 -SkipVapidCheck -HealthCheckTimeout 60
+.\deploy-production.ps1 -SkipVapidCheck -SkipHealthCheck -HealthCheckTimeout 60
 .\deploy-test.ps1 -ComposeFile "test-compose.yml" -BaseDomain "test.example.com"
 ```
 
@@ -79,6 +81,7 @@ Deploy multiple environments or all environments at once.
 - `SkipHealthCheck` (Optional): Skip health checks during deployment
 - `BaseDomain` (Optional): Base domain for environment subdomains (default: "warehouse.cuby")
 - `HealthCheckTimeout` (Optional): Health check timeout in seconds (default: 30)
+- `SkipVapidCheck` (Optional): Skip legacy VAPID validation in nested deployments
 
 **Examples:**
 ```powershell
@@ -109,7 +112,8 @@ Deploy with completely custom file names and domains.
 - `ComposeFile` (Optional): Custom Docker Compose file path
 - `Domain` (Optional): Custom domain name
 - `BaseDomain` (Optional): Base domain for environment subdomains (default: "warehouse.cuby")
- 
+- `SkipVapidCheck` (Optional): Skip legacy VAPID validation in wrapper
+- `SkipHealthCheck` (Optional): Skip runtime health verification (use with caution)
 - `HealthCheckTimeout` (Optional): Health check timeout in seconds (default: 30)
 - `DryRun` (Optional): Show what would be executed without running
 
@@ -197,7 +201,7 @@ The universal deployment script follows this process:
 
 ### Common Issues
 
-1. **VAPID Keys Not Generated**: The script automatically generates VAPID keys if they're missing
+1. **Legacy VAPID Flags**: Web Push/VAPID support has been removed; `-SkipVapidCheck` is retained only for backward compatibility
 2. **Environment File Missing**: The script will warn if environment files are missing
 3. **Health Check Fails**: Check Docker logs and ensure services are running properly
 4. **Permission Issues**: Ensure the script has proper execution permissions

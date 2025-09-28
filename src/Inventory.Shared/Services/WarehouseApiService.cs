@@ -7,6 +7,7 @@ using System.Text.Json;
 
 namespace Inventory.Shared.Services;
 
+#pragma warning disable CS9113 // Parameter is not read
 public class WarehouseApiService(HttpClient httpClient, ILogger<WarehouseApiService> logger, IRetryService? retryService = null, INotificationService? notificationService = null) : BaseApiService(httpClient, ApiEndpoints.Warehouses, logger), IWarehouseService
 {
     public async Task<List<WarehouseDto>> GetAllWarehousesAsync()
@@ -47,3 +48,4 @@ public class WarehouseApiService(HttpClient httpClient, ILogger<WarehouseApiServ
         return response.Success;
     }
 }
+#pragma warning restore CS9113 // Parameter is not read

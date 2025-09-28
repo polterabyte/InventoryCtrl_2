@@ -42,6 +42,9 @@ services:
       - Jwt__RefreshTokenExpireDays=${JWT_REFRESH_EXPIRE_DAYS:-7}
       - ApiUrl=${ApiUrl:-http://localhost}
       - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@localhost}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-Admin123!}
     depends_on:
       postgres:
         condition: service_healthy

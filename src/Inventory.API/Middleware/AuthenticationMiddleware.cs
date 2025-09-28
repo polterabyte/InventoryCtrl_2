@@ -20,6 +20,13 @@ public class AuthenticationMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
+        // Skip authentication for non-API routes (serving Blazor UI)
+        if (!context.Request.Path.StartsWithSegments("/api"))
+        {
+            await _next(context);
+            return;
+        }
+
         // Пропускаем проверку для публичных эндпоинтов
         if (IsPublicEndpoint(context.Request.Path))
         {
@@ -49,7 +56,7 @@ public class AuthenticationMiddleware
             var token = authHeader.Substring("Bearer ".Length).Trim();
             
             // Проверяем валидность токена
-            if (!await ValidateTokenAsync(token))
+            if (!ValidateToken(token))
             {
                 _logger.LogWarning("Invalid token for path: {Path}", context.Request.Path);
                 await HandleUnauthorized(context);
@@ -73,6 +80,7 @@ public class AuthenticationMiddleware
             "/api/auth/login",
             "/api/auth/register",
             "/api/health",
+            "/health",
             "/swagger",
             "/notificationHub"
         };
@@ -86,7 +94,7 @@ public class AuthenticationMiddleware
         return staticExtensions.Any(ext => path.Value?.EndsWith(ext, StringComparison.OrdinalIgnoreCase) == true);
     }
 
-    private async Task<bool> ValidateTokenAsync(string token)
+    private bool ValidateToken(string token)
     {
         try
         {

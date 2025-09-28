@@ -34,6 +34,7 @@ public static class ApiEndpoints
     // ProductGroup endpoints
     public const string ProductGroups = "/ProductGroup";
     public const string ProductGroupById = $"{ProductGroups}/{{id}}";
+    public const string ProductGroupAll = $"{ProductGroups}/all";
     
     // ProductModel endpoints
     public const string ProductModels = "/ProductModel";
@@ -77,6 +78,18 @@ public static class ApiEndpoints
     public const string DashboardStats = $"{Dashboard}/stats";
     public const string DashboardRecentActivity = $"{Dashboard}/recent-activity";
     public const string DashboardLowStockProducts = $"{Dashboard}/low-stock-products";
+    
+    // Request endpoints
+    public const string Requests = "/requests";
+    public const string RequestById = $"{Requests}/{{id}}";
+    public const string RequestSubmit = $"{Requests}/{{id}}/submit";
+    public const string RequestApprove = $"{Requests}/{{id}}/approve";
+    public const string RequestReceived = $"{Requests}/{{id}}/received";
+    public const string RequestInstalled = $"{Requests}/{{id}}/installed";
+    public const string RequestComplete = $"{Requests}/{{id}}/complete";
+    public const string RequestCancel = $"{Requests}/{{id}}/cancel";
+    public const string RequestReject = $"{Requests}/{{id}}/reject";
+    public const string RequestItems = $"{Requests}/{{id}}/items";
     
     // Audit endpoints
     public const string Audit = "/audit";

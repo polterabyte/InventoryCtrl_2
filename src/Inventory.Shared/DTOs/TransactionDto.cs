@@ -34,7 +34,7 @@ public class CreateInventoryTransactionDto
     public int? LocationId { get; set; }
     
     [Required(ErrorMessage = "Transaction type is required")]
-    [RegularExpression("^(Income|Outcome|Install)$", ErrorMessage = "Transaction type must be Income, Outcome, or Install")]
+    [RegularExpression("^(Pending|Income|Outcome|Install)$", ErrorMessage = "Transaction type must be Pending, Income, Outcome, or Install")]
     public string Type { get; set; } = string.Empty;
     
     [Required(ErrorMessage = "Quantity is required")]

@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  
+  <!-- Navigation -->
+  <data name="Navigation.ToggleMenu">
+    <value>Переключить меню</value>
+  </data>
+  <data name="Navigation.Home">
+    <value>Главная</value>
+  </data>
+  <data name="Navigation.Catalog">
+    <value>Каталог</value>
+  </data>
+  <data name="Navigation.Warehouses">
+    <value>Склады</value>
+  </data>
+  <data name="Navigation.Requests">
+    <value>Заявки</value>
+  </data>
+  <data name="Navigation.Reports">
+    <value>Отчеты</value>
+  </data>
+  <data name="Navigation.Administration">
+    <value>Администрирование</value>
+  </data>
+  <data name="Navigation.ReferenceData">
+    <value>Справочники</value>
+  </data>
+  <data name="Navigation.Users">
+    <value>Пользователи</value>
+  </data>
+  <data name="Navigation.Audit">
+    <value>Аудит</value>
+  </data>
+  <data name="Navigation.Debug">
+    <value>Отладка</value>
+  </data>
+  
+  <!-- Greetings and User -->
+  <data name="Greeting.Hello">
+    <value>Привет, {0}!</value>
+  </data>
+  <data name="User.DefaultName">
+    <value>администратор</value>
+  </data>
+  
+  <!-- Actions -->
+  <data name="Action.Logout">
+    <value>Выйти</value>
+  </data>
+  <data name="Action.AddProduct">
+    <value>Добавить товар</value>
+  </data>
+  <data name="Action.ProductIncome">
+    <value>Приход товара</value>
+  </data>
+  <data name="Action.ProductExpense">
+    <value>Расход товара</value>
+  </data>
+  <data name="Action.Reports">
+    <value>Отчеты</value>
+  </data>
+  
+  <!-- Dashboard -->
+  <data name="Dashboard.KeyMetrics">
+    <value>Ключевые показатели</value>
+  </data>
+  <data name="Dashboard.QuickActions">
+    <value>Быстрые действия</value>
+  </data>
+  <data name="Dashboard.Welcome">
+    <value>Следите за ключевыми показателями и управляйте складом в режиме реального времени.</value>
+  </data>
+  
+  <!-- Stats Labels -->
+  <data name="Stats.TotalProducts">
+    <value>Всего товаров</value>
+  </data>
+  <data name="Stats.Categories">
+    <value>Категории</value>
+  </data>
+  <data name="Stats.Manufacturers">
+    <value>Производители</value>
+  </data>
+  <data name="Stats.Warehouses">
+    <value>Склады</value>
+  </data>
+  <data name="Stats.LowStock">
+    <value>Низкий остаток</value>
+  </data>
+  <data name="Stats.LowStockSubLabel">
+    <value>требуют пополнения</value>
+  </data>
+  <data name="Stats.OutOfStock">
+    <value>Нет в наличии</value>
+  </data>
+  <data name="Stats.OutOfStockSubLabel">
+    <value>нужно заказать</value>
+  </data>
+  
+  <!-- Common -->
+  <data name="Common.Loading">
+    <value>Загрузка...</value>
+  </data>
+  <data name="Common.Error">
+    <value>Ошибка</value>
+  </data>
+  <data name="Common.Success">
+    <value>Успех</value>
+  </data>
+  <data name="Common.Warning">
+    <value>Предупреждение</value>
+  </data>
+  <data name="Common.Information">
+    <value>Информация</value>
+  </data>
+  
+  <!-- Pages -->
+  <data name="Page.ReportsInProgress">
+    <value>Отчеты в разработке</value>
+  </data>
+  <data name="Page.WarehousesInProgress">
+    <value>Склады в разработке</value>
+  </data>
+  
+  <!-- Language Selection -->
+  <data name="Language.Select">
+    <value>Выбрать язык</value>
+  </data>
+  
+  <!-- Validation -->
+  <data name="Validation.ErrorSummary">
+    <value>Пожалуйста, исправьте следующие ошибки:</value>
+  </data>
+  <data name="Validation.Required">
+    <value>Это поле обязательно для заполнения</value>
+  </data>
+  <data name="Validation.InvalidEmail">
+    <value>Пожалуйста, введите корректный адрес электронной почты</value>
+  </data>
+  <data name="Validation.MinLength">
+    <value>Минимальная длина составляет {0} символов</value>
+  </data>
+  <data name="Validation.MaxLength">
+    <value>Максимальная длина составляет {0} символов</value>
+  </data>
+  
+  <!-- Field Names -->
+  <data name="Field.Name">
+    <value>Имя</value>
+  </data>
+  <data name="Field.Email">
+    <value>Электронная почта</value>
+  </data>
+  <data name="Field.Password">
+    <value>Пароль</value>
+  </data>
+  <data name="Field.Description">
+    <value>Описание</value>
+  </data>
+  
+  <!-- Product Related -->
+  <data name="Product.SKU">
+    <value>SKU</value>
+  </data>
+  <data name="Product.Category">
+    <value>Категория</value>
+  </data>
+  <data name="Product.Manufacturer">
+    <value>Производитель</value>
+  </data>
+  <data name="Product.MinMax">
+    <value>Мин: {0} | Макс: {1}</value>
+  </data>
+  
+  <!-- Actions -->
+  <data name="Action.Edit">
+    <value>Изменить</value>
+  </data>
+  <data name="Action.Delete">
+    <value>Удалить</value>
+  </data>
+  <data name="Action.Cancel">
+    <value>Отмена</value>
+  </data>
+  <data name="Action.Confirm">
+    <value>Подтвердить</value>
+  </data>
+  <data name="Action.Save">
+    <value>Сохранить</value>
+  </data>
+  <data name="Action.Close">
+    <value>Закрыть</value>
+  </data>
+  
+  <!-- Navigation Accessibility -->
+  <data name="Navigation.MainMenu">
+    <value>Основное меню навигации</value>
+  </data>
+  <data name="Navigation.MainContent">
+    <value>Основная область содержимого</value>
+  </data>
+  <data name="Navigation.PageContent">
+    <value>Содержимое страницы</value>
+  </data>
+  <data name="Navigation.AboutCompany">
+    <value>О компании (открывается в новом окне)</value>
+  </data>
+
+</root>

@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Components.Web;
+﻿using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Inventory.Web.Client;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -13,6 +13,10 @@ using Inventory.Web.Client.Services;
 using Microsoft.AspNetCore.Components;
 using Inventory.Web.Client.Configuration;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Localization;
+using System.Globalization;
+using Radzen;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -21,6 +25,10 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 // Configure API settings
 builder.Services.Configure<ApiConfiguration>(
     builder.Configuration.GetSection(ApiConfiguration.SectionName));
+
+// Configure Token settings
+builder.Services.Configure<TokenConfiguration>(
+    builder.Configuration.GetSection(TokenConfiguration.SectionName));
 
 // Register API URL service
 builder.Services.AddScoped<Inventory.Web.Client.Services.IApiUrlService, Inventory.Web.Client.Services.ApiUrlService>();
@@ -43,15 +51,38 @@ builder.Services.AddScoped<IApiHealthService, ApiHealthService>();
 // Register resilient API service
 builder.Services.AddScoped<IResilientApiService, ResilientApiService>();
 
-// Configure API HTTP client - will be configured dynamically via JavaScript
+// Register token refresh service (without circular dependencies)
+builder.Services.AddScoped<ITokenRefreshService>(sp =>
+{
+    // Separate HttpClient to avoid interceptor recursion; no fixed BaseAddress
+    var httpClient = new HttpClient();
+    httpClient.DefaultRequestHeaders.Add("X-Requested-With", "XMLHttpRequest");
+
+    var logger = sp.GetRequiredService<ILogger<TokenRefreshService>>();
+    var config = sp.GetRequiredService<IOptions<TokenConfiguration>>();
+    var urlBuilder = sp.GetRequiredService<IUrlBuilderService>();
+
+    return new TokenRefreshService(httpClient, logger, config, urlBuilder);
+});
+
+// Register token management service
+builder.Services.AddScoped<ITokenManagementService, TokenManagementService>();
+
+// Register HTTP interceptor
+builder.Services.AddScoped<IHttpInterceptor, JwtHttpInterceptor>();
+
+// Configure API HTTP client with interceptor support
 builder.Services.AddScoped<HttpClient>(sp =>
 {
-    // Create HttpClient without BaseAddress - URLs will be constructed in services
-    var httpClient = new HttpClient();
+    var interceptor = sp.GetRequiredService<IHttpInterceptor>();
+    var logger = sp.GetRequiredService<ILogger<InterceptedHttpClient>>();
+    
+    var httpClient = new InterceptedHttpClient(interceptor, logger);
     httpClient.DefaultRequestHeaders.Add("X-Requested-With", "XMLHttpRequest");
     
     return httpClient;
 });
+
 
 // Add Blazor authorization services
 builder.Services.AddAuthorizationCore();
@@ -67,7 +98,7 @@ builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Informatio
 
 // Register Web-specific services
 builder.Services.AddScoped<IAuthService, WebAuthApiService>();
-builder.Services.AddScoped<IProductService, ProductApiService>();
+builder.Services.AddScoped<IProductService, WebProductApiService>();
 builder.Services.AddScoped<IUnitOfMeasureApiService, WebUnitOfMeasureApiService>();
 builder.Services.AddScoped<ICategoryService, WebCategoryApiService>();
 builder.Services.AddScoped<IManufacturerService, WebManufacturerApiService>();
@@ -82,12 +113,9 @@ builder.Services.AddScoped<ILoggingService, LoggingService>();
 builder.Services.AddScoped<IErrorHandlingService, ErrorHandlingService>();
 
 // Register notification and retry services
-builder.Services.AddScoped<IUINotificationService, NotificationService>();
+builder.Services.AddScoped<IUINotificationService, Inventory.Shared.Services.NotificationService>();
 builder.Services.AddScoped<IRetryService, RetryService>();
 builder.Services.AddScoped<IDebugLogsService, DebugLogsService>();
-
-// Register authorization services
-builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 
 // Register authentication service
 builder.Services.AddScoped<Inventory.UI.Services.IAuthenticationService, Inventory.UI.Services.AuthenticationService>();
@@ -97,6 +125,9 @@ builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 
 // Register audit services
 builder.Services.AddScoped<IAuditService, WebAuditApiService>();
+
+// Register request services
+builder.Services.AddScoped<IRequestApiService, WebRequestApiService>();
 
 // Initialize validators
 builder.Services.AddScoped(provider =>
@@ -109,4 +140,21 @@ builder.Services.AddScoped(provider =>
 // Register SignalR service (C# client)
 builder.Services.AddScoped<ISignalRService, SignalRService>();
 
+// Register Radzen services
+builder.Services.AddRadzenComponents();
+
+// Configure Localization
+builder.Services.AddLocalization();
+
+// Configure supported cultures (for WebAssembly client)
+var supportedCultures = new[] { "en-US", "ru-RU" };
+
+// Register Theme service
+builder.Services.AddScoped<IThemeService, Inventory.Web.Client.Services.ThemeService>();
+
+// Register Culture service
+builder.Services.AddScoped<ICultureService, CultureService>();
+
 await builder.Build().RunAsync();
+
+

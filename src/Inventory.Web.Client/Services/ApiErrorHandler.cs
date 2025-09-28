@@ -2,6 +2,9 @@ using Inventory.Shared.DTOs;
 using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Components;
+using Inventory.Shared.Interfaces;
+using Inventory.Shared.Services;
 
 namespace Inventory.Web.Client.Services;
 
@@ -11,10 +14,20 @@ namespace Inventory.Web.Client.Services;
 public class ApiErrorHandler : IApiErrorHandler
 {
     private readonly ILogger<ApiErrorHandler> _logger;
+    private readonly ITokenManagementService _tokenManagementService;
+    private readonly NavigationManager _navigationManager;
+    private readonly IUINotificationService _notificationService;
 
-    public ApiErrorHandler(ILogger<ApiErrorHandler> logger)
+    public ApiErrorHandler(
+        ILogger<ApiErrorHandler> logger,
+        ITokenManagementService tokenManagementService,
+        NavigationManager navigationManager,
+        IUINotificationService notificationService)
     {
         _logger = logger;
+        _tokenManagementService = tokenManagementService;
+        _navigationManager = navigationManager;
+        _notificationService = notificationService;
     }
 
     public async Task<ApiResponse<T>> HandleResponseAsync<T>(HttpResponseMessage response)
@@ -23,9 +36,30 @@ public class ApiErrorHandler : IApiErrorHandler
         {
             if (response.IsSuccessStatusCode)
             {
-                var data = await response.Content.ReadFromJsonAsync<T>();
-                _logger.LogDebug("API request successful. Status: {StatusCode}", response.StatusCode);
-                return new ApiResponse<T> { Success = true, Data = data };
+                try
+                {
+                    var data = await response.Content.ReadFromJsonAsync<T>();
+                    _logger.LogDebug("API request successful. Status: {StatusCode}", response.StatusCode);
+                    return new ApiResponse<T> { Success = true, Data = data };
+                }
+                catch (System.Text.Json.JsonException jsonEx)
+                {
+                    _logger.LogWarning(jsonEx, "Failed to deserialize response as {Type}. Response content: {Content}", 
+                        typeof(T).Name, await response.Content.ReadAsStringAsync());
+                    
+                    // For DELETE operations, if we can't deserialize, assume success
+                    if (typeof(T) == typeof(bool))
+                    {
+                        _logger.LogInformation("Assuming success for boolean response that couldn't be deserialized");
+                        return new ApiResponse<T> { Success = true, Data = (T)(object)true };
+                    }
+                    
+                    return new ApiResponse<T> 
+                    { 
+                        Success = false, 
+                        ErrorMessage = "Failed to deserialize response data"
+                    };
+                }
             }
 
             return await HandleErrorResponseAsync<T>(response);
@@ -97,6 +131,40 @@ public class ApiErrorHandler : IApiErrorHandler
         var statusCode = response.StatusCode;
         
         _logger.LogWarning("API request failed. Status: {StatusCode}, Error: {Error}", statusCode, errorMessage);
+        
+        // Enhanced error handling based on status code
+        switch (statusCode)
+        {
+            case HttpStatusCode.Unauthorized:
+                return await HandleUnauthorizedResponseAsync<T>(response);
+                
+            case HttpStatusCode.InternalServerError:
+                // For 500 errors, log but don't redirect to login
+                // These are server errors, not authentication issues
+                _logger.LogError("Server error occurred: {Error}", errorMessage);
+                _notificationService.ShowError("Server Error", "A server error occurred. Please try again in a few moments.");
+                break;
+                
+            case HttpStatusCode.BadRequest:
+                _logger.LogWarning("Bad request: {Error}", errorMessage);
+                _notificationService.ShowWarning("Invalid Request", errorMessage);
+                break;
+                
+            case HttpStatusCode.Forbidden:
+                _logger.LogWarning("Access forbidden: {Error}", errorMessage);
+                _notificationService.ShowError("Access Denied", "You don't have permission to perform this action.");
+                break;
+                
+            case HttpStatusCode.NotFound:
+                _logger.LogWarning("Resource not found: {Error}", errorMessage);
+                _notificationService.ShowWarning("Not Found", "The requested resource was not found.");
+                break;
+                
+            case HttpStatusCode.Conflict:
+                _logger.LogWarning("Conflict error: {Error}", errorMessage);
+                _notificationService.ShowWarning("Conflict", errorMessage);
+                break;
+        }
         
         return new ApiResponse<T> 
         { 
@@ -177,6 +245,83 @@ public class ApiErrorHandler : IApiErrorHandler
             ArgumentException => "Invalid request parameters.",
             InvalidOperationException => "Operation cannot be completed at this time.",
             _ => "An unexpected error occurred. Please try again later."
+        };
+    }
+
+    /// <summary>
+    /// Handles 401 Unauthorized errors with intelligent token refresh and redirect logic
+    /// </summary>
+    private async Task<ApiResponse<T>> HandleUnauthorizedResponseAsync<T>(HttpResponseMessage response)
+    {
+        _logger.LogInformation("Handling 401 Unauthorized response - attempting token refresh");
+        
+        try
+        {
+            // Check if we have valid tokens to refresh
+            var hasRefreshToken = await _tokenManagementService.HasValidRefreshTokenAsync();
+            if (!hasRefreshToken)
+            {
+                _logger.LogInformation("No valid refresh token available, redirecting to login");
+                await RedirectToLoginAsync("Session expired. Please log in again.");
+                return CreateAuthFailureResponse<T>();
+            }
+
+            // Attempt token refresh
+            var refreshSuccess = await _tokenManagementService.TryRefreshTokenAsync();
+            
+            if (refreshSuccess)
+            {
+                _logger.LogInformation("Token refresh successful, returning retry indication");
+                
+                // Return special response indicating that the request should be retried
+                return new ApiResponse<T>
+                {
+                    Success = false,
+                    ErrorMessage = "TOKEN_REFRESHED", // Special code for retry
+                    Data = default(T)
+                };
+            }
+            else
+            {
+                _logger.LogWarning("Token refresh failed, redirecting to login");
+                await RedirectToLoginAsync("Session expired. Please log in again.");
+                return CreateAuthFailureResponse<T>();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling 401 response");
+            
+            // In case of error, also redirect to login
+            await RedirectToLoginAsync("Authentication error. Please log in again.");
+            return CreateAuthFailureResponse<T>();
+        }
+    }
+
+    /// <summary>
+    /// Redirects to login page with cleanup
+    /// </summary>
+    private async Task RedirectToLoginAsync(string message)
+    {
+        // Clear tokens
+        await _tokenManagementService.ClearTokensAsync();
+        
+        // Show notification
+        _notificationService.ShowError("Authentication Required", message);
+        
+        // Redirect to login page
+        _navigationManager.NavigateTo("/login", true);
+    }
+
+    /// <summary>
+    /// Creates a standardized authentication failure response
+    /// </summary>
+    private ApiResponse<T> CreateAuthFailureResponse<T>()
+    {
+        return new ApiResponse<T>
+        {
+            Success = false,
+            ErrorMessage = "Authentication required. Please log in again."
         };
     }
 }

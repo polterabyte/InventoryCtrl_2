@@ -207,10 +207,13 @@ public class WarehouseControllerTests : IDisposable
     {
         // Arrange
         await CleanupDatabaseAsync();
+        var loc = new Location { Name = "New Location", IsActive = true, CreatedAt = DateTime.UtcNow };
+        _context.Locations.Add(loc);
+        await _context.SaveChangesAsync();
         var request = new CreateWarehouseDto 
         { 
             Name = "New Warehouse", 
-            Address = "New Location" 
+            LocationId = loc.Id 
         };
 
         // Act
@@ -225,7 +228,7 @@ public class WarehouseControllerTests : IDisposable
         response!.Success.Should().BeTrue();
         response.Data.Should().NotBeNull();
         response.Data!.Name.Should().Be("New Warehouse");
-        response.Data.Address.Should().Be("New Location");
+        response.Data.LocationId.Should().Be(loc.Id);
         response.Data.IsActive.Should().BeTrue();
         
         // Verify warehouse was created in database
@@ -238,10 +241,13 @@ public class WarehouseControllerTests : IDisposable
     {
         // Arrange
         await SeedTestDataAsync();
+        var locDup = new Location { Name = "New Location", IsActive = true, CreatedAt = DateTime.UtcNow };
+        _context.Locations.Add(locDup);
+        await _context.SaveChangesAsync();
         var request = new CreateWarehouseDto 
         { 
             Name = "Main Warehouse", // Duplicate name
-            Address = "New Location" 
+            LocationId = locDup.Id 
         };
 
         // Act
@@ -263,7 +269,7 @@ public class WarehouseControllerTests : IDisposable
         // Arrange
         await CleanupDatabaseAsync();
         _controller.ModelState.AddModelError("Name", "Name is required");
-        var request = new CreateWarehouseDto { Name = "", Address = "Test Location" };
+        var request = new CreateWarehouseDto { Name = "" };
 
         // Act
         var result = await _controller.CreateWarehouse(request);
@@ -284,10 +290,13 @@ public class WarehouseControllerTests : IDisposable
         // Arrange
         await SeedTestDataAsync();
         var warehouse = _context.Warehouses.First();
+        var updLoc = new Location { Name = "Updated Location", IsActive = true, CreatedAt = DateTime.UtcNow };
+        _context.Locations.Add(updLoc);
+        await _context.SaveChangesAsync();
         var request = new UpdateWarehouseDto 
         { 
             Name = "Updated Warehouse", 
-            Address = "Updated Location",
+            LocationId = updLoc.Id,
             IsActive = true
         };
 
@@ -303,12 +312,12 @@ public class WarehouseControllerTests : IDisposable
         response!.Success.Should().BeTrue();
         response.Data.Should().NotBeNull();
         response.Data!.Name.Should().Be("Updated Warehouse");
-        response.Data.Address.Should().Be("Updated Location");
+        response.Data.LocationId.Should().Be(updLoc.Id);
         
         // Verify warehouse was updated in database
         var updatedWarehouse = await _context.Warehouses.FindAsync(warehouse.Id);
         updatedWarehouse!.Name.Should().Be("Updated Warehouse");
-        updatedWarehouse.Address.Should().Be("Updated Location");
+        updatedWarehouse.LocationId.Should().Be(updLoc.Id);
     }
 
     [Fact]
@@ -319,7 +328,6 @@ public class WarehouseControllerTests : IDisposable
         var request = new UpdateWarehouseDto 
         { 
             Name = "Updated Name", 
-            Address = "Updated Location",
             IsActive = true
         };
 
@@ -342,10 +350,13 @@ public class WarehouseControllerTests : IDisposable
         // Arrange
         await SeedTestDataAsync();
         var warehouses = _context.Warehouses.ToList();
+        var updLoc2 = new Location { Name = "Updated Location", IsActive = true, CreatedAt = DateTime.UtcNow };
+        _context.Locations.Add(updLoc2);
+        await _context.SaveChangesAsync();
         var request = new UpdateWarehouseDto 
         { 
             Name = warehouses[1].Name, // Duplicate name
-            Address = "Updated Location",
+            LocationId = updLoc2.Id,
             IsActive = true
         };
 
@@ -428,7 +439,7 @@ public class WarehouseControllerTests : IDisposable
         {
             Name = "Test Product",
             SKU = "TEST001",
-            Quantity = 10,
+            CurrentQuantity = 10,
             CategoryId = category.Id,
             ManufacturerId = manufacturer.Id,
             ProductGroupId = productGroup.Id,
@@ -478,14 +489,14 @@ public class WarehouseControllerTests : IDisposable
             new() 
             { 
                 Name = "Main Warehouse", 
-                Address = "Main Street 1", 
+                LocationId = null, 
                 IsActive = true, 
                 CreatedAt = DateTime.UtcNow 
             },
             new() 
             { 
                 Name = "Secondary Warehouse", 
-                Address = "Secondary Street 2", 
+                LocationId = null, 
                 IsActive = true, 
                 CreatedAt = DateTime.UtcNow 
             }

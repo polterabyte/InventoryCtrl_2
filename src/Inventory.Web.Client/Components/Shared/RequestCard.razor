@@ -1,0 +1,189 @@
+@using Inventory.Shared.DTOs
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenCard Class="@($"request-card {GetStatusClass(Request.Status)}")" @onclick="@OnClick" style="cursor: pointer;">
+    <RadzenStack Gap="1rem">
+        @* Header with ID and Status *@
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenText TextStyle="TextStyle.Subtitle1" Class="rz-m-0">Request #{Request.Id}</RadzenText>
+                <RequestStatusBadge Status="@Request.Status" />
+            </RadzenStack>
+            <RadzenText TextStyle="TextStyle.Caption" Class="rz-text-secondary rz-m-0">
+                @Request.CreatedAt.ToString("MMM dd, yyyy")
+            </RadzenText>
+        </RadzenStack>
+
+        @* Title and Description *@
+        <RadzenStack Gap="0.25rem">
+            <RadzenText TextStyle="TextStyle.H6" Class="rz-m-0 request-title">@Request.Title</RadzenText>
+            @if (!string.IsNullOrEmpty(Request.Description))
+            {
+                <RadzenText TextStyle="TextStyle.Body2" Class="rz-text-secondary rz-m-0 request-description">
+                    @GetTruncatedDescription(Request.Description)
+                </RadzenText>
+            }
+        </RadzenStack>
+
+        @* Actions *@
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                <RadzenButton Text="View" 
+                              Icon="visibility"
+                              ButtonStyle="ButtonStyle.Primary"
+                              Variant="Variant.Text"
+                              Size="ButtonSize.Small"
+                              Click="@HandleViewClick" />
+                
+                @if (CanEdit())
+                {
+                    <RadzenButton Text="Edit" 
+                                  Icon="edit"
+                                  ButtonStyle="ButtonStyle.Secondary"
+                                  Variant="Variant.Text"
+                                  Size="ButtonSize.Small"
+                                  Click="@HandleEditClick" />
+                }
+            </RadzenStack>
+
+            @* Quick Status Actions *@
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
+                @if (CanSubmit())
+                {
+                    <RadzenButton Text="Submit" 
+                                  Icon="send"
+                                  ButtonStyle="ButtonStyle.Success"
+                                  Size="ButtonSize.Small"
+                                  Click="@(() => HandleStatusAction("Submitted"))" />
+                }
+                @if (CanApprove())
+                {
+                    <RadzenButton Text="Approve" 
+                                  Icon="check_circle"
+                                  ButtonStyle="ButtonStyle.Success"
+                                  Size="ButtonSize.Small"
+                                  Click="@(() => HandleStatusAction("Approved"))" />
+                }
+                @if (CanComplete())
+                {
+                    <RadzenButton Text="Complete" 
+                                  Icon="done_all"
+                                  ButtonStyle="ButtonStyle.Success"
+                                  Size="ButtonSize.Small"
+                                  Click="@(() => HandleStatusAction("Completed"))" />
+                }
+            </RadzenStack>
+        </RadzenStack>
+    </RadzenStack>
+</RadzenCard>
+
+<style>
+    .request-card {
+        transition: all 0.2s ease;
+        border-left: 4px solid var(--rz-primary);
+    }
+
+    .request-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .request-card.status-draft {
+        border-left-color: #757575;
+    }
+
+    .request-card.status-submitted {
+        border-left-color: #2196F3;
+    }
+
+    .request-card.status-approved {
+        border-left-color: #4CAF50;
+    }
+
+    .request-card.status-inprogress {
+        border-left-color: #FF9800;
+    }
+
+    .request-card.status-completed {
+        border-left-color: #388E3C;
+    }
+
+    .request-card.status-cancelled,
+    .request-card.status-rejected {
+        border-left-color: #F44336;
+    }
+
+    .request-title {
+        font-weight: 600;
+        line-height: 1.3;
+    }
+
+    .request-description {
+        line-height: 1.4;
+        max-height: 2.8em;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+</style>
+
+@code {
+    [Parameter, EditorRequired] public RequestDto Request { get; set; } = default!;
+    [Parameter] public EventCallback OnClick { get; set; }
+    [Parameter] public EventCallback OnEdit { get; set; }
+    [Parameter] public EventCallback<(int requestId, string status, string? comment)> OnStatusChange { get; set; }
+
+    private async Task HandleViewClick(MouseEventArgs e)
+    {
+        await OnClick.InvokeAsync();
+    }
+
+    private async Task HandleEditClick(MouseEventArgs e)
+    {
+        await OnEdit.InvokeAsync();
+    }
+
+    private async Task HandleStatusAction(string newStatus)
+    {
+        if (OnStatusChange.HasDelegate)
+        {
+            await OnStatusChange.InvokeAsync((Request.Id, newStatus, null));
+        }
+    }
+
+    private string GetStatusClass(string status)
+    {
+        return $"status-{status.ToLowerInvariant().Replace(" ", "")}";
+    }
+
+    private string GetTruncatedDescription(string description)
+    {
+        const int maxLength = 120;
+        return description.Length > maxLength ? $"{description[..maxLength]}..." : description;
+    }
+
+    private bool CanEdit()
+    {
+        return Request.Status.Equals("Draft", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private bool CanSubmit()
+    {
+        return Request.Status.Equals("Draft", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private bool CanApprove()
+    {
+        return Request.Status.Equals("Submitted", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private bool CanComplete()
+    {
+        return Request.Status.Equals("ItemsInstalled", StringComparison.OrdinalIgnoreCase) ||
+               Request.Status.Equals("ItemsReceived", StringComparison.OrdinalIgnoreCase) ||
+               Request.Status.Equals("InProgress", StringComparison.OrdinalIgnoreCase);
+    }
+}

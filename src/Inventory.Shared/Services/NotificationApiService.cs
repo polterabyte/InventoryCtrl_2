@@ -30,17 +30,17 @@ public class NotificationApiService : BaseApiService, INotificationApiService
 
     public async Task<ApiResponse<bool>> MarkAsReadAsync(int notificationId)
     {
-        return await PutAsync<bool>($"{ApiEndpoints.NotificationById.Replace("{id}", notificationId.ToString())}/read", null);
+        return await PutAsync<bool>($"{ApiEndpoints.NotificationById.Replace("{id}", notificationId.ToString())}/read", new { });
     }
 
     public async Task<ApiResponse<bool>> MarkAllAsReadAsync()
     {
-        return await PutAsync<bool>($"{ApiEndpoints.Notifications}/mark-all-read", null);
+        return await PutAsync<bool>($"{ApiEndpoints.Notifications}/mark-all-read", new { });
     }
 
     public async Task<ApiResponse<bool>> ArchiveNotificationAsync(int notificationId)
     {
-        return await PutAsync<bool>($"{ApiEndpoints.NotificationById.Replace("{id}", notificationId.ToString())}/archive", null);
+        return await PutAsync<bool>($"{ApiEndpoints.NotificationById.Replace("{id}", notificationId.ToString())}/archive", new { });
     }
 
     public async Task<ApiResponse<bool>> DeleteNotificationAsync(int notificationId)
@@ -90,7 +90,7 @@ public class NotificationApiService : BaseApiService, INotificationApiService
 
     public async Task<ApiResponse<bool>> ToggleNotificationRuleAsync(int ruleId)
     {
-        return await PutAsync<bool>($"{ApiEndpoints.NotificationRuleById.Replace("{id}", ruleId.ToString())}/toggle", null);
+        return await PutAsync<bool>($"{ApiEndpoints.NotificationRuleById.Replace("{id}", ruleId.ToString())}/toggle", new { });
     }
 }
 

@@ -1,0 +1,143 @@
+@using Inventory.Shared.DTOs
+@using Inventory.Shared.Interfaces
+@using Inventory.Shared.Services
+@using Radzen
+@using Radzen.Blazor
+@inject IProductService ProductService
+@inject IErrorHandlingService ErrorHandlingService
+@inject IUINotificationService NotificationService
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+    <!-- Header with title and add button -->
+    <RadzenStack Orientation="Orientation.Horizontal"
+                 AlignItems="AlignItems.Center"
+                 JustifyContent="JustifyContent.SpaceBetween">
+        <RadzenText TextStyle="TextStyle.H5">Товары</RadzenText>
+        <RadzenButton Text="Добавить товар"
+                      Icon="add_circle"
+                      ButtonStyle="ButtonStyle.Primary"
+                      Click="OnAddProduct" />
+    </RadzenStack>
+
+    @if (isLoading)
+    {
+        <!-- Loading spinner -->
+        <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="1rem">
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary);">Загрузка...</RadzenText>
+        </RadzenStack>
+    }
+    else if (products.Any())
+    {
+        <!-- Products grid -->
+        <RadzenRow Gap="1rem">
+            @foreach (var product in products)
+            {
+                <RadzenColumn Size="12" SizeSm="6" SizeLg="4">
+                    <ProductCard Product="product"
+                                 OnEdit="EditProduct"
+                                 OnDelete="DeleteProduct" />
+                </RadzenColumn>
+            }
+        </RadzenRow>
+
+        @if (ShowPagination && totalPages > 1)
+        {
+            <!-- Pagination -->
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center">
+                <RadzenPager ShowPagingSummary="true"
+                            PageSize="@PageSize"
+                            Count="@(products.Count)"
+                            PageChanged="@((args) => ChangePage(args))" />
+            </RadzenStack>
+        }
+    }
+    else
+    {
+        <!-- Empty state -->
+        <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 2rem;">
+            <RadzenIcon Icon="info" Style="font-size: 3rem; color: var(--rz-text-secondary);" />
+            <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-text-secondary);">Товары не найдены</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary);">
+                Попробуйте изменить фильтры или <a href="#" @onclick="OnAddProduct" style="cursor: pointer;">добавить первый товар</a>
+            </RadzenText>
+        </RadzenStack>
+    }
+</RadzenStack>
+
+@code {
+    [Parameter] public bool ShowPagination { get; set; } = true;
+    [Parameter] public int PageSize { get; set; } = 12;
+    [Parameter] public EventCallback<ProductDto> OnProductEdit { get; set; }
+    [Parameter] public EventCallback<ProductDto> OnProductDelete { get; set; }
+    [Parameter] public EventCallback OnProductAdd { get; set; }
+
+    private List<ProductDto> products = new();
+    private bool isLoading = true;
+    private int currentPage = 1;
+    private int totalPages = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProducts();
+    }
+
+    private async Task LoadProducts()
+    {
+        isLoading = true;
+        try
+        {
+            products = await ProductService.GetAllProductsAsync();
+            totalPages = (int)Math.Ceiling((double)products.Count / PageSize);
+            
+            if (products.Any())
+            {
+                NotificationService.ShowSuccess("Products Loaded", $"Successfully loaded {products.Count} products");
+            }
+        }
+        catch (Exception ex)
+        {
+            await ErrorHandlingService.HandleErrorAsync(ex, "Loading products", new { PageSize, CurrentPage = currentPage });
+            products = new List<ProductDto>(); // Set empty list on error
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task EditProduct(ProductDto product)
+    {
+        await OnProductEdit.InvokeAsync(product);
+    }
+
+    private async Task DeleteProduct(ProductDto product)
+    {
+        var success = await ErrorHandlingService.TryExecuteAsync(
+            async () =>
+            {
+                var result = await ProductService.DeleteProductAsync(product.Id);
+                if (result)
+                {
+                    await LoadProducts(); // Refresh list
+                }
+                return result;
+            },
+            "Deleting product",
+            new { ProductId = product.Id, ProductName = product.Name }
+        );
+
+        await OnProductDelete.InvokeAsync(product);
+    }
+
+    private async Task OnAddProduct()
+    {
+        await OnProductAdd.InvokeAsync();
+    }
+
+    private async Task ChangePage(PagerEventArgs args)
+    {
+        currentPage = args.PageIndex + 1; // Radzen uses 0-based indexing
+        await LoadProducts();
+    }
+}

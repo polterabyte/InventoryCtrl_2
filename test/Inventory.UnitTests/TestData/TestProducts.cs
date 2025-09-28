@@ -10,7 +10,8 @@ public static class TestProducts
         Name = "Test Product",
         SKU = "TEST-001",
         Description = "Test Description",
-        Quantity = 100,
+        // Quantity = 100, // Removed - using CurrentQuantity computed property
+        CurrentQuantity = 100,
                 UnitOfMeasureId = 1,
         IsActive = true,
         MinStock = 10,
@@ -26,7 +27,8 @@ public static class TestProducts
         Name = "Inactive Product",
         SKU = "INACTIVE-001",
         Description = "Inactive Description",
-        Quantity = 0,
+        // Quantity = 0, // Removed - using CurrentQuantity computed property
+        CurrentQuantity = 0,
                 UnitOfMeasureId = 1,
         IsActive = false,
         MinStock = 0,
@@ -42,7 +44,8 @@ public static class TestProducts
         Name = "Low Stock Product",
         SKU = "LOW-001",
         Description = "Low Stock Description",
-        Quantity = 5,
+        // Quantity = 5, // Removed - using CurrentQuantity computed property
+        CurrentQuantity = 5,
                 UnitOfMeasureId = 1,
         IsActive = true,
         MinStock = 10,

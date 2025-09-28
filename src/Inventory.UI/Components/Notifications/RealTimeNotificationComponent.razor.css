@@ -1,0 +1,151 @@
+/* Real-time notification component styles */
+
+/* Connection status indicators */
+.connection-status-icon {
+    color: var(--rz-success);
+}
+
+.connection-status-icon--error {
+    color: var(--rz-danger);
+}
+
+/* Notification cards */
+.notification-card {
+    position: relative;
+    transition: all 0.2s ease-in-out;
+}
+
+.notification-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.notification-card--success {
+    border-left: 4px solid var(--rz-success);
+}
+
+.notification-card--warning {
+    border-left: 4px solid var(--rz-warning);
+}
+
+.notification-card--error {
+    border-left: 4px solid var(--rz-danger);
+}
+
+.notification-card--info {
+    border-left: 4px solid var(--rz-info);
+}
+
+/* Notification content */
+.notification-title {
+    font-weight: 600;
+    margin: 0;
+}
+
+.notification-message {
+    color: var(--rz-text-secondary);
+    margin: 0;
+}
+
+.notification-action {
+    align-self: flex-start;
+}
+
+.notification-meta {
+    color: var(--rz-text-secondary);
+    align-self: flex-end;
+    font-size: 0.75rem;
+}
+
+/* Language-specific adjustments */
+:global([lang="ru"]) .notification-title {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.3;
+}
+
+:global([lang="ru"]) .notification-message {
+    line-height: 1.4;
+}
+
+/* RTL support preparation */
+:global([dir="rtl"]) .notification-card--success {
+    border-left: none;
+    border-right: 4px solid var(--rz-success);
+}
+
+:global([dir="rtl"]) .notification-card--warning {
+    border-left: none;
+    border-right: 4px solid var(--rz-warning);
+}
+
+:global([dir="rtl"]) .notification-card--error {
+    border-left: none;
+    border-right: 4px solid var(--rz-danger);
+}
+
+:global([dir="rtl"]) .notification-card--info {
+    border-left: none;
+    border-right: 4px solid var(--rz-info);
+}
+
+:global([dir="rtl"]) .notification-meta {
+    align-self: flex-start;
+}
+
+/* Animation for notification entry */
+@keyframes notification-slide-in {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.notification-card {
+    animation: notification-slide-in 0.3s ease-out;
+}
+
+/* Responsive adjustments for different text lengths */
+@media (max-width: 768px) {
+    .notification-title {
+        font-size: 0.875rem;
+    }
+    
+    .notification-message {
+        font-size: 0.8125rem;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .notification-card--success {
+        border-left-width: 6px;
+    }
+    
+    .notification-card--warning {
+        border-left-width: 6px;
+    }
+    
+    .notification-card--error {
+        border-left-width: 6px;
+    }
+    
+    .notification-card--info {
+        border-left-width: 6px;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .notification-card {
+        animation: none;
+        transition: none;
+    }
+    
+    .notification-card:hover {
+        transform: none;
+    }
+}

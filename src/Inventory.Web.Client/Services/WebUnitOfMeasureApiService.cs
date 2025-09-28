@@ -19,7 +19,7 @@ public class WebUnitOfMeasureApiService : WebBaseApiService, IUnitOfMeasureApiSe
 
     public async Task<ApiResponse<List<UnitOfMeasureDto>>> GetAllAsync()
     {
-        var response = await GetAsync<List<UnitOfMeasureDto>>(ApiEndpoints.UnitOfMeasures);
+        var response = await GetAsync<List<UnitOfMeasureDto>>(ApiEndpoints.UnitOfMeasureAll);
         return response;
     }
 

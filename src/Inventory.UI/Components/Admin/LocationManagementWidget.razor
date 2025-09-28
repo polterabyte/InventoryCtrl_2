@@ -3,219 +3,134 @@
 @using Inventory.Shared.Services
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
+@using System.Linq
+@using Inventory.UI.Utilities
 @inject ILocationService LocationService
-@inject IUINotificationService NotificationService
+@inject IUINotificationService UiNotificationService
 @inject IJSRuntime JSRuntime
+@inject DialogService DialogService
 
 <AuthorizeView Roles="Admin">
-    <Authorized>
-        <div class="reference-data-widget">
-            <div class="widget-header">
-                <h4><i class="fas fa-map-marker-alt"></i> Locations Management</h4>
-                <div class="widget-actions">
-                    <button class="btn btn-primary btn-sm" @onclick="ShowCreateModal">
-                        <i class="fas fa-plus"></i> Add New Location
-                    </button>
-                    <button class="btn btn-outline-secondary btn-sm" @onclick="RefreshData">
-                        <i class="fas fa-refresh"></i> Refresh
-                    </button>
-                </div>
-            </div>
+    <Authorized Context="_">
+        <RadzenCard Style="width:100%;">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.GapLarge">
+                    <RadzenStack Orientation="Orientation.Horizontal"
+                                 JustifyContent="JustifyContent.SpaceBetween"
+                                 AlignItems="AlignItems.Center"
+                                 Wrap="FlexWrap.Wrap"
+                                 Gap="@RadzenUi.Gap">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="location_on" />
+                            <RadzenText TextStyle="TextStyle.H5">Locations Management</RadzenText>
+                        </RadzenStack>
 
-            <div class="widget-filters">
-                <div class="row">
-                    <div class="col-md-4">
-                        <input type="text" class="form-control" placeholder="Search locations..." @bind="searchTerm" @onkeyup="OnSearchKeyUp" />
-                    </div>
-                    <div class="col-md-2">
-                        <select class="form-select" @bind="isActiveFilter">
-                            <option value="">All</option>
-                            <option value="true">Active</option>
-                            <option value="false">Inactive</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <select class="form-select" @bind="parentLocationFilter">
-                            <option value="">All Locations</option>
-                            <option value="null">Root Locations</option>
-                            @foreach (var location in parentLocations)
-                            {
-                                <option value="@location.Id">@location.Name</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <select class="form-select" @bind="pageSize">
-                            <option value="10">10 per page</option>
-                            <option value="25">25 per page</option>
-                            <option value="50">50 per page</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem">
+                            <RadzenButton Icon="add"
+                                          Text="Add"
+                                          ButtonStyle="ButtonStyle.Primary"
+                                          Click="ShowCreateModal" />
+                            <RadzenButton Icon="refresh"
+                                          Text="Refresh"
+                                          Variant="Variant.Outlined"
+                                          ButtonStyle="ButtonStyle.Secondary"
+                                          Click="RefreshData" />
+                        </RadzenStack>
+                    </RadzenStack>
 
-            <div class="widget-content">
-                @if (isLoading)
-                {
-                    <div class="text-center p-4">
-                        <div class="spinner-border" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
-                }
-                else if (data?.Any() == true)
-                {
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Description</th>
-                                    <th>Parent Location</th>
-                                    <th>Status</th>
-                                    <th>Created</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var item in data)
-                                {
-                                    <tr>
-                                        <td><strong>@item.Name</strong></td>
-                                        <td>@(item.Description ?? "-")</td>
-                                        <td>@(item.ParentLocationName ?? "Root")</td>
-                                        <td>
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="@RadzenUi.Gap" Wrap="FlexWrap.Wrap">
+                        <RadzenTextBox @bind-Value="searchTerm"
+                                       Placeholder="Search locations..."
+                                       Style="min-width:220px;"
+                                       @onkeyup="OnSearchKeyUp" />
+
+                        <RadzenDropDown Data="@statusFilterOptions"
+                                       TextProperty="Text"
+                                       ValueProperty="Value"
+                                       @bind-Value="isActiveFilter"
+                                       Placeholder="Filter by status"
+                                       Style="min-width:180px;"
+                                       Change="OnFilterChanged" />
+
+                        <RadzenDropDown Data="@ParentLocationFilterOptions"
+                                       TextProperty="Text"
+                                       ValueProperty="Value"
+                                       @bind-Value="parentLocationFilter"
+                                       Placeholder="Parent location"
+                                       Style="min-width:200px;"
+                                       Change="OnFilterChanged" />
+
+                        <RadzenDropDown Data="@pageSizeOptions"
+                                       @bind-Value="pageSize"
+                                       Style="min-width:160px;"
+                                       Change="OnPageSizeChanged" />
+                    </RadzenStack>
+
+                    <RadzenBusyIndicator IsBusy="@isLoading">
+                        @if (data?.Any() == true)
+                        {
+                            <RadzenDataGrid TItem="LocationDto"
+                                             Data="@data"
+                                             Count="@totalCount"
+                                             AllowPaging="true"
+                                             PageSize="@pageSize"
+                                             LoadData="@OnGridLoad"
+                                             AllowSorting="true"
+                                             Responsive="true">
+                                <Columns>
+                                    <RadzenDataGridColumn TItem="LocationDto" Title="Name" Property="Name">
+                                        <Template Context="item">
+                                            <RadzenText>@item.Name</RadzenText>
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="LocationDto" Title="Description">
+                                        <Template Context="item">@(item.Description ?? "-")</Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="LocationDto" Title="Parent Location">
+                                        <Template Context="item">@(item.ParentLocationName ?? "Root")</Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="LocationDto" Title="Status">
+                                        <Template Context="item">
                                             @if (item.IsActive)
                                             {
-                                                <span class="badge bg-success">Active</span>
+                                                <RadzenBadge Text="Active" Style="success" />
                                             }
                                             else
                                             {
-                                                <span class="badge bg-secondary">Inactive</span>
+                                                <RadzenBadge Text="Inactive" Style="secondary" />
                                             }
-                                        </td>
-                                        <td>@item.CreatedAt.ToString("MMM dd, yyyy")</td>
-                                        <td>
-                                            <div class="btn-group btn-group-sm">
-                                                <button class="btn btn-outline-primary" @onclick="() => EditItem(item)" title="Edit">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                <button class="btn btn-outline-danger" @onclick="() => DeleteItem(item)" title="Delete">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="LocationDto" Title="Created" Property="CreatedAt">
+                                        <Template Context="item">@item.CreatedAt.ToString("MMM dd, yyyy")</Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="LocationDto" Title="Actions">
+                                        <Template Context="item">
+                                            <RadzenButton Icon="edit" Size="ButtonSize.Small" Variant="Variant.Text" Click="@(() => EditItem(item))" />
+                                            <RadzenButton Icon="delete" Size="ButtonSize.Small" Variant="Variant.Text" ButtonStyle="ButtonStyle.Danger" Click="@(() => DeleteItem(item))" />
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                </Columns>
+                            </RadzenDataGrid>
+                        }
+                        else
+                        {
+                            <RadzenStack Orientation="Orientation.Vertical"
+                                         AlignItems="AlignItems.Center"
+                                         Gap="0.5rem"
+                                         Style="padding: 1.5rem;">
+                                <RadzenIcon Icon="map" Style="font-size:32px; color: var(--rz-text-secondary);" />
+                                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary);">No locations found</RadzenText>
+                            </RadzenStack>
+                        }
+                    </RadzenBusyIndicator>
+                </RadzenStack>
+        </RadzenCard>
 
-                    @if (totalPages > 1)
-                    {
-                        <nav aria-label="Page navigation">
-                            <ul class="pagination justify-content-center">
-                                <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                                    <button class="page-link" @onclick="() => ChangePage(1)">First</button>
-                                </li>
-                                <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                                    <button class="page-link" @onclick="() => ChangePage(currentPage - 1)">Previous</button>
-                                </li>
-                                
-                                @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(totalPages, currentPage + 2); i++)
-                                {
-                                    <li class="page-item @(i == currentPage ? "active" : "")">
-                                        <button class="page-link" @onclick="() => ChangePage(i)">@i</button>
-                                    </li>
-                                }
-                                
-                                <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                                    <button class="page-link" @onclick="() => ChangePage(currentPage + 1)">Next</button>
-                                </li>
-                                <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                                    <button class="page-link" @onclick="() => ChangePage(totalPages)">Last</button>
-                                </li>
-                            </ul>
-                        </nav>
-                    }
-                }
-                else
-                {
-                    <div class="text-center p-4">
-                        <p class="text-muted">No locations found</p>
-                    </div>
-                }
-            </div>
-        </div>
-
-        <!-- Create/Edit Modal -->
-        <div class="modal @(showModal ? "show d-block" : "d-none")" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">@(isEditing ? "Edit" : "Create") Location</h5>
-                        <button type="button" class="btn-close" @onclick="CloseModal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <EditForm Model="@currentItem" OnValidSubmit="@SaveItem" Context="editFormContext">
-                            <DataAnnotationsValidator />
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label">Name *</label>
-                                        <InputText class="form-control" @bind-Value="currentItem.Name" />
-                                        <ValidationMessage For="@(() => currentItem.Name)" />
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label">Parent Location</label>
-                                        <InputSelect class="form-select" @bind-Value="currentItem.ParentLocationId">
-                                            <option value="">Root Location</option>
-                                            @foreach (var location in availableParentLocations)
-                                            {
-                                                <option value="@location.Id">@location.Name</option>
-                                            }
-                                        </InputSelect>
-                                        <ValidationMessage For="@(() => currentItem.ParentLocationId)" />
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Description</label>
-                                <InputTextArea class="form-control" @bind-Value="currentItem.Description" rows="2" />
-                                <ValidationMessage For="@(() => currentItem.Description)" />
-                            </div>
-                            @if (isEditing)
-                            {
-                                <div class="mb-3">
-                                    <div class="form-check">
-                                        <InputCheckbox class="form-check-input" @bind-Value="isActive" />
-                                        <label class="form-check-label">Active</label>
-                                    </div>
-                                </div>
-                            }
-                        </EditForm>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
-                        <button type="button" class="btn btn-primary" @onclick="SaveItem" disabled="@isSaving">
-                            @if (isSaving)
-                            {
-                                <span class="spinner-border spinner-border-sm me-2"></span>
-                            }
-                            @(isEditing ? "Update" : "Create")
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
     </Authorized>
     <NotAuthorized>
-        <div class="alert alert-danger">
-            <i class="fas fa-exclamation-triangle"></i>
+        <RadzenAlert AlertStyle="AlertStyle.Danger" ShowIcon="true">
             Access denied. Administrator role required.
-        </div>
+        </RadzenAlert>
     </NotAuthorized>
 </AuthorizeView>
 
@@ -224,7 +139,6 @@
     private List<LocationDto> parentLocations = new();
     private List<LocationDto> availableParentLocations = new();
     private bool isLoading = false;
-    private bool showModal = false;
     private bool isEditing = false;
     private bool isSaving = false;
     private string searchTerm = "";
@@ -239,10 +153,64 @@
     private LocationDto? selectedItem = null;
     private bool isActive = true;
 
+    private readonly FilterOption[] statusFilterOptions = new[]
+    {
+        new FilterOption("", "All statuses"),
+        new FilterOption("true", "Active"),
+        new FilterOption("false", "Inactive")
+    };
+
+    private readonly int[] pageSizeOptions = new[] { 10, 25, 50 };
+
+    private IEnumerable<FilterOption> ParentLocationFilterOptions =>
+        new[]
+        {
+            new FilterOption("", "All locations"),
+            new FilterOption("null", "Root locations only")
+        }.Concat(parentLocations.Select(l => new FilterOption(l.Id.ToString(), l.Name)));
+
+    private List<ParentLocationOption> parentLocationOptions = new();
+
+    public class ParentLocationOption
+    {
+        public int? Value { get; set; }
+        public string Text { get; set; } = "";
+    }
+
+    private record FilterOption(string Value, string Text);
+
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
         await LoadParentLocations();
+    }
+
+    private async Task OnGridLoad(Radzen.LoadDataArgs args)
+    {
+        var top = args.Top ?? pageSize;
+        var skip = args.Skip ?? 0;
+        if (top > 0)
+        {
+            pageSize = top;
+        }
+        currentPage = (skip / pageSize) + 1;
+        await LoadData();
+    }
+
+    private async Task OnFilterChanged()
+    {
+        currentPage = 1;
+        await LoadData();
+    }
+
+    private async Task OnPageSizeChanged(object? value)
+    {
+        if (value is int size && size > 0)
+        {
+            pageSize = size;
+            currentPage = 1;
+            await LoadData();
+        }
     }
 
     private async Task LoadData()
@@ -293,7 +261,7 @@
         }
         catch (Exception ex)
         {
-            NotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
+            UiNotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
             data = new();
         }
         finally
@@ -308,10 +276,25 @@
         {
             parentLocations = (await LocationService.GetAllLocationsAsync()).ToList();
             availableParentLocations = parentLocations.ToList();
+            
+            // Create options for RadzenDropDown
+            parentLocationOptions = new List<ParentLocationOption>
+            {
+                new() { Value = null, Text = "Root Location" }
+            };
+            
+            foreach (var location in availableParentLocations)
+            {
+                parentLocationOptions.Add(new ParentLocationOption
+                {
+                    Value = location.Id,
+                    Text = location.Name
+                });
+            }
         }
         catch (Exception ex)
         {
-            NotificationService.ShowError("Error", $"Failed to load parent locations: {ex.Message}");
+            UiNotificationService.ShowError("Error", $"Failed to load parent locations: {ex.Message}");
             parentLocations = new();
             availableParentLocations = new();
         }
@@ -341,15 +324,22 @@
         }
     }
 
-    private void ShowCreateModal()
+    private async Task ShowCreateModal()
     {
         currentItem = new CreateLocationDto();
         isActive = true;
         isEditing = false;
-        showModal = true;
+        
+        await DialogService.OpenAsync("Create Location", ds => CreateLocationDialog(ds), new DialogOptions
+        {
+            Width = "500px",
+            Height = "auto",
+            CloseDialogOnOverlayClick = true,
+            CloseDialogOnEsc = true
+        });
     }
 
-    private void EditItem(LocationDto item)
+    private async Task EditItem(LocationDto item)
     {
         selectedItem = item;
         currentItem = new CreateLocationDto
@@ -360,18 +350,25 @@
         };
         isActive = item.IsActive;
         isEditing = true;
-        showModal = true;
+        
+        await DialogService.OpenAsync("Edit Location", ds => CreateLocationDialog(ds), new DialogOptions
+        {
+            Width = "500px",
+            Height = "auto",
+            CloseDialogOnOverlayClick = true,
+            CloseDialogOnEsc = true
+        });
     }
 
-    private void CloseModal()
+    private void CloseModal(DialogService ds)
     {
-        showModal = false;
+        ds.Close();
         currentItem = new CreateLocationDto();
         selectedItem = null;
         isEditing = false;
     }
 
-    private async Task SaveItem()
+    private async Task OnSubmit(CreateLocationDto model, DialogService ds)
     {
         isSaving = true;
         try
@@ -380,43 +377,49 @@
             {
                 var updateDto = new UpdateLocationDto
                 {
-                    Name = currentItem.Name,
-                    Description = currentItem.Description,
-                    ParentLocationId = currentItem.ParentLocationId,
+                    Name = model.Name,
+                    Description = model.Description,
+                    ParentLocationId = model.ParentLocationId,
                     IsActive = isActive
                 };
                 var result = await LocationService.UpdateLocationAsync(selectedItem.Id, updateDto);
                 if (result != null)
                 {
-                    NotificationService.ShowSuccess("Success", "Location updated successfully");
-                    CloseModal();
+                    UiNotificationService.ShowSuccess("Success", "Location updated successfully");
+                    ds.Close();
+                    currentItem = new CreateLocationDto();
+                    selectedItem = null;
+                    isEditing = false;
                     await RefreshData();
                     await LoadParentLocations(); // Refresh parent locations list
                 }
                 else
                 {
-                    NotificationService.ShowError("Error", "Failed to update location");
+                    UiNotificationService.ShowError("Error", "Failed to update location");
                 }
             }
             else
             {
-                var result = await LocationService.CreateLocationAsync(currentItem);
+                var result = await LocationService.CreateLocationAsync(model);
                 if (result != null)
                 {
-                    NotificationService.ShowSuccess("Success", "Location created successfully");
-                    CloseModal();
+                    UiNotificationService.ShowSuccess("Success", "Location created successfully");
+                    ds.Close();
+                    currentItem = new CreateLocationDto();
+                    selectedItem = null;
+                    isEditing = false;
                     await RefreshData();
                     await LoadParentLocations(); // Refresh parent locations list
                 }
                 else
                 {
-                    NotificationService.ShowError("Error", "Failed to create location");
+                    UiNotificationService.ShowError("Error", "Failed to create location");
                 }
             }
         }
         catch (Exception ex)
         {
-            NotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
+            UiNotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
         }
         finally
         {
@@ -434,19 +437,151 @@
                 var success = await LocationService.DeleteLocationAsync(item.Id);
                 if (success)
                 {
-                    NotificationService.ShowSuccess("Success", "Location deleted successfully");
+                    UiNotificationService.ShowSuccess("Success", "Location deleted successfully");
                     await RefreshData();
                     await LoadParentLocations(); // Refresh parent locations list
                 }
                 else
                 {
-                    NotificationService.ShowError("Error", "Failed to delete location. Make sure the location has no sub-locations.");
+                    UiNotificationService.ShowError("Error", "Failed to delete location. Make sure the location has no sub-locations.");
                 }
             }
             catch (Exception ex)
             {
-                NotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
+                UiNotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
             }
         }
     }
+
+    private RenderFragment CreateLocationDialog(DialogService ds) => builder =>
+    {
+        builder.OpenComponent<RadzenTemplateForm<CreateLocationDto>>(0);
+        builder.AddAttribute(1, "Data", currentItem);
+        builder.AddAttribute(2, "Submit", EventCallback.Factory.Create<CreateLocationDto>(this, async (model) => await OnSubmit(model, ds)));
+        builder.AddAttribute(3, "ChildContent", (RenderFragment<EditContext>)((editContext) => (builder2) =>
+        {
+            builder2.OpenComponent<DataAnnotationsValidator>(0);
+            builder2.CloseComponent();
+
+            builder2.OpenComponent<RadzenStack>(1);
+            builder2.AddAttribute(2, "Orientation", Orientation.Vertical);
+            builder2.AddAttribute(3, "Gap", RadzenUi.Gap);
+            builder2.AddAttribute(4, "ChildContent", (RenderFragment)((builder3) =>
+            {
+                builder3.OpenComponent<RadzenText>(0);
+                builder3.AddAttribute(1, "TextStyle", TextStyle.H4);
+                builder3.AddAttribute(2, "class", "rz-mb-3");
+                builder3.AddAttribute(3, "ChildContent", (RenderFragment)((builder4) =>
+                {
+                    builder4.AddContent(0, $"{(isEditing ? "Edit" : "Create")} Location");
+                }));
+                builder3.CloseComponent();
+
+                builder3.OpenComponent<RadzenStack>(1);
+                builder3.AddAttribute(4, "Orientation", Orientation.Horizontal);
+                builder3.AddAttribute(5, "Wrap", FlexWrap.Wrap);
+                builder3.AddAttribute(6, "Gap", RadzenUi.Gap);
+                builder3.AddAttribute(7, "ChildContent", (RenderFragment)((builder4) =>
+                {
+                    builder4.OpenComponent<RadzenStack>(0);
+                    builder4.AddAttribute(1, "Orientation", Orientation.Vertical);
+                    builder4.AddAttribute(2, "Style", "flex:1 1 260px;");
+                    builder4.AddAttribute(3, "ChildContent", (RenderFragment)((builder5) =>
+                    {
+                        builder5.OpenComponent<RadzenFormField>(0);
+                        builder5.AddAttribute(1, "Text", "Name *");
+                        builder5.AddAttribute(2, "ChildContent", (RenderFragment)((builder6) =>
+                        {
+                            builder6.OpenComponent<RadzenTextBox>(0);
+                            builder6.AddAttribute(1, "Value", currentItem.Name);
+                            builder6.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<string>(this, (value) => currentItem.Name = value));
+                            builder6.AddAttribute(3, "Name", "locationName");
+                            builder6.CloseComponent();
+
+                            builder6.OpenComponent<RadzenRequiredValidator>(1);
+                            builder6.AddAttribute(2, "Component", "locationName");
+                            builder6.AddAttribute(3, "Text", "Name is required");
+                            builder6.CloseComponent();
+                        }));
+                        builder5.CloseComponent();
+                    }));
+                    builder4.CloseComponent();
+
+                    builder4.OpenComponent<RadzenStack>(1);
+                    builder4.AddAttribute(4, "Orientation", Orientation.Vertical);
+                    builder4.AddAttribute(5, "Style", "flex:1 1 260px;");
+                    builder4.AddAttribute(6, "ChildContent", (RenderFragment)((builder5) =>
+                    {
+                        builder5.OpenComponent<RadzenFormField>(0);
+                        builder5.AddAttribute(1, "Text", "Parent Location");
+                        builder5.AddAttribute(2, "ChildContent", (RenderFragment)((builder6) =>
+                        {
+                            builder6.OpenComponent<RadzenDropDown<int?>>(0);
+                            builder6.AddAttribute(1, "Data", parentLocationOptions);
+                            builder6.AddAttribute(2, "ValueProperty", "Value");
+                            builder6.AddAttribute(3, "TextProperty", "Text");
+                            builder6.AddAttribute(4, "Value", currentItem.ParentLocationId);
+                            builder6.AddAttribute(5, "ValueChanged", EventCallback.Factory.Create<int?>(this, (value) => currentItem.ParentLocationId = value));
+                            builder6.AddAttribute(6, "Placeholder", "Root Location");
+                            builder6.AddAttribute(7, "Name", "parentLocationId");
+                            builder6.CloseComponent();
+                        }));
+                        builder5.CloseComponent();
+                    }));
+                    builder4.CloseComponent();
+                }));
+                builder3.CloseComponent();
+
+                builder3.OpenComponent<RadzenFormField>(2);
+                builder3.AddAttribute(8, "Text", "Description");
+                builder3.AddAttribute(9, "ChildContent", (RenderFragment)((builder4) =>
+                {
+                    builder4.OpenComponent<RadzenTextArea>(0);
+                    builder4.AddAttribute(1, "Value", currentItem.Description);
+                    builder4.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<string>(this, (value) => currentItem.Description = value));
+                    builder4.AddAttribute(3, "Name", "locationDescription");
+                    builder4.AddAttribute(4, "Rows", 3);
+                    builder4.CloseComponent();
+                }));
+                builder3.CloseComponent();
+
+                builder3.OpenComponent<RadzenFormField>(3);
+                builder3.AddAttribute(10, "Text", "Status");
+                builder3.AddAttribute(11, "ChildContent", (RenderFragment)((builder4) =>
+                {
+                    builder4.OpenComponent<RadzenCheckBox<bool>>(0);
+                    builder4.AddAttribute(1, "Value", isActive);
+                    builder4.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<bool>(this, (value) => isActive = value));
+                    builder4.AddAttribute(3, "Name", "isActive");
+                    builder4.CloseComponent();
+                    builder4.AddMarkupContent(4, "<span class=\"rz-form-text\">Active</span>");
+                }));
+                builder3.CloseComponent();
+
+                builder3.OpenComponent<RadzenStack>(4);
+                builder3.AddAttribute(12, "Orientation", Orientation.Horizontal);
+                builder3.AddAttribute(13, "JustifyContent", JustifyContent.End);
+                builder3.AddAttribute(14, "Gap", "0.75rem");
+                builder3.AddAttribute(15, "ChildContent", (RenderFragment)((builder4) =>
+                {
+                    builder4.OpenComponent<RadzenButton>(0);
+                    builder4.AddAttribute(1, "Text", "Cancel");
+                    builder4.AddAttribute(2, "ButtonStyle", ButtonStyle.Light);
+                    builder4.AddAttribute(3, "Variant", Variant.Outlined);
+                    builder4.AddAttribute(4, "Click", EventCallback.Factory.Create<MouseEventArgs>(this, (args) => CloseModal(ds)));
+                    builder4.CloseComponent();
+
+                    builder4.OpenComponent<RadzenButton>(1);
+                    builder4.AddAttribute(2, "Text", isSaving ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update" : "Create"));
+                    builder4.AddAttribute(3, "ButtonStyle", ButtonStyle.Primary);
+                    builder4.AddAttribute(4, "ButtonType", ButtonType.Submit);
+                    builder4.AddAttribute(5, "Disabled", isSaving);
+                    builder4.CloseComponent();
+                }));
+                builder3.CloseComponent();
+            }));
+            builder2.CloseComponent();
+        }));
+        builder.CloseComponent();
+    };
 }

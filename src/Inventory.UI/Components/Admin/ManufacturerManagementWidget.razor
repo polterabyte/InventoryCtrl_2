@@ -3,122 +3,102 @@
 @using Inventory.Shared.Services
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
+@using Inventory.UI.Utilities
+@using System.Linq
 @inject IManufacturerService ManufacturerService
-@inject IUINotificationService NotificationService
+@inject ILocationService LocationService
+@inject IUINotificationService UiNotificationService
 @inject IJSRuntime JSRuntime
+@inject DialogService DialogService
 
 <AuthorizeView Roles="Admin">
-    <Authorized>
-        <div class="reference-data-widget">
-            <div class="widget-header">
-                <h4><i class="fas fa-industry"></i> Manufacturers Management</h4>
-                <div class="widget-actions">
-                    <button class="btn btn-primary btn-sm" @onclick="ShowCreateModal">
-                        <i class="fas fa-plus"></i> Add New Manufacturer
-                    </button>
-                    <button class="btn btn-outline-secondary btn-sm" @onclick="RefreshData">
-                        <i class="fas fa-refresh"></i> Refresh
-                    </button>
-                </div>
-            </div>
+    <Authorized Context="_">
+        <RadzenCard Style="width:100%;">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.GapLarge">
+                    <RadzenStack Orientation="Orientation.Horizontal"
+                                 JustifyContent="JustifyContent.SpaceBetween"
+                                 AlignItems="AlignItems.Center"
+                                 Wrap="FlexWrap.Wrap"
+                                 Gap="@RadzenUi.Gap">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="factory" />
+                            <RadzenText TextStyle="TextStyle.H5">Manufacturers Management</RadzenText>
+                        </RadzenStack>
 
-            <div class="widget-content">
-                @if (isLoading)
-                {
-                    <div class="text-center p-4">
-                        <div class="spinner-border" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
-                }
-                else if (data?.Any() == true)
-                {
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Created</th>
-                                    <th>Updated</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var item in data)
-                                {
-                                    <tr>
-                                        <td><strong>@item.Name</strong></td>
-                                        <td>@item.CreatedAt.ToString("MMM dd, yyyy")</td>
-                                        <td>@(item.UpdatedAt?.ToString("MMM dd, yyyy") ?? "-")</td>
-                                        <td>
-                                            <div class="btn-group btn-group-sm">
-                                                <button class="btn btn-outline-primary" @onclick="() => EditItem(item)" title="Edit">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                <button class="btn btn-outline-danger" @onclick="() => DeleteItem(item)" title="Delete">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                }
-                else
-                {
-                    <div class="text-center p-4">
-                        <p class="text-muted">No manufacturers found</p>
-                    </div>
-                }
-            </div>
-        </div>
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem">
+                            <RadzenButton Icon="add"
+                                          Text="Add"
+                                          ButtonStyle="ButtonStyle.Primary"
+                                          Click="ShowCreateModal" />
+                            <RadzenButton Icon="refresh"
+                                          Text="Refresh"
+                                          Variant="Variant.Outlined"
+                                          ButtonStyle="ButtonStyle.Secondary"
+                                          Click="RefreshData" />
+                        </RadzenStack>
+                    </RadzenStack>
 
-        <!-- Create/Edit Modal -->
-        <div class="modal @(showModal ? "show d-block" : "d-none")" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">@(isEditing ? "Edit" : "Create") Manufacturer</h5>
-                        <button type="button" class="btn-close" @onclick="CloseModal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <EditForm Model="@currentItem" OnValidSubmit="@SaveItem" Context="editFormContext">
-                            <DataAnnotationsValidator />
-                            <div class="mb-3">
-                                <label class="form-label">Name *</label>
-                                <InputText class="form-control" @bind-Value="currentItem.Name" />
-                                <ValidationMessage For="@(() => currentItem.Name)" />
-                            </div>
-                        </EditForm>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
-                        <button type="button" class="btn btn-primary" @onclick="SaveItem" disabled="@isSaving">
-                            @if (isSaving)
-                            {
-                                <span class="spinner-border spinner-border-sm me-2"></span>
-                            }
-                            @(isEditing ? "Update" : "Create")
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+                    <RadzenBusyIndicator IsBusy="@isLoading">
+                        @if (data?.Any() == true)
+                        {
+                            <RadzenDataGrid TItem="ManufacturerDto"
+                                             Data="@data"
+                                             AllowPaging="true"
+                                             PageSize="10"
+                                             AllowSorting="true"
+                                             FilterMode="FilterMode.Advanced">
+                                <Columns>
+                                    <RadzenDataGridColumn TItem="ManufacturerDto" Title="Name" Property="Name">
+                                        <Template Context="item">
+                                            <RadzenText>@item.Name</RadzenText>
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="ManufacturerDto" Title="Location" Property="LocationName">
+                                        <Template Context="item">
+                                            <div title="@item.LocationFullPath">@item.LocationName</div>
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="ManufacturerDto" Title="Created" Property="CreatedAt">
+                                        <Template Context="item">@item.CreatedAt.ToString("MMM dd, yyyy")</Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="ManufacturerDto" Title="Updated" Property="UpdatedAt">
+                                        <Template Context="item">@(item.UpdatedAt?.ToString("MMM dd, yyyy") ?? "-")</Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="ManufacturerDto" Title="Actions">
+                                        <Template Context="item">
+                                            <RadzenButton Icon="edit" Size="ButtonSize.Small" Variant="Variant.Text" Click="@(() => EditItem(item))" />
+                                            <RadzenButton Icon="delete" Size="ButtonSize.Small" Variant="Variant.Text" ButtonStyle="ButtonStyle.Danger" Click="@(() => DeleteItem(item))" />
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                </Columns>
+                            </RadzenDataGrid>
+                        }
+                        else
+                        {
+                            <RadzenStack Orientation="Orientation.Vertical"
+                                         AlignItems="AlignItems.Center"
+                                         Gap="0.5rem"
+                                         Style="padding: 1.5rem;">
+                                <RadzenIcon Icon="store_mall_directory" Style="font-size:32px; color: var(--rz-text-secondary);" />
+                                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary);">No manufacturers found</RadzenText>
+                            </RadzenStack>
+                        }
+                    </RadzenBusyIndicator>
+                </RadzenStack>
+        </RadzenCard>
+
     </Authorized>
     <NotAuthorized>
-        <div class="alert alert-danger">
-            <i class="fas fa-exclamation-triangle"></i>
+        <RadzenAlert AlertStyle="AlertStyle.Danger" ShowIcon="true">
             Access denied. Administrator role required.
-        </div>
+        </RadzenAlert>
     </NotAuthorized>
 </AuthorizeView>
 
 @code {
     private List<ManufacturerDto> data = new();
+    private List<LocationDto> locations = new();
     private bool isLoading = false;
-    private bool showModal = false;
     private bool isEditing = false;
     private bool isSaving = false;
 
@@ -136,11 +116,13 @@
         try
         {
             data = await ManufacturerService.GetAllManufacturersAsync();
+            locations = (await LocationService.GetAllLocationsAsync()).ToList();
         }
         catch (Exception ex)
         {
-            NotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
+            UiNotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
             data = new();
+            locations = new();
         }
         finally
         {
@@ -153,33 +135,54 @@
         await LoadData();
     }
 
-    private void ShowCreateModal()
+    private async Task ShowCreateModal()
     {
-        currentItem = new CreateManufacturerDto();
+        currentItem = new CreateManufacturerDto
+        {
+            LocationId = locations.FirstOrDefault()?.Id ?? 1 // Инициализируем с первым доступным location
+        };
         isEditing = false;
-        showModal = true;
+        
+        await DialogService.OpenAsync("Create Manufacturer", ds => CreateManufacturerDialog(ds), new DialogOptions
+        {
+            Width = "500px",
+            Height = "auto",
+            CloseDialogOnOverlayClick = true,
+            CloseDialogOnEsc = true
+        });
     }
 
-    private void EditItem(ManufacturerDto item)
+    private async Task EditItem(ManufacturerDto item)
     {
         selectedItem = item;
         currentItem = new CreateManufacturerDto
         {
-            Name = item.Name
+            Name = item.Name,
+            Description = item.Description,
+            ContactInfo = item.ContactInfo,
+            Website = item.Website,
+            LocationId = item.LocationId
         };
         isEditing = true;
-        showModal = true;
+        
+        await DialogService.OpenAsync("Edit Manufacturer", ds => CreateManufacturerDialog(ds), new DialogOptions
+        {
+            Width = "500px",
+            Height = "auto",
+            CloseDialogOnOverlayClick = true,
+            CloseDialogOnEsc = true
+        });
     }
 
-    private void CloseModal()
+    private void CloseModal(DialogService ds)
     {
-        showModal = false;
+        ds.Close();
         currentItem = new CreateManufacturerDto();
         selectedItem = null;
         isEditing = false;
     }
 
-    private async Task SaveItem()
+    private async Task OnSubmit(CreateManufacturerDto model, DialogService ds)
     {
         isSaving = true;
         try
@@ -188,38 +191,49 @@
             {
                 var updateDto = new UpdateManufacturerDto
                 {
-                    Name = currentItem.Name
+                    Name = model.Name,
+                    Description = model.Description,
+                    ContactInfo = model.ContactInfo,
+                    Website = model.Website,
+                    IsActive = true,
+                    LocationId = model.LocationId
                 };
                 var result = await ManufacturerService.UpdateManufacturerAsync(selectedItem.Id, updateDto);
                 if (result != null)
                 {
-                    NotificationService.ShowSuccess("Success", "Manufacturer updated successfully");
-                    CloseModal();
+                    UiNotificationService.ShowSuccess("Success", "Manufacturer updated successfully");
+                    ds.Close();
+                    currentItem = new CreateManufacturerDto();
+                    selectedItem = null;
+                    isEditing = false;
                     await RefreshData();
                 }
                 else
                 {
-                    NotificationService.ShowError("Error", "Failed to update manufacturer");
+                    UiNotificationService.ShowError("Error", "Failed to update manufacturer");
                 }
             }
             else
             {
-                var result = await ManufacturerService.CreateManufacturerAsync(currentItem);
+                var result = await ManufacturerService.CreateManufacturerAsync(model);
                 if (result != null)
                 {
-                    NotificationService.ShowSuccess("Success", "Manufacturer created successfully");
-                    CloseModal();
+                    UiNotificationService.ShowSuccess("Success", "Manufacturer created successfully");
+                    ds.Close();
+                    currentItem = new CreateManufacturerDto();
+                    selectedItem = null;
+                    isEditing = false;
                     await RefreshData();
                 }
                 else
                 {
-                    NotificationService.ShowError("Error", "Failed to create manufacturer");
+                    UiNotificationService.ShowError("Error", "Failed to create manufacturer");
                 }
             }
         }
         catch (Exception ex)
         {
-            NotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
+            UiNotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
         }
         finally
         {
@@ -237,18 +251,145 @@
                 var success = await ManufacturerService.DeleteManufacturerAsync(item.Id);
                 if (success)
                 {
-                    NotificationService.ShowSuccess("Success", "Manufacturer deleted successfully");
+                    UiNotificationService.ShowSuccess("Success", "Manufacturer deleted successfully");
                     await RefreshData();
                 }
                 else
                 {
-                    NotificationService.ShowError("Error", "Failed to delete manufacturer");
+                    UiNotificationService.ShowError("Error", "Failed to delete manufacturer");
                 }
             }
             catch (Exception ex)
             {
-                NotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
+                UiNotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
             }
         }
     }
+
+    private RenderFragment CreateManufacturerDialog(DialogService ds) => builder =>
+    {
+        builder.OpenComponent<RadzenTemplateForm<CreateManufacturerDto>>(0);
+        builder.AddAttribute(1, "Data", currentItem);
+        builder.AddAttribute(2, "Submit", EventCallback.Factory.Create<CreateManufacturerDto>(this, async (model) => await OnSubmit(model, ds)));
+        builder.AddAttribute(3, "ChildContent", (RenderFragment<EditContext>)((editContext) => (RenderFragment)((builder2) =>
+        {
+            builder2.OpenComponent<DataAnnotationsValidator>(0);
+            builder2.CloseComponent();
+
+            builder2.OpenComponent<RadzenStack>(1);
+            builder2.AddAttribute(2, "Orientation", Orientation.Vertical);
+            builder2.AddAttribute(3, "Gap", RadzenUi.Gap);
+            builder2.AddAttribute(4, "ChildContent", (RenderFragment)((builder3) =>
+            {
+                builder3.OpenComponent<RadzenText>(0);
+                builder3.AddAttribute(1, "TextStyle", TextStyle.H4);
+                builder3.AddAttribute(2, "class", "rz-mb-3");
+                builder3.AddAttribute(3, "ChildContent", (RenderFragment)((builder4) =>
+                {
+                    builder4.AddContent(0, $"{(isEditing ? "Edit" : "Create")} Manufacturer");
+                }));
+                builder3.CloseComponent();
+
+                builder3.OpenComponent<RadzenFormField>(1);
+                builder3.AddAttribute(2, "Text", "Name *");
+                builder3.AddAttribute(3, "ChildContent", (RenderFragment)((builder4) =>
+                {
+                    builder4.OpenComponent<RadzenTextBox>(0);
+                    builder4.AddAttribute(1, "Value", currentItem.Name);
+                    builder4.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<string>(this, (value) => currentItem.Name = value));
+                    builder4.AddAttribute(3, "Name", "manufacturerName");
+                    builder4.CloseComponent();
+
+                    builder4.OpenComponent<RadzenRequiredValidator>(1);
+                    builder4.AddAttribute(2, "Component", "manufacturerName");
+                    builder4.AddAttribute(3, "Text", "Name is required");
+                    builder4.CloseComponent();
+                }));
+                builder3.CloseComponent();
+
+                builder3.OpenComponent<RadzenFormField>(2);
+                builder3.AddAttribute(4, "Text", "Description");
+                builder3.AddAttribute(5, "ChildContent", (RenderFragment)((builder4) =>
+                {
+                    builder4.OpenComponent<RadzenTextBox>(0);
+                    builder4.AddAttribute(1, "Value", currentItem.Description);
+                    builder4.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<string>(this, (value) => currentItem.Description = value));
+                    builder4.AddAttribute(3, "Name", "manufacturerDescription");
+                    builder4.AddAttribute(4, "Multiline", true);
+                    builder4.AddAttribute(5, "Rows", 3);
+                    builder4.CloseComponent();
+                }));
+                builder3.CloseComponent();
+
+                builder3.OpenComponent<RadzenFormField>(3);
+                builder3.AddAttribute(6, "Text", "Contact Info");
+                builder3.AddAttribute(7, "ChildContent", (RenderFragment)((builder4) =>
+                {
+                    builder4.OpenComponent<RadzenTextBox>(0);
+                    builder4.AddAttribute(1, "Value", currentItem.ContactInfo);
+                    builder4.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<string>(this, (value) => currentItem.ContactInfo = value));
+                    builder4.AddAttribute(3, "Name", "manufacturerContactInfo");
+                    builder4.CloseComponent();
+                }));
+                builder3.CloseComponent();
+
+                builder3.OpenComponent<RadzenFormField>(4);
+                builder3.AddAttribute(8, "Text", "Website");
+                builder3.AddAttribute(9, "ChildContent", (RenderFragment)((builder4) =>
+                {
+                    builder4.OpenComponent<RadzenTextBox>(0);
+                    builder4.AddAttribute(1, "Value", currentItem.Website);
+                    builder4.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<string>(this, (value) => currentItem.Website = value));
+                    builder4.AddAttribute(3, "Name", "manufacturerWebsite");
+                    builder4.CloseComponent();
+                }));
+                builder3.CloseComponent();
+
+                builder3.OpenComponent<RadzenFormField>(5);
+                builder3.AddAttribute(10, "Text", "Location *");
+                builder3.AddAttribute(11, "ChildContent", (RenderFragment)((builder4) =>
+                {
+                    builder4.OpenComponent<RadzenDropDown<int>>(0);
+                    builder4.AddAttribute(1, "Data", locations);
+                    builder4.AddAttribute(2, "Value", currentItem.LocationId);
+                    builder4.AddAttribute(3, "ValueChanged", EventCallback.Factory.Create<int>(this, (value) => currentItem.LocationId = value));
+                    builder4.AddAttribute(4, "ValueProperty", "Id");
+                    builder4.AddAttribute(5, "TextProperty", "Name");
+                    builder4.AddAttribute(6, "Name", "manufacturerLocation");
+                    builder4.AddAttribute(7, "Placeholder", "Select location...");
+                    builder4.CloseComponent();
+
+                    builder4.OpenComponent<RadzenRequiredValidator>(1);
+                    builder4.AddAttribute(2, "Component", "manufacturerLocation");
+                    builder4.AddAttribute(3, "Text", "Location is required");
+                    builder4.CloseComponent();
+                }));
+                builder3.CloseComponent();
+
+                builder3.OpenComponent<RadzenStack>(6);
+                builder3.AddAttribute(12, "Orientation", Orientation.Horizontal);
+                builder3.AddAttribute(13, "JustifyContent", JustifyContent.End);
+                builder3.AddAttribute(14, "Gap", "0.75rem");
+                builder3.AddAttribute(15, "ChildContent", (RenderFragment)((builder4) =>
+                {
+                    builder4.OpenComponent<RadzenButton>(0);
+                    builder4.AddAttribute(1, "Text", "Cancel");
+                    builder4.AddAttribute(2, "ButtonStyle", ButtonStyle.Light);
+                    builder4.AddAttribute(3, "Variant", Variant.Outlined);
+                    builder4.AddAttribute(4, "Click", EventCallback.Factory.Create<MouseEventArgs>(this, (args) => CloseModal(ds)));
+                    builder4.CloseComponent();
+
+                    builder4.OpenComponent<RadzenButton>(1);
+                    builder4.AddAttribute(2, "Text", isSaving ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update" : "Create"));
+                    builder4.AddAttribute(3, "ButtonStyle", ButtonStyle.Primary);
+                    builder4.AddAttribute(4, "ButtonType", ButtonType.Submit);
+                    builder4.AddAttribute(5, "Disabled", isSaving);
+                    builder4.CloseComponent();
+                }));
+                builder3.CloseComponent();
+            }));
+            builder2.CloseComponent();
+        })));
+        builder.CloseComponent();
+    };
 }

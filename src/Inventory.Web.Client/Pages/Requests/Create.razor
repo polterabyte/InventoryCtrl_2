@@ -1,0 +1,194 @@
+@page "/requests/create"
+
+@using Microsoft.AspNetCore.Authorization
+@using Inventory.Shared.DTOs
+@using Inventory.Shared.Interfaces
+@using System.ComponentModel.DataAnnotations
+@using Radzen
+@using Radzen.Blazor
+
+@inject IRequestApiService RequestService
+@inject NavigationManager Navigation
+@inject NotificationService NotificationService
+
+@attribute [Authorize]
+
+<PageTitle>Create Request - Inventory Control</PageTitle>
+
+<div class="content-card">
+    <RadzenStack Gap="2rem">
+        @* Header *@
+        <RadzenStack Gap="0.5rem">
+            <RadzenText TextStyle="TextStyle.H4" Class="rz-m-0">Create New Request</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2" Class="rz-text-secondary rz-m-0">
+                Create a new inventory request to track items needed for your projects
+            </RadzenText>
+        </RadzenStack>
+
+        @* Form *@
+        <EditForm Model="@createRequest" OnValidSubmit="@HandleSubmit">
+            <DataAnnotationsValidator />
+            
+            <RadzenStack Gap="1.5rem">
+                @* Basic Information *@
+                <RadzenCard Class="rz-p-4">
+                    <RadzenStack Gap="1rem">
+                        <RadzenText TextStyle="TextStyle.H6" Class="rz-m-0">Request Information</RadzenText>
+                        
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12">
+                                <RadzenStack Gap="0.5rem">
+                                    <RadzenLabel Text="Title *" Component="titleInput" />
+                                    <RadzenTextBox @bind-Value="createRequest.Title" 
+                                                   Name="titleInput"
+                                                   Placeholder="Enter a descriptive title for your request"
+                                                   Style="width: 100%"
+                                                   MaxLength="200" />
+                                    <ValidationMessage For="@(() => createRequest.Title)" />
+                                </RadzenStack>
+                            </RadzenColumn>
+                        </RadzenRow>
+                        
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12">
+                                <RadzenStack Gap="0.5rem">
+                                    <RadzenLabel Text="Description" Component="descriptionInput" />
+                                    <RadzenTextArea @bind-Value="createRequest.Description" 
+                                                    Name="descriptionInput"
+                                                    Placeholder="Provide additional details about this request (optional)"
+                                                    Style="width: 100%"
+                                                    Rows="4"
+                                                    MaxLength="1000" />
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="rz-text-secondary rz-m-0">
+                                        @(createRequest.Description?.Length ?? 0)/1000 characters
+                                    </RadzenText>
+                                    <ValidationMessage For="@(() => createRequest.Description)" />
+                                </RadzenStack>
+                            </RadzenColumn>
+                        </RadzenRow>
+                    </RadzenStack>
+                </RadzenCard>
+
+                @* Actions *@
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                    <RadzenButton Text="Create Request" 
+                                  Icon="add_circle" 
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  ButtonType="ButtonType.Submit"
+                                  Disabled="@submitting"
+                                  Loading="@submitting" />
+                    
+                    <RadzenButton Text="Cancel" 
+                                  Icon="cancel" 
+                                  ButtonStyle="ButtonStyle.Light"
+                                  Click="@(() => Navigation.NavigateTo("/requests"))"
+                                  Disabled="@submitting" />
+                    
+                    @if (submitting)
+                    {
+                        <RadzenText TextStyle="TextStyle.Body2" Class="rz-text-secondary rz-m-0">
+                            Creating request...
+                        </RadzenText>
+                    }
+                </RadzenStack>
+
+                @* Validation Summary *@
+                <ValidationSummary />
+            </RadzenStack>
+        </EditForm>
+    </RadzenStack>
+</div>
+
+<style>
+    .create-request-form {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .form-section {
+        border: 1px solid var(--rz-border);
+        border-radius: var(--rz-border-radius);
+        padding: 1.5rem;
+        background-color: var(--rz-base-0);
+    }
+
+    .form-actions {
+        border-top: 1px solid var(--rz-border);
+        padding-top: 1.5rem;
+        margin-top: 1.5rem;
+    }
+</style>
+
+@code {
+    private CreateRequestModel createRequest = new();
+    private bool submitting = false;
+
+    private async Task HandleSubmit()
+    {
+        if (submitting) return;
+
+        submitting = true;
+        StateHasChanged();
+
+        try
+        {
+            var dto = new CreateRequestDto
+            {
+                Title = createRequest.Title?.Trim() ?? string.Empty,
+                Description = string.IsNullOrWhiteSpace(createRequest.Description) ? null : createRequest.Description.Trim()
+            };
+
+            var response = await RequestService.CreateRequestAsync(dto);
+
+            if (response.Success && response.Data != null)
+            {
+                NotificationService.Notify(new Radzen.NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Request Created",
+                    Detail = $"Request '{response.Data.Title}' has been created successfully",
+                    Duration = 4000
+                });
+
+                // Navigate to the created request details page
+                Navigation.NavigateTo($"/requests/{response.Data.Id}");
+            }
+            else
+            {
+                NotificationService.Notify(new Radzen.NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Creation Failed",
+                    Detail = response.ErrorMessage ?? "Failed to create request",
+                    Duration = 4000
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new Radzen.NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"An error occurred: {ex.Message}",
+                Duration = 4000
+            });
+        }
+        finally
+        {
+            submitting = false;
+            StateHasChanged();
+        }
+    }
+
+    public class CreateRequestModel
+    {
+        [Required(ErrorMessage = "Title is required")]
+        [StringLength(200, ErrorMessage = "Title cannot exceed 200 characters")]
+        [MinLength(3, ErrorMessage = "Title must be at least 3 characters long")]
+        public string Title { get; set; } = string.Empty;
+
+        [StringLength(1000, ErrorMessage = "Description cannot exceed 1000 characters")]
+        public string? Description { get; set; }
+    }
+}

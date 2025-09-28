@@ -215,7 +215,7 @@ public class NotificationServiceTests : IDisposable
             Id = 1,
             Name = "Test Product",
             SKU = "TEST-001",
-            Quantity = 5,
+            CurrentQuantity = 5,
             MinStock = 10,
             IsActive = true
         };

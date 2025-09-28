@@ -13,6 +13,9 @@
     <PackageReference Include="Blazored.LocalStorage" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
+    <PackageReference Include="Microsoft.Extensions.Localization" />
+    <!-- Microsoft.AspNetCore.Localization functionality is built into .NET 8 framework -->
+    <PackageReference Include="Radzen.Blazor" />
   </ItemGroup>
 
   <ItemGroup>

@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace Inventory.Shared.Services;
 
 public class ProductApiService(HttpClient httpClient, ILogger<ProductApiService> logger, IRetryService? retryService = null, INotificationService? notificationService = null) 
-    : BaseApiService(httpClient, ApiEndpoints.BaseUrl, logger), IProductService
+    : BaseApiService(httpClient, "", logger), IProductService
 {
     private readonly IRetryService? _retryService = retryService;
     private readonly INotificationService? _notificationService = notificationService;
@@ -18,7 +18,7 @@ public class ProductApiService(HttpClient httpClient, ILogger<ProductApiService>
             return await _retryService.ExecuteWithRetryAsync(
                 async () =>
                 {
-                    var response = await GetPagedAsync<ProductDto>(BaseUrl);
+                    var response = await GetPagedAsync<ProductDto>(ApiEndpoints.Products);
                     return response.Data?.Items ?? new List<ProductDto>();
                 },
                 "GetAllProducts"

@@ -1,28 +1,40 @@
-﻿@using Inventory.Web.Client.Components
+@using Inventory.Web.Client.Components
+@using Inventory.Shared.Interfaces
+@using Inventory.Shared.Components
+@using Inventory.Shared.Models
+@using Microsoft.AspNetCore.Components.Web
+@implements IDisposable
+@inject IThemeService ThemeService
+@inject ICultureService CultureService
+@inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
+
+
+
+@* Dynamic theme CSS loading *@
+<HeadContent>
+    <RadzenTheme Theme="@currentTheme" />
+     <link id="radzen-theme-css" href="@GetThemeCssUrl()" rel="stylesheet" />
+</HeadContent>
+
+@* Accessibility helpers for screen readers *@
+<AccessibilityHelpers @ref="accessibilityHelpers" />
 
 <CascadingAuthenticationState>
-    <Router AppAssembly="@typeof(App).Assembly" AdditionalAssemblies="new[] { typeof(Inventory.UI.Pages.Login).Assembly }">
+    <Router AppAssembly="@typeof(App).Assembly" AdditionalAssemblies="new[] { typeof(Inventory.UI.Pages.Login).Assembly, typeof(Inventory.Web.Client.Pages.Requests.Index).Assembly }">
         <Found Context="routeData">
-            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
-                <NotAuthorized>
-                    @if (routeData.PageType != typeof(Inventory.UI.Pages.Login))
-                    {
-                        <Inventory.UI.Components.RedirectToLogin />
-                    }
-                    else
-                    {
-                        <PageTitle>Login</PageTitle>
-                        <LayoutView Layout="@typeof(MainLayout)">
-                            <Inventory.UI.Pages.Login />
-                        </LayoutView>
-                    }
-                </NotAuthorized>
-            </AuthorizeRouteView>
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)"/>
         </Found>
         <NotFound>
-            <PageTitle>Not found</PageTitle>
+            <PageTitle>@GetNotFoundTitle()</PageTitle>
             <LayoutView Layout="@typeof(MainLayout)">
-                <p role="alert">Sorry, there's nothing at this address.</p>
+                <div role="alert" 
+                     aria-live="assertive"
+                     lang="@CultureService.CurrentCulture.Name"
+                     dir="@(CultureService.CurrentCulture.TextInfo.IsRightToLeft ? "rtl" : "ltr")">
+                    <h1>@GetNotFoundTitle()</h1>
+                    <p>@GetNotFoundMessage()</p>
+                </div>
             </LayoutView>
         </NotFound>
     </Router>
@@ -30,3 +42,170 @@
     @* SignalR Initializer - runs in background *@
     <SignalRInitializer />
 </CascadingAuthenticationState>
+
+@code {
+    private string currentTheme = "material";
+    private AccessibilityHelpers? accessibilityHelpers;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Initialize theme service
+            await ThemeService.InitializeThemeAsync();
+            
+            // Get current theme
+            currentTheme = ThemeService.GetCurrentTheme();
+            
+            // Load initial theme CSS
+            await UpdateThemeCssAsync(currentTheme);
+            
+            // Subscribe to theme changes
+            ThemeService.ThemeChanged += OnThemeChanged;
+            
+            // Subscribe to culture changes for accessibility updates
+            CultureService.CultureChanged += OnCultureChanged;
+            
+            // Set initial document language
+            await UpdateDocumentLanguageAsync();
+        }
+        catch (Exception ex)
+        {
+            // Log error and use default theme
+            Console.WriteLine($"Failed to initialize app: {ex.Message}");
+            currentTheme = "material";
+        }
+    }
+    
+    private void OnThemeChanged(object? sender, ThemeChangedEventArgs e)
+    {
+        currentTheme = e.ThemeName;
+        InvokeAsync(async () =>
+        {
+            await UpdateThemeCssAsync(e.ThemeName);
+            StateHasChanged();
+        });
+    }
+    
+    private async void OnCultureChanged(object? sender, System.Globalization.CultureInfo newCulture)
+    {
+        await InvokeAsync(async () =>
+        {
+            await UpdateDocumentLanguageAsync();
+            
+            // Announce language change to screen readers
+            var cultureName = newCulture.Name switch
+            {
+                "ru-RU" => "Russian",
+                "de-DE" => "German", 
+                _ => "English"
+            };
+            
+            if (accessibilityHelpers != null)
+            {
+                await accessibilityHelpers.AnnounceAsync(
+                    GetLanguageChangeAnnouncement(cultureName), true);
+            }
+            
+            StateHasChanged();
+        });
+    }
+    
+    private async Task UpdateDocumentLanguageAsync()
+    {
+        try
+        {
+            var culture = CultureService.CurrentCulture;
+            var direction = culture.TextInfo.IsRightToLeft ? "rtl" : "ltr";
+            
+            await JSRuntime.InvokeVoidAsync("eval", $@"
+                document.documentElement.setAttribute('lang', '{culture.Name}');
+                document.documentElement.setAttribute('dir', '{direction}');
+            ");
+        }
+        catch
+        {
+            // Silently handle errors
+        }
+    }
+    
+    private string GetNotFoundTitle()
+    {
+        return CultureService.CurrentCulture.Name switch
+        {
+            "ru-RU" => "Страница не найдена",
+            "de-DE" => "Seite nicht gefunden",
+            _ => "Page Not Found"
+        };
+    }
+    
+    private string GetNotFoundMessage()
+    {
+        return CultureService.CurrentCulture.Name switch
+        {
+            "ru-RU" => "К сожалению, по этому адресу ничего нет.",
+            "de-DE" => "Leider gibt es unter dieser Adresse nichts.",
+            _ => "Sorry, there's nothing at this address."
+        };
+    }
+    
+    private string GetThemeCssUrl()
+    {
+        return $"_content/Radzen.Blazor/css/{currentTheme}.css";
+    }
+    
+    private async Task UpdateThemeCssAsync(string themeName)
+    {
+        try
+        {
+            var newThemeUrl = $"_content/Radzen.Blazor/css/{themeName}.css";
+            
+            await JSRuntime.InvokeVoidAsync("eval", $@"
+                const linkElement = document.getElementById('radzen-theme-css');
+                if (linkElement) {{
+                    // Smooth theme transition to prevent flashing
+                    linkElement.style.transition = 'opacity 0.2s ease-in-out';
+                    linkElement.style.opacity = '0';
+                    
+                    setTimeout(() => {{
+                        linkElement.href = '{newThemeUrl}';
+                        linkElement.onload = () => {{
+                            linkElement.style.opacity = '1';
+                        }};
+                    }}, 100);
+                }} else {{
+                    console.warn('radzen-theme-css element not found');
+                }}
+            ");
+            
+            Console.WriteLine($"Theme CSS updated to: {newThemeUrl}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to update theme CSS: {ex.Message}");
+        }
+    }
+    
+    private string GetLanguageChangeAnnouncement(string languageName)
+    {
+        return CultureService.CurrentCulture.Name switch
+        {
+            "ru-RU" => $"Язык интерфейса изменён на {languageName}",
+            "de-DE" => $"Sprache der Benutzeroberfläche wurde auf {languageName} geändert",
+            _ => $"Interface language changed to {languageName}"
+        };
+    }
+    
+    public void Dispose()
+    {
+        if (ThemeService != null)
+        {
+            ThemeService.ThemeChanged -= OnThemeChanged;
+        }
+        
+        if (CultureService != null)
+        {
+            CultureService.CultureChanged -= OnCultureChanged;
+        }
+    }
+}

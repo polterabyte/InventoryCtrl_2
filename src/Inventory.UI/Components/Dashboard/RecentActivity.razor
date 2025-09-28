@@ -1,72 +1,77 @@
-@using Inventory.Shared.DTOs
+﻿@using Inventory.Shared.DTOs
+@using Inventory.UI.Utilities
 @inject IDashboardService DashboardService
 
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">
-            <i class="bi bi-clock-history me-2"></i>Последняя активность
-        </h5>
-        <button class="btn btn-sm btn-outline-primary" @onclick="RefreshActivity">
-            <i class="bi bi-arrow-clockwise"></i> Обновить
-        </button>
-    </div>
-    <div class="card-body">
-        @if (isLoading)
-        {
-            <div class="text-center py-4">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Загрузка...</span>
-                </div>
-            </div>
-        }
-        else if (recentActivity?.RecentTransactions?.Any() == true)
-        {
-            <div class="activity-list">
-                @foreach (var transaction in recentActivity.RecentTransactions.Take(5))
-                {
-                    <div class="activity-item">
-                        <div class="activity-icon @GetTransactionIconClass(transaction.Type)">
-                            <i class="@GetTransactionIcon(transaction.Type)"></i>
-                        </div>
-                        <div class="activity-content">
-                            <div class="activity-title">
-                                @GetTransactionTitle(transaction.Type) товара
-                                <strong>@transaction.ProductName</strong>
-                            </div>
-                            <div class="activity-details">
-                                <span class="badge @GetTransactionBadgeClass(transaction.Type)">
-                                    @transaction.Quantity @transaction.ProductSku
-                                </span>
-                                <span class="text-muted ms-2">
-                                    @transaction.UserName • @transaction.WarehouseName
-                                </span>
-                            </div>
-                            <div class="activity-time">
-                                <i class="bi bi-clock"></i> @transaction.Date.ToString("dd.MM.yyyy HH:mm")
-                            </div>
-                        </div>
-                    </div>
-                }
-            </div>
-            
-            @if (recentActivity.RecentTransactions.Count > 5)
+<RadzenCard Style="width:100%;">
+    <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.GapLarge">
+        <RadzenStack Orientation="Orientation.Horizontal"
+                     AlignItems="AlignItems.Center"
+                     Gap="0.5rem"
+                     JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenIcon Icon="schedule" />
+                <RadzenText TextStyle="TextStyle.H6">Недавняя активность</RadzenText>
+            </RadzenStack>
+
+            <RadzenButton Icon="refresh"
+                          Text="Обновить"
+                          ButtonStyle="ButtonStyle.Secondary"
+                          Variant="Variant.Outlined"
+                          Size="ButtonSize.Small"
+                          Click="RefreshActivity" />
+        </RadzenStack>
+
+        <RadzenBusyIndicator IsBusy="@isLoading" LoadingText="Загружаем последние операции...">
+            @if (recentActivity?.RecentTransactions?.Any() == true)
             {
-                <div class="text-center mt-3">
-                    <button class="btn btn-sm btn-outline-secondary">
-                        Показать все (@recentActivity.RecentTransactions.Count)
-                    </button>
-                </div>
+                <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.Gap">
+                    @foreach (var transaction in recentActivity.RecentTransactions.Take(5))
+                    {
+                        <RadzenStack Orientation="Orientation.Horizontal"
+                                     Gap="@RadzenUi.Gap"
+                                     AlignItems="AlignItems.Start"
+                                     Style="padding:0.75rem; border:1px solid var(--rz-border); border-radius:var(--rz-border-radius);">
+                            <RadzenIcon Icon="@GetTransactionIcon(transaction.Type)"
+                                        Style="@($"color:{GetTransactionColor(transaction.Type)}; font-size:1.6rem;")" />
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.3rem" Style="flex:1;">
+                                <RadzenText TextStyle="TextStyle.Body1">
+                                    @GetTransactionTitle(transaction.Type) для <strong>@transaction.ProductName</strong>
+                                </RadzenText>
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                    <RadzenBadge Text="@($"{transaction.Quantity} {transaction.ProductSku}")"
+                                                 Style="@GetTransactionBadgeStyle(transaction.Type)" />
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary);">
+                                        @transaction.UserName - @transaction.WarehouseName
+                                    </RadzenText>
+                                </RadzenStack>
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" AlignItems="AlignItems.Center" Style="color: var(--rz-text-secondary);">
+                                    <RadzenIcon Icon="access_time" />
+                                    <RadzenText TextStyle="TextStyle.Caption">@transaction.Date.ToString("dd.MM.yyyy HH:mm")</RadzenText>
+                                </RadzenStack>
+                            </RadzenStack>
+                        </RadzenStack>
+                    }
+
+                    @if (recentActivity.RecentTransactions.Count > 5)
+                    {
+                        <RadzenButton Text="@($"Показать все ({recentActivity.RecentTransactions.Count})")"
+                                      ButtonStyle="ButtonStyle.Secondary"
+                                      Variant="Variant.Outlined"
+                                      Icon="list"
+                                      Size="ButtonSize.Small" />
+                    }
+                </RadzenStack>
             }
-        }
-        else
-        {
-            <div class="text-center py-4 text-muted">
-                <i class="bi bi-inbox" style="font-size: 2rem;"></i>
-                <p class="mt-2 mb-0">Нет недавней активности</p>
-            </div>
-        }
-    </div>
-</div>
+            else
+            {
+                <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.5rem" Style="padding:1rem; color: var(--rz-text-secondary);">
+                    <RadzenIcon Icon="inbox" Style="font-size:2rem;" />
+                    <RadzenText TextStyle="TextStyle.Body1">Записей активности пока нет</RadzenText>
+                </RadzenStack>
+            }
+        </RadzenBusyIndicator>
+    </RadzenStack>
+</RadzenCard>
 
 @code {
     private RecentActivityDto? recentActivity;
@@ -86,7 +91,6 @@
         }
         catch (Exception ex)
         {
-            // Handle error - could show notification
             Console.WriteLine($"Error loading recent activity: {ex.Message}");
         }
         finally
@@ -100,47 +104,33 @@
         await LoadRecentActivity();
     }
 
-    private string GetTransactionIcon(string type)
+    private static string GetTransactionIcon(string type) => type.ToLowerInvariant() switch
     {
-        return type.ToLower() switch
-        {
-            "income" => "bi bi-arrow-down-circle",
-            "outcome" => "bi bi-arrow-up-circle",
-            "install" => "bi bi-tools",
-            _ => "bi bi-arrow-right-circle"
-        };
-    }
+        "income" => "trending_down",
+        "outcome" => "trending_up",
+        "install" => "handyman",
+        _ => "sync"
+    };
 
-    private string GetTransactionIconClass(string type)
+    private static string GetTransactionColor(string type) => type.ToLowerInvariant() switch
     {
-        return type.ToLower() switch
-        {
-            "income" => "text-success",
-            "outcome" => "text-warning",
-            "install" => "text-info",
-            _ => "text-primary"
-        };
-    }
+        "income" => "var(--rz-success)",
+        "outcome" => "var(--rz-warning)",
+        "install" => "var(--rz-info)",
+        _ => "var(--rz-primary)"
+    };
 
-    private string GetTransactionTitle(string type)
+    private static string GetTransactionTitle(string type) => type.ToLowerInvariant() switch
     {
-        return type.ToLower() switch
-        {
-            "income" => "Приход",
-            "outcome" => "Расход",
-            "install" => "Установка",
-            _ => "Операция"
-        };
-    }
+        "income" => "Приход",
+        "outcome" => "Расход",
+        "install" => "Установка",
+        _ => "Операция"
+    };
 
-    private string GetTransactionBadgeClass(string type)
+    private static string GetTransactionBadgeStyle(string type)
     {
-        return type.ToLower() switch
-        {
-            "income" => "bg-success",
-            "outcome" => "bg-warning",
-            "install" => "bg-info",
-            _ => "bg-primary"
-        };
+        var color = GetTransactionColor(type);
+        return $"background-color:{color}; color:var(--rz-base-0);";
     }
 }

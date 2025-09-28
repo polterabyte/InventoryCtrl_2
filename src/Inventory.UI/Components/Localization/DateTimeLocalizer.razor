@@ -1,0 +1,117 @@
+@using Inventory.Shared.Interfaces
+@using System.Globalization
+@inject ICultureService CultureService
+
+@if (Value.HasValue)
+{
+    @GetFormattedDateTime()
+}
+
+@code {
+    /// <summary>
+    /// The DateTime value to format
+    /// </summary>
+    [Parameter] public DateTime? Value { get; set; }
+    
+    /// <summary>
+    /// Custom format string (optional)
+    /// </summary>
+    [Parameter] public string? Format { get; set; }
+    
+    /// <summary>
+    /// Predefined format type
+    /// </summary>
+    [Parameter] public DateTimeFormat FormatType { get; set; } = DateTimeFormat.Default;
+    
+    /// <summary>
+    /// Whether to include time component
+    /// </summary>
+    [Parameter] public bool IncludeTime { get; set; } = true;
+    
+    /// <summary>
+    /// Additional CSS class
+    /// </summary>
+    [Parameter] public string? Class { get; set; }
+    
+    /// <summary>
+    /// Additional inline style
+    /// </summary>
+    [Parameter] public string? Style { get; set; }
+
+    private string GetFormattedDateTime()
+    {
+        if (!Value.HasValue)
+            return string.Empty;
+
+        var culture = CultureService.CurrentCulture;
+        
+        if (!string.IsNullOrWhiteSpace(Format))
+        {
+            return Value.Value.ToString(Format, culture);
+        }
+
+        return FormatType switch
+        {
+            DateTimeFormat.Short => IncludeTime 
+                ? Value.Value.ToString("g", culture)  // Short date + short time
+                : Value.Value.ToString("d", culture), // Short date only
+            DateTimeFormat.Long => IncludeTime 
+                ? Value.Value.ToString("F", culture)  // Full date + long time
+                : Value.Value.ToString("D", culture), // Long date only
+            DateTimeFormat.Time => Value.Value.ToString("t", culture), // Short time
+            DateTimeFormat.LongTime => Value.Value.ToString("T", culture), // Long time
+            DateTimeFormat.Relative => GetRelativeTime(),
+            _ => IncludeTime 
+                ? Value.Value.ToString("g", culture)
+                : Value.Value.ToString("d", culture)
+        };
+    }
+    
+    private string GetRelativeTime()
+    {
+        if (!Value.HasValue)
+            return string.Empty;
+            
+        var timeSpan = DateTime.Now - Value.Value;
+        var culture = CultureService.CurrentCulture;
+        
+        if (timeSpan.TotalMinutes < 1)
+            return culture.TwoLetterISOLanguageName == "ru" ? "только что" : "just now";
+        if (timeSpan.TotalHours < 1)
+            return culture.TwoLetterISOLanguageName == "ru" 
+                ? $"{(int)timeSpan.TotalMinutes} мин. назад"
+                : $"{(int)timeSpan.TotalMinutes} min ago";
+        if (timeSpan.TotalDays < 1)
+            return culture.TwoLetterISOLanguageName == "ru" 
+                ? $"{(int)timeSpan.TotalHours} ч. назад"
+                : $"{(int)timeSpan.TotalHours} hours ago";
+        if (timeSpan.TotalDays < 7)
+            return culture.TwoLetterISOLanguageName == "ru" 
+                ? $"{(int)timeSpan.TotalDays} дн. назад"
+                : $"{(int)timeSpan.TotalDays} days ago";
+            
+        // For older dates, show the actual date
+        return IncludeTime 
+            ? Value.Value.ToString("g", culture)
+            : Value.Value.ToString("d", culture);
+    }
+
+    public enum DateTimeFormat
+    {
+        Default,
+        Short,
+        Long,
+        Time,
+        LongTime,
+        Relative
+    }
+}
+
+@if (Value.HasValue && (!string.IsNullOrWhiteSpace(Class) || !string.IsNullOrWhiteSpace(Style)))
+{
+    <span class="@Class" style="@Style">@GetFormattedDateTime()</span>
+}
+else if (Value.HasValue)
+{
+    @GetFormattedDateTime()
+}

@@ -192,8 +192,17 @@ namespace Inventory.API.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("RequestId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("TotalPrice")
+                        .HasColumnType("numeric");
+
                     b.Property<int>("Type")
                         .HasColumnType("integer");
+
+                    b.Property<decimal?>("UnitPrice")
+                        .HasColumnType("numeric");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -210,6 +219,8 @@ namespace Inventory.API.Migrations
                     b.HasIndex("LocationId");
 
                     b.HasIndex("ProductId");
+
+                    b.HasIndex("RequestId");
 
                     b.HasIndex("UserId");
 
@@ -260,8 +271,20 @@ namespace Inventory.API.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("ContactInfo")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("LocationId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -270,7 +293,12 @@ namespace Inventory.API.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Website")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("LocationId");
 
                     b.ToTable("Manufacturers");
                 });
@@ -315,9 +343,6 @@ namespace Inventory.API.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("ProductModelId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Quantity")
                         .HasColumnType("integer");
 
                     b.Property<string>("SKU")
@@ -407,6 +432,47 @@ namespace Inventory.API.Migrations
                     b.ToTable("ProductHistories");
                 });
 
+            modelBuilder.Entity("Inventory.API.Models.ProductInstalledView", b =>
+                {
+                    b.Property<DateTime?>("FirstInstallDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("first_install_date");
+
+                    b.Property<int>("InstalledQty")
+                        .HasColumnType("integer")
+                        .HasColumnName("installed_qty");
+
+                    b.Property<DateTime?>("LastInstallDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_install_date");
+
+                    b.Property<int?>("LocationId")
+                        .HasColumnType("integer")
+                        .HasColumnName("location_id");
+
+                    b.Property<string>("LocationName")
+                        .HasColumnType("text")
+                        .HasColumnName("location_name");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer")
+                        .HasColumnName("product_id");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("product_name");
+
+                    b.Property<string>("SKU")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("sku");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("vw_product_installed", (string)null);
+                });
+
             modelBuilder.Entity("Inventory.API.Models.ProductModel", b =>
                 {
                     b.Property<int>("Id")
@@ -436,6 +502,64 @@ namespace Inventory.API.Migrations
                     b.HasIndex("ManufacturerId");
 
                     b.ToTable("ProductModels");
+                });
+
+            modelBuilder.Entity("Inventory.API.Models.ProductOnHandView", b =>
+                {
+                    b.Property<int>("OnHandQty")
+                        .HasColumnType("integer")
+                        .HasColumnName("on_hand_qty");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer")
+                        .HasColumnName("product_id");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("product_name");
+
+                    b.Property<string>("SKU")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("sku");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("vw_product_on_hand", (string)null);
+                });
+
+            modelBuilder.Entity("Inventory.API.Models.ProductPendingView", b =>
+                {
+                    b.Property<DateTime?>("FirstPendingDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("first_pending_date");
+
+                    b.Property<DateTime?>("LastPendingDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_pending_date");
+
+                    b.Property<int>("PendingQty")
+                        .HasColumnType("integer")
+                        .HasColumnName("pending_qty");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer")
+                        .HasColumnName("product_id");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("product_name");
+
+                    b.Property<string>("SKU")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("sku");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("vw_product_pending", (string)null);
                 });
 
             modelBuilder.Entity("Inventory.API.Models.ProductTag", b =>
@@ -469,6 +593,76 @@ namespace Inventory.API.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ProductTags");
+                });
+
+            modelBuilder.Entity("Inventory.API.Models.Request", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ApprovedByUserId")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedByUserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Requests");
+                });
+
+            modelBuilder.Entity("Inventory.API.Models.RequestHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("ChangedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ChangedByUserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Comment")
+                        .HasColumnType("text");
+
+                    b.Property<int>("NewStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("OldStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RequestId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RequestId");
+
+                    b.ToTable("RequestHistories");
                 });
 
             modelBuilder.Entity("Inventory.API.Models.SignalRConnection", b =>
@@ -658,10 +852,6 @@ namespace Inventory.API.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Address")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<string>("ContactInfo")
                         .HasColumnType("text");
 
@@ -674,6 +864,9 @@ namespace Inventory.API.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.Property<int?>("LocationId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -682,6 +875,8 @@ namespace Inventory.API.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("LocationId");
 
                     b.ToTable("Warehouses");
                 });
@@ -994,6 +1189,9 @@ namespace Inventory.API.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("CurrentQuantity")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
@@ -1033,9 +1231,6 @@ namespace Inventory.API.Migrations
                     b.Property<string>("ProductModelName")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("integer");
 
                     b.Property<string>("SKU")
                         .IsRequired()
@@ -1263,6 +1458,10 @@ namespace Inventory.API.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Inventory.API.Models.Request", "Request")
+                        .WithMany("Transactions")
+                        .HasForeignKey("RequestId");
+
                     b.HasOne("Inventory.API.Models.User", "User")
                         .WithMany("Transactions")
                         .HasForeignKey("UserId")
@@ -1279,6 +1478,8 @@ namespace Inventory.API.Migrations
 
                     b.Navigation("Product");
 
+                    b.Navigation("Request");
+
                     b.Navigation("User");
 
                     b.Navigation("Warehouse");
@@ -1291,6 +1492,17 @@ namespace Inventory.API.Migrations
                         .HasForeignKey("ParentLocationId");
 
                     b.Navigation("ParentLocation");
+                });
+
+            modelBuilder.Entity("Inventory.API.Models.Manufacturer", b =>
+                {
+                    b.HasOne("Inventory.API.Models.Location", "Location")
+                        .WithMany()
+                        .HasForeignKey("LocationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Location");
                 });
 
             modelBuilder.Entity("Inventory.API.Models.Product", b =>
@@ -1366,6 +1578,17 @@ namespace Inventory.API.Migrations
                     b.Navigation("Manufacturer");
                 });
 
+            modelBuilder.Entity("Inventory.API.Models.RequestHistory", b =>
+                {
+                    b.HasOne("Inventory.API.Models.Request", "Request")
+                        .WithMany("History")
+                        .HasForeignKey("RequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Request");
+                });
+
             modelBuilder.Entity("Inventory.API.Models.SignalRConnection", b =>
                 {
                     b.HasOne("Inventory.API.Models.User", "User")
@@ -1375,6 +1598,15 @@ namespace Inventory.API.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Inventory.API.Models.Warehouse", b =>
+                {
+                    b.HasOne("Inventory.API.Models.Location", "Location")
+                        .WithMany()
+                        .HasForeignKey("LocationId");
+
+                    b.Navigation("Location");
                 });
 
             modelBuilder.Entity("Inventory.Shared.Models.DbNotification", b =>
@@ -1512,6 +1744,13 @@ namespace Inventory.API.Migrations
             modelBuilder.Entity("Inventory.API.Models.ProductModel", b =>
                 {
                     b.Navigation("Products");
+                });
+
+            modelBuilder.Entity("Inventory.API.Models.Request", b =>
+                {
+                    b.Navigation("History");
+
+                    b.Navigation("Transactions");
                 });
 
             modelBuilder.Entity("Inventory.API.Models.UnitOfMeasure", b =>

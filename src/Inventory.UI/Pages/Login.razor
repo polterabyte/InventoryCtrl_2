@@ -1,119 +1,71 @@
 @page "/login"
 
 @using Inventory.UI.Services
+@using Inventory.UI.Utilities
+@using Radzen
+@using Radzen.Blazor
 
 @inject NavigationManager Navigation
 @inject IAuthService AuthService
 @inject AuthenticationStateProvider AuthStateProvider
 @inject IAuthenticationService AuthenticationService
 
-<AuthorizeView>
+<AuthorizeView Context="authState">
     <Authorized>
-        <div class="text-center">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Redirecting...</span>
-            </div>
-            <p class="mt-3 text-muted">You are already logged in. Redirecting...</p>
-        </div>
+        <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="@RadzenUi.Gap">
+            <RadzenProgressBarCircular Mode="ProgressBarMode.Indeterminate" Style="width:48px;height:48px;" />
+            <RadzenText class="rz-text-secondary">You are already logged in. Redirecting...</RadzenText>
+        </RadzenStack>
     </Authorized>
-    <NotAuthorized Context="loginContext">
-        <div class="text-center mb-5">
-            <h2 class="fw-bold text-primary">Inventory Control System</h2>
-            <p class="lead text-muted">Manage your inventory efficiently</p>
-        </div>
+    <NotAuthorized>
+        <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="@RadzenUi.GapLarge" Style="margin-top: 2rem;">
+            <RadzenText TextStyle="TextStyle.H4" class="rz-text-primary">Inventory Control System</RadzenText>
+            <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-text-secondary">Manage your inventory efficiently</RadzenText>
 
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-md-6">
-                    <div class="card shadow-lg border-0">
-                        <div class="card-body p-5">
-                            <div class="text-center mb-4">
-                                <h5 class="card-title fw-bold text-primary">Welcome Back</h5>
-                                <p class="text-muted">Sign in to your account</p>
-                            </div>
-                            
-                            <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin">
-                                <DataAnnotationsValidator />
-                                <div @onkeypress="@OnKeyPress"></div>
-                                
-                                <div class="mb-3">
-                                    <label for="username" class="form-label">Username:</label>
-                                    <InputText @bind-Value="loginModel.Username" 
-                                             @oninput="OnUsernameChanged"
-                                             class="@GetUsernameClass()" 
-                                             id="username" />
-                                    <ValidationMessage For="@(() => loginModel.Username)" />
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="password" class="form-label">Password:</label>
-                                    <InputText @bind-Value="loginModel.Password" 
-                                             @oninput="OnPasswordChanged"
-                                             type="password" 
-                                             class="@GetPasswordClass()" 
-                                             id="password" />
-                                    <ValidationMessage For="@(() => loginModel.Password)" />
-                                </div>
-                                
-                                <div class="d-grid">
-                                    <button type="submit" 
-                                            class="btn btn-primary btn-lg fw-semibold py-3" 
-                                            disabled="@(isLoading || isRedirecting)"
-                                            style="transition: all 0.3s ease;">
-                                        @if (isLoading)
-                                        {
-                                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                                            <span>Signing in...</span>
-                                        }
-                                        else if (isRedirecting)
-                                        {
-                                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                                            <span>Redirecting...</span>
-                                        }
-                                        else
-                                        {
-                                            <i class="bi bi-box-arrow-in-right me-2"></i>
-                                            <span>Sign In</span>
-                                        }
-                                    </button>
-                                </div>
-                            </EditForm>
-                            
-                            @if (!string.IsNullOrEmpty(errorMessage))
-                            {
-                                <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
-                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                                    @errorMessage
-                                    <button type="button" class="btn-close" @onclick="() => errorMessage = string.Empty" aria-label="Close"></button>
-                                </div>
-                            }
-                            
-                            @if (!string.IsNullOrEmpty(successMessage))
-                            {
-                                <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
-                                    <i class="bi bi-check-circle-fill me-2"></i>
-                                    @successMessage
-                                    @if (!isRedirecting)
-                                    {
-                                        <button type="button" class="btn-close" @onclick="() => successMessage = string.Empty" aria-label="Close"></button>
-                                    }
-                                </div>
-                            }
-                            
-                            <div class="mt-4 text-center">
-                                <p class="text-muted">Don't have an account? 
-                                    <a href="/register" @onclick="NavigateToRegister" 
-                                       class="text-primary text-decoration-none fw-semibold" 
-                                       style="cursor: pointer; transition: color 0.3s ease;">
-                                        Create one here
-                                    </a>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+            <RadzenCard Style="max-width: 520px; width: 100%;">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.Gap">
+                    <RadzenText TextStyle="TextStyle.H5" class="rz-text-primary">Welcome Back</RadzenText>
+                    <RadzenText class="rz-text-secondary">Sign in to your account</RadzenText>
+
+                    <RadzenTemplateForm Data="@loginModel" Submit="@(async (LoginRequest model) => await HandleLogin())">
+                        <RadzenFormField Text="Username:">
+                            <RadzenTextBox @bind-Value="loginModel.Username" Name="username" />
+                            <RadzenRequiredValidator Component="username" Text="Username is required" />
+                        </RadzenFormField>
+
+                        <RadzenFormField Text="Password:">
+                            <RadzenPassword @bind-Value="loginModel.Password" Name="password" />
+                            <RadzenRequiredValidator Component="password" Text="Password is required" />
+                        </RadzenFormField>
+
+                        <RadzenButton Text="@GetLoginButtonText()" ButtonType="ButtonType.Submit"
+                                      ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Medium"
+                                      Disabled="@(isLoading || isRedirecting)" />
+                    </RadzenTemplateForm>
+
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Danger" class="rz-mt-3" ShowIcon="true">
+                            @errorMessage
+                        </RadzenAlert>
+                    }
+
+                    @if (!string.IsNullOrEmpty(successMessage))
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Success" class="rz-mt-3" ShowIcon="true">
+                            @successMessage
+                        </RadzenAlert>
+                    }
+
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center">
+                        <RadzenText class="rz-text-secondary">
+                            Don't have an account?
+                            <a href="/register" @onclick="NavigateToRegister" class="rz-text-primary" style="cursor: pointer;">Create one here</a>
+                        </RadzenText>
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenStack>
     </NotAuthorized>
 </AuthorizeView>
 
@@ -123,27 +75,8 @@
     private bool isRedirecting = false;
     private string errorMessage = string.Empty;
     private string successMessage = string.Empty;
-    
-    // Real-time validation
-    private bool IsUsernameTouched = false;
-    private bool IsPasswordTouched = false;
-    private bool IsUsernameValid => !string.IsNullOrWhiteSpace(loginModel.Username) && loginModel.Username.Length >= 3;
-    private bool IsPasswordValid => !string.IsNullOrWhiteSpace(loginModel.Password) && loginModel.Password.Length >= 6;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-            if (authState.User.Identity?.IsAuthenticated == true)
-            {
-                await Task.Delay(1000); // Show loading message briefly
-                Navigation.NavigateTo("/");
-            }
-        }
-    }
-
-    private async Task HandleLogin()
+    private async Task HandleLogin(LoginRequest? model = null)
     {
         isLoading = true;
         errorMessage = string.Empty;
@@ -152,26 +85,21 @@
         try
         {
             var result = await AuthService.LoginAsync(loginModel);
-            
+
             if (result.Success && !string.IsNullOrEmpty(result.Token))
             {
                 var customAuthProvider = (ICustomAuthenticationStateProvider)AuthStateProvider;
                 await customAuthProvider.MarkUserAsAuthenticatedAsync(result.Token);
-                
+
                 successMessage = "Login successful! Redirecting...";
                 isRedirecting = true;
-                StateHasChanged(); // Force UI update
-                
-                // Получаем URL для возврата
+                StateHasChanged();
+
                 var returnUrl = await AuthenticationService.GetReturnUrlAsync();
-                
-                // Очищаем сохраненный URL
                 await AuthenticationService.ClearReturnUrlAsync();
-                
-                // Smooth redirect with progress indication
-                await Task.Delay(650); // Show success message and redirect progress
-                
-                // Перенаправляем на сохраненный URL или на главную страницу
+
+                await Task.Delay(650);
+
                 var redirectUrl = !string.IsNullOrEmpty(returnUrl) ? $"/{returnUrl}" : "/";
                 Navigation.NavigateTo(redirectUrl, true);
             }
@@ -195,40 +123,11 @@
     {
         Navigation.NavigateTo("/register");
     }
-    
-    private void OnUsernameChanged(ChangeEventArgs e)
+
+    private string GetLoginButtonText()
     {
-        IsUsernameTouched = true;
-        StateHasChanged();
-    }
-    
-    private void OnPasswordChanged(ChangeEventArgs e)
-    {
-        IsPasswordTouched = true;
-        StateHasChanged();
-    }
-    
-    private async Task OnKeyPress(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter" && !isLoading && !isRedirecting)
-        {
-            await HandleLogin();
-        }
-    }
-    
-    private string GetUsernameClass()
-    {
-        var baseClass = "form-control";
-        if (IsUsernameValid) return $"{baseClass} is-valid";
-        if (IsUsernameTouched) return $"{baseClass} is-invalid";
-        return baseClass;
-    }
-    
-    private string GetPasswordClass()
-    {
-        var baseClass = "form-control";
-        if (IsPasswordValid) return $"{baseClass} is-valid";
-        if (IsPasswordTouched) return $"{baseClass} is-invalid";
-        return baseClass;
+        if (isLoading) return "Signing in...";
+        if (isRedirecting) return "Redirecting...";
+        return "Sign In";
     }
 }

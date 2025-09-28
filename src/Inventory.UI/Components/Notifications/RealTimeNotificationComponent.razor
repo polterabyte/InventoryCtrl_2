@@ -1,0 +1,410 @@
+@using Microsoft.JSInterop
+@using Inventory.Shared.DTOs
+@using System.Text.Json
+@using Microsoft.Extensions.Logging
+@using Blazored.LocalStorage
+@using Microsoft.AspNetCore.Components.Authorization
+@using Inventory.Shared.Interfaces
+@using Radzen
+@using Radzen.Blazor
+@inject IJSRuntime JSRuntime
+@inject ILogger<RealTimeNotificationComponent> Logger
+@inject ILocalStorageService LocalStorage
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ISignalRService SignalRService
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+    <!-- Connection Status -->
+    @if (IsConnected)
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Success"
+                    ShowIcon="true"
+                    AllowClose="false">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenIcon Icon="wifi" Class="connection-status-icon" />
+                <RadzenText TextStyle="TextStyle.Body2">Real-time notifications active</RadzenText>
+            </RadzenStack>
+        </RadzenAlert>
+    }
+    else if (IsReconnecting)
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Warning"
+                    ShowIcon="true"
+                    AllowClose="false">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Small" />
+                <RadzenText TextStyle="TextStyle.Body2">Reconnecting...</RadzenText>
+            </RadzenStack>
+        </RadzenAlert>
+    }
+    else
+    {
+        @if (ShowSignInBanner && string.IsNullOrEmpty(accessToken))
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Danger"
+                        ShowIcon="true"
+                        AllowClose="true"
+                        Close="DismissSignInBanner">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="wifi_off" Class="connection-status-icon--error" />
+                    <RadzenText TextStyle="TextStyle.Body2">Sign in to enable notifications</RadzenText>
+                </RadzenStack>
+            </RadzenAlert>
+        }
+        else if (!string.IsNullOrEmpty(accessToken))
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Danger"
+                        ShowIcon="true"
+                        AllowClose="false">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="wifi_off" Class="connection-status-icon--error" />
+                    <RadzenText TextStyle="TextStyle.Body2">Real-time notifications offline</RadzenText>
+                </RadzenStack>
+            </RadzenAlert>
+        }
+    }
+
+    <!-- Notifications -->
+    @if (ShowNotifications)
+    {
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+            @foreach (var notification in Notifications.Take(MaxVisibleNotifications))
+            {
+                <RadzenCard Class="@GetNotificationClass(notification.Type)">
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                        <!-- Header -->
+                        <RadzenStack Orientation="Orientation.Horizontal"
+                                   AlignItems="AlignItems.Center"
+                                   JustifyContent="JustifyContent.SpaceBetween">
+                            <RadzenText TextStyle="TextStyle.Body1" Class="notification-title">
+                                @notification.Title
+                            </RadzenText>
+                            <RadzenButton Icon="close"
+                                         Size="ButtonSize.Small"
+                                         ButtonStyle="ButtonStyle.Light"
+                                         Variant="Variant.Text"
+                                         Click="() => DismissNotification(notification.Id)" />
+                        </RadzenStack>
+
+                        <!-- Message -->
+                        <RadzenText TextStyle="TextStyle.Body2" Class="notification-message">
+                            @notification.Message
+                        </RadzenText>
+
+                        <!-- Action Button -->
+                        @if (!string.IsNullOrEmpty(notification.ActionUrl) && !string.IsNullOrEmpty(notification.ActionText))
+                        {
+                            <RadzenButton Text="@notification.ActionText"
+                                         Size="ButtonSize.Small"
+                                         ButtonStyle="ButtonStyle.Primary"
+                                         Variant="Variant.Outlined"
+                                         Class="notification-action" />
+                        }
+
+                        <!-- Meta -->
+                        <RadzenText TextStyle="TextStyle.Caption" Class="notification-meta">
+                            @notification.CreatedAt.ToString("HH:mm")
+                        </RadzenText>
+                    </RadzenStack>
+                </RadzenCard>
+            }
+        </RadzenStack>
+    }
+</RadzenStack>
+
+@code {
+    [Parameter] public bool ShowNotifications { get; set; } = true;
+    [Parameter] public int MaxVisibleNotifications { get; set; } = 5;
+    [Parameter] public int AutoDismissDelay { get; set; } = 5000; // 5 seconds
+    [Parameter] public EventCallback<NotificationDto> OnNotificationReceived { get; set; }
+    [Parameter] public EventCallback<string> OnConnectionStateChanged { get; set; }
+
+    private List<NotificationDto> Notifications { get; set; } = new();
+    private bool IsConnected { get; set; } = false;
+    private bool IsReconnecting { get; set; } = false;
+    private string ConnectionState { get; set; } = "Disconnected";
+    private string? accessToken { get; set; }
+    private DotNetObjectReference<RealTimeNotificationComponent>? dotNetRef;
+    private bool ShowSignInBanner { get; set; } = true;
+    private Timer? signInBannerTimer;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            Logger.LogInformation("RealTimeNotificationComponent first render");
+            dotNetRef = DotNetObjectReference.Create(this);
+            // Initialize SignalR directly (using C# client, no JavaScript services needed)
+            await InitializeSignalR();
+            
+            // Check authentication state and manage banner
+            await CheckAuthenticationStateAndManageBanner();
+        }
+    }
+
+
+    private async Task InitializeSignalR()
+    {
+        try
+        {
+            // Get access token from LocalStorage (same key as CustomAuthenticationStateProvider uses)
+            accessToken = await LocalStorage.GetItemAsStringAsync("authToken");
+
+            if (string.IsNullOrEmpty(accessToken))
+            {
+                Logger.LogWarning("Access token not available for SignalR connection");
+                
+                // If no token, ensure banner is shown
+                ShowSignInBanner = true;
+                StartSignInBannerTimer();
+                
+                StateHasChanged(); // Update UI to show appropriate message
+                return;
+            }
+
+            // Initialize SignalR connection using SignalRService
+            var success = await SignalRService.InitializeConnectionAsync(accessToken, dotNetRef!);
+            
+            if (success)
+            {
+                Logger.LogInformation("SignalR connection initialized successfully");
+            }
+            else
+            {
+                Logger.LogError("Failed to initialize SignalR connection");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error initializing SignalR connection");
+        }
+    }
+
+    // Listen for authentication state changes to reconnect SignalR
+    protected override async Task OnInitializedAsync()
+    {
+        Logger.LogInformation("RealTimeNotificationComponent initialized");
+        AuthStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
+        
+        // Initial check of authentication state
+        await CheckAuthenticationStateAndManageBanner();
+    }
+
+    private async void OnAuthenticationStateChanged(Task<AuthenticationState> authStateTask)
+    {
+        var authState = await authStateTask;
+        var isAuthenticated = authState.User.Identity?.IsAuthenticated == true;
+        
+        if (isAuthenticated)
+        {
+            // User logged in, hide sign-in banner and try to initialize SignalR
+            ShowSignInBanner = false;
+            StopSignInBannerTimer();
+            await InitializeSignalR();
+        }
+        else
+        {
+            // User logged out, disconnect SignalR and show sign-in banner
+            await DisconnectSignalR();
+            ShowSignInBanner = true;
+            StartSignInBannerTimer();
+        }
+        
+        StateHasChanged();
+    }
+
+    private async Task DisconnectSignalR()
+    {
+        try
+        {
+            await SignalRService.DisconnectAsync();
+            IsConnected = false;
+            ConnectionState = "Disconnected";
+            accessToken = null;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error disconnecting SignalR");
+        }
+    }
+
+    [JSInvokable]
+    public void OnNotificationReceivedJS(NotificationDto notification)
+    {
+        try
+        {
+            Notifications.Insert(0, notification);
+            
+            // Keep only the maximum number of notifications
+            if (Notifications.Count > MaxVisibleNotifications * 2)
+            {
+                Notifications = Notifications.Take(MaxVisibleNotifications * 2).ToList();
+            }
+
+            // Auto-dismiss after delay
+            if (AutoDismissDelay > 0)
+            {
+                _ = Task.Delay(AutoDismissDelay).ContinueWith(_ => 
+                {
+                    InvokeAsync(() => DismissNotification(notification.Id));
+                });
+            }
+
+            // Notify parent component
+            OnNotificationReceived.InvokeAsync(notification);
+            
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error handling received notification");
+        }
+    }
+
+    [JSInvokable]
+    public void OnConnectionStateChangedJS(string state, string? error = null)
+    {
+        try
+        {
+            ConnectionState = state;
+            IsConnected = state == "Connected";
+            IsReconnecting = state == "Reconnecting";
+            
+            OnConnectionStateChanged.InvokeAsync(state);
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error handling connection state change");
+        }
+    }
+
+    private void DismissNotification(int notificationId)
+    {
+        Notifications.RemoveAll(n => n.Id == notificationId);
+        StateHasChanged();
+    }
+
+    private void DismissSignInBanner()
+    {
+        Logger.LogInformation("Sign-in banner dismissed by user");
+        ShowSignInBanner = false;
+        StopSignInBannerTimer();
+        StateHasChanged();
+    }
+
+    private void StartSignInBannerTimer()
+    {
+        StopSignInBannerTimer();
+        Logger.LogInformation("Starting sign-in banner auto-dismiss timer (10 seconds)");
+        signInBannerTimer = new Timer(async _ =>
+        {
+            await InvokeAsync(() =>
+            {
+                Logger.LogInformation("Sign-in banner auto-dismissed after 10 seconds");
+                ShowSignInBanner = false;
+                StateHasChanged();
+            });
+        }, null, TimeSpan.FromSeconds(10), Timeout.InfiniteTimeSpan);
+    }
+
+    private void StopSignInBannerTimer()
+    {
+        signInBannerTimer?.Dispose();
+        signInBannerTimer = null;
+    }
+
+    private async Task CheckAuthenticationStateAndManageBanner()
+    {
+        try
+        {
+            // Get current authentication state
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var isAuthenticated = authState.User.Identity?.IsAuthenticated == true;
+            
+            Logger.LogInformation("Authentication state check: IsAuthenticated={IsAuthenticated}, UserName={UserName}", 
+                isAuthenticated, authState.User.Identity?.Name);
+            
+            if (isAuthenticated)
+            {
+                // User is authenticated, hide banner
+                Logger.LogInformation("User is authenticated, hiding sign-in banner");
+                ShowSignInBanner = false;
+                StopSignInBannerTimer();
+            }
+            else
+            {
+                // User is not authenticated, show banner with timer
+                Logger.LogInformation("User is not authenticated, showing sign-in banner");
+                ShowSignInBanner = true;
+                StartSignInBannerTimer();
+            }
+            
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error checking authentication state");
+            // Default to showing banner if there's an error
+            ShowSignInBanner = true;
+            StartSignInBannerTimer();
+            StateHasChanged();
+        }
+    }
+
+    private string GetNotificationClass(string type)
+    {
+        var baseClass = "notification-card";
+        var typeClass = type?.ToUpper() switch
+        {
+            "SUCCESS" => "notification-card--success",
+            "WARNING" => "notification-card--warning",
+            "ERROR" => "notification-card--error",
+            "INFO" => "notification-card--info",
+            _ => "notification-card--info"
+        };
+        return $"{baseClass} {typeClass}";
+    }
+
+    public async Task SubscribeToNotificationType(string notificationType)
+    {
+        try
+        {
+            await SignalRService.SubscribeToNotificationTypeAsync(notificationType);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error subscribing to notification type: {NotificationType}", notificationType);
+        }
+    }
+
+    public async Task UnsubscribeFromNotificationType(string notificationType)
+    {
+        try
+        {
+            await SignalRService.UnsubscribeFromNotificationTypeAsync(notificationType);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error unsubscribing from notification type: {NotificationType}", notificationType);
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            AuthStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
+            StopSignInBannerTimer();
+            await SignalRService.DisconnectAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error disconnecting SignalR");
+        }
+        finally
+        {
+            dotNetRef?.Dispose();
+        }
+    }
+}

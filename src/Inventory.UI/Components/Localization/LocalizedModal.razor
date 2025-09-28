@@ -1,0 +1,308 @@
+@using Inventory.Shared.Components
+@using Radzen
+@using Radzen.Blazor
+@inherits LocalizedComponentBase
+
+<RadzenDialog>
+    @if (IsVisible)
+    {
+        <div class="modal-backdrop @(IsVisible ? "show" : "")" @onclick="OnBackdropClick">
+            <div class="modal-dialog @GetModalSizeClass()" @onclick:stopPropagation="true">
+                <div class="modal-content">
+                    @if (ShowHeader)
+                    {
+                        <div class="modal-header">
+                            <RadzenText TextStyle="TextStyle.H6" class="modal-title">
+                                @GetTitleText()
+                            </RadzenText>
+                            @if (ShowCloseButton)
+                            {
+                                <RadzenButton Icon="close"
+                                            ButtonStyle="ButtonStyle.Light"
+                                            Variant="Variant.Text"
+                                            Size="ButtonSize.Small"
+                                            Click="@OnCloseAsync"
+                                            class="btn-close" />
+                            }
+                        </div>
+                    }
+                    
+                    <div class="modal-body">
+                        @ChildContent
+                    </div>
+                    
+                    @if (ShowFooter)
+                    {
+                        <div class="modal-footer">
+                            @if (FooterContent != null)
+                            {
+                                @FooterContent
+                            }
+                            else
+                            {
+                                @if (ShowCancelButton)
+                                {
+                                    <LocalizedButton TextKey="@CancelButtonTextKey"
+                                                   Text="@CancelButtonText"
+                                                   ButtonStyle="ButtonStyle.Secondary"
+                                                   Variant="Variant.Outlined"
+                                                   OnClick="@OnCancelAsync" />
+                                }
+                                
+                                @if (ShowConfirmButton)
+                                {
+                                    <LocalizedButton TextKey="@ConfirmButtonTextKey"
+                                                   Text="@ConfirmButtonText"
+                                                   ButtonStyle="@ConfirmButtonStyle"
+                                                   Variant="Variant.Filled"
+                                                   OnClick="@OnConfirmAsync"
+                                                   Disabled="@ConfirmDisabled" />
+                                }
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</RadzenDialog>
+
+@code {
+    /// <summary>
+    /// Whether the modal is visible
+    /// </summary>
+    [Parameter] public bool IsVisible { get; set; }
+    
+    /// <summary>
+    /// Resource key for the modal title
+    /// </summary>
+    [Parameter] public string? TitleKey { get; set; }
+    
+    /// <summary>
+    /// Direct title text
+    /// </summary>
+    [Parameter] public string? Title { get; set; }
+    
+    /// <summary>
+    /// Modal content
+    /// </summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    
+    /// <summary>
+    /// Custom footer content
+    /// </summary>
+    [Parameter] public RenderFragment? FooterContent { get; set; }
+    
+    /// <summary>
+    /// Modal size
+    /// </summary>
+    [Parameter] public ModalSize Size { get; set; } = ModalSize.Medium;
+    
+    /// <summary>
+    /// Whether to show the header
+    /// </summary>
+    [Parameter] public bool ShowHeader { get; set; } = true;
+    
+    /// <summary>
+    /// Whether to show the footer
+    /// </summary>
+    [Parameter] public bool ShowFooter { get; set; } = true;
+    
+    /// <summary>
+    /// Whether to show the close button
+    /// </summary>
+    [Parameter] public bool ShowCloseButton { get; set; } = true;
+    
+    /// <summary>
+    /// Whether to show the cancel button
+    /// </summary>
+    [Parameter] public bool ShowCancelButton { get; set; } = true;
+    
+    /// <summary>
+    /// Whether to show the confirm button
+    /// </summary>
+    [Parameter] public bool ShowConfirmButton { get; set; } = true;
+    
+    /// <summary>
+    /// Cancel button text key
+    /// </summary>
+    [Parameter] public string CancelButtonTextKey { get; set; } = "Action.Cancel";
+    
+    /// <summary>
+    /// Cancel button text
+    /// </summary>
+    [Parameter] public string? CancelButtonText { get; set; }
+    
+    /// <summary>
+    /// Confirm button text key
+    /// </summary>
+    [Parameter] public string ConfirmButtonTextKey { get; set; } = "Action.Confirm";
+    
+    /// <summary>
+    /// Confirm button text
+    /// </summary>
+    [Parameter] public string? ConfirmButtonText { get; set; }
+    
+    /// <summary>
+    /// Confirm button style
+    /// </summary>
+    [Parameter] public ButtonStyle ConfirmButtonStyle { get; set; } = ButtonStyle.Primary;
+    
+    /// <summary>
+    /// Whether the confirm button is disabled
+    /// </summary>
+    [Parameter] public bool ConfirmDisabled { get; set; }
+    
+    /// <summary>
+    /// Whether clicking backdrop closes the modal
+    /// </summary>
+    [Parameter] public bool CloseOnBackdropClick { get; set; } = true;
+    
+    /// <summary>
+    /// Event when modal is closed
+    /// </summary>
+    [Parameter] public EventCallback OnClose { get; set; }
+    
+    /// <summary>
+    /// Event when cancel is clicked
+    /// </summary>
+    [Parameter] public EventCallback OnCancel { get; set; }
+    
+    /// <summary>
+    /// Event when confirm is clicked
+    /// </summary>
+    [Parameter] public EventCallback OnConfirm { get; set; }
+
+    private string GetTitleText()
+    {
+        if (!string.IsNullOrWhiteSpace(TitleKey))
+        {
+            return GetString(TitleKey);
+        }
+        
+        return Title ?? string.Empty;
+    }
+    
+    private string GetModalSizeClass()
+    {
+        return Size switch
+        {
+            ModalSize.Small => "modal-sm",
+            ModalSize.Large => "modal-lg",
+            ModalSize.ExtraLarge => "modal-xl",
+            _ => ""
+        };
+    }
+    
+    private async Task OnCloseAsync()
+    {
+        await OnClose.InvokeAsync();
+    }
+    
+    private async Task OnCancelAsync()
+    {
+        await OnCancel.InvokeAsync();
+        await OnCloseAsync();
+    }
+    
+    private async Task OnConfirmAsync()
+    {
+        await OnConfirm.InvokeAsync();
+    }
+    
+    private async Task OnBackdropClick()
+    {
+        if (CloseOnBackdropClick)
+        {
+            await OnCloseAsync();
+        }
+    }
+
+    public enum ModalSize
+    {
+        Small,
+        Medium,
+        Large,
+        ExtraLarge
+    }
+}
+
+<style>
+    .modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1050;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.15s linear;
+    }
+    
+    .modal-backdrop.show {
+        opacity: 1;
+    }
+    
+    .modal-dialog {
+        position: relative;
+        width: auto;
+        margin: 1rem;
+        max-width: 500px;
+        pointer-events: none;
+    }
+    
+    .modal-sm {
+        max-width: 300px;
+    }
+    
+    .modal-lg {
+        max-width: 800px;
+    }
+    
+    .modal-xl {
+        max-width: 1140px;
+    }
+    
+    .modal-content {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        pointer-events: auto;
+        background-color: var(--rz-base-background-color);
+        border: 1px solid var(--rz-border-color);
+        border-radius: var(--rz-border-radius);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    
+    .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 1rem;
+        border-bottom: 1px solid var(--rz-border-color);
+    }
+    
+    .modal-body {
+        position: relative;
+        flex: 1 1 auto;
+        padding: 1rem;
+    }
+    
+    .modal-footer {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        padding: 1rem;
+        border-top: 1px solid var(--rz-border-color);
+    }
+    
+    .btn-close {
+        margin-left: auto;
+    }
+</style>
