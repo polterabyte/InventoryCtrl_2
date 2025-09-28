@@ -1,6 +1,10 @@
 ﻿@using Inventory.Web.Client.Components
+@using Inventory.Web.Client.Services.Interfaces
+@implements IDisposable
+@inject IThemeService ThemeService
+
 <script src="_content/Radzen.Blazor/Radzen.Blazor.js?v=@(typeof(Radzen.Colors).Assembly.GetName().Version)"></script>
-<RadzenTheme Theme="material" @rendermode="InteractiveAuto" />
+<RadzenTheme Theme="@currentTheme" @rendermode="InteractiveAuto" />
 <CascadingAuthenticationState>
     <Router AppAssembly="@typeof(App).Assembly" AdditionalAssemblies="new[] { typeof(Inventory.UI.Pages.Login).Assembly, typeof(Inventory.Web.Client.Pages.Requests.Index).Assembly }">
         <Found Context="routeData">
@@ -19,3 +23,42 @@
     @* SignalR Initializer - runs in background *@
     <SignalRInitializer />
 </CascadingAuthenticationState>
+
+@code {
+    private string currentTheme = "material";
+    
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Initialize theme service
+            await ThemeService.InitializeThemeAsync();
+            
+            // Get current theme
+            currentTheme = ThemeService.GetCurrentTheme();
+            
+            // Subscribe to theme changes
+            ThemeService.ThemeChanged += OnThemeChanged;
+        }
+        catch (Exception ex)
+        {
+            // Log error and use default theme
+            Console.WriteLine($"Failed to initialize theme: {ex.Message}");
+            currentTheme = "material";
+        }
+    }
+    
+    private void OnThemeChanged(object? sender, Inventory.Web.Client.Services.Models.ThemeChangedEventArgs e)
+    {
+        currentTheme = e.ThemeName;
+        InvokeAsync(StateHasChanged);
+    }
+    
+    public void Dispose()
+    {
+        if (ThemeService != null)
+        {
+            ThemeService.ThemeChanged -= OnThemeChanged;
+        }
+    }
+}

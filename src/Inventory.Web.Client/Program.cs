@@ -141,6 +141,9 @@ builder.Services.AddScoped<ISignalRService, SignalRService>();
 // Register Radzen services
 builder.Services.AddRadzenComponents();
 
+// Register Theme service
+builder.Services.AddScoped<Inventory.Web.Client.Services.Interfaces.IThemeService, Inventory.Web.Client.Services.ThemeService>();
+
 await builder.Build().RunAsync();
 
 
