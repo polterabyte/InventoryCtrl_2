@@ -1,6 +1,6 @@
-using Inventory.Web.Client.Services.Models;
+using Inventory.Shared.Models;
 
-namespace Inventory.Web.Client.Services.Interfaces;
+namespace Inventory.Shared.Interfaces;
 
 /// <summary>
 /// Service interface for managing application themes

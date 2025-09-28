@@ -1,5 +1,6 @@
 @using Inventory.Shared.DTOs
 @using Inventory.Shared.Components
+@using Microsoft.AspNetCore.Components
 @using Radzen
 @using Radzen.Blazor
 @inherits LocalizedComponentBase
@@ -49,7 +50,7 @@
                              Variant="Variant.Outlined"
                              Size="ButtonSize.Small"
                              Click="() => OnEdit.InvokeAsync(Product)"
-                             title="@GetString(\"Action.Edit\")" />
+                             title="@GetEditTitle()" />
 
                 @if (ShowDeleteButton)
                 {
@@ -58,7 +59,7 @@
                                  Variant="Variant.Outlined"
                                  Size="ButtonSize.Small"
                                  Click="() => OnDelete.InvokeAsync(Product)"
-                                 title="@GetString(\"Action.Delete\")" />
+                                 title="@GetDeleteTitle()" />
                 }
             </RadzenStack>
         </RadzenStack>
@@ -116,5 +117,15 @@
     private string GetStockText()
     {
         return $"{FormatNumber(Product.Quantity)} {Product.UnitOfMeasureSymbol}";
+    }
+    
+    private string GetEditTitle()
+    {
+        return GetString("Action.Edit");
+    }
+    
+    private string GetDeleteTitle()
+    {
+        return GetString("Action.Delete");
     }
 }

@@ -1,4 +1,5 @@
 @using Inventory.Shared.Resources
+@using Microsoft.AspNetCore.Components
 @using Microsoft.Extensions.Localization
 @using Radzen
 @using Radzen.Blazor
@@ -48,7 +49,7 @@
     /// <summary>
     /// Text style for Radzen components
     /// </summary>
-    [Parameter] public Radzen.TextStyle? TextStyle { get; set; }
+    [Parameter] public TextStyle? TextStyle { get; set; }
     
     private string GetLocalizedContent()
     {

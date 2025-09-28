@@ -1,7 +1,7 @@
-﻿@using Inventory.Web.Client.Components
-@using Inventory.Web.Client.Services.Interfaces
-@using Inventory.Shared.Components
+@using Inventory.Web.Client.Components
 @using Inventory.Shared.Interfaces
+@using Inventory.Shared.Components
+@using Inventory.Shared.Models
 @implements IDisposable
 @inject IThemeService ThemeService
 @inject ICultureService CultureService
@@ -67,7 +67,7 @@
         }
     }
     
-    private void OnThemeChanged(object? sender, Inventory.Web.Client.Services.Models.ThemeChangedEventArgs e)
+    private void OnThemeChanged(object? sender, ThemeChangedEventArgs e)
     {
         currentTheme = e.ThemeName;
         InvokeAsync(StateHasChanged);

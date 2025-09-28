@@ -1,6 +1,6 @@
 using Blazored.LocalStorage;
-using Inventory.Web.Client.Services.Interfaces;
-using Inventory.Web.Client.Services.Models;
+using Inventory.Shared.Interfaces;
+using Inventory.Shared.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 

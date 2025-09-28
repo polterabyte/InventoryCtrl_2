@@ -1,6 +1,8 @@
 @using Inventory.Shared.Interfaces
 @using System.Globalization
+@using Microsoft.JSInterop
 @inject ICultureService CultureService
+@inject IJSRuntime JSRuntime
 
 @* 
     Accessibility helper component that provides language and direction attributes
@@ -12,7 +14,7 @@
     /// Renders the appropriate lang attribute for the current culture
     /// </summary>
     /// <returns>HTML lang attribute</returns>
-    public string GetLangAttribute()
+    private string GetLangAttribute()
     {
         return CultureService.CurrentCulture.Name;
     }
@@ -21,7 +23,7 @@
     /// Renders the appropriate dir attribute for the current culture
     /// </summary>
     /// <returns>HTML dir attribute (ltr or rtl)</returns>
-    public string GetDirAttribute()
+    private string GetDirAttribute()
     {
         return CultureService.CurrentCulture.TextInfo.IsRightToLeft ? "rtl" : "ltr";
     }
@@ -30,7 +32,7 @@
     /// Gets ARIA label for language selector
     /// </summary>
     /// <returns>Localized ARIA label</returns>
-    public string GetLanguageSelectorAriaLabel()
+    private string GetLanguageSelectorAriaLabel()
     {
         var culture = CultureService.CurrentCulture.Name;
         return culture switch
@@ -46,7 +48,7 @@
     /// </summary>
     /// <param name="newLanguage">The new language name</param>
     /// <returns>Localized announcement</returns>
-    public string GetLanguageChangeAnnouncement(string newLanguage)
+    private string GetLanguageChangeAnnouncement(string newLanguage)
     {
         var culture = CultureService.CurrentCulture.Name;
         return culture switch
@@ -61,7 +63,7 @@
     /// Gets screen reader announcement for loading states
     /// </summary>
     /// <returns>Localized loading announcement</returns>
-    public string GetLoadingAnnouncement()
+    private string GetLoadingAnnouncement()
     {
         var culture = CultureService.CurrentCulture.Name;
         return culture switch
@@ -77,7 +79,7 @@
     /// </summary>
     /// <param name="errorCount">Number of errors</param>
     /// <returns>Localized error announcement</returns>
-    public string GetValidationErrorAnnouncement(int errorCount)
+    private string GetValidationErrorAnnouncement(int errorCount)
     {
         var culture = CultureService.CurrentCulture.Name;
         return culture switch
@@ -92,25 +94,25 @@
     /// Gets appropriate role for navigation elements
     /// </summary>
     /// <returns>ARIA role</returns>
-    public static string GetNavigationRole() => "navigation";
+    private static string GetNavigationRole() => "navigation";
     
     /// <summary>
     /// Gets appropriate role for main content
     /// </summary>
     /// <returns>ARIA role</returns>
-    public static string GetMainRole() => "main";
+    private static string GetMainRole() => "main";
     
     /// <summary>
     /// Gets appropriate role for complementary content
     /// </summary>
     /// <returns>ARIA role</returns>
-    public static string GetComplementaryRole() => "complementary";
+    private static string GetComplementaryRole() => "complementary";
     
     /// <summary>
     /// Gets keyboard navigation hints based on culture
     /// </summary>
     /// <returns>Localized keyboard hints</returns>
-    public string GetKeyboardNavigationHints()
+    private string GetKeyboardNavigationHints()
     {
         var culture = CultureService.CurrentCulture.Name;
         return culture switch
@@ -156,20 +158,25 @@
     /// </summary>
     /// <param name="message">Message to announce</param>
     /// <param name="isUrgent">Whether to use assertive (urgent) or polite announcement</param>
-    public static async Task AnnounceAsync(IJSRuntime jsRuntime, string message, bool isUrgent = false)
+    public async Task AnnounceAsync(string message, bool isUrgent = false)
     {
         var elementId = isUrgent ? "accessibility-alerts" : "accessibility-announcements";
+        var escapedMessage = message.Replace("'", "\\'")
+                                   .Replace("\n", "\\n")
+                                   .Replace("\r", "\\r");
+        
+        var script = $@"
+            const element = document.getElementById('{elementId}');
+            if (element) {{
+                element.textContent = '';
+                setTimeout(() => {{
+                    element.textContent = '{escapedMessage}';
+                }}, 100);
+            }}";
+        
         try
         {
-            await jsRuntime.InvokeVoidAsync("eval", $@"
-                const element = document.getElementById('{elementId}');
-                if (element) {{
-                    element.textContent = '';
-                    setTimeout(() => {{
-                        element.textContent = '{message.Replace("'", "\\'")}';
-                    }}, 100);
-                }}
-            ");
+            await JSRuntime.InvokeVoidAsync("eval", script);
         }
         catch
         {

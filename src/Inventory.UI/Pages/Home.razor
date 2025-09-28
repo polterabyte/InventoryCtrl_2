@@ -4,7 +4,13 @@
 @using Inventory.UI.Utilities
 @using Inventory.Shared.Components
 @using Inventory.Shared.Resources
+@using Inventory.Shared.DTOs
+@using Inventory.Shared.Interfaces
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components
 @using Microsoft.Extensions.Localization
+@using Radzen
+@using Radzen.Blazor
 @inherits LocalizedComponentBase
 
 @inject IDashboardService DashboardService
@@ -44,40 +50,40 @@
 
                 <RadzenRow Class="dashboard-kpi-grid g-3">
                     <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnThirdSize">
-                        <StatsWidget Label="@GetString(\"Stats.TotalProducts\")"
+                        <StatsWidget Label="@GetString("Stats.TotalProducts")"
                                         Value="@dashboardStats.TotalProducts"
                                         Icon="inventory_2"
                                         CardClass="primary" />
                     </RadzenColumn>
                     <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnThirdSize">
-                        <StatsWidget Label="@GetString(\"Stats.Categories\")"
+                        <StatsWidget Label="@GetString("Stats.Categories")"
                                         Value="@dashboardStats.TotalCategories"
                                         Icon="category"
                                         CardClass="info" />
                     </RadzenColumn>
                     <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnThirdSize">
-                        <StatsWidget Label="@GetString(\"Stats.Manufacturers\")"
+                        <StatsWidget Label="@GetString("Stats.Manufacturers")"
                                         Value="@dashboardStats.TotalManufacturers"
                                         Icon="precision_manufacturing"
                                         CardClass="success" />
                     </RadzenColumn>
                     <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnThirdSize">
-                        <StatsWidget Label="@GetString(\"Stats.Warehouses\")"
+                        <StatsWidget Label="@GetString("Stats.Warehouses")"
                                         Value="@dashboardStats.TotalWarehouses"
                                         Icon="storefront"
                                         CardClass="primary" />
                     </RadzenColumn>
                     <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnThirdSize">
-                        <StatsWidget Label="@GetString(\"Stats.LowStock\")"
+                        <StatsWidget Label="@GetString("Stats.LowStock")"
                                         Value="@dashboardStats.LowStockProducts"
-                                        SubLabel="@GetString(\"Stats.LowStockSubLabel\")"
+                                        SubLabel="@GetString("Stats.LowStockSubLabel")"
                                         Icon="warning_amber"
                                         CardClass="warning" />
                     </RadzenColumn>
                     <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnThirdSize">
-                        <StatsWidget Label="@GetString(\"Stats.OutOfStock\")"
+                        <StatsWidget Label="@GetString("Stats.OutOfStock")"
                                         Value="@dashboardStats.OutOfStockProducts"
-                                        SubLabel="@GetString(\"Stats.OutOfStockSubLabel\")"
+                                        SubLabel="@GetString("Stats.OutOfStockSubLabel")"
                                         Icon="remove_shopping_cart"
                                         CardClass="danger" />
                     </RadzenColumn>
@@ -104,7 +110,7 @@
 
                         <RadzenRow Class="quick-actions-grid g-3">
                             <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnQuarterSize">
-                                <RadzenButton Text="@GetString(\"Action.AddProduct\")"
+                                <RadzenButton Text="@GetString("Action.AddProduct")"
                                               Icon="add_circle"
                                               ButtonStyle="ButtonStyle.Primary"
                                               Variant="Variant.Filled"
@@ -113,7 +119,7 @@
                                               @onclick="NavigateToProducts" />
                             </RadzenColumn>
                             <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnQuarterSize">
-                                <RadzenButton Text="@GetString(\"Action.ProductIncome\")"
+                                <RadzenButton Text="@GetString("Action.ProductIncome")"
                                               Icon="arrow_downward"
                                               ButtonStyle="ButtonStyle.Success"
                                               Variant="Variant.Filled"
@@ -122,7 +128,7 @@
                                               @onclick="NavigateToProducts" />
                             </RadzenColumn>
                             <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnQuarterSize">
-                                <RadzenButton Text="@GetString(\"Action.ProductExpense\")"
+                                <RadzenButton Text="@GetString("Action.ProductExpense")"
                                               Icon="arrow_upward"
                                               ButtonStyle="ButtonStyle.Warning"
                                               Variant="Variant.Filled"
@@ -131,7 +137,7 @@
                                               @onclick="NavigateToProducts" />
                             </RadzenColumn>
                             <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnQuarterSize">
-                                <RadzenButton Text="@GetString(\"Action.Reports\")"
+                                <RadzenButton Text="@GetString("Action.Reports")"
                                               Icon="description"
                                               ButtonStyle="ButtonStyle.Info"
                                               Variant="Variant.Filled"

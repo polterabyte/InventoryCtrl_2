@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-namespace Inventory.Web.Client.Services.Models;
+namespace Inventory.Shared.Models;
 
 /// <summary>
 /// Represents the category of a theme (Light or Dark)
