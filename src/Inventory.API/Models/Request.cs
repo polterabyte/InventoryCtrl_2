@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Inventory.API.Models;
 
 public enum RequestStatus
@@ -27,6 +29,11 @@ public class Request
     public DateTime? UpdatedAt { get; set; }
 
     public ICollection<InventoryTransaction> Transactions { get; set; } = new List<InventoryTransaction>();
+    
+    /// <summary>
+    /// Navigation property to request history. JsonIgnore prevents circular reference during serialization.
+    /// </summary>
+    [JsonIgnore]
     public ICollection<RequestHistory> History { get; set; } = new List<RequestHistory>();
 }
 

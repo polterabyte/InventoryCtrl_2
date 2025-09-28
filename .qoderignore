@@ -1,0 +1,12 @@
+# Specify files or folders to ignore during indexing. Use commas to separate entries. Glob patterns like *.log，my-security/ are supported.
+./ai-temp/
+./claude/
+./cursor/
+./taskmaster/
+./trae/
+./venv/
+.vscode/
+./windsurf/
+./zed/
+./AgentTools/
+./node_modules/

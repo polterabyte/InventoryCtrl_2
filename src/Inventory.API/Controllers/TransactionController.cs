@@ -286,26 +286,25 @@ public class TransactionController(AppDbContext context, ILogger<TransactionCont
                 }
             }
 
-            // Update product quantity
-            var oldQuantity = product.Quantity;
-            if (request.Type == "Income")
+            // Validate stock availability for Outcome transactions using ProductOnHandView
+            if (request.Type == "Outcome")
             {
-                product.Quantity += request.Quantity;
-            }
-            else if (request.Type == "Outcome")
-            {
-                if (product.Quantity < request.Quantity)
+                var currentQuantity = await context.ProductOnHand
+                    .Where(v => v.ProductId == request.ProductId)
+                    .Select(v => v.OnHandQty)
+                    .FirstOrDefaultAsync();
+                    
+                if (currentQuantity < request.Quantity)
                 {
                     return BadRequest(new ApiResponse<InventoryTransactionDto>
                     {
                         Success = false,
-                        ErrorMessage = "Insufficient stock for this transaction"
+                        ErrorMessage = $"Insufficient stock for this transaction. Available: {currentQuantity}, Requested: {request.Quantity}"
                     });
                 }
-                product.Quantity -= request.Quantity;
             }
-            // For "Install" type, we don't change the quantity
 
+            // We no longer modify Product.Quantity directly - it's computed from transactions
             product.UpdatedAt = DateTime.UtcNow;
 
             var transaction = new InventoryTransaction

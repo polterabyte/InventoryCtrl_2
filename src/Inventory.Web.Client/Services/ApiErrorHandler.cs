@@ -132,10 +132,38 @@ public class ApiErrorHandler : IApiErrorHandler
         
         _logger.LogWarning("API request failed. Status: {StatusCode}, Error: {Error}", statusCode, errorMessage);
         
-        // Специальная обработка 401 ошибок
-        if (statusCode == HttpStatusCode.Unauthorized)
+        // Enhanced error handling based on status code
+        switch (statusCode)
         {
-            return await HandleUnauthorizedResponseAsync<T>(response);
+            case HttpStatusCode.Unauthorized:
+                return await HandleUnauthorizedResponseAsync<T>(response);
+                
+            case HttpStatusCode.InternalServerError:
+                // For 500 errors, log but don't redirect to login
+                // These are server errors, not authentication issues
+                _logger.LogError("Server error occurred: {Error}", errorMessage);
+                _notificationService.ShowError("Server Error", "A server error occurred. Please try again in a few moments.");
+                break;
+                
+            case HttpStatusCode.BadRequest:
+                _logger.LogWarning("Bad request: {Error}", errorMessage);
+                _notificationService.ShowWarning("Invalid Request", errorMessage);
+                break;
+                
+            case HttpStatusCode.Forbidden:
+                _logger.LogWarning("Access forbidden: {Error}", errorMessage);
+                _notificationService.ShowError("Access Denied", "You don't have permission to perform this action.");
+                break;
+                
+            case HttpStatusCode.NotFound:
+                _logger.LogWarning("Resource not found: {Error}", errorMessage);
+                _notificationService.ShowWarning("Not Found", "The requested resource was not found.");
+                break;
+                
+            case HttpStatusCode.Conflict:
+                _logger.LogWarning("Conflict error: {Error}", errorMessage);
+                _notificationService.ShowWarning("Conflict", errorMessage);
+                break;
         }
         
         return new ApiResponse<T> 
@@ -221,7 +249,7 @@ public class ApiErrorHandler : IApiErrorHandler
     }
 
     /// <summary>
-    /// Обрабатывает 401 Unauthorized ошибки с попыткой обновления токена
+    /// Handles 401 Unauthorized errors with intelligent token refresh and redirect logic
     /// </summary>
     private async Task<ApiResponse<T>> HandleUnauthorizedResponseAsync<T>(HttpResponseMessage response)
     {
@@ -229,54 +257,71 @@ public class ApiErrorHandler : IApiErrorHandler
         
         try
         {
-            // Пытаемся обновить токен
+            // Check if we have valid tokens to refresh
+            var hasRefreshToken = await _tokenManagementService.HasValidRefreshTokenAsync();
+            if (!hasRefreshToken)
+            {
+                _logger.LogInformation("No valid refresh token available, redirecting to login");
+                await RedirectToLoginAsync("Session expired. Please log in again.");
+                return CreateAuthFailureResponse<T>();
+            }
+
+            // Attempt token refresh
             var refreshSuccess = await _tokenManagementService.TryRefreshTokenAsync();
             
             if (refreshSuccess)
             {
                 _logger.LogInformation("Token refresh successful, returning retry indication");
                 
-                // Возвращаем специальный ответ, указывающий что нужно повторить запрос
+                // Return special response indicating that the request should be retried
                 return new ApiResponse<T>
                 {
                     Success = false,
-                    ErrorMessage = "TOKEN_REFRESHED", // Специальный код для повторного запроса
+                    ErrorMessage = "TOKEN_REFRESHED", // Special code for retry
                     Data = default(T)
                 };
             }
             else
             {
                 _logger.LogWarning("Token refresh failed, redirecting to login");
-                
-                // Очищаем токены и перенаправляем на логин
-                await _tokenManagementService.ClearTokensAsync();
-                
-                // Показываем уведомление пользователю
-                _notificationService.ShowError("Сессия истекла", "Пожалуйста, войдите снова.");
-                
-                // Перенаправляем на страницу входа
-                _navigationManager.NavigateTo("/login", true);
-                
-                return new ApiResponse<T>
-                {
-                    Success = false,
-                    ErrorMessage = "Session expired. Please log in again."
-                };
+                await RedirectToLoginAsync("Session expired. Please log in again.");
+                return CreateAuthFailureResponse<T>();
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error handling 401 response");
             
-            // В случае ошибки также перенаправляем на логин
-            await _tokenManagementService.ClearTokensAsync();
-            _navigationManager.NavigateTo("/login", true);
-            
-            return new ApiResponse<T>
-            {
-                Success = false,
-                ErrorMessage = "Authentication error. Please log in again."
-            };
+            // In case of error, also redirect to login
+            await RedirectToLoginAsync("Authentication error. Please log in again.");
+            return CreateAuthFailureResponse<T>();
         }
+    }
+
+    /// <summary>
+    /// Redirects to login page with cleanup
+    /// </summary>
+    private async Task RedirectToLoginAsync(string message)
+    {
+        // Clear tokens
+        await _tokenManagementService.ClearTokensAsync();
+        
+        // Show notification
+        _notificationService.ShowError("Authentication Required", message);
+        
+        // Redirect to login page
+        _navigationManager.NavigateTo("/login", true);
+    }
+
+    /// <summary>
+    /// Creates a standardized authentication failure response
+    /// </summary>
+    private ApiResponse<T> CreateAuthFailureResponse<T>()
+    {
+        return new ApiResponse<T>
+        {
+            Success = false,
+            ErrorMessage = "Authentication required. Please log in again."
+        };
     }
 }

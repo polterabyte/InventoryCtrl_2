@@ -1,0 +1,340 @@
+@page "/requests/{Id:int}/edit"
+
+@using Microsoft.AspNetCore.Authorization
+@using Inventory.Shared.DTOs
+@using Inventory.Shared.Interfaces
+@using Inventory.Web.Client.Components.Shared
+@using System.ComponentModel.DataAnnotations
+@using Radzen
+@using Radzen.Blazor
+
+@inject IRequestApiService RequestService
+@inject NavigationManager Navigation
+@inject NotificationService NotificationService
+
+@attribute [Authorize]
+
+<PageTitle>Edit Request - Inventory Control</PageTitle>
+
+<div class="content-card">
+    @if (loading)
+    {
+        <RadzenStack AlignItems="AlignItems.Center" Gap="1rem" Class="rz-p-8">
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+            <RadzenText TextStyle="TextStyle.Body1">Loading request...</RadzenText>
+        </RadzenStack>
+    }
+    else if (errorMessage != null)
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Danger" Shade="Shade.Lighter" Variant="Variant.Flat" Size="AlertSize.Large">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenIcon Icon="error" />
+                <RadzenText TextStyle="TextStyle.Body1"><strong>Error:</strong> @errorMessage</RadzenText>
+            </RadzenStack>
+        </RadzenAlert>
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Class="rz-mt-4">
+            <RadzenButton Text="Retry" Icon="refresh" ButtonStyle="ButtonStyle.Primary" Click="@LoadRequestDetails" />
+            <RadzenButton Text="Back to Requests" Icon="arrow_back" ButtonStyle="ButtonStyle.Light" Click="@(() => Navigation.NavigateTo("/requests"))" />
+        </RadzenStack>
+    }
+    else if (originalRequest == null)
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Warning" Shade="Shade.Lighter" Variant="Variant.Flat" Size="AlertSize.Large">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenIcon Icon="warning" />
+                <RadzenText TextStyle="TextStyle.Body1">Request not found.</RadzenText>
+            </RadzenStack>
+        </RadzenAlert>
+        <RadzenButton Text="Back to Requests" Icon="arrow_back" ButtonStyle="ButtonStyle.Primary" Click="@(() => Navigation.NavigateTo("/requests"))" Class="rz-mt-4" />
+    }
+    else if (!CanEdit())
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Warning" Shade="Shade.Lighter" Variant="Variant.Flat" Size="AlertSize.Large">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenIcon Icon="warning" />
+                <RadzenText TextStyle="TextStyle.Body1">This request cannot be edited in its current status: @originalRequest.Status</RadzenText>
+            </RadzenStack>
+        </RadzenAlert>
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Class="rz-mt-4">
+            <RadzenButton Text="View Details" Icon="visibility" ButtonStyle="ButtonStyle.Primary" Click="@(() => Navigation.NavigateTo($"/requests/{Id}"))" />
+            <RadzenButton Text="Back to Requests" Icon="arrow_back" ButtonStyle="ButtonStyle.Light" Click="@(() => Navigation.NavigateTo("/requests"))" />
+        </RadzenStack>
+    }
+    else
+    {
+        <RadzenStack Gap="2rem">
+            @* Header *@
+            <RadzenStack Gap="0.5rem">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                    <RadzenText TextStyle="TextStyle.H4" Class="rz-m-0">Edit Request #@Id</RadzenText>
+                    <RequestStatusBadge Status="@originalRequest.Status" />
+                </RadzenStack>
+                <RadzenText TextStyle="TextStyle.Body2" Class="rz-text-secondary rz-m-0">
+                    Make changes to your request while it's still in draft status
+                </RadzenText>
+            </RadzenStack>
+
+            @* Form *@
+            <EditForm Model="@editRequest" OnValidSubmit="@HandleSubmit">
+                <DataAnnotationsValidator />
+                
+                <RadzenStack Gap="1.5rem">
+                    @* Basic Information *@
+                    <RadzenCard Class="rz-p-4">
+                        <RadzenStack Gap="1rem">
+                            <RadzenText TextStyle="TextStyle.H6" Class="rz-m-0">Request Information</RadzenText>
+                            
+                            <RadzenRow Gap="1rem">
+                                <RadzenColumn Size="12">
+                                    <RadzenStack Gap="0.5rem">
+                                        <RadzenLabel Text="Title *" Component="titleInput" />
+                                        <RadzenTextBox @bind-Value="editRequest.Title" 
+                                                       Name="titleInput"
+                                                       Placeholder="Enter a descriptive title for your request"
+                                                       Style="width: 100%"
+                                                       MaxLength="200" />
+                                        <ValidationMessage For="@(() => editRequest.Title)" />
+                                    </RadzenStack>
+                                </RadzenColumn>
+                            </RadzenRow>
+                            
+                            <RadzenRow Gap="1rem">
+                                <RadzenColumn Size="12">
+                                    <RadzenStack Gap="0.5rem">
+                                        <RadzenLabel Text="Description" Component="descriptionInput" />
+                                        <RadzenTextArea @bind-Value="editRequest.Description" 
+                                                        Name="descriptionInput"
+                                                        Placeholder="Provide additional details about this request (optional)"
+                                                        Style="width: 100%"
+                                                        Rows="4"
+                                                        MaxLength="1000" />
+                                        <RadzenText TextStyle="TextStyle.Caption" Class="rz-text-secondary rz-m-0">
+                                            @(editRequest.Description?.Length ?? 0)/1000 characters
+                                        </RadzenText>
+                                        <ValidationMessage For="@(() => editRequest.Description)" />
+                                    </RadzenStack>
+                                </RadzenColumn>
+                            </RadzenRow>
+                        </RadzenStack>
+                    </RadzenCard>
+
+                    @* Change Summary *@
+                    @if (HasChanges())
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" Variant="Variant.Flat">
+                            <RadzenStack Gap="0.5rem">
+                                <RadzenText TextStyle="TextStyle.Subtitle1" Class="rz-m-0">Changes detected:</RadzenText>
+                                <RadzenStack Gap="0.25rem">
+                                    @if (editRequest.Title != originalRequest.Title)
+                                    {
+                                        <RadzenText TextStyle="TextStyle.Body2" Class="rz-m-0">• Title has been modified</RadzenText>
+                                    }
+                                    @if (editRequest.Description != originalRequest.Description)
+                                    {
+                                        <RadzenText TextStyle="TextStyle.Body2" Class="rz-m-0">• Description has been modified</RadzenText>
+                                    }
+                                </RadzenStack>
+                            </RadzenStack>
+                        </RadzenAlert>
+                    }
+
+                    @* Actions *@
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                        <RadzenButton Text="Save Changes" 
+                                      Icon="save" 
+                                      ButtonStyle="ButtonStyle.Primary"
+                                      ButtonType="ButtonType.Submit"
+                                      Disabled="@(submitting || !HasChanges())"
+                                      Loading="@submitting" />
+                        
+                        <RadzenButton Text="View Details" 
+                                      Icon="visibility" 
+                                      ButtonStyle="ButtonStyle.Secondary"
+                                      Click="@(() => Navigation.NavigateTo($"/requests/{Id}"))"
+                                      Disabled="@submitting" />
+                        
+                        <RadzenButton Text="Back to Requests" 
+                                      Icon="arrow_back" 
+                                      ButtonStyle="ButtonStyle.Light"
+                                      Click="@(() => Navigation.NavigateTo("/requests"))"
+                                      Disabled="@submitting" />
+                        
+                        @if (submitting)
+                        {
+                            <RadzenText TextStyle="TextStyle.Body2" Class="rz-text-secondary rz-m-0">
+                                Saving changes...
+                            </RadzenText>
+                        }
+                    </RadzenStack>
+
+                    @* Validation Summary *@
+                    <ValidationSummary />
+                </RadzenStack>
+            </EditForm>
+        </RadzenStack>
+    }
+</div>
+
+<style>
+    .edit-request-form {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .form-section {
+        border: 1px solid var(--rz-border);
+        border-radius: var(--rz-border-radius);
+        padding: 1.5rem;
+        background-color: var(--rz-base-0);
+    }
+
+    .form-actions {
+        border-top: 1px solid var(--rz-border);
+        padding-top: 1.5rem;
+        margin-top: 1.5rem;
+    }
+</style>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private RequestDetailsDto? originalRequest;
+    private EditRequestModel editRequest = new();
+    private bool loading = true;
+    private bool submitting = false;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRequestDetails();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (originalRequest?.Id != Id)
+        {
+            await LoadRequestDetails();
+        }
+    }
+
+    private async Task LoadRequestDetails()
+    {
+        loading = true;
+        errorMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            var response = await RequestService.GetRequestByIdAsync(Id);
+            
+            if (response.Success && response.Data != null)
+            {
+                originalRequest = response.Data;
+                
+                // Initialize edit model with current values
+                editRequest = new EditRequestModel
+                {
+                    Title = originalRequest.Title,
+                    Description = originalRequest.Description
+                };
+            }
+            else
+            {
+                errorMessage = response.ErrorMessage ?? "Failed to load request details";
+                originalRequest = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An error occurred while loading request details: {ex.Message}";
+            originalRequest = null;
+        }
+        finally
+        {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (submitting || originalRequest == null || !HasChanges()) return;
+
+        submitting = true;
+        StateHasChanged();
+
+        try
+        {
+            var dto = new UpdateRequestDto
+            {
+                Title = editRequest.Title?.Trim() ?? string.Empty,
+                Description = string.IsNullOrWhiteSpace(editRequest.Description) ? null : editRequest.Description.Trim()
+            };
+
+            var response = await RequestService.UpdateRequestAsync(originalRequest.Id, dto);
+
+            if (response.Success && response.Data != null)
+            {
+                NotificationService.Notify(new Radzen.NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Request Updated",
+                    Detail = $"Request '{response.Data.Title}' has been updated successfully",
+                    Duration = 4000
+                });
+
+                // Navigate to the updated request details page
+                Navigation.NavigateTo($"/requests/{response.Data.Id}");
+            }
+            else
+            {
+                NotificationService.Notify(new Radzen.NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Update Failed",
+                    Detail = response.ErrorMessage ?? "Failed to update request",
+                    Duration = 4000
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new Radzen.NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"An error occurred: {ex.Message}",
+                Duration = 4000
+            });
+        }
+        finally
+        {
+            submitting = false;
+            StateHasChanged();
+        }
+    }
+
+    private bool CanEdit()
+    {
+        return originalRequest?.Status?.Equals("Draft", StringComparison.OrdinalIgnoreCase) == true;
+    }
+
+    private bool HasChanges()
+    {
+        if (originalRequest == null) return false;
+        
+        return editRequest.Title != originalRequest.Title ||
+               editRequest.Description != originalRequest.Description;
+    }
+
+    public class EditRequestModel
+    {
+        [Required(ErrorMessage = "Title is required")]
+        [StringLength(200, ErrorMessage = "Title cannot exceed 200 characters")]
+        [MinLength(3, ErrorMessage = "Title must be at least 3 characters long")]
+        public string Title { get; set; } = string.Empty;
+
+        [StringLength(1000, ErrorMessage = "Description cannot exceed 1000 characters")]
+        public string? Description { get; set; }
+    }
+}

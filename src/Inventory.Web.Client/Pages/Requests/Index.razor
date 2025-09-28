@@ -1,0 +1,12 @@
+@* Base component for request module routing *@
+@page "/requests"
+@page "/requests/list"
+
+@using Inventory.Web.Client.Pages.Requests.List
+@using Microsoft.AspNetCore.Authorization
+
+@attribute [Authorize]
+
+<PageTitle>Request Management - Inventory Control</PageTitle>
+
+<RequestListPage />

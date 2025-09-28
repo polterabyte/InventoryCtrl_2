@@ -22,13 +22,61 @@ public class RequestServiceTests
         public Task<ApiResponse<NotificationDto>> GetNotificationAsync(int notificationId)
             => Task.FromResult(new ApiResponse<NotificationDto> { Success = false });
 
-        public Task<ApiResponse<bool>> ArchiveNotificationAsync(int notificationId)
+        public Task<ApiResponse<bool>> MarkAsReadAsync(int notificationId, string userId)
             => Task.FromResult(new ApiResponse<bool> { Success = true, Data = true });
 
-        public Task<ApiResponse<bool>> MarkAsReadAsync(int notificationId)
+        public Task<ApiResponse<bool>> MarkAllAsReadAsync(string userId)
             => Task.FromResult(new ApiResponse<bool> { Success = true, Data = true });
+
+        public Task<ApiResponse<bool>> ArchiveNotificationAsync(int notificationId, string userId)
+            => Task.FromResult(new ApiResponse<bool> { Success = true, Data = true });
+
+        public Task<ApiResponse<bool>> DeleteNotificationAsync(int notificationId, string userId)
+            => Task.FromResult(new ApiResponse<bool> { Success = true, Data = true });
+
+        public Task<ApiResponse<NotificationStatsDto>> GetNotificationStatsAsync(string userId)
+            => Task.FromResult(new ApiResponse<NotificationStatsDto> { Success = true, Data = new NotificationStatsDto() });
+
+        public Task<ApiResponse<List<NotificationPreferenceDto>>> GetUserPreferencesAsync(string userId)
+            => Task.FromResult(new ApiResponse<List<NotificationPreferenceDto>> { Success = true, Data = new List<NotificationPreferenceDto>() });
+
+        public Task<ApiResponse<NotificationPreferenceDto>> UpdatePreferenceAsync(string userId, UpdateNotificationPreferenceRequest request)
+            => Task.FromResult(new ApiResponse<NotificationPreferenceDto> { Success = true, Data = new NotificationPreferenceDto() });
+
+        public Task<ApiResponse<bool>> DeletePreferenceAsync(string userId, string eventType)
+            => Task.FromResult(new ApiResponse<bool> { Success = true, Data = true });
+
+        public Task<ApiResponse<List<NotificationRuleDto>>> GetNotificationRulesAsync()
+            => Task.FromResult(new ApiResponse<List<NotificationRuleDto>> { Success = true, Data = new List<NotificationRuleDto>() });
+
+        public Task<ApiResponse<NotificationRuleDto>> CreateNotificationRuleAsync(CreateNotificationRuleRequest request)
+            => Task.FromResult(new ApiResponse<NotificationRuleDto> { Success = true, Data = new NotificationRuleDto() });
+
+        public Task<ApiResponse<NotificationRuleDto>> UpdateNotificationRuleAsync(int ruleId, CreateNotificationRuleRequest request)
+            => Task.FromResult(new ApiResponse<NotificationRuleDto> { Success = true, Data = new NotificationRuleDto() });
+
+        public Task<ApiResponse<bool>> DeleteNotificationRuleAsync(int ruleId)
+            => Task.FromResult(new ApiResponse<bool> { Success = true, Data = true });
+
+        public Task<ApiResponse<bool>> ToggleNotificationRuleAsync(int ruleId)
+            => Task.FromResult(new ApiResponse<bool> { Success = true, Data = true });
+
+        public Task TriggerStockLowNotificationAsync(object product)
+            => Task.CompletedTask;
+
+        public Task TriggerStockOutNotificationAsync(object product)
+            => Task.CompletedTask;
+
+        public Task TriggerTransactionNotificationAsync(object transaction)
+            => Task.CompletedTask;
+
+        public Task TriggerSystemNotificationAsync(string title, string message, string userId, string? actionUrl = null)
+            => Task.CompletedTask;
 
         public Task<ApiResponse<bool>> SendBulkNotificationAsync(List<string> userIds, CreateNotificationRequest request)
+            => Task.FromResult(new ApiResponse<bool> { Success = true, Data = true });
+
+        public Task<ApiResponse<bool>> CleanupExpiredNotificationsAsync()
             => Task.FromResult(new ApiResponse<bool> { Success = true, Data = true });
     }
 
@@ -77,7 +125,7 @@ public class RequestServiceTests
     {
         using var db = CreateDb();
         // seed product/warehouse to satisfy FK-less in-memory model usage
-        db.Products.Add(new Product { Id = 1, Name = "P1", SKU = "SKU1", Quantity = 0, UnitOfMeasureId = 1, CategoryId = 1, ManufacturerId = 1, ProductModelId = 1, ProductGroupId = 1, MinStock = 0, MaxStock = 100, CreatedAt = DateTime.UtcNow });
+        db.Products.Add(new Product { Id = 1, Name = "P1", SKU = "SKU1", CurrentQuantity = 0, UnitOfMeasureId = 1, CategoryId = 1, ManufacturerId = 1, ProductModelId = 1, ProductGroupId = 1, MinStock = 0, MaxStock = 100, CreatedAt = DateTime.UtcNow });
         db.Warehouses.Add(new Warehouse { Id = 1, Name = "Main" });
         await db.SaveChangesAsync();
 

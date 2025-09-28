@@ -345,9 +345,6 @@ namespace Inventory.API.Migrations
                     b.Property<int>("ProductModelId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("Quantity")
-                        .HasColumnType("integer");
-
                     b.Property<string>("SKU")
                         .IsRequired()
                         .HasColumnType("text");
@@ -1192,6 +1189,9 @@ namespace Inventory.API.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("CurrentQuantity")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
@@ -1231,9 +1231,6 @@ namespace Inventory.API.Migrations
                     b.Property<string>("ProductModelName")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("integer");
 
                     b.Property<string>("SKU")
                         .IsRequired()

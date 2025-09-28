@@ -13,11 +13,13 @@ namespace Inventory.API.Services;
 public class AuditService(
     AppDbContext context,
     IHttpContextAccessor httpContextAccessor,
-    ILogger<AuditService> logger)
+    ILogger<AuditService> logger,
+    SafeSerializationService safeSerializer)
 {
     private readonly AppDbContext _context = context;
     private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
     private readonly ILogger<AuditService> _logger = logger;
+    private readonly SafeSerializationService _safeSerializer = safeSerializer;
 
     /// <summary>
     /// Logs an audit entry for entity changes
@@ -74,8 +76,8 @@ public class AuditService(
 
             // Create changes JSON if both old and new values are provided
             var changesJson = AuditLog.CreateChangesJson(
-                oldValues != null ? JsonSerializer.Serialize(oldValues) : null,
-                newValues != null ? JsonSerializer.Serialize(newValues) : null
+                oldValues != null ? _safeSerializer.SafeSerialize(oldValues) : null,
+                newValues != null ? _safeSerializer.SafeSerialize(newValues) : null
             );
 
             var auditLog = new AuditLog(
@@ -87,8 +89,8 @@ public class AuditService(
                 userId,
                 changesJson,
                 requestId,
-                oldValues != null ? JsonSerializer.Serialize(oldValues) : null,
-                newValues != null ? JsonSerializer.Serialize(newValues) : null,
+                oldValues != null ? _safeSerializer.SafeSerialize(oldValues) : null,
+                newValues != null ? _safeSerializer.SafeSerialize(newValues) : null,
                 description)
             {
                 Username = username,
@@ -204,7 +206,7 @@ public class AuditService(
                 UserId = userId,
                 Username = username,
                 Description = description,
-                Metadata = metadata != null ? JsonSerializer.Serialize(metadata) : null,
+                Metadata = metadata != null ? _safeSerializer.SafeSerialize(metadata) : null,
                 Severity = severity,
                 IsSuccess = isSuccess,
                 ErrorMessage = errorMessage,
@@ -336,7 +338,7 @@ public class AuditService(
             }
             userId = correctUserId;
 
-            var changesJson = changes != null ? JsonSerializer.Serialize(changes) : null;
+            var changesJson = changes != null ? _safeSerializer.SafeSerialize(changes) : null;
 
             var auditLog = new AuditLog(
                 entityName,

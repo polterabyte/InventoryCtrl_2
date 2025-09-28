@@ -124,6 +124,9 @@ builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 // Register audit services
 builder.Services.AddScoped<IAuditService, WebAuditApiService>();
 
+// Register request services
+builder.Services.AddScoped<IRequestApiService, WebRequestApiService>();
+
 // Initialize validators
 builder.Services.AddScoped(provider =>
 {

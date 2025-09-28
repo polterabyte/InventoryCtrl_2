@@ -1,0 +1,411 @@
+@using Inventory.Shared.DTOs
+@using Inventory.Shared.Interfaces
+@using Inventory.Web.Client.Components.Shared
+@using Inventory.Web.Client.Services
+@using Microsoft.JSInterop
+@using Radzen
+@using Radzen.Blazor
+
+@inject IRequestApiService RequestService
+@inject NavigationManager Navigation
+@inject NotificationService NotificationService
+@inject ISignalRService SignalRService
+@inject ITokenManagementService TokenManagement
+@implements IAsyncDisposable
+
+<div class="content-card">
+    <RadzenStack Gap="1.5rem">
+        @* Page Header *@
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Class="request-list-header">
+            <RadzenStack>
+                <RadzenText TextStyle="TextStyle.H4" Class="rz-m-0">Request Management</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Class="rz-text-secondary rz-m-0">
+                    Manage inventory requests throughout their lifecycle
+                </RadzenText>
+            </RadzenStack>
+            <RadzenButton Text="Create Request" 
+                          Icon="add" 
+                          ButtonStyle="ButtonStyle.Primary"
+                          Click="@(() => Navigation.NavigateTo("/requests/create"))" />
+        </RadzenStack>
+
+        @* Filters and Search *@
+        <RadzenCard Class="rz-p-4">
+            <RadzenStack Gap="1rem">
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="4">
+                        <RadzenLabel Text="Search" Component="searchInput" />
+                        <RadzenTextBox @bind-Value="searchTerm" 
+                                       Name="searchInput"
+                                       Placeholder="Search by title or description..." 
+                                       Style="width: 100%"
+                                       @onkeypress="@HandleSearchKeyPress" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="3">
+                        <RadzenLabel Text="Status" Component="statusFilter" />
+                        <RadzenDropDown @bind-Value="selectedStatus" 
+                                        Data="statusOptions"
+                                        TextProperty="Text"
+                                        ValueProperty="Value"
+                                        Name="statusFilter"
+                                        Placeholder="All Statuses"
+                                        AllowClear="true"
+                                        Style="width: 100%" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="3">
+                        <RadzenLabel Text="Page Size" Component="pageSizeSelect" />
+                        <RadzenDropDown @bind-Value="pageSize" 
+                                        Data="pageSizeOptions"
+                                        Name="pageSizeSelect"
+                                        Style="width: 100%" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="2">
+                        <RadzenLabel Text="&nbsp;" />
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                            <RadzenButton Text="Search" 
+                                          Icon="search" 
+                                          ButtonStyle="ButtonStyle.Primary"
+                                          Click="@SearchRequests" />
+                            <RadzenButton Text="Clear" 
+                                          Icon="clear" 
+                                          ButtonStyle="ButtonStyle.Light"
+                                          Click="@ClearFilters" />
+                        </RadzenStack>
+                    </RadzenColumn>
+                </RadzenRow>
+            </RadzenStack>
+        </RadzenCard>
+
+        @* Request List *@
+        @if (loading)
+        {
+            <RadzenCard Class="rz-p-6">
+                <RadzenStack AlignItems="AlignItems.Center" Gap="1rem">
+                    <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+                    <RadzenText TextStyle="TextStyle.Body1">Loading requests...</RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        }
+        else if (errorMessage != null)
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Danger" Shade="Shade.Lighter" Variant="Variant.Flat" Size="AlertSize.Large">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="error" />
+                    <RadzenText TextStyle="TextStyle.Body1"><strong>Error:</strong> @errorMessage</RadzenText>
+                </RadzenStack>
+            </RadzenAlert>
+        }
+        else if (requests?.Count == 0)
+        {
+            <RadzenCard Class="rz-p-6">
+                <RadzenStack AlignItems="AlignItems.Center" Gap="1rem">
+                    <RadzenIcon Icon="inbox" Style="font-size: 4rem; color: var(--rz-text-disabled)" />
+                    <RadzenText TextStyle="TextStyle.H6" Class="rz-text-secondary">
+                        @(string.IsNullOrEmpty(searchTerm) && string.IsNullOrEmpty(selectedStatus) ? "No requests found" : "No requests match your filters")
+                    </RadzenText>
+                    @if (!string.IsNullOrEmpty(searchTerm) || !string.IsNullOrEmpty(selectedStatus))
+                    {
+                        <RadzenButton Text="Clear Filters" 
+                                      Icon="clear" 
+                                      ButtonStyle="ButtonStyle.Light"
+                                      Click="@ClearFilters" />
+                    }
+                    else
+                    {
+                        <RadzenButton Text="Create First Request" 
+                                      Icon="add" 
+                                      ButtonStyle="ButtonStyle.Primary"
+                                      Click="@(() => Navigation.NavigateTo("/requests/create"))" />
+                    }
+                </RadzenStack>
+            </RadzenCard>
+        }
+        else
+        {
+            <RadzenStack Gap="1rem">
+                @foreach (var request in requests)
+                {
+                    <RequestCard Request="request" 
+                                 OnClick="@(EventCallback.Factory.Create(this, () => ViewRequestDetails(request.Id)))"
+                                 OnEdit="@(EventCallback.Factory.Create(this, () => EditRequest(request.Id)))"
+                                 OnStatusChange="@(EventCallback.Factory.Create<(int, string, string?)>(this, args => HandleStatusChange(args.Item1, args.Item2, args.Item3)))" />
+                }
+            </RadzenStack>
+
+            @* Pagination *@
+            @if (totalPages > 1)
+            {
+                <RadzenStack AlignItems="AlignItems.Center" Class="rz-mt-4">
+                    <RadzenPager ShowPagingSummary="true" 
+                                 PagingSummaryFormat="Showing {0} to {1} of {2} requests"
+                                 HorizontalAlign="HorizontalAlign.Center" 
+                                 Count="totalCount"
+                                 PageSize="pageSize" 
+                                 PageNumbersCount="5"
+                                 PageChanged="@HandlePageChanged" />
+                </RadzenStack>
+            }
+        }
+    </RadzenStack>
+</div>
+
+@code {
+    // State variables
+    private List<RequestDto>? requests;
+    private bool loading = true;
+    private string? errorMessage;
+    private string searchTerm = string.Empty;
+    private string? selectedStatus;
+    private int currentPage = 1;
+    private int pageSize = 20;
+    private int totalCount = 0;
+    private int totalPages = 0;
+
+    // Filter options
+    private readonly List<StatusOption> statusOptions = new()
+    {
+        new("Draft", "Draft"),
+        new("Submitted", "Submitted"),
+        new("Approved", "Approved"),
+        new("In Progress", "InProgress"),
+        new("Items Received", "ItemsReceived"),
+        new("Items Installed", "ItemsInstalled"),
+        new("Completed", "Completed"),
+        new("Cancelled", "Cancelled"),
+        new("Rejected", "Rejected")
+    };
+
+    private readonly List<int> pageSizeOptions = new() { 10, 20, 50, 100 };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await InitializeSignalR();
+        await LoadRequests();
+    }
+
+    private async Task InitializeSignalR()
+    {
+        try
+        {
+            var token = await TokenManagement.GetStoredTokenAsync();
+            if (!string.IsNullOrEmpty(token))
+            {
+                var dotNetRef = DotNetObjectReference.Create(this);
+                var connected = await SignalRService.InitializeConnectionAsync(token, dotNetRef);
+                if (connected)
+                {
+                    await SignalRService.SubscribeToNotificationTypeAsync("REQUEST");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"SignalR initialization error: {ex.Message}");
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnRequestStatusChanged(int requestId, string newStatus)
+    {
+        try
+        {
+            // Find and update the request in the current list
+            var request = requests?.FirstOrDefault(r => r.Id == requestId);
+            if (request != null)
+            {
+                // Create a new request object with updated status to trigger UI update
+                var updatedRequest = new RequestDto(request.Id, request.Title, request.Description, newStatus, request.CreatedAt);
+                var index = requests.IndexOf(request);
+                requests[index] = updatedRequest;
+                
+                await InvokeAsync(StateHasChanged);
+                
+                // Show notification
+                NotificationService.Notify(new Radzen.NotificationMessage
+                {
+                    Severity = NotificationSeverity.Info,
+                    Summary = "Real-time Update",
+                    Detail = $"Request #{requestId} status changed to {newStatus}",
+                    Duration = 3000
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error handling real-time status update: {ex.Message}");
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnRequestCreated(int requestId, string title)
+    {
+        try
+        {
+            // Reload the list to include the new request
+            await LoadRequests();
+            
+            NotificationService.Notify(new Radzen.NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "New Request",
+                Detail = $"Request '{title}' has been created",
+                Duration = 4000
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error handling new request notification: {ex.Message}");
+        }
+    }
+
+    private async Task LoadRequests()
+    {
+        loading = true;
+        errorMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            var response = await RequestService.GetPagedRequestsAsync(
+                page: currentPage,
+                pageSize: pageSize,
+                search: string.IsNullOrWhiteSpace(searchTerm) ? null : searchTerm,
+                status: selectedStatus
+            );
+
+            if (response.Success && response.Data != null)
+            {
+                requests = response.Data.Items;
+                totalCount = response.Data.TotalCount;
+                totalPages = response.Data.TotalPages;
+            }
+            else
+            {
+                errorMessage = response.ErrorMessage ?? "Failed to load requests";
+                requests = new List<RequestDto>();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An error occurred while loading requests: {ex.Message}";
+            requests = new List<RequestDto>();
+        }
+        finally
+        {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SearchRequests()
+    {
+        currentPage = 1; // Reset to first page when searching
+        await LoadRequests();
+    }
+
+    private async Task ClearFilters()
+    {
+        searchTerm = string.Empty;
+        selectedStatus = null;
+        currentPage = 1;
+        await LoadRequests();
+    }
+
+    private async Task HandlePageChanged(PagerEventArgs args)
+    {
+        currentPage = args.PageIndex + 1; // Radzen uses 0-based indexing
+        await LoadRequests();
+    }
+
+    private async Task HandleSearchKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SearchRequests();
+        }
+    }
+
+    private void ViewRequestDetails(int requestId)
+    {
+        Navigation.NavigateTo($"/requests/{requestId}");
+    }
+
+    private void EditRequest(int requestId)
+    {
+        Navigation.NavigateTo($"/requests/{requestId}/edit");
+    }
+
+    private async Task HandleStatusChange(int requestId, string newStatus, string? comment)
+    {
+        loading = true;
+        StateHasChanged();
+
+        try
+        {
+            ApiResponse<RequestDetailsDto>? response = newStatus switch
+            {
+                "Submitted" => await RequestService.SubmitRequestAsync(requestId, comment),
+                "Approved" => await RequestService.ApproveRequestAsync(requestId, comment),
+                "ItemsReceived" => await RequestService.MarkItemsReceivedAsync(requestId, comment),
+                "ItemsInstalled" => await RequestService.MarkItemsInstalledAsync(requestId, comment),
+                "Completed" => await RequestService.CompleteRequestAsync(requestId, comment),
+                "Cancelled" => await RequestService.CancelRequestAsync(requestId, comment),
+                "Rejected" => await RequestService.RejectRequestAsync(requestId, comment),
+                _ => null
+            };
+
+            if (response?.Success == true)
+            {
+                NotificationService.Notify(new Radzen.NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Status Updated",
+                    Detail = $"Request status changed to {newStatus}",
+                    Duration = 4000
+                });
+                
+                await LoadRequests(); // Reload the list to reflect changes
+            }
+            else
+            {
+                NotificationService.Notify(new Radzen.NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Status Update Failed",
+                    Detail = response?.ErrorMessage ?? "Failed to update request status",
+                    Duration = 4000
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new Radzen.NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"An error occurred: {ex.Message}",
+                Duration = 4000
+            });
+        }
+        finally
+        {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private record StatusOption(string Text, string Value);
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            await SignalRService.UnsubscribeFromNotificationTypeAsync("REQUEST");
+            await SignalRService.DisconnectAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error disposing SignalR: {ex.Message}");
+        }
+    }
+}

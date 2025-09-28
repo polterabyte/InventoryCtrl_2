@@ -267,7 +267,7 @@ public class ManufacturerControllerIntegrationTests : IntegrationTestBase
         {
             Name = "Test Product",
             SKU = "TEST001",
-            Quantity = 10,
+            CurrentQuantity = 10,
             CategoryId = category.Id,
             ManufacturerId = manufacturer.Id,
             ProductGroupId = productGroup.Id,

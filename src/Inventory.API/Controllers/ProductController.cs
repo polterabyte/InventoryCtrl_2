@@ -81,7 +81,7 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                     Name = p.Name,
                     SKU = p.SKU,
                     Description = p.Description,
-                    Quantity = p.Quantity,
+                    Quantity = 0, // Will be populated from ProductOnHandView
                     UnitOfMeasureId = p.UnitOfMeasureId,
                     UnitOfMeasureName = p.UnitOfMeasure.Name,
                     UnitOfMeasureSymbol = p.UnitOfMeasure.Symbol,
@@ -101,6 +101,17 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                     UpdatedAt = p.UpdatedAt
                 })
                 .ToListAsync();
+                
+            // Get quantities from ProductOnHandView and update the DTOs
+            var productIds = products.Select(p => p.Id).ToList();
+            var onHandQuantities = await context.ProductOnHand
+                .Where(v => productIds.Contains(v.ProductId))
+                .ToDictionaryAsync(v => v.ProductId, v => v.OnHandQty);
+                
+            foreach (var product in products)
+            {
+                product.Quantity = onHandQuantities.GetValueOrDefault(product.Id, 0);
+            }
 
             var pagedResponse = new PagedResponse<ProductDto>
             {
@@ -155,7 +166,7 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 Name = product.Name,
                 SKU = product.SKU,
                 Description = product.Description,
-                Quantity = product.Quantity,
+                Quantity = 0, // Will be populated from ProductOnHandView
                 UnitOfMeasureId = product.UnitOfMeasureId,
                 UnitOfMeasureName = product.UnitOfMeasure.Name,
                 UnitOfMeasureSymbol = product.UnitOfMeasure.Symbol,
@@ -174,6 +185,13 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 CreatedAt = product.CreatedAt,
                 UpdatedAt = product.UpdatedAt
             };
+            
+            // Get quantity from ProductOnHandView
+            var onHandQuantity = await context.ProductOnHand
+                .Where(v => v.ProductId == product.Id)
+                .Select(v => v.OnHandQty)
+                .FirstOrDefaultAsync();
+            productDto.Quantity = onHandQuantity;
 
             return Ok(new ApiResponse<ProductDto>
             {
@@ -219,7 +237,7 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 Name = product.Name,
                 SKU = product.SKU,
                 Description = product.Description,
-                Quantity = product.Quantity,
+                Quantity = 0, // Will be populated from ProductOnHandView
                 UnitOfMeasureId = product.UnitOfMeasureId,
                 UnitOfMeasureName = product.UnitOfMeasure.Name,
                 UnitOfMeasureSymbol = product.UnitOfMeasure.Symbol,
@@ -238,6 +256,13 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 CreatedAt = product.CreatedAt,
                 UpdatedAt = product.UpdatedAt
             };
+            
+            // Get quantity from ProductOnHandView
+            var onHandQuantity = await context.ProductOnHand
+                .Where(v => v.ProductId == product.Id)
+                .Select(v => v.OnHandQty)
+                .FirstOrDefaultAsync();
+            productDto.Quantity = onHandQuantity;
 
             return Ok(new ApiResponse<ProductDto>
             {
@@ -294,7 +319,7 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 Name = request.Name,
                 SKU = request.SKU,
                 Description = request.Description,
-                Quantity = 0, // New products start with 0 quantity
+                // New products start with 0 quantity - actual quantity managed through transactions
                 UnitOfMeasureId = request.UnitOfMeasureId,
                 IsActive = userRole == "Admin" ? request.IsActive : true, // Only Admin can set IsActive
                 CategoryId = request.CategoryId,
@@ -353,7 +378,7 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 Name = createdProduct.Name,
                 SKU = createdProduct.SKU,
                 Description = createdProduct.Description,
-                Quantity = createdProduct.Quantity,
+                Quantity = 0, // Will be populated from ProductOnHandView
                 UnitOfMeasureId = createdProduct.UnitOfMeasureId,
                 UnitOfMeasureName = createdProduct.UnitOfMeasure.Name,
                 UnitOfMeasureSymbol = createdProduct.UnitOfMeasure.Symbol,
@@ -372,6 +397,13 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 CreatedAt = createdProduct.CreatedAt,
                 UpdatedAt = createdProduct.UpdatedAt
             };
+            
+            // Get quantity from ProductOnHandView
+            var onHandQuantity = await context.ProductOnHand
+                .Where(v => v.ProductId == createdProduct.Id)
+                .Select(v => v.OnHandQty)
+                .FirstOrDefaultAsync();
+            productDto.Quantity = onHandQuantity;
 
             logger.LogInformation("Product created: {ProductName} with SKU {SKU}", product.Name, product.SKU);
 
@@ -503,7 +535,7 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                     Name = product.Name,
                     SKU = product.SKU,
                     Description = product.Description,
-                    Quantity = product.Quantity,
+                    Quantity = 0, // Will be populated from ProductOnHandView
                     UnitOfMeasureId = product.UnitOfMeasureId,
                 UnitOfMeasureName = product.UnitOfMeasure.Name,
                 UnitOfMeasureSymbol = product.UnitOfMeasure.Symbol,
@@ -630,8 +662,13 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 });
             }
 
-            var oldQuantity = product.Quantity;
-            product.Quantity += request.Quantity;
+            // Get current quantity from ProductOnHandView for logging purposes
+            var currentQuantity = await context.ProductOnHand
+                .Where(v => v.ProductId == id)
+                .Select(v => v.OnHandQty)
+                .FirstOrDefaultAsync();
+            
+            // We no longer modify Product.Quantity directly - it's managed via transactions
             product.UpdatedAt = DateTime.UtcNow;
 
             // Create transaction record
@@ -649,8 +686,14 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
             context.InventoryTransactions.Add(transaction);
             await context.SaveChangesAsync();
 
+            // Get updated quantity from ProductOnHandView
+            var newQuantity = await context.ProductOnHand
+                .Where(v => v.ProductId == id)
+                .Select(v => v.OnHandQty)
+                .FirstOrDefaultAsync();
+
             logger.LogInformation("Stock adjusted for product {ProductId}: {OldQuantity} -> {NewQuantity}", 
-                id, oldQuantity, product.Quantity);
+                id, currentQuantity, newQuantity);
 
             return Ok(new ApiResponse<object>
             {
@@ -658,8 +701,8 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 Data = new 
                 { 
                     message = "Stock adjusted successfully",
-                    oldQuantity,
-                    newQuantity = product.Quantity,
+                    oldQuantity = currentQuantity,
+                    newQuantity = newQuantity,
                     adjustment = request.Quantity
                 }
             });

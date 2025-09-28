@@ -1,0 +1,58 @@
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenBadge Text="@GetStatusText(Status)" 
+             IsPill="true"
+             Style="@GetStatusStyle(Status)"
+             Class="request-status-badge" />
+
+<style>
+    .request-status-badge {
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        min-width: 80px;
+        text-align: center;
+    }
+</style>
+
+@code {
+    [Parameter, EditorRequired] public string Status { get; set; } = string.Empty;
+
+    private string GetStatusText(string status)
+    {
+        return status switch
+        {
+            "Draft" => "Draft",
+            "Submitted" => "Submitted",
+            "Approved" => "Approved",
+            "InProgress" => "In Progress",
+            "ItemsReceived" => "Received",
+            "ItemsInstalled" => "Installed",
+            "Completed" => "Completed",
+            "Cancelled" => "Cancelled",
+            "Rejected" => "Rejected",
+            _ => status
+        };
+    }
+
+    private string GetStatusStyle(string status)
+    {
+        var (bgColor, textColor) = status switch
+        {
+            "Draft" => ("#757575", "#ffffff"),
+            "Submitted" => ("#2196F3", "#ffffff"),
+            "Approved" => ("#4CAF50", "#ffffff"),
+            "InProgress" => ("#FF9800", "#ffffff"),
+            "ItemsReceived" => ("#9C27B0", "#ffffff"),
+            "ItemsInstalled" => ("#3F51B5", "#ffffff"),
+            "Completed" => ("#388E3C", "#ffffff"),
+            "Cancelled" => ("#F44336", "#ffffff"),
+            "Rejected" => ("#D32F2F", "#ffffff"),
+            _ => ("#6B7280", "#ffffff")
+        };
+
+        return $"background-color: {bgColor}; color: {textColor}; border: none;";
+    }
+}

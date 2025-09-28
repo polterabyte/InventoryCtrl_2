@@ -79,6 +79,18 @@ public static class ApiEndpoints
     public const string DashboardRecentActivity = $"{Dashboard}/recent-activity";
     public const string DashboardLowStockProducts = $"{Dashboard}/low-stock-products";
     
+    // Request endpoints
+    public const string Requests = "/requests";
+    public const string RequestById = $"{Requests}/{{id}}";
+    public const string RequestSubmit = $"{Requests}/{{id}}/submit";
+    public const string RequestApprove = $"{Requests}/{{id}}/approve";
+    public const string RequestReceived = $"{Requests}/{{id}}/received";
+    public const string RequestInstalled = $"{Requests}/{{id}}/installed";
+    public const string RequestComplete = $"{Requests}/{{id}}/complete";
+    public const string RequestCancel = $"{Requests}/{{id}}/cancel";
+    public const string RequestReject = $"{Requests}/{{id}}/reject";
+    public const string RequestItems = $"{Requests}/{{id}}/items";
+    
     // Audit endpoints
     public const string Audit = "/audit";
     public const string AuditExport = $"{Audit}/export";

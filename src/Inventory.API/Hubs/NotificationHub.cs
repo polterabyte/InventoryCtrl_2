@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Inventory.API.Models;
 using System.Text.Json;
+using System.Collections.Concurrent;
 
 namespace Inventory.API.Hubs;
 
@@ -12,7 +13,7 @@ public class NotificationHub : Hub
 {
     private readonly ILogger<NotificationHub> _logger;
     private readonly AppDbContext _context;
-    private static readonly Dictionary<string, string> _userConnections = new();
+    private static readonly ConcurrentDictionary<string, string> _userConnections = new();
 
     public NotificationHub(ILogger<NotificationHub> logger, AppDbContext context)
     {
@@ -22,77 +23,144 @@ public class NotificationHub : Hub
 
     public override async Task OnConnectedAsync()
     {
-        var userId = GetUserId();
-        if (!string.IsNullOrEmpty(userId))
+        try
         {
-            _userConnections[Context.ConnectionId] = userId;
-            await Groups.AddToGroupAsync(Context.ConnectionId, $"User_{userId}");
-            await Groups.AddToGroupAsync(Context.ConnectionId, "AllUsers");
-            
-            // Save connection to database
-            await SaveConnectionToDatabase(userId);
-            
-            _logger.LogInformation("User {UserId} connected with connection {ConnectionId}", userId, Context.ConnectionId);
-            
-            // Notify user about successful connection
-            await Clients.Caller.SendAsync("connectionEstablished", new
+            var userId = GetUserId();
+            if (!string.IsNullOrEmpty(userId))
             {
-                ConnectionId = Context.ConnectionId,
-                UserId = userId,
-                Timestamp = DateTime.UtcNow
-            });
-        }
+                _userConnections.TryAdd(Context.ConnectionId, userId);
+                await Groups.AddToGroupAsync(Context.ConnectionId, $"User_{userId}");
+                await Groups.AddToGroupAsync(Context.ConnectionId, "AllUsers");
+                
+                // Save connection to database
+                await SaveConnectionToDatabase(userId);
+                
+                _logger.LogInformation("User {UserId} connected with connection {ConnectionId}", userId, Context.ConnectionId);
+                
+                // Notify user about successful connection
+                await Clients.Caller.SendAsync("connectionEstablished", new
+                {
+                    ConnectionId = Context.ConnectionId,
+                    UserId = userId,
+                    Timestamp = DateTime.UtcNow
+                });
+            }
+            else
+            {
+                _logger.LogWarning("Connection attempt without valid user ID for connection {ConnectionId}", Context.ConnectionId);
+            }
 
-        await base.OnConnectedAsync();
+            await base.OnConnectedAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during connection establishment for connection {ConnectionId}", Context.ConnectionId);
+            throw; // Re-throw to let SignalR handle the connection failure
+        }
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        var userId = GetUserId();
-        if (!string.IsNullOrEmpty(userId))
+        try
         {
-            _userConnections.Remove(Context.ConnectionId);
-            
-            // Mark connection as inactive in database
-            await MarkConnectionAsInactive(Context.ConnectionId);
-            
-            _logger.LogInformation("User {UserId} disconnected from connection {ConnectionId}", userId, Context.ConnectionId);
-        }
+            var userId = GetUserId();
+            if (!string.IsNullOrEmpty(userId))
+            {
+                _userConnections.TryRemove(Context.ConnectionId, out _);
+                
+                // Mark connection as inactive in database
+                await MarkConnectionAsInactive(Context.ConnectionId);
+                
+                var logLevel = exception != null ? LogLevel.Warning : LogLevel.Information;
+                _logger.Log(logLevel, exception, "User {UserId} disconnected from connection {ConnectionId}", userId, Context.ConnectionId);
+            }
+            else
+            {
+                _logger.LogWarning("Disconnection attempt without valid user ID for connection {ConnectionId}", Context.ConnectionId);
+            }
 
-        await base.OnDisconnectedAsync(exception);
+            await base.OnDisconnectedAsync(exception);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during disconnection for connection {ConnectionId}", Context.ConnectionId);
+            // Don't re-throw here as it's already a disconnection scenario
+        }
     }
 
     public async Task JoinGroup(string groupName)
     {
-        await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
-        _logger.LogInformation("User {UserId} joined group {GroupName}", GetUserId(), groupName);
+        try
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
+            await UpdateConnectionActivity(Context.ConnectionId);
+            _logger.LogInformation("User {UserId} joined group {GroupName}", GetUserId(), groupName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error joining group {GroupName} for user {UserId}", groupName, GetUserId());
+            throw;
+        }
     }
 
     public async Task LeaveGroup(string groupName)
     {
-        await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupName);
-        _logger.LogInformation("User {UserId} left group {GroupName}", GetUserId(), groupName);
+        try
+        {
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupName);
+            await UpdateConnectionActivity(Context.ConnectionId);
+            _logger.LogInformation("User {UserId} left group {GroupName}", GetUserId(), groupName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error leaving group {GroupName} for user {UserId}", groupName, GetUserId());
+            throw;
+        }
     }
 
     public async Task SubscribeToNotifications(string notificationType)
     {
-        var userId = GetUserId();
-        if (!string.IsNullOrEmpty(userId))
+        try
         {
-            await Groups.AddToGroupAsync(Context.ConnectionId, $"Notifications_{notificationType}");
-            await UpdateConnectionSubscriptions(notificationType, true);
-            _logger.LogInformation("User {UserId} subscribed to {NotificationType} notifications", userId, notificationType);
+            var userId = GetUserId();
+            if (!string.IsNullOrEmpty(userId))
+            {
+                await Groups.AddToGroupAsync(Context.ConnectionId, $"Notifications_{notificationType}");
+                await UpdateConnectionSubscriptions(notificationType, true);
+                _logger.LogInformation("User {UserId} subscribed to {NotificationType} notifications", userId, notificationType);
+            }
+            else
+            {
+                _logger.LogWarning("Subscription attempt without valid user ID for notification type {NotificationType}", notificationType);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error subscribing to {NotificationType} notifications for user {UserId}", notificationType, GetUserId());
+            throw;
         }
     }
 
     public async Task UnsubscribeFromNotifications(string notificationType)
     {
-        var userId = GetUserId();
-        if (!string.IsNullOrEmpty(userId))
+        try
         {
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"Notifications_{notificationType}");
-            await UpdateConnectionSubscriptions(notificationType, false);
-            _logger.LogInformation("User {UserId} unsubscribed from {NotificationType} notifications", userId, notificationType);
+            var userId = GetUserId();
+            if (!string.IsNullOrEmpty(userId))
+            {
+                await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"Notifications_{notificationType}");
+                await UpdateConnectionSubscriptions(notificationType, false);
+                _logger.LogInformation("User {UserId} unsubscribed from {NotificationType} notifications", userId, notificationType);
+            }
+            else
+            {
+                _logger.LogWarning("Unsubscription attempt without valid user ID for notification type {NotificationType}", notificationType);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error unsubscribing from {NotificationType} notifications for user {UserId}", notificationType, GetUserId());
+            throw;
         }
     }
 
@@ -224,6 +292,31 @@ public class NotificationHub : Hub
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to update SignalR connection subscriptions for connection {ConnectionId}", Context.ConnectionId);
+        }
+    }
+    
+    /// <summary>
+    /// Cleans up inactive connections that have been disconnected for more than 24 hours
+    /// </summary>
+    public static async Task CleanupInactiveConnections(AppDbContext context, ILogger logger)
+    {
+        try
+        {
+            var cutoffTime = DateTime.UtcNow.AddDays(-1);
+            var inactiveConnections = await context.SignalRConnections
+                .Where(c => !c.IsActive && c.LastActivityAt < cutoffTime)
+                .ToListAsync();
+            
+            if (inactiveConnections.Any())
+            {
+                context.SignalRConnections.RemoveRange(inactiveConnections);
+                await context.SaveChangesAsync();
+                logger.LogInformation("Cleaned up {Count} inactive SignalR connections", inactiveConnections.Count);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to clean up inactive SignalR connections");
         }
     }
 }

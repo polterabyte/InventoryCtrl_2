@@ -77,9 +77,27 @@ public class RequestsController(AppDbContext db, IRequestService service, ILogge
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateRequestBody body)
     {
-        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "system";
-        var req = await service.CreateRequestAsync(body.Title, userId, body.Description);
-        return CreatedAtAction(nameof(GetById), new { id = req.Id }, req);
+        try
+        {
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "system";
+            var req = await service.CreateRequestAsync(body.Title, userId, body.Description);
+            return CreatedAtAction(nameof(GetById), new { id = req.Id }, req);
+        }
+        catch (ArgumentException ex)
+        {
+            logger.LogWarning(ex, "Invalid request parameters for creating request");
+            return BadRequest(new { success = false, errorMessage = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            logger.LogWarning(ex, "Invalid operation while creating request");
+            return Conflict(new { success = false, errorMessage = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Unexpected error while creating request");
+            return StatusCode(500, new { success = false, errorMessage = "An error occurred while creating the request. Please try again." });
+        }
     }
 
     public record AddItemBody(int ProductId, int WarehouseId, int Quantity, int? LocationId, decimal? UnitPrice, string? Description);
@@ -87,9 +105,27 @@ public class RequestsController(AppDbContext db, IRequestService service, ILogge
     [HttpPost("{id}/items")]
     public async Task<IActionResult> AddItem(int id, [FromBody] AddItemBody body)
     {
-        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "system";
-        var trx = await service.AddPendingItemAsync(id, body.ProductId, body.WarehouseId, body.Quantity, userId, body.LocationId, body.UnitPrice, body.Description);
-        return Ok(trx);
+        try
+        {
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "system";
+            var trx = await service.AddPendingItemAsync(id, body.ProductId, body.WarehouseId, body.Quantity, userId, body.LocationId, body.UnitPrice, body.Description);
+            return Ok(trx);
+        }
+        catch (InvalidOperationException ex)
+        {
+            logger.LogWarning(ex, "Invalid operation while adding item to request {RequestId}", id);
+            return BadRequest(new { success = false, errorMessage = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            logger.LogWarning(ex, "Invalid arguments while adding item to request {RequestId}", id);
+            return BadRequest(new { success = false, errorMessage = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Unexpected error while adding item to request {RequestId}", id);
+            return StatusCode(500, new { success = false, errorMessage = "An error occurred while adding the item. Please try again." });
+        }
     }
 
     public record TransitionBody(string? Comment);
@@ -97,9 +133,22 @@ public class RequestsController(AppDbContext db, IRequestService service, ILogge
     [HttpPost("{id}/submit")]
     public async Task<IActionResult> Submit(int id, [FromBody] TransitionBody body)
     {
-        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "system";
-        var req = await service.SubmitAsync(id, userId, body?.Comment);
-        return Ok(req);
+        try
+        {
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "system";
+            var req = await service.SubmitAsync(id, userId, body?.Comment);
+            return Ok(req);
+        }
+        catch (InvalidOperationException ex)
+        {
+            logger.LogWarning(ex, "Invalid operation while submitting request {RequestId}", id);
+            return BadRequest(new { success = false, errorMessage = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Unexpected error while submitting request {RequestId}", id);
+            return StatusCode(500, new { success = false, errorMessage = "An error occurred while submitting the request. Please try again." });
+        }
     }
 
     [HttpPost("{id}/approve")]

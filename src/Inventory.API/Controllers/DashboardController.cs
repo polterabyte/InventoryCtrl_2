@@ -9,27 +9,33 @@ namespace Inventory.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class DashboardController(AppDbContext context) : ControllerBase
+public class DashboardController(AppDbContext context, ILogger<DashboardController> logger) : ControllerBase
 {
     [HttpGet("stats")]
     public async Task<IActionResult> GetDashboardStats()
     {
         try
         {
+            logger.LogInformation("Getting dashboard statistics");
+            
             var totalProducts = await context.Products.CountAsync(p => p.IsActive);
             var totalCategories = await context.Categories.CountAsync(c => c.IsActive);
             var totalManufacturers = await context.Manufacturers.CountAsync();
             var totalWarehouses = await context.Warehouses.CountAsync(w => w.IsActive);
             
-            // Low stock products (quantity <= MinStock)
-            var lowStockProducts = await context.Products
-                .Where(p => p.IsActive && p.Quantity <= p.MinStock)
-                .CountAsync();
+            // Low stock products (quantity <= MinStock) - using direct ProductOnHandView query
+            var lowStockProducts = await (from oh in context.ProductOnHand
+                                        join p in context.Products on oh.ProductId equals p.Id
+                                        where p.IsActive && oh.OnHandQty <= p.MinStock
+                                        select oh.ProductId)
+                                        .CountAsync();
             
-            // Out of stock products
-            var outOfStockProducts = await context.Products
-                .Where(p => p.IsActive && p.Quantity == 0)
-                .CountAsync();
+            // Out of stock products - using direct ProductOnHandView query
+            var outOfStockProducts = await (from oh in context.ProductOnHand
+                                          join p in context.Products on oh.ProductId equals p.Id
+                                          where p.IsActive && oh.OnHandQty == 0
+                                          select oh.ProductId)
+                                          .CountAsync();
             
             // Recent transactions (last 7 days)
             var recentTransactions = await context.InventoryTransactions
@@ -53,15 +59,32 @@ public class DashboardController(AppDbContext context) : ControllerBase
                 RecentProducts = recentProducts
             };
 
+            logger.LogInformation("Dashboard statistics retrieved successfully: {Stats}", 
+                new { totalProducts, lowStockProducts, outOfStockProducts });
+
             return Ok(new ApiResponse<object>
             {
                 Success = true,
                 Data = stats
             });
         }
+        catch (InvalidOperationException ex)
+        {
+            logger.LogError(ex, "Database operation error while retrieving dashboard statistics");
+            return StatusCode(500, new ApiResponse<object>
+            {
+                Success = false,
+                ErrorMessage = "Database operation failed. Please try again."
+            });
+        }
         catch (Exception ex)
         {
-            return StatusCode(500, new { error = "Failed to retrieve dashboard statistics", details = ex.Message });
+            logger.LogError(ex, "Unexpected error while retrieving dashboard statistics");
+            return StatusCode(500, new ApiResponse<object>
+            {
+                Success = false,
+                ErrorMessage = "Failed to retrieve dashboard statistics"
+            });
         }
     }
 
@@ -70,6 +93,8 @@ public class DashboardController(AppDbContext context) : ControllerBase
     {
         try
         {
+            logger.LogInformation("Getting recent activity data");
+
             // Recent transactions with product details
             var recentTransactions = await context.InventoryTransactions
                 .Include(t => t.Product)
@@ -104,7 +129,7 @@ public class DashboardController(AppDbContext context) : ControllerBase
                     Id = p.Id,
                     Name = p.Name,
                     SKU = p.SKU,
-                    Quantity = p.Quantity,
+                    Quantity = 0, // Will be populated from ProductOnHandView
                     CategoryName = p.Category.Name,
                     ManufacturerName = p.Manufacturer.Name,
                     CreatedAt = p.CreatedAt
@@ -117,15 +142,32 @@ public class DashboardController(AppDbContext context) : ControllerBase
                 RecentProducts = recentProducts
             };
 
+            logger.LogInformation("Recent activity retrieved successfully: {TransactionCount} transactions, {ProductCount} products", 
+                recentTransactions.Count, recentProducts.Count);
+
             return Ok(new ApiResponse<object>
             {
                 Success = true,
                 Data = activity
             });
         }
+        catch (InvalidOperationException ex)
+        {
+            logger.LogError(ex, "Database operation error while retrieving recent activity");
+            return StatusCode(500, new ApiResponse<object>
+            {
+                Success = false,
+                ErrorMessage = "Database operation failed. Please try again."
+            });
+        }
         catch (Exception ex)
         {
-            return StatusCode(500, new { error = "Failed to retrieve recent activity", details = ex.Message });
+            logger.LogError(ex, "Unexpected error while retrieving recent activity");
+            return StatusCode(500, new ApiResponse<object>
+            {
+                Success = false,
+                ErrorMessage = "Failed to retrieve recent activity"
+            });
         }
     }
 
@@ -134,25 +176,28 @@ public class DashboardController(AppDbContext context) : ControllerBase
     {
         try
         {
-            var lowStockProducts = await context.Products
-                .Include(p => p.Category)
-                .Include(p => p.Manufacturer)
-                .Include(p => p.UnitOfMeasure)
-                .Where(p => p.IsActive && p.Quantity <= p.MinStock)
-                .OrderBy(p => p.Quantity)
-                .Select(p => new LowStockProductDto
-                {
-                    Id = p.Id,
-                    Name = p.Name,
-                    SKU = p.SKU,
-                    CurrentQuantity = p.Quantity,
-                    MinStock = p.MinStock,
-                    MaxStock = p.MaxStock,
-                    CategoryName = p.Category.Name,
-                    ManufacturerName = p.Manufacturer.Name,
-                    UnitOfMeasureSymbol = p.UnitOfMeasure.Symbol
-                })
-                .ToListAsync();
+            logger.LogInformation("Getting low stock products");
+
+            // Get products with their quantities from ProductOnHandView - optimized query
+            var lowStockProducts = await (from oh in context.ProductOnHand
+                                        join p in context.Products on oh.ProductId equals p.Id
+                                        where p.IsActive && oh.OnHandQty <= p.MinStock
+                                        orderby oh.OnHandQty
+                                        select new LowStockProductDto
+                                        {
+                                            Id = p.Id,
+                                            Name = p.Name,
+                                            SKU = p.SKU,
+                                            CurrentQuantity = oh.OnHandQty,
+                                            MinStock = p.MinStock,
+                                            MaxStock = p.MaxStock,
+                                            CategoryName = p.Category.Name,
+                                            ManufacturerName = p.Manufacturer.Name,
+                                            UnitOfMeasureSymbol = p.UnitOfMeasure.Symbol
+                                        })
+                                        .ToListAsync();
+
+            logger.LogInformation("Low stock products retrieved successfully: {Count} products", lowStockProducts.Count);
 
             return Ok(new ApiResponse<List<LowStockProductDto>>
             {
@@ -160,8 +205,18 @@ public class DashboardController(AppDbContext context) : ControllerBase
                 Data = lowStockProducts
             });
         }
-        catch (Exception)
+        catch (InvalidOperationException ex)
         {
+            logger.LogError(ex, "Database operation error while retrieving low stock products");
+            return StatusCode(500, new ApiResponse<List<LowStockProductDto>>
+            {
+                Success = false,
+                ErrorMessage = "Database operation failed. Please try again."
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Unexpected error while retrieving low stock products");
             return StatusCode(500, new ApiResponse<List<LowStockProductDto>>
             {
                 Success = false,
