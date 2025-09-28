@@ -10,80 +10,161 @@
 @using Microsoft.Extensions.Localization
 @using Radzen
 @using Radzen.Blazor
+@using Blazored.LocalStorage
+@using Microsoft.AspNetCore.Components.Routing
 
 @inject IStringLocalizer<SharedResources> Localizer
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IAuthService AuthService
+@inject NavigationManager Navigation
+@inject ILocalStorageService LocalStorage
 
 <AuthorizeView>
     <Authorized Context="userContext">
-        <div class="app-shell">
-            <aside class="app-sidebar @(sidebarExpanded ? "expanded" : "collapsed")">
-                <div class="sidebar-inner">
-                    <div class="sidebar-brand">
+        <RadzenLayout>
+            <RadzenHeader>
+                <RadzenStack Orientation="Orientation.Horizontal" 
+                             AlignItems="AlignItems.Center" 
+                             JustifyContent="JustifyContent.SpaceBetween" 
+                             Gap="0" 
+                             Style="width: 100%; padding: 0 1rem;">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                        <RadzenSidebarToggle Click="@(() => sidebarExpanded = !sidebarExpanded)" />
                         <RadzenIcon Icon="warehouse" />
-                        <span>Inventory Control</span>
-                    </div>
-                    <NavMenu />
-                </div>
-            </aside>
-
-            <div class="sidebar-backdrop @(sidebarExpanded ? "is-visible" : string.Empty)" @onclick="ToggleSidebar"></div>
-
-            <main class="app-main @(sidebarExpanded ? "shifted" : "full")">
-                <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.Gap" class="main-column">
-                    <RadzenStack Orientation="Orientation.Horizontal"
-                                 AlignItems="AlignItems.Center"
-                                 JustifyContent="JustifyContent.SpaceBetween"
-                                 class="top-bar">
-                        <RadzenButton Icon="@SidebarToggleIcon"
-                                      ButtonStyle="ButtonStyle.Light"
-                                      Variant="Variant.Text"
-                                      Size="ButtonSize.Medium"
-                                      Class="sidebar-toggle"
-                                      AriaLabel="@Localizer["Navigation.ToggleMenu"]"
-                                      Click="ToggleSidebar" />
-
-                        <RadzenStack Orientation="Orientation.Horizontal" 
-                                     AlignItems="AlignItems.Center" 
-                                     Gap="@RadzenUi.Gap">
-                            <span class="top-bar__greeting">
-                                <RadzenIcon Icon="account_circle" Class="rz-mr-2" />
-                                @Localizer["Greeting.Hello", userContext.User.Identity?.Name ?? Localizer["User.DefaultName"]]
-                            </span>
-                            
-                            <CultureSelector />
-                            <ThemeSelector />
-                            
-                            <a class="top-bar__link" href="https://www.cubytechnologies.com/" target="_blank">About</a>
-                        </RadzenStack>
+                        <RadzenLabel Text="Inventory Control" Style="font-weight: bold; font-size: 1.2rem;" />
                     </RadzenStack>
-
-                    <RadzenCard Style="flex: 1;" class="content-card">
-                        @Body
-                    </RadzenCard>
+                    
+                    <RadzenStack Orientation="Orientation.Horizontal" 
+                                 AlignItems="AlignItems.Center" 
+                                 Gap="1rem">
+                        <span>
+                            <RadzenIcon Icon="account_circle" Class="rz-mr-2" />
+                            @Localizer["Greeting.Hello", userContext.User.Identity?.Name ?? Localizer["User.DefaultName"]]
+                        </span>
+                        
+                        <CultureSelector />
+                        <ThemeSelector />
+                        
+                        <a href="https://www.cubytechnologies.com/" target="_blank">About</a>
+                    </RadzenStack>
                 </RadzenStack>
-            </main>
-        </div>
+            </RadzenHeader>
+            
+            <RadzenSidebar @bind-Expanded="@sidebarExpanded">
+                <RadzenPanelMenu>
+                    @foreach (var link in GetMainLinks())
+                    {
+                        <RadzenPanelMenuItem Text="@link.Text" 
+                                             Icon="@link.Icon" 
+                                             Path="@link.Path" />
+                    }
+                </RadzenPanelMenu>
+                
+                <AuthorizeView Roles="Admin">
+                    <Authorized>
+                        <div style="padding: 1rem 0 0.5rem 1rem; font-weight: bold; color: var(--rz-text-disabled-color); font-size: 0.875rem;">
+                            @Localizer["Navigation.Administration"]
+                        </div>
+                        <RadzenPanelMenu>
+                            @foreach (var link in GetAdminLinks())
+                            {
+                                <RadzenPanelMenuItem Text="@link.Text" 
+                                                     Icon="@link.Icon" 
+                                                     Path="@link.Path" />
+                            }
+                        </RadzenPanelMenu>
+                    </Authorized>
+                </AuthorizeView>
+                
+                @* <div style="position: absolute; bottom: 1rem; left: 1rem; right: 1rem;"> *@
+                    <RadzenButton Text="@Localizer["Action.Logout"]"
+                                  Icon="logout"
+                                  ButtonStyle="ButtonStyle.Danger"
+                                  Variant="Variant.Outlined"
+                                  Size="ButtonSize.Medium"
+                                  Style="width: 100%;"
+                                  Click="LogoutAsync" />
+                @* </div> *@
+            </RadzenSidebar>
+            
+            <RadzenBody>
+                <RadzenCard Style="margin: 1rem; height: calc(100vh - 8rem);">
+                    @Body
+                </RadzenCard>
+            </RadzenBody>
+            
+            <RadzenFooter>
+                <div style="text-align: center; padding: 0.5rem; color: var(--rz-text-disabled-color); font-size: 0.875rem;">
+                    © 2024 Inventory Control System
+                </div>
+            </RadzenFooter>
+        </RadzenLayout>
 
         <NotificationContainer />
         <RealTimeNotificationComponent />
 
         <RadzenNotificationBridge />
-        <RadzenComponents @rendermode="InteractiveAuto" />
+        <RadzenComponents />
     </Authorized>
     <NotAuthorized>
         <Inventory.UI.Pages.Login />
     </NotAuthorized>
+    <Authorizing>
+        <h3>Loading ...</h3>
+    </Authorizing>
 </AuthorizeView>
 
 @code {
     private bool sidebarExpanded = true;
 
-    private string SidebarToggleIcon => sidebarExpanded ? "menu_open" : "menu";
-
-    private void ToggleSidebar()
+    private NavLinkItem[] GetMainLinks() => new NavLinkItem[]
     {
-        sidebarExpanded = !sidebarExpanded;
+        new(Localizer["Navigation.Home"], "home", "/"),
+        new(Localizer["Navigation.Catalog"], "inventory_2", "products"),
+        new(Localizer["Navigation.Warehouses"], "warehouse", "warehouses"),
+        new(Localizer["Navigation.Requests"], "assignment", "requests"),
+        new(Localizer["Navigation.Reports"], "insights", "reports")
+    };
+
+    private NavLinkItem[] GetAdminLinks() => new NavLinkItem[]
+    {
+        new(Localizer["Navigation.ReferenceData"], "settings", "admin/reference-data"),
+        new(Localizer["Navigation.Users"], "group", "admin/users"),
+        new(Localizer["Navigation.Audit"], "list_alt", "admin/audit-logs"),
+        new(Localizer["Navigation.Debug"], "bug_report", "debug")
+    };
+
+    private async Task LogoutAsync()
+    {
+        try
+        {
+            var token = await LocalStorage.GetItemAsStringAsync("authToken");
+            if (!string.IsNullOrEmpty(token))
+            {
+                await AuthService.LogoutAsync(token);
+            }
+
+            await ClearAuthDataAsync();
+            Navigation.NavigateTo("/login", true);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Logout error: {ex.Message}");
+            await ClearAuthDataAsync();
+            Navigation.NavigateTo("/login", true);
+        }
     }
 
+    private async Task ClearAuthDataAsync()
+    {
+        await LocalStorage.RemoveItemAsync("authToken");
+
+        if (AuthStateProvider is ICustomAuthenticationStateProvider customProvider)
+        {
+            await customProvider.MarkUserAsLoggedOutAsync();
+        }
+    }
+
+    private sealed record NavLinkItem(string Text, string Icon, string Path);
 }
 

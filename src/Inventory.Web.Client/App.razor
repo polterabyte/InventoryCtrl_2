@@ -7,13 +7,14 @@
 @inject IThemeService ThemeService
 @inject ICultureService CultureService
 @inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
 
-<script src="_content/Radzen.Blazor/Radzen.Blazor.js?v=@(typeof(Radzen.Colors).Assembly.GetName().Version)"></script>
-<RadzenTheme Theme="@currentTheme" @rendermode="InteractiveAuto" />
+
 
 @* Dynamic theme CSS loading *@
 <HeadContent>
-    <link id="radzen-theme-css" href="@GetThemeCssUrl()" rel="stylesheet" />
+    <RadzenTheme Theme="@currentTheme" />
+     <link id="radzen-theme-css" href="@GetThemeCssUrl()" rel="stylesheet" />
 </HeadContent>
 
 @* Accessibility helpers for screen readers *@
@@ -22,8 +23,7 @@
 <CascadingAuthenticationState>
     <Router AppAssembly="@typeof(App).Assembly" AdditionalAssemblies="new[] { typeof(Inventory.UI.Pages.Login).Assembly, typeof(Inventory.Web.Client.Pages.Requests.Index).Assembly }">
         <Found Context="routeData">
-            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
-            </AuthorizeRouteView>
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)"/>
         </Found>
         <NotFound>
             <PageTitle>@GetNotFoundTitle()</PageTitle>
@@ -163,7 +163,18 @@
             await JSRuntime.InvokeVoidAsync("eval", $@"
                 const linkElement = document.getElementById('radzen-theme-css');
                 if (linkElement) {{
-                    linkElement.href = '{newThemeUrl}';
+                    // Smooth theme transition to prevent flashing
+                    linkElement.style.transition = 'opacity 0.2s ease-in-out';
+                    linkElement.style.opacity = '0';
+                    
+                    setTimeout(() => {{
+                        linkElement.href = '{newThemeUrl}';
+                        linkElement.onload = () => {{
+                            linkElement.style.opacity = '1';
+                        }};
+                    }}, 100);
+                }} else {{
+                    console.warn('radzen-theme-css element not found');
                 }}
             ");
             
