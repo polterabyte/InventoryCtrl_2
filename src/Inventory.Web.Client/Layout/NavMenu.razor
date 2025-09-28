@@ -1,4 +1,6 @@
 ﻿@using Blazored.LocalStorage
+@using Inventory.Shared.Resources
+@using Microsoft.Extensions.Localization
 @using Radzen
 @using Radzen.Blazor
 @using Microsoft.AspNetCore.Components.Routing
@@ -7,11 +9,12 @@
 @inject IAuthService AuthService
 @inject NavigationManager Navigation
 @inject ILocalStorageService LocalStorage
+@inject IStringLocalizer<SharedResources> Localizer
 
 <div class="sidebar-nav-container">
     <div class="sidebar-scroll">
         <nav class="sidebar-nav">
-            @foreach (var link in mainLinks)
+            @foreach (var link in GetMainLinks())
             {
                 <NavLink class="sidebar-link"
                          href="@link.Path"
@@ -25,9 +28,9 @@
         <AuthorizeView Roles="Admin">
             <Authorized>
                 <div class="sidebar-section">
-                    <span class="sidebar-section__title">Администрирование</span>
+                    <span class="sidebar-section__title">@Localizer["Navigation.Administration"]</span>
                     <nav class="sidebar-nav sidebar-nav--sub">
-                        @foreach (var link in adminLinks)
+                        @foreach (var link in GetAdminLinks())
                         {
                             <NavLink class="sidebar-link sidebar-link--sub"
                                      href="@link.Path"
@@ -43,7 +46,7 @@
     </div>
 
     <div class="sidebar-footer">
-        <RadzenButton Text="Выйти"
+        <RadzenButton Text="@Localizer[\"Action.Logout\"]"
                       Icon="logout"
                       ButtonStyle="ButtonStyle.Danger"
                       Variant="Variant.Outlined"
@@ -54,21 +57,21 @@
 </div>
 
 @code {
-    private readonly NavLinkItem[] mainLinks =
+    private NavLinkItem[] GetMainLinks() => new[]
     {
-        new("Главная", "home", "/", NavLinkMatch.All),
-        new("Каталог", "inventory_2", "products"),
-        new("Склады", "warehouse", "warehouses"),
-        new("Заявки", "assignment", "requests"),
-        new("Отчеты", "insights", "reports")
+        new(Localizer["Navigation.Home"], "home", "/", NavLinkMatch.All),
+        new(Localizer["Navigation.Catalog"], "inventory_2", "products"),
+        new(Localizer["Navigation.Warehouses"], "warehouse", "warehouses"),
+        new(Localizer["Navigation.Requests"], "assignment", "requests"),
+        new(Localizer["Navigation.Reports"], "insights", "reports")
     };
 
-    private readonly NavLinkItem[] adminLinks =
+    private NavLinkItem[] GetAdminLinks() => new[]
     {
-        new("Справочники", "settings", "admin/reference-data"),
-        new("Пользователи", "group", "admin/users"),
-        new("Аудит", "list_alt", "admin/audit-logs"),
-        new("Отладка", "bug_report", "debug")
+        new(Localizer["Navigation.ReferenceData"], "settings", "admin/reference-data"),
+        new(Localizer["Navigation.Users"], "group", "admin/users"),
+        new(Localizer["Navigation.Audit"], "list_alt", "admin/audit-logs"),
+        new(Localizer["Navigation.Debug"], "bug_report", "debug")
     };
 
     private async Task LogoutAsync()

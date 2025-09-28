@@ -1,13 +1,16 @@
 @page "/"
 @attribute [Authorize]
-
 @using System.Security.Claims
 @using Inventory.UI.Utilities
+@using Inventory.Shared.Components
+@using Inventory.Shared.Resources
+@using Microsoft.Extensions.Localization
+@inherits LocalizedComponentBase
 
 @inject IDashboardService DashboardService
 @inject NavigationManager NavigationManager
 
-<PageTitle>Home</PageTitle>
+<PageTitle>@GetString("Navigation.Home")</PageTitle>
 
 <AuthorizeView Context="authState">
     <Authorized Context="authContext">
@@ -22,11 +25,11 @@
                                     Style="font-size:2.5rem; color:var(--rz-primary);" />
                         <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
                             <RadzenText TextStyle="TextStyle.H5">
-                                Привет, @GetUserDisplayName(authContext.User)!
+                                @GetString("Greeting.Hello", GetUserDisplayName(authContext.User))
                             </RadzenText>
                             <RadzenText TextStyle="TextStyle.Body2"
                                         Style="color: var(--rz-text-secondary);">
-                                Следите за ключевыми показателями и управляйте складом в режиме реального времени.
+                                @GetString("Dashboard.Welcome")
                             </RadzenText>
                         </RadzenStack>
                     </RadzenStack>
@@ -36,45 +39,45 @@
                                 AlignItems="AlignItems.Center"
                                 JustifyContent="JustifyContent.SpaceBetween"
                                 class="section-header">
-                    <RadzenText TextStyle="TextStyle.H6">Ключевые показатели</RadzenText>
+                    <RadzenText TextStyle="TextStyle.H6">@GetString("Dashboard.KeyMetrics")</RadzenText>
                 </RadzenStack>
 
                 <RadzenRow Class="dashboard-kpi-grid g-3">
                     <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnThirdSize">
-                        <StatsWidget Label="Всего товаров"
+                        <StatsWidget Label="@GetString(\"Stats.TotalProducts\")"
                                         Value="@dashboardStats.TotalProducts"
                                         Icon="inventory_2"
                                         CardClass="primary" />
                     </RadzenColumn>
                     <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnThirdSize">
-                        <StatsWidget Label="Категории"
+                        <StatsWidget Label="@GetString(\"Stats.Categories\")"
                                         Value="@dashboardStats.TotalCategories"
                                         Icon="category"
                                         CardClass="info" />
                     </RadzenColumn>
                     <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnThirdSize">
-                        <StatsWidget Label="Производители"
+                        <StatsWidget Label="@GetString(\"Stats.Manufacturers\")"
                                         Value="@dashboardStats.TotalManufacturers"
                                         Icon="precision_manufacturing"
                                         CardClass="success" />
                     </RadzenColumn>
                     <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnThirdSize">
-                        <StatsWidget Label="Склады"
+                        <StatsWidget Label="@GetString(\"Stats.Warehouses\")"
                                         Value="@dashboardStats.TotalWarehouses"
                                         Icon="storefront"
                                         CardClass="primary" />
                     </RadzenColumn>
                     <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnThirdSize">
-                        <StatsWidget Label="Низкий остаток"
+                        <StatsWidget Label="@GetString(\"Stats.LowStock\")"
                                         Value="@dashboardStats.LowStockProducts"
-                                        SubLabel="требуют пополнения"
+                                        SubLabel="@GetString(\"Stats.LowStockSubLabel\")"
                                         Icon="warning_amber"
                                         CardClass="warning" />
                     </RadzenColumn>
                     <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnThirdSize">
-                        <StatsWidget Label="Нет в наличии"
+                        <StatsWidget Label="@GetString(\"Stats.OutOfStock\")"
                                         Value="@dashboardStats.OutOfStockProducts"
-                                        SubLabel="нужно заказать"
+                                        SubLabel="@GetString(\"Stats.OutOfStockSubLabel\")"
                                         Icon="remove_shopping_cart"
                                         CardClass="danger" />
                     </RadzenColumn>
@@ -96,12 +99,12 @@
                                      AlignItems="AlignItems.Center"
                                      Gap="0.5rem">
                             <RadzenIcon Icon="bolt" Style="color:var(--rz-primary);" />
-                            <RadzenText TextStyle="TextStyle.H6">Быстрые действия</RadzenText>
+                            <RadzenText TextStyle="TextStyle.H6">@GetString("Dashboard.QuickActions")</RadzenText>
                         </RadzenStack>
 
                         <RadzenRow Class="quick-actions-grid g-3">
                             <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnQuarterSize">
-                                <RadzenButton Text="Добавить товар"
+                                <RadzenButton Text="@GetString(\"Action.AddProduct\")"
                                               Icon="add_circle"
                                               ButtonStyle="ButtonStyle.Primary"
                                               Variant="Variant.Filled"
@@ -110,7 +113,7 @@
                                               @onclick="NavigateToProducts" />
                             </RadzenColumn>
                             <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnQuarterSize">
-                                <RadzenButton Text="Приход товара"
+                                <RadzenButton Text="@GetString(\"Action.ProductIncome\")"
                                               Icon="arrow_downward"
                                               ButtonStyle="ButtonStyle.Success"
                                               Variant="Variant.Filled"
@@ -119,7 +122,7 @@
                                               @onclick="NavigateToProducts" />
                             </RadzenColumn>
                             <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnQuarterSize">
-                                <RadzenButton Text="Расход товара"
+                                <RadzenButton Text="@GetString(\"Action.ProductExpense\")"
                                               Icon="arrow_upward"
                                               ButtonStyle="ButtonStyle.Warning"
                                               Variant="Variant.Filled"
@@ -128,7 +131,7 @@
                                               @onclick="NavigateToProducts" />
                             </RadzenColumn>
                             <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnQuarterSize">
-                                <RadzenButton Text="Отчеты"
+                                <RadzenButton Text="@GetString(\"Action.Reports\")"
                                               Icon="description"
                                               ButtonStyle="ButtonStyle.Info"
                                               Variant="Variant.Filled"
@@ -160,7 +163,7 @@
     private static string GetUserDisplayName(ClaimsPrincipal user)
     {
         var name = user.Identity?.Name;
-        return string.IsNullOrWhiteSpace(name) ? "администратор" : name!;
+        return string.IsNullOrWhiteSpace(name) ? "administrator" : name!;
     }
 
     private void NavigateToProducts()

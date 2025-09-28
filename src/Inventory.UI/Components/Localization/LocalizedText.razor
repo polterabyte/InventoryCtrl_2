@@ -1,0 +1,59 @@
+@using Inventory.Shared.Resources
+@using Microsoft.Extensions.Localization
+@using Radzen
+@using Radzen.Blazor
+@inject IStringLocalizer<SharedResources> Localizer
+
+@if (!string.IsNullOrWhiteSpace(Key))
+{
+    @if (TextStyle.HasValue)
+    {
+        <RadzenText TextStyle="TextStyle.Value" Class="@Class" Style="@Style">
+            @GetLocalizedContent()
+        </RadzenText>
+    }
+    else if (!string.IsNullOrWhiteSpace(Class) || !string.IsNullOrWhiteSpace(Style))
+    {
+        <span class="@Class" style="@Style">
+            @GetLocalizedContent()
+        </span>
+    }
+    else
+    {
+        @GetLocalizedContent()
+    }
+}
+
+@code {
+    /// <summary>
+    /// The resource key to localize
+    /// </summary>
+    [Parameter, EditorRequired] public string Key { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Optional format arguments for the localized string
+    /// </summary>
+    [Parameter] public object[]? Arguments { get; set; }
+    
+    /// <summary>
+    /// Optional CSS class to apply to the text
+    /// </summary>
+    [Parameter] public string? Class { get; set; }
+    
+    /// <summary>
+    /// Optional inline style to apply to the text
+    /// </summary>
+    [Parameter] public string? Style { get; set; }
+    
+    /// <summary>
+    /// Text style for Radzen components
+    /// </summary>
+    [Parameter] public Radzen.TextStyle? TextStyle { get; set; }
+    
+    private string GetLocalizedContent()
+    {
+        return Arguments?.Length > 0 
+            ? Localizer[Key, Arguments] 
+            : Localizer[Key];
+    }
+}

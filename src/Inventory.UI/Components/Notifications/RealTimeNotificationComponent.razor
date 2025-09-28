@@ -21,7 +21,7 @@
                     ShowIcon="true"
                     AllowClose="false">
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                <RadzenIcon Icon="wifi" Style="color: var(--rz-success);" />
+                <RadzenIcon Icon="wifi" Class="connection-status-icon" />
                 <RadzenText TextStyle="TextStyle.Body2">Real-time notifications active</RadzenText>
             </RadzenStack>
         </RadzenAlert>
@@ -46,7 +46,7 @@
                         AllowClose="true"
                         Close="DismissSignInBanner">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                    <RadzenIcon Icon="wifi_off" Style="color: var(--rz-danger);" />
+                    <RadzenIcon Icon="wifi_off" Class="connection-status-icon--error" />
                     <RadzenText TextStyle="TextStyle.Body2">Sign in to enable notifications</RadzenText>
                 </RadzenStack>
             </RadzenAlert>
@@ -57,7 +57,7 @@
                         ShowIcon="true"
                         AllowClose="false">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                    <RadzenIcon Icon="wifi_off" Style="color: var(--rz-danger);" />
+                    <RadzenIcon Icon="wifi_off" Class="connection-status-icon--error" />
                     <RadzenText TextStyle="TextStyle.Body2">Real-time notifications offline</RadzenText>
                 </RadzenStack>
             </RadzenAlert>
@@ -70,13 +70,13 @@
         <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
             @foreach (var notification in Notifications.Take(MaxVisibleNotifications))
             {
-                <RadzenCard Style="@GetNotificationCardStyle(notification.Type)">
+                <RadzenCard Class="@GetNotificationClass(notification.Type)">
                     <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
                         <!-- Header -->
                         <RadzenStack Orientation="Orientation.Horizontal"
                                    AlignItems="AlignItems.Center"
                                    JustifyContent="JustifyContent.SpaceBetween">
-                            <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">
+                            <RadzenText TextStyle="TextStyle.Body1" Class="notification-title">
                                 @notification.Title
                             </RadzenText>
                             <RadzenButton Icon="close"
@@ -87,7 +87,7 @@
                         </RadzenStack>
 
                         <!-- Message -->
-                        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary);">
+                        <RadzenText TextStyle="TextStyle.Body2" Class="notification-message">
                             @notification.Message
                         </RadzenText>
 
@@ -98,11 +98,11 @@
                                          Size="ButtonSize.Small"
                                          ButtonStyle="ButtonStyle.Primary"
                                          Variant="Variant.Outlined"
-                                         Style="align-self: flex-start;" />
+                                         Class="notification-action" />
                         }
 
                         <!-- Meta -->
-                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary); align-self: flex-end;">
+                        <RadzenText TextStyle="TextStyle.Caption" Class="notification-meta">
                             @notification.CreatedAt.ToString("HH:mm")
                         </RadzenText>
                     </RadzenStack>
@@ -354,26 +354,16 @@
 
     private string GetNotificationClass(string type)
     {
-        return type?.ToUpper() switch
+        var baseClass = "notification-card";
+        var typeClass = type?.ToUpper() switch
         {
-            "SUCCESS" => "notification-success",
-            "WARNING" => "notification-warning",
-            "ERROR" => "notification-error",
-            "INFO" => "notification-info",
-            _ => "notification-info"
+            "SUCCESS" => "notification-card--success",
+            "WARNING" => "notification-card--warning",
+            "ERROR" => "notification-card--error",
+            "INFO" => "notification-card--info",
+            _ => "notification-card--info"
         };
-    }
-
-    private string GetNotificationCardStyle(string type)
-    {
-        return type?.ToUpper() switch
-        {
-            "SUCCESS" => "border-left: 4px solid var(--rz-success);",
-            "WARNING" => "border-left: 4px solid var(--rz-warning);",
-            "ERROR" => "border-left: 4px solid var(--rz-danger);",
-            "INFO" => "border-left: 4px solid var(--rz-info);",
-            _ => "border-left: 4px solid var(--rz-info);"
-        };
+        return $"{baseClass} {typeClass}";
     }
 
     public async Task SubscribeToNotificationType(string notificationType)

@@ -1,8 +1,10 @@
 @using Inventory.Shared.DTOs
+@using Inventory.Shared.Components
 @using Radzen
 @using Radzen.Blazor
+@inherits LocalizedComponentBase
 
-<RadzenCard class="mb-3">
+<RadzenCard class="@GetCardCssClass()" Style="@Style">
     <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
         <!-- Product info section -->
         <RadzenStack Orientation="Orientation.Vertical" class="flex-grow-1">
@@ -10,13 +12,13 @@
 
             <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
                 <RadzenText TextStyle="TextStyle.Body2">
-                    <strong>SKU:</strong> @Product.SKU
+                    <strong>@GetString("Product.SKU"):</strong> @Product.SKU
                 </RadzenText>
                 <RadzenText TextStyle="TextStyle.Body2">
-                    <strong>Категория:</strong> @Product.CategoryName
+                    <strong>@GetString("Product.Category"):</strong> @Product.CategoryName
                 </RadzenText>
                 <RadzenText TextStyle="TextStyle.Body2">
-                    <strong>Производитель:</strong> @Product.ManufacturerName
+                    <strong>@GetString("Product.Manufacturer"):</strong> @Product.ManufacturerName
                 </RadzenText>
             </RadzenStack>
 
@@ -30,14 +32,14 @@
 
         <!-- Stock and actions section -->
         <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.End" Gap="0.5rem">
-            <RadzenBadge Text="@($"{Product.Quantity} {Product.UnitOfMeasureSymbol}")"
+            <RadzenBadge Text="@GetStockText()"
                         BadgeStyle="@GetStockBadgeStyle()"
                         Style="font-size: 0.875rem;" />
 
             @if (Product.MinStock > 0 || Product.MaxStock > 0)
             {
                 <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary);">
-                    Мин: @Product.MinStock | Макс: @Product.MaxStock
+                    @GetString("Product.MinMax", Product.MinStock, Product.MaxStock)
                 </RadzenText>
             }
 
@@ -47,7 +49,7 @@
                              Variant="Variant.Outlined"
                              Size="ButtonSize.Small"
                              Click="() => OnEdit.InvokeAsync(Product)"
-                             title="Изменить" />
+                             title="@GetString(\"Action.Edit\")" />
 
                 @if (ShowDeleteButton)
                 {
@@ -56,7 +58,7 @@
                                  Variant="Variant.Outlined"
                                  Size="ButtonSize.Small"
                                  Click="() => OnDelete.InvokeAsync(Product)"
-                                 title="Удалить" />
+                                 title="@GetString(\"Action.Delete\")" />
                 }
             </RadzenStack>
         </RadzenStack>
@@ -64,10 +66,43 @@
 </RadzenCard>
 
 @code {
-    [Parameter] public ProductDto Product { get; set; } = new();
+    /// <summary>
+    /// The product data to display
+    /// </summary>
+    [Parameter, EditorRequired] public ProductDto Product { get; set; } = new();
+    
+    /// <summary>
+    /// Whether to show the delete button
+    /// </summary>
     [Parameter] public bool ShowDeleteButton { get; set; } = true;
+    
+    /// <summary>
+    /// Event callback when the edit button is clicked
+    /// </summary>
     [Parameter] public EventCallback<ProductDto> OnEdit { get; set; }
+    
+    /// <summary>
+    /// Event callback when the delete button is clicked
+    /// </summary>
     [Parameter] public EventCallback<ProductDto> OnDelete { get; set; }
+    
+    /// <summary>
+    /// Additional CSS classes
+    /// </summary>
+    [Parameter] public string? CssClass { get; set; }
+    
+    /// <summary>
+    /// Additional inline styles
+    /// </summary>
+    [Parameter] public string? Style { get; set; }
+
+    private string GetCardCssClass()
+    {
+        var classes = new List<string> { "mb-3" };
+        if (!string.IsNullOrWhiteSpace(CssClass))
+            classes.Add(CssClass);
+        return string.Join(" ", classes);
+    }
 
     private BadgeStyle GetStockBadgeStyle()
     {
@@ -76,5 +111,10 @@
         if (Product.Quantity >= Product.MaxStock)
             return BadgeStyle.Warning;
         return BadgeStyle.Success;
+    }
+    
+    private string GetStockText()
+    {
+        return $"{FormatNumber(Product.Quantity)} {Product.UnitOfMeasureSymbol}";
     }
 }

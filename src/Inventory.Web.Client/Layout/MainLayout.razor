@@ -1,11 +1,17 @@
 @inherits LayoutComponentBase
 @using Microsoft.AspNetCore.Components.Authorization
 @using Inventory.UI.Components.Notifications
-@using Inventory.UI.Components
+@using Inventory.UI.Components.Shared
+@using Inventory.UI.Components.Localization
 @using Inventory.UI.Utilities
 @using Inventory.Web.Client.Components
+@using Inventory.Shared.Components
+@using Inventory.Shared.Resources
+@using Microsoft.Extensions.Localization
 @using Radzen
 @using Radzen.Blazor
+
+@inject IStringLocalizer<SharedResources> Localizer
 
 <AuthorizeView>
     <Authorized Context="userContext">
@@ -33,7 +39,7 @@
                                       Variant="Variant.Text"
                                       Size="ButtonSize.Medium"
                                       Class="sidebar-toggle"
-                                      AriaLabel="Переключить меню"
+                                      AriaLabel="@Localizer[\"Navigation.ToggleMenu\"]"
                                       Click="ToggleSidebar" />
 
                         <RadzenStack Orientation="Orientation.Horizontal" 
@@ -41,9 +47,10 @@
                                      Gap="@RadzenUi.Gap">
                             <span class="top-bar__greeting">
                                 <RadzenIcon Icon="account_circle" Class="rz-mr-2" />
-                                Привет, @userContext.User.Identity?.Name!
+                                @Localizer["Greeting.Hello", userContext.User.Identity?.Name ?? Localizer["User.DefaultName"]]
                             </span>
                             
+                            <CultureSelector />
                             <ThemeSelector />
                             
                             <a class="top-bar__link" href="https://www.cubytechnologies.com/" target="_blank">About</a>
