@@ -1,0 +1,117 @@
+{
+	"meta": {
+		"generatedAt": "2025-09-26T15:16:45.122Z",
+		"tasksAnalyzed": 13,
+		"totalTasks": 13,
+		"analysisCount": 13,
+		"thresholdScore": 5,
+		"projectName": "Taskmaster",
+		"usedResearch": false
+	},
+	"complexityAnalysis": [
+		{
+			"taskId": 1,
+			"taskTitle": "Design index strategy for inventory tables",
+			"complexityScore": 8,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Break down the task into subtasks for cataloging read/write patterns, profiling queries, proposing composite indexes, documenting selectivity rationale, and creating a measurement plan.",
+			"reasoning": "This task requires in-depth analysis and understanding of database performance, making it complex and requiring multiple steps."
+		},
+		{
+			"taskId": 2,
+			"taskTitle": "Add EF migration for critical indexes",
+			"complexityScore": 6,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Create subtasks for creating the migration, adjusting DbContext configurations, capturing performance metrics, and testing the migration.",
+			"reasoning": "This task involves technical implementation and testing, which adds complexity and necessitates careful execution."
+		},
+		{
+			"taskId": 3,
+			"taskTitle": "Implement quantity reconciliation tooling",
+			"complexityScore": 7,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Divide the task into subtasks for designing the script, comparing quantities, flagging discrepancies, and documenting remediation steps.",
+			"reasoning": "The task involves multiple components and requires careful handling of data discrepancies, contributing to its complexity."
+		},
+		{
+			"taskId": 4,
+			"taskTitle": "Design request domain entities",
+			"complexityScore": 7,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Create subtasks for defining each entity, enhancing existing models, producing ERD, and establishing validation rules.",
+			"reasoning": "Designing domain entities involves multiple considerations and requires a structured approach, increasing its complexity."
+		},
+		{
+			"taskId": 5,
+			"taskTitle": "Create EF migrations for request domain",
+			"complexityScore": 6,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Break down the task into subtasks for adding new tables, updating constraints, seeding adjustments, and updating AppDbContext.",
+			"reasoning": "This task requires careful planning and execution of database changes, which adds to its complexity."
+		},
+		{
+			"taskId": 6,
+			"taskTitle": "Implement request management service",
+			"complexityScore": 8,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Divide the task into subtasks for creating the service layer, enforcing transition rules, coordinating updates, and testing the service.",
+			"reasoning": "Implementing a service layer with multiple states and transitions is complex and requires thorough planning and testing."
+		},
+		{
+			"taskId": 7,
+			"taskTitle": "Expose request API endpoints",
+			"complexityScore": 7,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Create subtasks for adding CRUD endpoints, integrating with existing controllers, updating DTOs, and ensuring authorization policies.",
+			"reasoning": "This task involves multiple integrations and security considerations, which contribute to its complexity."
+		},
+		{
+			"taskId": 10,
+			"taskTitle": "Extend notifications for request workflow",
+			"complexityScore": 6,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Break down the task into subtasks for updating NotificationRule, modifying NotificationService, adjusting SignalR hubs, and testing notifications.",
+			"reasoning": "This task requires changes across multiple components, which adds complexity and necessitates careful integration."
+		},
+		{
+			"taskId": 11,
+			"taskTitle": "Build Blazor UI for request workflow",
+			"complexityScore": 8,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Divide the task into subtasks for creating pages/components, wiring APIs, integrating validation, and implementing real-time updates.",
+			"reasoning": "Building a UI with multiple components and real-time features is complex and requires careful design and implementation."
+		},
+		{
+			"taskId": 12,
+			"taskTitle": "Benchmark view performance before materialization",
+			"complexityScore": 5,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Create subtasks for collecting baseline timings, simulating traffic, and documenting criteria for materialized views.",
+			"reasoning": "While this task involves performance testing, it is less complex than others as it focuses on data collection and analysis."
+		},
+		{
+			"taskId": 13,
+			"taskTitle": "Expand automated tests for requests",
+			"complexityScore": 7,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Break down the task into subtasks for adding unit tests, integration tests, UI tests, and integrating into test pipelines.",
+			"reasoning": "Expanding tests requires thorough coverage and integration, which adds complexity to the task."
+		},
+		{
+			"taskId": 14,
+			"taskTitle": "Plan data migration for existing pending transactions",
+			"complexityScore": 6,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Create subtasks for assessing current transactions, mapping to the new model, preparing migration scripts, and planning rollback strategies.",
+			"reasoning": "Data migration planning involves careful consideration of existing data and potential impacts, contributing to its complexity."
+		},
+		{
+			"taskId": 15,
+			"taskTitle": "Update documentation for request system",
+			"complexityScore": 5,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break down the task into subtasks for refreshing README, updating operational runbooks, and ensuring documentation covers new workflows.",
+			"reasoning": "Updating documentation is important but generally less complex than implementation tasks, making it easier to manage."
+		}
+	]
+}

@@ -41,7 +41,7 @@ public class WebProductGroupApiService : WebBaseApiService, IProductGroupService
         var response = await GetPagedAsync<ProductGroupDto>($"{ApiEndpoints.ProductGroups}{queryString}");
         
         Logger.LogInformation("GetPagedAsync returned {Count} product groups", response?.Data?.Items?.Count ?? 0);
-        return response;
+        return response ?? new PagedApiResponse<ProductGroupDto>();
     }
 
     public async Task<ProductGroupDto?> GetProductGroupByIdAsync(int id)

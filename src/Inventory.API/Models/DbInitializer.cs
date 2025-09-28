@@ -24,7 +24,7 @@ public static class DbInitializer
         await CreateRolesAsync(roleManager);
 
         // Создание администратора
-        await CreateAdminUserAsync(userManager);
+        await CreateAdminUserAsync(userManager, configuration);
         
         // Seed notification data
         await NotificationSeeder.SeedAsync(db);
@@ -48,14 +48,13 @@ public static class DbInitializer
         }
     }
 
-    private static async Task CreateAdminUserAsync(UserManager<User> userManager)
+    private static async Task CreateAdminUserAsync(UserManager<User> userManager, IConfiguration configuration)
     {
         const string adminRole = "Admin";
-        // Prefer IConfiguration; allow ENV to override
-        var configSection = new ConfigurationBuilder().AddEnvironmentVariables().Build();
-        var adminEmail = configSection["ADMIN_EMAIL"];
-        var adminUserName = configSection["ADMIN_USERNAME"];
-        var adminPassword = configSection["ADMIN_PASSWORD"];
+        // Use injected IConfiguration instead of creating new one
+        var adminEmail = configuration["ADMIN_EMAIL"];
+        var adminUserName = configuration["ADMIN_USERNAME"];
+        var adminPassword = configuration["ADMIN_PASSWORD"];
         // Fallbacks to appsettings (Identity:DefaultAdmin)
         adminEmail ??= userManager.Options?.Stores?.ProtectPersonalData == false
             ? null
@@ -120,6 +119,24 @@ public static class DbInitializer
                         string.Join(", ", updateResult.Errors.Select(e => e.Description)));
                 }
             }
+            
+            // Обновляем пароль если он указан в конфигурации
+            if (!string.IsNullOrEmpty(adminPassword))
+            {
+                // Удаляем текущий пароль и устанавливаем новый
+                await userManager.RemovePasswordAsync(adminUser);
+                var passwordResult = await userManager.AddPasswordAsync(adminUser, adminPassword);
+                if (passwordResult.Succeeded)
+                {
+                    Log.Information("Admin password updated for {Email}", adminEmail);
+                }
+                else
+                {
+                    Log.Error("Error updating admin password: {Errors}", 
+                        string.Join(", ", passwordResult.Errors.Select(e => e.Description)));
+                }
+            }
+            
             Log.Information("Admin user already exists: {Email} with username: {Username}", 
                 adminEmail, adminUser.UserName);
         }

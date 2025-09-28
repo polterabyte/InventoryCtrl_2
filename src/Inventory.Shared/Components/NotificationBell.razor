@@ -73,7 +73,7 @@
                     @if (notifications.Count > 5)
                     {
                         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" Style="padding: 1rem;">
-                            <RadzenButton Text="View All (@notifications.Count)"
+                            <RadzenButton Text="@GetViewAllButtonText()"
                                          Size="ButtonSize.Small"
                                          ButtonStyle="ButtonStyle.Light"
                                          Variant="Variant.Outlined"
@@ -199,5 +199,10 @@
             return "background-color: var(--rz-info-lighter); border-left: 3px solid var(--rz-info);";
         }
         return "";
+    }
+
+    private string GetViewAllButtonText()
+    {
+        return $"View All ({notifications.Count})";
     }
 }

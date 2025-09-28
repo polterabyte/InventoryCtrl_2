@@ -259,6 +259,7 @@ builder.Services.AddHttpClient<ILocationService, LocationApiService>(client =>
 });
 
 // Add FluentValidation
+builder.Services.AddScoped<IRequestService, RequestService>();
 builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
 
 // Add Rate Limiting
@@ -434,3 +435,6 @@ app.Run();
 
 // Make Program class public for testing
 public partial class Program { }
+
+
+

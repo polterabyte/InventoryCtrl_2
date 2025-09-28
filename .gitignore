@@ -149,14 +149,12 @@ env.*
 
 # Added by Claude Task Master
 
-# Task files
-# tasks.json
-# tasks/
-
 # Added by Claude Task Master
-tasks.json
-tasks/
 Agents.md
 .windsurfrules
 .ai-temp/
 
+
+# Task files
+# tasks.json
+# tasks/ 

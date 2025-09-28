@@ -180,7 +180,7 @@
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="AuditLogDto" Title="Action">
                             <Template Context="log">
-                                <RadzenBadge Text="@log.ActionType.ToString()" BadgeStyle="@GetActionBadgeStyle(log.ActionType)" />
+                                <RadzenBadge Text="@log.ActionType.ToString()" BadgeStyle="@GetActionBadgeStyle(log.ActionType.ToString())" />
                             </Template>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="AuditLogDto" Title="Entity">
@@ -279,7 +279,6 @@
     private int failedRequests = 0;
     private double averageResponseTime = 0;
     private AuditLogDto? selectedLog;
-    private bool showLogDetails = false;
 
     private AuditLogFilters filters = new()
     {
@@ -430,13 +429,11 @@
     private void ShowLogDetails(AuditLogDto log)
     {
         selectedLog = log;
-        showLogDetails = true;
     }
 
     private void CloseLogDetails()
     {
         selectedLog = null;
-        showLogDetails = false;
     }
 
     private string GetRowClass(AuditLogDto log)
@@ -471,6 +468,26 @@
             >= 400 and < 500 => "bg-warning",
             >= 500 => "bg-danger",
             _ => "bg-secondary"
+        };
+    }
+
+    private BadgeStyle GetActionBadgeStyle(string actionType)
+    {
+        return actionType switch
+        {
+            "Create" => BadgeStyle.Success,
+            "Update" => BadgeStyle.Warning,
+            "Delete" => BadgeStyle.Danger,
+            "Login" => BadgeStyle.Info,
+            "Logout" => BadgeStyle.Secondary,
+            "Read" => BadgeStyle.Primary,
+            "Export" => BadgeStyle.Info,
+            "Import" => BadgeStyle.Info,
+            "Search" => BadgeStyle.Light,
+            "Request" => BadgeStyle.Primary,
+            "Refresh" => BadgeStyle.Light,
+            "Other" => BadgeStyle.Secondary,
+            _ => BadgeStyle.Secondary
         };
     }
 

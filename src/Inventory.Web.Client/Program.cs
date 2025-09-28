@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Components.Web;
+﻿using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Inventory.Web.Client;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -139,3 +139,5 @@ builder.Services.AddScoped<ISignalRService, SignalRService>();
 builder.Services.AddRadzenComponents();
 
 await builder.Build().RunAsync();
+
+

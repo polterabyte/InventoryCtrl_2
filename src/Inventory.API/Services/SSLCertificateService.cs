@@ -375,7 +375,7 @@ namespace Inventory.API.Services
         {
             try
             {
-                var certificate = await ScanCertificateFromFileAsync(domain);
+                var certificate = ScanCertificateFromFile(domain);
                 if (certificate != null)
                 {
                     await UpdateCertificateInDbAsync(certificate);
@@ -489,7 +489,7 @@ namespace Inventory.API.Services
                 await Task.Delay(2000);
 
                 // Load the generated certificate
-                var certificate = await ScanCertificateFromFileAsync(request.Domain);
+                var certificate = ScanCertificateFromFile(request.Domain);
                 if (certificate == null)
                 {
                     throw new Exception("Certificate was generated but could not be loaded");
@@ -504,7 +504,7 @@ namespace Inventory.API.Services
             }
         }
 
-        private async Task<SSLCertificateDto?> ScanCertificateFromFileAsync(string domain)
+        private SSLCertificateDto? ScanCertificateFromFile(string domain)
         {
             try
             {
@@ -538,7 +538,7 @@ namespace Inventory.API.Services
                     IsExpired = now > validTo,
                     IsExpiringSoon = daysUntilExpiration <= 30,
                     CertificateType = "SelfSigned", // This would need to be determined based on issuer
-                    KeySize = cert.PublicKey.Key.KeySize,
+                    KeySize = cert.GetRSAPublicKey()?.KeySize ?? 0,
                     SubjectAlternativeNames = ExtractSubjectAlternativeNames(cert),
                     Environment = "development", // This would need to be determined
                     CreatedAt = File.GetCreationTime(certFile),
@@ -553,7 +553,7 @@ namespace Inventory.API.Services
             }
         }
 
-        private async Task<IEnumerable<SSLCertificateDto>> ScanCertificatesFromFilesAsync()
+        private Task<IEnumerable<SSLCertificateDto>> ScanCertificatesFromFilesAsync()
         {
             var certificates = new List<SSLCertificateDto>();
 
@@ -561,14 +561,14 @@ namespace Inventory.API.Services
             {
                 if (!Directory.Exists(_sslPath))
                 {
-                    return certificates;
+                    return Task.FromResult<IEnumerable<SSLCertificateDto>>(certificates);
                 }
 
                 var certFiles = Directory.GetFiles(_sslPath, "*.crt");
                 foreach (var certFile in certFiles)
                 {
                     var fileName = Path.GetFileNameWithoutExtension(certFile);
-                    var certificate = await ScanCertificateFromFileAsync(fileName);
+                    var certificate = ScanCertificateFromFile(fileName);
                     if (certificate != null)
                     {
                         certificates.Add(certificate);
@@ -580,7 +580,7 @@ namespace Inventory.API.Services
                 _logger.LogError(ex, "Error scanning certificates from files");
             }
 
-            return certificates;
+            return Task.FromResult<IEnumerable<SSLCertificateDto>>(certificates);
         }
 
         private string[] ExtractSubjectAlternativeNames(X509Certificate2 cert)

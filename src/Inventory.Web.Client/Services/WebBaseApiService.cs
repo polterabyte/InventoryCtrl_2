@@ -1,4 +1,4 @@
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 using Inventory.Shared.Constants;
 using Inventory.Shared.DTOs;
 using Microsoft.Extensions.Logging;
@@ -21,13 +21,13 @@ public abstract class WebBaseApiService(
     protected readonly IRequestValidator RequestValidator = requestValidator;
     protected readonly ILogger Logger = logger;
 
-    protected async Task<string> GetApiUrlAsync()
+    public async Task<string> GetApiUrlAsync()
     {
         return await UrlBuilderService.BuildApiUrlAsync(string.Empty);
     }
 
     /// <summary>
-    /// Валидировать объект запроса перед отправкой
+    /// Р’Р°Р»РёРґРёСЂРѕРІР°С‚СЊ РѕР±СЉРµРєС‚ Р·Р°РїСЂРѕСЃР° РїРµСЂРµРґ РѕС‚РїСЂР°РІРєРѕР№
     /// </summary>
     protected async Task<ValidationResult> ValidateRequestAsync<T>(T request)
     {
@@ -75,11 +75,11 @@ public abstract class WebBaseApiService(
     }
 
     /// <summary>
-    /// Выполнить HTTP запрос с валидацией
+    /// Р’С‹РїРѕР»РЅРёС‚СЊ HTTP Р·Р°РїСЂРѕСЃ СЃ РІР°Р»РёРґР°С†РёРµР№
     /// </summary>
     protected async Task<ApiResponse<T>> ExecuteWithValidationAsync<T>(HttpMethod method, string endpoint, object? data = null)
     {
-        // Валидируем данные если они есть
+        // Р’Р°Р»РёРґРёСЂСѓРµРј РґР°РЅРЅС‹Рµ РµСЃР»Рё РѕРЅРё РµСЃС‚СЊ
         if (data != null)
         {
             var validationResult = await ValidateRequestAsync(data);
@@ -90,14 +90,14 @@ public abstract class WebBaseApiService(
             }
         }
 
-        // Выполняем HTTP запрос
+        // Р’С‹РїРѕР»РЅСЏРµРј HTTP Р·Р°РїСЂРѕСЃ
         return await ExecuteHttpRequestAsync<ApiResponse<T>>(method, endpoint, data);
     }
 
     /// <summary>
-    /// Общий метод для выполнения HTTP запросов с устранением дублирования кода
+    /// РћР±С‰РёР№ РјРµС‚РѕРґ РґР»СЏ РІС‹РїРѕР»РЅРµРЅРёСЏ HTTP Р·Р°РїСЂРѕСЃРѕРІ СЃ СѓСЃС‚СЂР°РЅРµРЅРёРµРј РґСѓР±Р»РёСЂРѕРІР°РЅРёСЏ РєРѕРґР°
     /// </summary>
-    protected async Task<T> ExecuteHttpRequestAsync<T>(
+    public async Task<T> ExecuteHttpRequestAsync<T>(
         HttpMethod method, 
         string endpoint, 
         object? data = null,
@@ -108,7 +108,7 @@ public abstract class WebBaseApiService(
             var fullUrl = await BuildFullUrlAsync(endpoint);
             var request = new HttpRequestMessage(method, fullUrl);
             
-            // Добавляем контент для POST/PUT запросов
+            // Р”РѕР±Р°РІР»СЏРµРј РєРѕРЅС‚РµРЅС‚ РґР»СЏ POST/PUT Р·Р°РїСЂРѕСЃРѕРІ
             if (data != null && (method == HttpMethod.Post || method == HttpMethod.Put))
             {
                 request.Content = JsonContent.Create(data);
@@ -122,17 +122,17 @@ public abstract class WebBaseApiService(
                 Logger.LogDebug("Received response with status {StatusCode} for {Method} {FullUrl}", 
                     response.StatusCode, method, fullUrl);
                 
-                // Используем кастомный обработчик или стандартный
+                // РСЃРїРѕР»СЊР·СѓРµРј РєР°СЃС‚РѕРјРЅС‹Р№ РѕР±СЂР°Р±РѕС‚С‡РёРє РёР»Рё СЃС‚Р°РЅРґР°СЂС‚РЅС‹Р№
                 return customResponseHandler != null 
                     ? await customResponseHandler(response)
                     : await HandleStandardResponseAsync<T>(response);
             }
             catch (TokenRefreshedException)
             {
-                // Токен был обновлен, повторяем запрос
+                // РўРѕРєРµРЅ Р±С‹Р» РѕР±РЅРѕРІР»РµРЅ, РїРѕРІС‚РѕСЂСЏРµРј Р·Р°РїСЂРѕСЃ
                 Logger.LogInformation("Token was refreshed, retrying {Method} request to {FullUrl}", method, fullUrl);
                 
-                // Создаем новый запрос с обновленным токеном
+                // РЎРѕР·РґР°РµРј РЅРѕРІС‹Р№ Р·Р°РїСЂРѕСЃ СЃ РѕР±РЅРѕРІР»РµРЅРЅС‹Рј С‚РѕРєРµРЅРѕРј
                 var retryRequest = new HttpRequestMessage(method, fullUrl);
                 if (data != null && (method == HttpMethod.Post || method == HttpMethod.Put))
                 {
@@ -162,7 +162,7 @@ public abstract class WebBaseApiService(
     }
 
     /// <summary>
-    /// Построение полного URL с валидацией и исправлением
+    /// РџРѕСЃС‚СЂРѕРµРЅРёРµ РїРѕР»РЅРѕРіРѕ URL СЃ РІР°Р»РёРґР°С†РёРµР№ Рё РёСЃРїСЂР°РІР»РµРЅРёРµРј
     /// </summary>
     private async Task<string> BuildFullUrlAsync(string endpoint)
     {
@@ -170,7 +170,7 @@ public abstract class WebBaseApiService(
     }
 
     /// <summary>
-    /// Стандартная обработка HTTP ответов
+    /// РЎС‚Р°РЅРґР°СЂС‚РЅР°СЏ РѕР±СЂР°Р±РѕС‚РєР° HTTP РѕС‚РІРµС‚РѕРІ
     /// </summary>
     private async Task<T> HandleStandardResponseAsync<T>(HttpResponseMessage response)
     {
@@ -180,7 +180,7 @@ public abstract class WebBaseApiService(
             
             if (!apiResponse.Success)
             {
-                // Проверяем, нужно ли повторить запрос после обновления токена
+                // РџСЂРѕРІРµСЂСЏРµРј, РЅСѓР¶РЅРѕ Р»Рё РїРѕРІС‚РѕСЂРёС‚СЊ Р·Р°РїСЂРѕСЃ РїРѕСЃР»Рµ РѕР±РЅРѕРІР»РµРЅРёСЏ С‚РѕРєРµРЅР°
                 if (apiResponse.ErrorMessage == "TOKEN_REFRESHED")
                 {
                     Logger.LogInformation("Token was refreshed, retrying original request");
@@ -245,7 +245,7 @@ public abstract class WebBaseApiService(
     {
         try
         {
-            // Валидируем данные перед отправкой
+            // Р’Р°Р»РёРґРёСЂСѓРµРј РґР°РЅРЅС‹Рµ РїРµСЂРµРґ РѕС‚РїСЂР°РІРєРѕР№
             var validationResult = await ValidateRequestAsync(data);
             if (!validationResult.IsValid)
             {
@@ -253,7 +253,7 @@ public abstract class WebBaseApiService(
                 return ApiResponse<T>.CreateValidationFailure(validationResult.Errors.Select(e => e.Message).ToList());
             }
 
-            // Для PUT запросов нужен специальный обработчик ответа
+            // Р”Р»СЏ PUT Р·Р°РїСЂРѕСЃРѕРІ РЅСѓР¶РµРЅ СЃРїРµС†РёР°Р»СЊРЅС‹Р№ РѕР±СЂР°Р±РѕС‚С‡РёРє РѕС‚РІРµС‚Р°
             return await ExecuteHttpRequestAsync<ApiResponse<T>>(HttpMethod.Put, endpoint, data, 
                 async response =>
                 {
@@ -305,3 +305,5 @@ public abstract class WebBaseApiService(
         }
     }
 }
+
+

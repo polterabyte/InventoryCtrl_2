@@ -113,15 +113,16 @@
         await LoadNotifications();
     }
 
-    private async Task LoadNotifications()
+    private Task LoadNotifications()
     {
         // This would typically call the API to get notifications
         // For now, we'll use empty list
         notifications = new List<NotificationDto>();
         unreadCount = 0;
+        return Task.CompletedTask;
     }
 
-    private async Task MarkAsRead(int notificationId)
+    private Task MarkAsRead(int notificationId)
     {
         var notification = notifications.FirstOrDefault(n => n.Id == notificationId);
         if (notification != null)
@@ -130,9 +131,10 @@
             unreadCount = notifications.Count(n => !n.IsRead);
             StateHasChanged();
         }
+        return Task.CompletedTask;
     }
 
-    private async Task MarkAllAsRead()
+    private Task MarkAllAsRead()
     {
         foreach (var notification in notifications)
         {
@@ -140,9 +142,10 @@
         }
         unreadCount = 0;
         StateHasChanged();
+        return Task.CompletedTask;
     }
 
-    private async Task DeleteNotification(int notificationId)
+    private Task DeleteNotification(int notificationId)
     {
         var notification = notifications.FirstOrDefault(n => n.Id == notificationId);
         if (notification != null)
@@ -151,6 +154,7 @@
             unreadCount = notifications.Count(n => !n.IsRead);
             StateHasChanged();
         }
+        return Task.CompletedTask;
     }
 
     private string GetNotificationCardStyle(NotificationDto notification)

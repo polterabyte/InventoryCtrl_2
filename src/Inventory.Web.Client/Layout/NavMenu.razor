@@ -1,4 +1,4 @@
-@using Blazored.LocalStorage
+﻿@using Blazored.LocalStorage
 @using Radzen
 @using Radzen.Blazor
 @using Microsoft.AspNetCore.Components.Routing
@@ -57,8 +57,9 @@
     private readonly NavLinkItem[] mainLinks =
     {
         new("Главная", "home", "/", NavLinkMatch.All),
-        new("Товары", "inventory_2", "products"),
+        new("Каталог", "inventory_2", "products"),
         new("Склады", "warehouse", "warehouses"),
+        new("Заявки", "assignment", "requests"),
         new("Отчеты", "insights", "reports")
     };
 
@@ -103,4 +104,5 @@
 
     private sealed record NavLinkItem(string Text, string Icon, string Path, NavLinkMatch Match = NavLinkMatch.Prefix);
 }
+
 

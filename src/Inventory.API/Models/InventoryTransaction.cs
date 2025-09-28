@@ -22,6 +22,10 @@ public class InventoryTransaction
     public User User { get; set; } = null!;
     public int? LocationId { get; set; }
     public Location? Location { get; set; }
+    public int? RequestId { get; set; }
+    public Request? Request { get; set; }
+    public decimal? UnitPrice { get; set; }
+    public decimal? TotalPrice { get; set; }
     public string? Description { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }

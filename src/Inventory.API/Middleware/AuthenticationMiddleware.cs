@@ -56,7 +56,7 @@ public class AuthenticationMiddleware
             var token = authHeader.Substring("Bearer ".Length).Trim();
             
             // Проверяем валидность токена
-            if (!await ValidateTokenAsync(token))
+            if (!ValidateToken(token))
             {
                 _logger.LogWarning("Invalid token for path: {Path}", context.Request.Path);
                 await HandleUnauthorized(context);
@@ -94,7 +94,7 @@ public class AuthenticationMiddleware
         return staticExtensions.Any(ext => path.Value?.EndsWith(ext, StringComparison.OrdinalIgnoreCase) == true);
     }
 
-    private async Task<bool> ValidateTokenAsync(string token)
+    private bool ValidateToken(string token)
     {
         try
         {

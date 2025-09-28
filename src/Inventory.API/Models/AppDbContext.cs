@@ -178,6 +178,8 @@ namespace Inventory.API.Models
 
         // PushSubscription removed with VAPID/Web Push
     }
+           public DbSet<Request> Requests { get; set; } = null!;
+           public DbSet<RequestHistory> RequestHistories { get; set; } = null!;
            public DbSet<Product> Products { get; set; } = null!;
            public DbSet<Category> Categories { get; set; } = null!;
            public DbSet<Warehouse> Warehouses { get; set; } = null!;
