@@ -11,7 +11,7 @@
 <RadzenTheme Theme="@currentTheme" @rendermode="InteractiveAuto" />
 
 @* Accessibility helpers for screen readers *@
-<AccessibilityHelpers />
+<AccessibilityHelpers @ref="accessibilityHelpers" />
 
 <CascadingAuthenticationState>
     <Router AppAssembly="@typeof(App).Assembly" AdditionalAssemblies="new[] { typeof(Inventory.UI.Pages.Login).Assembly, typeof(Inventory.Web.Client.Pages.Requests.Index).Assembly }">
@@ -39,6 +39,7 @@
 
 @code {
     private string currentTheme = "material";
+    private AccessibilityHelpers? accessibilityHelpers;
     
     protected override async Task OnInitializedAsync()
     {
@@ -87,8 +88,11 @@
                 _ => "English"
             };
             
-            await AccessibilityHelpers.AnnounceAsync(JSRuntime, 
-                GetLanguageChangeAnnouncement(cultureName), true);
+            if (accessibilityHelpers != null)
+            {
+                await accessibilityHelpers.AnnounceAsync(
+                    GetLanguageChangeAnnouncement(cultureName), true);
+            }
             
             StateHasChanged();
         });

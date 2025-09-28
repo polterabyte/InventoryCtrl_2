@@ -1,4 +1,3 @@
-
 # Feature-Specific Technical Design
 
 <cite>
@@ -13,7 +12,18 @@
 - [InventoryTransaction.cs](file://src/Inventory.API/Models/InventoryTransaction.cs)
 - [CreateProductDtoValidator.cs](file://src/Inventory.API/Validators/CreateProductDtoValidator.cs)
 - [CreateTransactionDtoValidator.cs](file://src/Inventory.API/Validators/CreateTransactionDtoValidator.cs)
+- [ThemeService.cs](file://src/Inventory.Web.Client/Services/ThemeService.cs) - *Updated in recent commit*
+- [app.css](file://src/Inventory.Web.Assets/wwwroot/css/app.css) - *Updated in recent commit*
+- [LowStockAlert.razor.css](file://src/Inventory.UI/Components/Dashboard/LowStockAlert.razor.css) - *Updated in recent commit*
 </cite>
+
+## Update Summary
+**Changes Made**   
+- Updated documentation to reflect implementation of Radzen theme support and CSS modernization
+- Removed references to obsolete compact UI styles
+- Added documentation for theme management service and available themes
+- Updated UI integration points to reflect new styling approach
+- Removed outdated information about compact UI implementation
 
 ## Table of Contents
 1. [Product Management](#product-management)
@@ -50,10 +60,6 @@ Service-->>API : Audit confirmation
 API-->>UI : 201 Created with Product data
 ```
 
-**Diagram sources**
-- [ProductController.cs](file://src/Inventory.API/Controllers/ProductController.cs#L13-L719)
-- [CreateProductDtoValidator.cs](file://src/Inventory.API/Validators/CreateProductDtoValidator.cs#L1-L63)
-
 **Section sources**
 - [ProductController.cs](file://src/Inventory.API/Controllers/ProductController.cs#L13-L719)
 - [Product.cs](file://src/Inventory.API/Models/Product.cs#L4-L35)
@@ -88,10 +94,6 @@ API->>Service : Update product UpdatedAt timestamp
 Service-->>API : Update confirmation
 API-->>UI : 201 Created with transaction data
 ```
-
-**Diagram sources**
-- [TransactionController.cs](file://src/Inventory.API/Controllers/TransactionController.cs#L9-L372)
-- [CreateTransactionDtoValidator.cs](file://src/Inventory.API/Validators/CreateTransactionDtoValidator.cs#L1-L41)
 
 **Section sources**
 - [TransactionController.cs](file://src/Inventory.API/Controllers/TransactionController.cs#L9-L372)
@@ -132,10 +134,6 @@ Service->>User : Send notification via preferred channel
 end
 ```
 
-**Diagram sources**
-- [NotificationRuleEngine.cs](file://src/Inventory.API/Services/NotificationRuleEngine.cs#L10-L271)
-- [ProductController.cs](file://src/Inventory.API/Controllers/ProductController.cs#L13-L719)
-
 **Section sources**
 - [NotificationRuleEngine.cs](file://src/Inventory.API/Services/NotificationRuleEngine.cs#L10-L271)
 - [ProductController.cs](file://src/Inventory.API/Controllers/ProductController.cs#L13-L719)
@@ -168,10 +166,6 @@ LogError --> [*]
 SkipLogging --> [*]
 ```
 
-**Diagram sources**
-- [AuditService.cs](file://src/Inventory.API/Services/AuditService.cs#L12-L604)
-- [ProductController.cs](file://src/Inventory.API/Controllers/ProductController.cs#L13-L719)
-
 **Section sources**
 - [AuditService.cs](file://src/Inventory.API/Services/AuditService.cs#L12-L604)
 - [ProductController.cs](file://src/Inventory.API/Controllers/ProductController.cs#L13-L719)
@@ -188,8 +182,67 @@ Edge cases include handling concurrent user modifications, preventing self-delet
 
 ```mermaid
 flowchart TD
-    Start([HTTP Request]) --> Authenticate["Authenticate User"]
-    Authenticate --> IsAdmin{"User is Admin?"}
-    IsAdmin -->|No| ReturnForbidden["Return 403 Forbidden"]
-    IsAdmin -->|Yes| ProcessRequest["Process Request"]
-    ProcessRequest --> CreateUser["
+Start([HTTP Request]) --> Authenticate["Authenticate User"]
+Authenticate --> IsAdmin{"User is Admin?"}
+IsAdmin --> |No| ReturnForbidden["Return 403 Forbidden"]
+IsAdmin --> |Yes| ProcessRequest["Process Request"]
+ProcessRequest --> CreateUser["Create User"]
+ProcessRequest --> UpdateUser["Update User"]
+ProcessRequest --> DeleteUser["Delete User"]
+ProcessRequest --> ChangePassword["Change Password"]
+CreateUser --> ValidateInput["Validate User Data"]
+UpdateUser --> ValidateInput
+DeleteUser --> ConfirmNotSelf["Confirm Not Self-Deletion"]
+ChangePassword --> ValidatePassword["Validate Password Strength"]
+ValidateInput --> CheckUniqueness["Check Username/Email Uniqueness"]
+CheckUniqueness --> SaveToDatabase["Save to Database"]
+SaveToDatabase --> LogActivity["Log Audit Entry"]
+LogActivity --> ReturnSuccess["Return 200 OK"]
+ConfirmNotSelf --> |Yes| DeleteFromDatabase["Delete User"]
+DeleteFromDatabase --> LogActivity
+ValidatePassword --> |Valid| UpdatePassword["Update Password Hash"]
+UpdatePassword --> LogActivity
+ReturnForbidden --> End
+ReturnSuccess --> End
+End([End])
+```
+
+**Section sources**
+- [UserController.cs](file://src/Inventory.API/Controllers/UserController.cs#L15-L432)
+- [User.cs](file://src/Inventory.API/Models/User.cs#L8-L42)
+- [AuthController.cs](file://src/Inventory.API/Controllers/AuthController.cs#L22-L189)
+
+## Dashboard Analytics
+
+The Dashboard Analytics feature provides real-time insights into inventory status, recent activities, and key performance indicators. The architecture has been updated to implement Radzen theme support with modern CSS styling, replacing the obsolete compact UI styles. The domain model includes various DTOs for dashboard data such as stock levels, transaction volumes, and user activity metrics.
+
+The service layer implementation in `DashboardController` retrieves aggregated data from multiple sources including product on-hand quantities, recent transactions, and user activity logs. The controller methods are optimized for performance with efficient database queries and appropriate indexing on frequently accessed fields. Business rules include role-based access control where only authorized users can view certain dashboard components.
+
+API endpoints include GET /api/dashboard/summary for overall system status, GET /api/dashboard/low-stock for products below minimum threshold, GET /api/dashboard/recent-activity for recent transactions and user actions, and GET /api/dashboard/stats for key performance metrics. The UI integration points include the main dashboard view, low stock alerts, recent activity panels, and statistical widgets that consume these endpoints.
+
+The styling has been modernized with the implementation of Radzen themes, providing a consistent and professional appearance across the application. The `ThemeService` manages theme selection and persistence, supporting multiple themes including Material Design, Standard, Humanistic, and Software themes in both light and dark variants. The service detects system preferences for dark mode and automatically applies the appropriate theme variant.
+
+```mermaid
+sequenceDiagram
+participant UI as Dashboard UI
+participant API as DashboardController
+participant Service as DashboardService
+participant DB as Database
+UI->>API : GET /api/dashboard/summary
+API->>Service : GetDashboardSummaryAsync()
+Service->>DB : Query product on-hand quantities
+DB-->>Service : Current stock data
+Service->>DB : Query recent transactions
+DB-->>Service : Recent transaction data
+Service->>DB : Query user activity
+DB-->>Service : User activity data
+Service-->>API : Aggregated dashboard data
+API-->>UI : Return dashboard summary
+UI->>UI : Render dashboard with Radzen theme
+```
+
+**Section sources**
+- [DashboardController.cs](file://src/Inventory.API/Controllers/DashboardController.cs#L12-L288)
+- [ThemeService.cs](file://src/Inventory.Web.Client/Services/ThemeService.cs#L11-L191)
+- [app.css](file://src/Inventory.Web.Assets/wwwroot/css/app.css)
+- [LowStockAlert.razor.css](file://src/Inventory.UI/Components/Dashboard/LowStockAlert.razor.css)

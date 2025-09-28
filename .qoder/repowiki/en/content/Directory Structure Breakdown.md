@@ -2,13 +2,24 @@
 
 <cite>
 **Referenced Files in This Document**   
-- [ProductController.cs](file://src/Inventory.API/Controllers/ProductController.cs)
-- [WebProductApiService.cs](file://src/Inventory.Web.Client/Services/WebProductApiService.cs)
-- [IApiUrlService.cs](file://src/Inventory.Shared/Interfaces/IApiUrlService.cs)
-- [ApiUrlService.cs](file://src/Inventory.Web.Client/Services/ApiUrlService.cs)
-- [ProductDto.cs](file://src/Inventory.Shared/DTOs/ProductDto.cs)
-- [Product.cs](file://src/Inventory.Shared/Models/Product.cs)
+- [ProductController.cs](file://src\Inventory.API\Controllers\ProductController.cs)
+- [WebProductApiService.cs](file://src\Inventory.Web.Client\Services\WebProductApiService.cs)
+- [IApiUrlService.cs](file://src\Inventory.Shared\Interfaces\IApiUrlService.cs)
+- [ApiUrlService.cs](file://src\Inventory.Web.Client\Services\ApiUrlService.cs)
+- [ProductDto.cs](file://src\Inventory.Shared\DTOs\ProductDto.cs)
+- [Product.cs](file://src\Inventory.Shared\Models\Product.cs)
+- [LocalizedComponentBase.cs](file://src\Inventory.Shared\Components\LocalizedComponentBase.cs)
+- [UI-REFACTORING-SUMMARY.md](file://docs\UI-REFACTORING-SUMMARY.md) - *Updated in recent commit*
+- [testing-checklist.md](file://docs\testing-checklist.md) - *Added in recent commit*
 </cite>
+
+## Update Summary
+**Changes Made**   
+- Updated documentation to reflect UI refactoring efforts and multilingual implementation
+- Added new sections on localization infrastructure and component architecture
+- Enhanced description of Inventory.UI and Inventory.Shared components
+- Updated diagram sources to include new localization components
+- Added references to new documentation files related to UI refactoring
 
 ## Top-Level Directory Overview
 
@@ -47,7 +58,7 @@ This project implements the backend API service using ASP.NET Core. It follows a
 The API implements standard CRUD operations with proper error handling, authentication, and audit logging. For example, the `ProductController` handles product management operations with comprehensive validation and security checks.
 
 **Section sources**
-- [ProductController.cs](file://src/Inventory.API/Controllers/ProductController.cs#L13-L719)
+- [ProductController.cs](file://src\Inventory.API\Controllers\ProductController.cs#L13-L719)
 
 ### Inventory.Web.Client - Frontend Blazor Application
 This project implements the frontend user interface using Blazor WebAssembly. It contains the client-side application that interacts with the backend API:
@@ -60,7 +71,7 @@ This project implements the frontend user interface using Blazor WebAssembly. It
 The client uses a service-oriented approach where each API controller has a corresponding client service that handles communication with the backend.
 
 **Section sources**
-- [WebProductApiService.cs](file://src/Inventory.Web.Client/Services/WebProductApiService.cs#L7-L86)
+- [WebProductApiService.cs](file://src\Inventory.Web.Client\Services\WebProductApiService.cs#L7-L86)
 
 ### Inventory.Shared - Cross-Platform Code Library
 This critical component enables code sharing between frontend and backend by containing types that are used by both applications:
@@ -70,18 +81,31 @@ This critical component enables code sharing between frontend and backend by con
 - **Interfaces**: Service contracts that define API capabilities
 - **Constants**: Shared constants like API endpoint definitions
 - **Enums**: Shared enumeration types
+- **Components**: Base components for localization and theming
+- **Resources**: Localization resource files for multilingual support
 
-This shared library eliminates code duplication and ensures consistency between client and server. For example, the `ProductDto` class is used by both the API controller for response serialization and the web client for deserialization.
+This shared library eliminates code duplication and ensures consistency between client and server. For example, the `ProductDto` class is used by both the API controller for response serialization and the web client for deserialization. The `LocalizedComponentBase` class provides a foundation for all components requiring multilingual support.
 
 **Section sources**
-- [ProductDto.cs](file://src/Inventory.Shared/DTOs/ProductDto.cs#L0-L138)
-- [Product.cs](file://src/Inventory.Shared/Models/Product.cs#L0-L27)
+- [ProductDto.cs](file://src\Inventory.Shared\DTOs\ProductDto.cs#L0-L138)
+- [Product.cs](file://src\Inventory.Shared\Models\Product.cs#L0-L27)
+- [LocalizedComponentBase.cs](file://src\Inventory.Shared\Components\LocalizedComponentBase.cs#L0-L150)
 
 ### Inventory.UI - UI Component Library
-This project contains reusable UI components and styling that can be shared across different parts of the application. It includes CSS files for various UI elements like buttons, cards, forms, and navigation components, organized by functionality.
+This project contains reusable UI components and styling that can be shared across different parts of the application. Following the recent UI refactoring, this library has been restructured to support multilingual capabilities:
+
+- **Components**: Organized by functionality (Dashboard, Notifications, Shared)
+- **Localization**: Dedicated components for multilingual support (CultureSelector, LocalizedText, LocalizedButton)
+- **CSS**: Component-scoped styles with language-specific adaptations
+- **Accessibility**: Components designed with WCAG 2.1 AA compliance
+
+The component architecture now follows a standardized interface pattern with consistent parameter naming and event handling, improving reusability and maintainability.
+
+**Section sources**
+- [UI-REFACTORING-SUMMARY.md](file://docs\UI-REFACTORING-SUMMARY.md#L1-L349) - *Updated in recent commit*
 
 ### Inventory.Web.Assets - Static Web Resources
-This directory contains static web assets such as CSS stylesheets and JavaScript files that are used by the frontend application. The CSS files are organized into components and themes, supporting both light and dark mode interfaces.
+This directory contains static web assets such as CSS stylesheets and JavaScript files that are used by the frontend application. The CSS files are organized into components and themes, supporting both light and dark mode interfaces. The design system includes language-aware variables to handle text expansion in different languages.
 
 ## Code Reuse and Component Relationships
 
@@ -153,11 +177,49 @@ WebProductApiService --> IApiUrlService : "depends on"
 ```
 
 **Diagram sources**
-- [IApiUrlService.cs](file://src/Inventory.Shared/Interfaces/IApiUrlService.cs#L2-L8)
-- [ApiUrlService.cs](file://src/Inventory.Web.Client/Services/ApiUrlService.cs#L9-L357)
-- [ProductController.cs](file://src/Inventory.API/Controllers/ProductController.cs#L13-L719)
-- [WebProductApiService.cs](file://src/Inventory.Web.Client/Services/WebProductApiService.cs#L7-L86)
-- [ProductDto.cs](file://src/Inventory.Shared/DTOs/ProductDto.cs#L0-L138)
+- [IApiUrlService.cs](file://src\Inventory.Shared\Interfaces\IApiUrlService.cs#L2-L8)
+- [ApiUrlService.cs](file://src\Inventory.Web.Client\Services\ApiUrlService.cs#L9-L357)
+- [ProductController.cs](file://src\Inventory.API\Controllers\ProductController.cs#L13-L719)
+- [WebProductApiService.cs](file://src\Inventory.Web.Client\Services\WebProductApiService.cs#L7-L86)
+- [ProductDto.cs](file://src\Inventory.Shared\DTOs\ProductDto.cs#L0-L138)
+
+### Localization Architecture
+The recent UI refactoring introduced a comprehensive localization system that enables multilingual support across the application:
+
+```mermaid
+graph TB
+App[App.razor] --> MainLayout[MainLayout.razor]
+MainLayout --> NavMenu[NavMenu.razor]
+MainLayout --> Content[Content Area]
+Content --> Dashboard[Dashboard Components]
+Content --> Products[Product Components]
+Content --> Forms[Form Components]
+Dashboard --> StatsWidget[StatsWidget]
+Dashboard --> RecentActivity[RecentActivity]
+Dashboard --> LowStockAlert[LowStockAlert]
+Products --> ProductCard[ProductCard]
+Products --> ProductList[ProductList]
+subgraph Localization
+CultureSelector[CultureSelector]
+LocalizedText[LocalizedText]
+LocalizedButton[LocalizedButton]
+LocalizedModal[LocalizedModal]
+end
+subgraph Base
+LocalizedComponentBase[LocalizedComponentBase]
+AccessibilityHelpers[AccessibilityHelpers]
+end
+CultureSelector --> CultureService[CultureService]
+CultureService --> LocalStorage[LocalStorage]
+CultureService --> Resources[SharedResources.resx]
+LocalizedComponentBase --> CultureService
+LocalizedComponentBase --> Resources
+```
+
+**Diagram sources**
+- [LocalizedComponentBase.cs](file://src\Inventory.Shared\Components\LocalizedComponentBase.cs#L0-L150)
+- [UI-REFACTORING-SUMMARY.md](file://docs\UI-REFACTORING-SUMMARY.md#L1-L349)
+- [testing-checklist.md](file://docs\testing-checklist.md#L1-L319)
 
 ### API Communication Flow
 The application follows a clear request-response pattern between client and server. When a user interacts with the frontend, the following sequence occurs:
@@ -181,8 +243,8 @@ UI->>UI : Update UI with product data
 ```
 
 **Diagram sources**
-- [WebProductApiService.cs](file://src/Inventory.Web.Client/Services/WebProductApiService.cs#L7-L86)
-- [ProductController.cs](file://src/Inventory.API/Controllers/ProductController.cs#L13-L719)
+- [WebProductApiService.cs](file://src\Inventory.Web.Client\Services\WebProductApiService.cs#L7-L86)
+- [ProductController.cs](file://src\Inventory.API\Controllers\ProductController.cs#L13-L719)
 
 ## Navigation and Feature Location Guide
 
@@ -193,6 +255,7 @@ To locate functionality within the codebase, follow these patterns:
 2. **Frontend Components**: Check `src/Inventory.Web.Client/Services/` for API client services and `src/Inventory.UI/` for reusable UI components
 3. **Data Models**: Find shared models in `src/Inventory.Shared/Models/` and API-specific DTOs in `src/Inventory.Shared/DTOs/`
 4. **Validation Logic**: Examine `src/Inventory.API/Validators/` for request validation rules
+5. **Localization Resources**: Find multilingual strings in `src/Inventory.Shared/Resources/SharedResources.resx` and language-specific files
 
 ### Adding New Features
 When adding new functionality, follow the established patterns:
@@ -201,6 +264,7 @@ When adding new functionality, follow the established patterns:
 2. **New Frontend Feature**: Add a new service in `src/Inventory.Web.Client/Services/` that implements the appropriate interface from `Inventory.Shared/Interfaces/`
 3. **New Shared Type**: Add new models or DTOs to `src/Inventory.Shared/` to ensure both client and server have access
 4. **Database Changes**: Use Entity Framework migrations in `src/Inventory.API/Migrations/` for schema modifications
+5. **New UI Component**: Create components in `src/Inventory.UI/` following the standardized architecture and inherit from `LocalizedComponentBase` for multilingual support
 
 ### Modifying Existing Functionality
 When modifying existing features, consider the impact across layers:
@@ -208,5 +272,6 @@ When modifying existing features, consider the impact across layers:
 1. **API Changes**: Update the controller, ensure corresponding DTOs in `Inventory.Shared` are modified if needed, and update client services
 2. **UI Changes**: Modify components in `src/Inventory.UI/` or `src/Inventory.Web.Client/` and ensure styling in `src/Inventory.Web.Assets/` is updated
 3. **Shared Logic**: Update interfaces in `Inventory.Shared/Interfaces/` and ensure all implementations are updated accordingly
+4. **Localization Updates**: When adding new user-facing text, add entries to `SharedResources.resx` and corresponding language files
 
 The directory structure supports this workflow by keeping related components physically close while maintaining clear separation of concerns through project boundaries.

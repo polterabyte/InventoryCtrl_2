@@ -16,24 +16,34 @@
 - [DashboardDto.cs](file://src/Inventory.Shared/DTOs/DashboardDto.cs)
 - [ICustomAuthenticationStateProvider.cs](file://src/Inventory.Shared/Interfaces/ICustomAuthenticationStateProvider.cs)
 - [Program.cs](file://src/Inventory.Web.Client/Program.cs)
+- [LocalizedComponentBase.cs](file://src/Inventory.Shared/Components/LocalizedComponentBase.cs) - *Updated in recent commit*
 </cite>
+
+## Update Summary
+**Changes Made**   
+- Added new section on Localization Testing Strategy to address the updated LocalizedComponentBase base class
+- Updated Introduction to reflect new accessibility and localization components
+- Enhanced Test Base Context Setup section with information about localization support
+- Added reference to LocalizedComponentBase.cs in document sources
+- Removed mention of AccessibilityHelpers as it was not found in the codebase
 
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [Test Base Context Setup](#test-base-context-setup)
-3. [Dashboard Component Testing](#dashboard-component-testing)
+3. [Localization Testing Strategy](#localization-testing-strategy)
+4. [Dashboard Component Testing](#dashboard-component-testing)
    - [Low Stock Alert Validation](#low-stock-alert-validation)
    - [Stats Widget Verification](#stats-widget-verification)
-4. [Layout and Navigation Testing](#layout-and-navigation-testing)
-5. [User Interaction Testing](#user-interaction-testing)
-6. [Form Input and Management Testing](#form-input-and-management-testing)
-7. [Real-Time Update Validation](#real-time-update-validation)
-8. [Accessibility and Responsive Behavior](#accessibility-and-responsive-behavior)
-9. [Authentication and API Mocking Strategy](#authentication-and-api-mocking-strategy)
-10. [Conclusion](#conclusion)
+5. [Layout and Navigation Testing](#layout-and-navigation-testing)
+6. [User Interaction Testing](#user-interaction-testing)
+7. [Form Input and Management Testing](#form-input-and-management-testing)
+8. [Real-Time Update Validation](#real-time-update-validation)
+9. [Accessibility and Responsive Behavior](#accessibility-and-responsive-behavior)
+10. [Authentication and API Mocking Strategy](#authentication-and-api-mocking-strategy)
+11. [Conclusion](#conclusion)
 
 ## Introduction
-This document details the component testing strategy for the Blazor-based inventory management application, focusing on UI component isolation using bUnit. The tests validate rendering behavior, event handling, state changes, accessibility, responsive design, and integration with services. Key dashboard components, navigation flows, user interactions, and real-time notifications are thoroughly tested to ensure reliability and usability.
+This document details the component testing strategy for the Blazor-based inventory management application, focusing on UI component isolation using bUnit. The tests validate rendering behavior, event handling, state changes, accessibility, responsive design, and integration with services. Key dashboard components, navigation flows, user interactions, and real-time notifications are thoroughly tested to ensure reliability and usability. Recent updates have introduced enhanced localization capabilities through the LocalizedComponentBase class, which requires specific testing considerations for multi-language support.
 
 ## Test Base Context Setup
 The component testing framework is built on a consistent base class that provides a standardized test context for all component tests. This ensures uniform service registration and simplifies test initialization.
@@ -52,6 +62,46 @@ ComponentTestBase --|> TestContext : inherits
 
 **Section sources**
 - [TestBase.cs](file://test/Inventory.ComponentTests/TestBase.cs#L7-L28)
+
+## Localization Testing Strategy
+The application now features enhanced localization support through the LocalizedComponentBase class, which serves as a foundation for all localized components. This base class provides caching mechanisms, culture change debouncing, and optimized resource loading to ensure high performance during language switching.
+
+```mermaid
+sequenceDiagram
+participant Test as Test
+participant Component as LocalizedComponent
+participant CultureService as ICultureService
+participant Localizer as IStringLocalizer
+Test->>CultureService : Set culture to 'ru-RU'
+CultureService->>Component : Fire CultureChanged event
+Component->>Component : Clear localization cache
+Component->>Component : Debounce StateHasChanged (100ms)
+Component->>Localizer : Request localized strings
+Localizer-->>Component : Return Russian translations
+Component-->>Test : Render UI with localized content
+```
+
+**Diagram sources**
+- [LocalizedComponentBase.cs](file://src/Inventory.Shared/Components/LocalizedComponentBase.cs#L13-L203)
+- [ICultureService.cs](file://src/Inventory.Shared/Interfaces/ICultureService.cs#L4-L15)
+
+**Section sources**
+- [LocalizedComponentBase.cs](file://src/Inventory.Shared/Components/LocalizedComponentBase.cs#L13-L203)
+
+The LocalizedComponentBase class implements several key features for efficient localization:
+- **Caching**: Stores resolved strings to prevent repeated lookups for the same key and culture combination
+- **Debouncing**: Prevents excessive re-renders during rapid culture switching by using a 100ms timer
+- **Memory Management**: Automatically clears cache when culture changes to prevent memory leaks
+- **Performance Optimization**: Uses ConcurrentDictionary for thread-safe access across components
+- **Resource Fallback**: Returns the original key if a translation is not found, aiding development
+
+When testing localized components, verify that:
+1. Text content changes appropriately when the culture is updated
+2. Number, date, and currency formatting follows locale-specific rules
+3. Right-to-left languages are properly supported with appropriate CSS direction
+4. Text overflow is handled for longer translations in different languages
+5. Accessibility labels are properly localized
+6. The component re-renders efficiently after culture changes without performance degradation
 
 ## Dashboard Component Testing
 The dashboard components are critical for providing users with key inventory insights. These components are tested for correct data rendering, visual presentation, and handling of various data states.
@@ -267,4 +317,4 @@ L --> N[Test Redirect to Login]
 - [Program.cs](file://src/Inventory.Web.Client/Program.cs#L1-L146)
 
 ## Conclusion
-The component testing strategy for InventoryCtrl_2 provides comprehensive coverage of UI components using bUnit for isolated testing. The approach validates rendering behavior, event handling, state changes, and integration with services through mocking. Key components including dashboard widgets, navigation flows, and interactive elements are thoroughly tested for functionality, accessibility, and responsiveness. The consistent test base setup and service mocking strategy enable reliable and maintainable tests that ensure the quality and reliability of the Blazor application's user interface.
+The component testing strategy for InventoryCtrl_2 provides comprehensive coverage of UI components using bUnit for isolated testing. The approach validates rendering behavior, event handling, state changes, and integration with services through mocking. Key components including dashboard widgets, navigation flows, and interactive elements are thoroughly tested for functionality, accessibility, and responsiveness. The consistent test base setup and service mocking strategy enable reliable and maintainable tests that ensure the quality and reliability of the Blazor application's user interface. With the introduction of the LocalizedComponentBase class, the testing strategy now includes specific considerations for localization, ensuring that the application functions correctly across different languages and cultural settings while maintaining performance through caching and debouncing mechanisms.

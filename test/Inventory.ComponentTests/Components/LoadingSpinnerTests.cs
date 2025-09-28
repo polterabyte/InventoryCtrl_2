@@ -1,6 +1,7 @@
 using Bunit;
 using FluentAssertions;
 using Inventory.UI.Components;
+using Inventory.UI.Components.Shared;
 using Xunit;
 
 namespace Inventory.ComponentTests.Components;

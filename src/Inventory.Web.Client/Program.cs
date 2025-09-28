@@ -17,6 +17,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Localization;
 using System.Globalization;
 using Radzen;
+using Microsoft.AspNetCore.Localization;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -156,7 +157,7 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
 });
 
 // Register Theme service
-builder.Services.AddScoped<Inventory.Web.Client.Services.Interfaces.IThemeService, Inventory.Web.Client.Services.ThemeService>();
+builder.Services.AddScoped<IThemeService, Inventory.Web.Client.Services.ThemeService>();
 
 // Register Culture service
 builder.Services.AddScoped<ICultureService, CultureService>();

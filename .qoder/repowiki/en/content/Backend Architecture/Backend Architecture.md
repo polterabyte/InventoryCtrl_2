@@ -1,21 +1,28 @@
-
 # Backend Architecture
 
 <cite>
 **Referenced Files in This Document**   
-- [CategoryController.cs](file://src/Inventory.API/Controllers/CategoryController.cs)
-- [AppDbContext.cs](file://src/Inventory.API/Models/AppDbContext.cs)
-- [AuditMiddleware.cs](file://src/Inventory.API/Middleware/AuditMiddleware.cs)
-- [AuthenticationMiddleware.cs](file://src/Inventory.API/Middleware/AuthenticationMiddleware.cs)
-- [GlobalExceptionMiddleware.cs](file://src/Inventory.API/Middleware/GlobalExceptionMiddleware.cs)
-- [Program.cs](file://src/Inventory.API/Program.cs)
-- [AuditService.cs](file://src/Inventory.API/Services/AuditService.cs)
-- [NotificationService.cs](file://src/Inventory.API/Services/NotificationService.cs)
-- [CreateCategoryDtoValidator.cs](file://src/Inventory.API/Validators/CreateCategoryDtoValidator.cs)
-- [IProductService.cs](file://src/Inventory.Shared/Interfaces/IProductService.cs)
-- [Category.cs](file://src/Inventory.API/Models/Category.cs)
-- [CategoryDto.cs](file://src/Inventory.Shared/DTOs/CategoryDto.cs)
+- [CategoryController.cs](file://src/Inventory.API/Controllers/CategoryController.cs) - *Updated in recent commit*
+- [AppDbContext.cs](file://src/Inventory.API/Models/AppDbContext.cs) - *Updated in recent commit*
+- [AuditMiddleware.cs](file://src/Inventory.API/Middleware/AuditMiddleware.cs) - *Updated in recent commit*
+- [AuthenticationMiddleware.cs](file://src/Inventory.API/Middleware/AuthenticationMiddleware.cs) - *Updated in recent commit*
+- [GlobalExceptionMiddleware.cs](file://src/Inventory.API/Middleware/GlobalExceptionMiddleware.cs) - *Updated in recent commit*
+- [Program.cs](file://src/Inventory.API/Program.cs) - *Updated in recent commit*
+- [AuditService.cs](file://src/Inventory.API/Services/AuditService.cs) - *Updated in recent commit*
+- [NotificationService.cs](file://src/Inventory.API/Services/NotificationService.cs) - *Updated in recent commit*
+- [CreateCategoryDtoValidator.cs](file://src/Inventory.API/Validators/CreateCategoryDtoValidator.cs) - *Updated in recent commit*
+- [IProductService.cs](file://src/Inventory.Shared/Interfaces/IProductService.cs) - *Updated in recent commit*
+- [Category.cs](file://src/Inventory.API/Models/Category.cs) - *Updated in recent commit*
+- [CategoryDto.cs](file://src/Inventory.Shared/DTOs/CategoryDto.cs) - *Updated in recent commit*
 </cite>
+
+## Update Summary
+**Changes Made**   
+- Updated documentation to reflect comprehensive API documentation and audit functionality enhancements
+- Added new sections for API endpoints and audit API documentation
+- Refreshed code examples and diagrams to match current implementation
+- Updated file references with commit annotations
+- Enhanced source tracking system with detailed file references
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -255,7 +262,7 @@ AuthMiddleware-->>Client : 401 Unauthorized
 end
 ```
 
-**Diagram sources**
+**Section sources**
 - [AuthenticationMiddleware.cs](file://src/Inventory.API/Middleware/AuthenticationMiddleware.cs)
 - [CategoryController.cs](file://src/Inventory.API/Controllers/CategoryController.cs)
 
@@ -280,7 +287,7 @@ AuditService-->>AuditMiddleware : Confirmation
 AuditMiddleware-->>Client : HTTP Response
 ```
 
-**Diagram sources**
+**Section sources**
 - [AuditMiddleware.cs](file://src/Inventory.API/Middleware/AuditMiddleware.cs)
 - [AuditService.cs](file://src/Inventory.API/Services/AuditService.cs)
 - [AppDbContext.cs](file://src/Inventory.API/Models/AppDbContext.cs)
@@ -303,7 +310,7 @@ style D fill:#f66,stroke:#333
 style I fill:#f66,stroke:#333
 ```
 
-**Diagram sources**
+**Section sources**
 - [GlobalExceptionMiddleware.cs](file://src/Inventory.API/Middleware/GlobalExceptionMiddleware.cs)
 
 ## Dependency Analysis
@@ -324,7 +331,7 @@ style B fill:#6f9,stroke:#333
 style C fill:#9cf,stroke:#333
 ```
 
-**Diagram sources**
+**Section sources**
 - [Program.cs](file://src/Inventory.API/Program.cs)
 - [AppDbContext.cs](file://src/Inventory.API/Models/AppDbContext.cs)
 
@@ -340,4 +347,5 @@ Common issues in the system typically relate to authentication, authorization, o
 
 **Section sources**
 - [AuthenticationMiddleware.cs](file://src/Inventory.API/Middleware/AuthenticationMiddleware.cs)
-- [Global
+- [GlobalExceptionMiddleware.cs](file://src/Inventory.API/Middleware/GlobalExceptionMiddleware.cs)
+- [CreateCategoryDtoValidator.cs](file://src/Inventory.API/Validators/CreateCategoryDtoValidator.cs)

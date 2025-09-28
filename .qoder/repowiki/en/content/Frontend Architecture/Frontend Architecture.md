@@ -1,4 +1,3 @@
-
 # Frontend Architecture
 
 <cite>
@@ -22,7 +21,20 @@
 - [app.css](file://src/Inventory.Web.Assets/wwwroot/css/app.css)
 - [light.css](file://src/Inventory.Web.Assets/wwwroot/css/themes/light.css)
 - [dark.css](file://src/Inventory.Web.Assets/wwwroot/css/themes/dark.css)
+- [LocalizedComponentBase.cs](file://src/Inventory.Shared/Components/LocalizedComponentBase.cs) - *Updated in recent commit*
+- [AccessibilityHelpers.razor](file://src/Inventory.Shared/Components/AccessibilityHelpers.razor) - *Added in recent commit*
+- [ICultureService.cs](file://src/Inventory.Shared/Interfaces/ICultureService.cs) - *Updated in recent commit*
+- [LowStockAlert.razor.css](file://src/Inventory.UI/Components/Dashboard/LowStockAlert.razor.css) - *Updated in recent commit*
 </cite>
+
+## Update Summary
+**Changes Made**   
+- Added comprehensive localization infrastructure section covering the new LocalizedComponentBase implementation
+- Added accessibility architecture section detailing the AccessibilityHelpers component and ARIA implementation
+- Updated core components section to include new localization and accessibility services
+- Enhanced architecture overview diagram to show localization and accessibility layers
+- Updated project structure to reflect new component organization
+- Added new section on internationalization and accessibility best practices
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -30,16 +42,18 @@
 3. [Core Components](#core-components)
 4. [Architecture Overview](#architecture-overview)
 5. [Detailed Component Analysis](#detailed-component-analysis)
-6. [Dependency Analysis](#dependency-analysis)
-7. [Performance Considerations](#performance-considerations)
-8. [Troubleshooting Guide](#troubleshooting-guide)
-9. [Conclusion](#conclusion)
+6. [Localization and Internationalization](#localization-and-internationalization)
+7. [Accessibility Architecture](#accessibility-architecture)
+8. [Dependency Analysis](#dependency-analysis)
+9. [Performance Considerations](#performance-considerations)
+10. [Troubleshooting Guide](#troubleshooting-guide)
+11. [Conclusion](#conclusion)
 
 ## Introduction
-This document provides comprehensive architectural documentation for the frontend implementation of InventoryCtrl_2, a Blazor WebAssembly application. The system follows a component-based UI design with robust integration to backend services through API clients. The architecture emphasizes resilience, security, and maintainability through layered service abstractions, centralized error handling, and JWT-based authentication. The frontend leverages Blazor's component model for UI development, implements comprehensive state management through service classes, and uses a modular approach to HTTP communication with automatic token refresh and retry mechanisms.
+This document provides comprehensive architectural documentation for the frontend implementation of InventoryCtrl_2, a Blazor WebAssembly application. The system follows a component-based UI design with robust integration to backend services through API clients. The architecture emphasizes resilience, security, maintainability, accessibility, and internationalization through layered service abstractions, centralized error handling, and JWT-based authentication. The frontend leverages Blazor's component model for UI development, implements comprehensive state management through service classes, and uses a modular approach to HTTP communication with automatic token refresh and retry mechanisms. Recent updates have significantly enhanced the localization infrastructure and accessibility features, making the application fully accessible and available in multiple languages.
 
 ## Project Structure
-The frontend architecture is organized into several key directories within the Inventory.Web.Client project. The Services directory contains API clients and utility services, while Layout components define the application's structural UI elements. The application uses a separate Web.Assets project for shared CSS resources and themes. The Program.cs file configures dependency injection and service registration, establishing the foundation for the application's modular architecture.
+The frontend architecture is organized into several key directories within the Inventory.Web.Client project. The Services directory contains API clients and utility services, while Layout components define the application's structural UI elements. The application uses a separate Web.Assets project for shared CSS resources and themes. The Program.cs file configures dependency injection and service registration, establishing the foundation for the application's modular architecture. The Inventory.Shared project now contains critical cross-cutting components for localization and accessibility that are used throughout the application.
 
 ```mermaid
 graph TB
@@ -56,23 +70,35 @@ J[wwwroot/css] --> K[Themes]
 J --> L[Components]
 J --> M[Application]
 end
+subgraph "Inventory.Shared"
+N[Components] --> O[Localization]
+N --> P[Accessibility]
+Q[Interfaces] --> R[ICultureService]
+S[Services] --> T[Shared API Services]
+end
 I --> A
 I --> E
 J --> A
+N --> A
+Q --> A
 ```
 
 **Diagram sources**
 - [Program.cs](file://src/Inventory.Web.Client/Program.cs)
 - [MainLayout.razor.css](file://src/Inventory.Web.Client/Layout/MainLayout.razor.css)
 - [app.css](file://src/Inventory.Web.Assets/wwwroot/css/app.css)
+- [LocalizedComponentBase.cs](file://src/Inventory.Shared/Components/LocalizedComponentBase.cs)
+- [AccessibilityHelpers.razor](file://src/Inventory.Shared/Components/AccessibilityHelpers.razor)
 
 **Section sources**
 - [Program.cs](file://src/Inventory.Web.Client/Program.cs)
 - [MainLayout.razor.css](file://src/Inventory.Web.Client/Layout/MainLayout.razor.css)
 - [app.css](file://src/Inventory.Web.Assets/wwwroot/css/app.css)
+- [LocalizedComponentBase.cs](file://src/Inventory.Shared/Components/LocalizedComponentBase.cs)
+- [AccessibilityHelpers.razor](file://src/Inventory.Shared/Components/AccessibilityHelpers.razor)
 
 ## Core Components
-The frontend architecture is built around several core components that provide the foundation for API communication, authentication, and state management. The WebApiServiceBase class implements a generic CRUD pattern for entity operations, while ResilientApiService provides retry mechanisms for unreliable network conditions. The InterceptedHttpClient enables request interception for authentication header management, and CustomAuthenticationStateProvider handles user authentication state across the application. RequestValidator ensures data integrity through validation rules, and specialized services like UserManagementService and NotificationApiService provide domain-specific functionality.
+The frontend architecture is built around several core components that provide the foundation for API communication, authentication, state management, localization, and accessibility. The WebApiServiceBase class implements a generic CRUD pattern for entity operations, while ResilientApiService provides retry mechanisms for unreliable network conditions. The InterceptedHttpClient enables request interception for authentication header management, and CustomAuthenticationStateProvider handles user authentication state across the application. RequestValidator ensures data integrity through validation rules, and specialized services like UserManagementService and NotificationApiService provide domain-specific functionality. The newly enhanced localization infrastructure centers around LocalizedComponentBase, which provides automatic culture-aware rendering and string localization with caching. The AccessibilityHelpers component implements comprehensive ARIA support and screen reader announcements for improved accessibility.
 
 **Section sources**
 - [WebApiServiceBase.cs](file://src/Inventory.Web.Client/Services/WebApiServiceBase.cs)
@@ -80,28 +106,41 @@ The frontend architecture is built around several core components that provide t
 - [InterceptedHttpClient.cs](file://src/Inventory.Web.Client/Services/InterceptedHttpClient.cs)
 - [CustomAuthenticationStateProvider.cs](file://src/Inventory.Web.Client/CustomAuthenticationStateProvider.cs)
 - [RequestValidator.cs](file://src/Inventory.Web.Client/Services/RequestValidator.cs)
+- [LocalizedComponentBase.cs](file://src/Inventory.Shared/Components/LocalizedComponentBase.cs)
+- [AccessibilityHelpers.razor](file://src/Inventory.Shared/Components/AccessibilityHelpers.razor)
+- [ICultureService.cs](file://src/Inventory.Shared/Interfaces/ICultureService.cs)
 
 ## Architecture Overview
-The frontend architecture follows a layered approach with clear separation of concerns. At the foundation is the Blazor WebAssembly runtime, which hosts the application and provides component rendering. Above this layer, service classes handle business logic and API communication, while components manage UI presentation and user interaction. The architecture implements a dependency injection pattern for service resolution, with services registered in Program.cs. HTTP requests flow through a chain of responsibility that includes validation, retry logic, authentication header injection, and error handling. The state management approach combines Blazor's built-in authentication state with custom services that maintain application-specific state.
+The frontend architecture follows a layered approach with clear separation of concerns. At the foundation is the Blazor WebAssembly runtime, which hosts the application and provides component rendering. Above this layer, service classes handle business logic and API communication, while components manage UI presentation and user interaction. The architecture implements a dependency injection pattern for service resolution, with services registered in Program.cs. HTTP requests flow through a chain of responsibility that includes validation, retry logic, authentication header injection, and error handling. The state management approach combines Blazor's built-in authentication state with custom services that maintain application-specific state. The localization layer, built on LocalizedComponentBase, automatically handles culture changes and provides cached string localization. The accessibility layer, implemented through AccessibilityHelpers, ensures the application is fully accessible with proper ARIA attributes and screen reader support.
 
 ```mermaid
 graph TD
 A[Blazor WebAssembly Runtime] --> B[UI Components]
 A --> C[Authentication State]
-B --> D[Service Layer]
-D --> E[API Communication]
-E --> F[ResilientApiService]
-E --> G[InterceptedHttpClient]
-G --> H[JwtHttpInterceptor]
-F --> I[ApiHealthService]
-D --> J[State Management Services]
-J --> K[UserManagementService]
-J --> L[NotificationApiService]
-D --> M[Validation Service]
-M --> N[RequestValidator]
-C --> O[CustomAuthenticationStateProvider]
-O --> P[TokenManagementService]
-P --> Q[TokenRefreshService]
+A --> D[Localization Layer]
+A --> E[Accessibility Layer]
+B --> F[Service Layer]
+D --> B
+E --> B
+F --> G[API Communication]
+G --> H[ResilientApiService]
+G --> I[InterceptedHttpClient]
+I --> J[JwtHttpInterceptor]
+H --> K[ApiHealthService]
+F --> L[State Management Services]
+L --> M[UserManagementService]
+L --> N[NotificationApiService]
+F --> O[Validation Service]
+O --> P[RequestValidator]
+C --> Q[CustomAuthenticationStateProvider]
+Q --> R[TokenManagementService]
+R --> S[TokenRefreshService]
+D --> T[LocalizedComponentBase]
+T --> U[ICultureService]
+T --> V[StringLocalizer]
+E --> W[AccessibilityHelpers]
+W --> U
+W --> X[JSRuntime]
 ```
 
 **Diagram sources**
@@ -114,6 +153,9 @@ P --> Q[TokenRefreshService]
 - [NotificationApiService.cs](file://src/Inventory.Shared/Services/NotificationApiService.cs)
 - [TokenManagementService.cs](file://src/Inventory.Web.Client/Services/TokenManagementService.cs)
 - [TokenRefreshService.cs](file://src/Inventory.Web.Client/Services/TokenRefreshService.cs)
+- [LocalizedComponentBase.cs](file://src/Inventory.Shared/Components/LocalizedComponentBase.cs)
+- [ICultureService.cs](file://src/Inventory.Shared/Interfaces/ICultureService.cs)
+- [AccessibilityHelpers.razor](file://src/Inventory.Shared/Components/AccessibilityHelpers.razor)
 
 ## Detailed Component Analysis
 
@@ -291,12 +333,133 @@ State management in the application is handled through specialized service class
 
 ```mermaid
 classDiagram
-    class UserManagementService {
-        +HttpClient _httpClient
-        +IAuthenticationService _authService
-        +IJSRuntime _jsRuntime
-        +IUrlBuilderService _urlBuilderService
-        +ILogger<UserManagementService> _logger
-        +Task~PagedApiResponse~UserDto~~ GetUsersAsync(int page, int pageSize, string? search, string? role)
-        +Task~ApiResponse~UserDto~~ GetUserAsync(string id)
-        +Task~ApiResponse~UserDto
+class UserManagementService {
++HttpClient _httpClient
++IAuthenticationService _authService
++IJSRuntime _jsRuntime
++IUrlBuilderService _urlBuilderService
++ILogger<UserManagementService> _logger
++Task~PagedApiResponse~UserDto~~ GetUsersAsync(int page, int pageSize, string? search, string? role)
++Task~ApiResponse~UserDto~~ GetUserAsync(string id)
++Task~ApiResponse~UserDto~~ CreateUserAsync(CreateUserDto createUserDto)
++Task~ApiResponse~UserDto~~ UpdateUserAsync(string id, UpdateUserDto updateUserDto)
++Task~ApiResponse~bool~~ DeleteUserAsync(string id)
++Task ExportUsersAsync(string format)
+}
+class NotificationApiService {
++HttpClient _httpClient
++IUrlBuilderService _urlBuilderService
++ILogger<NotificationApiService> _logger
++Task~PagedApiResponse~NotificationDto~~ GetNotificationsAsync(int page, int pageSize, bool? unreadOnly)
++Task~ApiResponse~NotificationDto~~ GetNotificationAsync(int id)
++Task~ApiResponse~bool~~ MarkAsReadAsync(int id)
++Task~ApiResponse~bool~~ MarkAllAsReadAsync()
++Task~ApiResponse~NotificationPreferenceDto~~ GetPreferencesAsync()
++Task~ApiResponse~NotificationPreferenceDto~~ UpdatePreferencesAsync(UpdateNotificationPreferenceDto updateDto)
+}
+UserManagementService --> WebUserApiService : implements
+NotificationApiService --> WebNotificationApiService : implements
+```
+
+**Diagram sources**
+- [UserManagementService.cs](file://src/Inventory.Web.Client/Services/UserManagementService.cs)
+- [NotificationApiService.cs](file://src/Inventory.Shared/Services/NotificationApiService.cs)
+
+**Section sources**
+- [UserManagementService.cs](file://src/Inventory.Web.Client/Services/UserManagementService.cs)
+- [NotificationApiService.cs](file://src/Inventory.Shared/Services/NotificationApiService.cs)
+
+## Localization and Internationalization
+The localization architecture has been significantly enhanced with the introduction of a comprehensive infrastructure that supports multiple languages and cultural formats. The core of this system is the LocalizedComponentBase class, which serves as the foundation for all localized components in the application. This abstract base class provides automatic culture change detection, string localization with caching, and cultural formatting for dates, numbers, and currency.
+
+### LocalizedComponentBase Implementation
+The LocalizedComponentBase class extends Blazor's ComponentBase and implements IDisposable to properly manage subscriptions. It uses dependency injection to access IStringLocalizer for resource lookup and ICultureService for culture management. The implementation includes several key features:
+
+- **Automatic Culture Change Detection**: Subscribes to the CultureChanged event from ICultureService to automatically detect when the application culture changes.
+- **Debounced Re-rendering**: Uses a timer-based debounce mechanism to prevent excessive re-renders during rapid culture switches, improving performance.
+- **String Caching**: Maintains a ConcurrentDictionary to cache localized strings, reducing repeated lookups for the same key and culture combination.
+- **Cultural Formatting**: Provides methods for formatting dates, numbers, and currency according to the current culture with built-in caching.
+- **Text Direction Support**: Automatically detects and provides the correct text direction (LTR/RTL) based on the current culture.
+
+```mermaid
+classDiagram
+class LocalizedComponentBase {
++IStringLocalizer<SharedResources> Localizer
++ICultureService CultureService
++ConcurrentDictionary<string, string> _stringCache
++Timer _debounceTimer
++CultureInfo _lastCulture
++void OnCultureChanged(object sender, CultureInfo newCulture)
++string GetString(string key)
++string GetString(string key, params object[] arguments)
++string FormatDate(DateTime date, string? format)
++string FormatNumber(decimal number, string? format)
++string FormatCurrency(decimal amount)
++string TextDirection
++string LanguageCode
++bool IsRightToLeft
++void ClearLocalizationCache()
++void Dispose()
+}
+class ICultureService {
++CultureInfo CurrentCulture
++CultureInfo CurrentUICulture
++Task SetCultureAsync(string culture)
++IEnumerable<CultureInfo> GetSupportedCultures()
++event EventHandler<CultureInfo> CultureChanged
++Task<string> GetPreferredCultureAsync()
+}
+LocalizedComponentBase --> ICultureService : uses
+LocalizedComponentBase --> IStringLocalizer : uses
+```
+
+**Diagram sources**
+- [LocalizedComponentBase.cs](file://src/Inventory.Shared/Components/LocalizedComponentBase.cs)
+- [ICultureService.cs](file://src/Inventory.Shared/Interfaces/ICultureService.cs)
+
+**Section sources**
+- [LocalizedComponentBase.cs](file://src/Inventory.Shared/Components/LocalizedComponentBase.cs)
+- [ICultureService.cs](file://src/Inventory.Shared/Interfaces/ICultureService.cs)
+
+### Cultural Format Handling
+The localization system provides comprehensive support for cultural formatting of various data types. The FormatDate, FormatNumber, and FormatCurrency methods automatically use the current culture's formatting rules, ensuring that dates, numbers, and monetary values are displayed correctly for the user's locale. Each method includes caching to improve performance by avoiding repeated formatting operations for the same values.
+
+```mermaid
+flowchart TD
+Start([FormatCurrency]) --> CheckCache{"Value in cache?"}
+CheckCache --> |Yes| ReturnCached["Return cached formatted value"]
+CheckCache --> |No| FormatValue["Format value using culture-specific rules"]
+FormatValue --> AddToCache["Add formatted value to cache"]
+AddToCache --> ReturnResult["Return formatted value"]
+style Start fill:#f9f,stroke:#333
+style ReturnCached fill:#9f9,stroke:#333
+style ReturnResult fill:#9f9,stroke:#333
+```
+
+**Diagram sources**
+- [LocalizedComponentBase.cs](file://src/Inventory.Shared/Components/LocalizedComponentBase.cs)
+
+**Section sources**
+- [LocalizedComponentBase.cs](file://src/Inventory.Shared/Components/LocalizedComponentBase.cs)
+
+## Accessibility Architecture
+The application's accessibility architecture has been enhanced with the introduction of the AccessibilityHelpers component, which provides comprehensive support for users with disabilities. This component implements ARIA (Accessible Rich Internet Applications) standards and ensures that the application is fully navigable and understandable by screen readers and other assistive technologies.
+
+### AccessibilityHelpers Implementation
+The AccessibilityHelpers component is a Razor component that provides various accessibility features through its code-behind methods and rendered HTML elements. Key features include:
+
+- **Language and Direction Attributes**: Automatically sets the correct lang and dir attributes based on the current culture, helping screen readers pronounce content correctly.
+- **ARIA Live Regions**: Implements polite and assertive live regions for dynamic content updates, allowing screen readers to announce important changes without interrupting the user.
+- **Keyboard Navigation Hints**: Provides culture-specific keyboard navigation instructions to help users understand how to navigate the application.
+- **Screen Reader Announcements**: Offers methods to programmatically announce messages to screen readers, such as loading states and validation errors.
+
+```mermaid
+classDiagram
+    class AccessibilityHelpers {
+        +ICultureService CultureService
+        +IJSRuntime JSRuntime
+        +string GetLangAttribute()
+        +string GetDirAttribute()
+        +string GetLanguageSelectorAriaLabel()
+        +string GetLanguageChangeAnnouncement(string newLanguage)
+        +string

@@ -1,4 +1,3 @@
-
 # Dashboard Analytics
 
 <cite>
@@ -10,7 +9,18 @@
 - [InventoryTransaction.cs](file://src/Inventory.API/Models/InventoryTransaction.cs)
 - [ProductViews.cs](file://src/Inventory.API/Models/ProductViews.cs)
 - [DashboardControllerIntegrationTests.cs](file://test/Inventory.IntegrationTests/Controllers/DashboardControllerIntegrationTests.cs)
+- [LowStockAlert.razor.css](file://src/Inventory.UI/Components/Dashboard/LowStockAlert.razor.css) - *Updated in recent commit*
+- [RecentActivity.razor.css](file://src/Inventory.UI/Components/Dashboard/RecentActivity.razor.css) - *Updated in recent commit*
+- [Home.razor.css](file://src/Inventory.UI/Pages/Home.razor.css) - *Updated in recent commit*
 </cite>
+
+## Update Summary
+**Changes Made**   
+- Updated styling documentation to reflect Radzen theme compatibility changes
+- Added details about responsive design improvements in dashboard components
+- Enhanced source tracking with new CSS files affected by recent theme integration
+- Maintained all existing functional documentation about dashboard data aggregation and statistical calculations
+- Updated file references to include new styling files with appropriate annotations
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -25,7 +35,7 @@
 10. [Common Issues and Solutions](#common-issues-and-solutions)
 
 ## Introduction
-The Dashboard Analytics feature provides a comprehensive overview of inventory system metrics, offering real-time insights into product inventory, warehouse operations, and recent system activity. This document details the implementation of the dashboard data aggregation system, focusing on the DashboardController and its supporting components. The system delivers key performance indicators through optimized database queries and provides actionable insights for inventory management decisions.
+The Dashboard Analytics feature provides a comprehensive overview of inventory system metrics, offering real-time insights into product inventory, warehouse operations, and recent system activity. This document details the implementation of the dashboard data aggregation system, focusing on the DashboardController and its supporting components. The system delivers key performance indicators through optimized database queries and provides actionable insights for inventory management decisions. Recent updates have enhanced the UI components with Radzen theme compatibility while maintaining the robust backend functionality.
 
 ## Dashboard Data Model
 
@@ -268,4 +278,202 @@ style End fill:#4CAF50,stroke:#388E3C
 **Diagram sources**
 - [DashboardController.cs](file://src/Inventory.API/Controllers/DashboardController.cs#L176-L227)
 - [DashboardDto.cs](file://src/Inventory.Shared/DTOs/DashboardDto.cs#L37-L55)
-- [ProductViews.cs](file
+- [ProductViews.cs](file://src/Inventory.API/Models/ProductViews.cs#L10-L14)
+
+**Section sources**
+- [DashboardController.cs](file://src/Inventory.API/Controllers/DashboardController.cs#L176-L227)
+- [DashboardDto.cs](file://src/Inventory.Shared/DTOs/DashboardDto.cs#L37-L55)
+- [ProductViews.cs](file://src/Inventory.API/Models/ProductViews.cs#L10-L14)
+
+## Performance Optimization
+
+The dashboard implementation includes several performance optimizations to ensure responsive user experience even with large datasets:
+
+### Database Query Optimization
+- Uses direct queries against the ProductOnHandView instead of calculating inventory from transactions
+- Implements proper indexing on frequently queried fields (Date, IsActive, CreatedAt)
+- Utilizes CountAsync for aggregate queries to avoid loading unnecessary data
+- Applies Take() limits on list queries to prevent excessive data transfer
+
+### Frontend Styling Performance
+Recent updates have optimized the dashboard component styling for Radzen theme compatibility:
+
+**Low Stock Alert Component**
+- Uses CSS custom properties (var(--rz-border), var(--rz-base-200)) for theme consistency
+- Implements efficient hover effects with minimal re-renders
+- Includes responsive design for mobile devices with optimized touch targets
+
+**Recent Activity Component**
+- Optimized flexbox layout for consistent rendering across devices
+- Theme-aware styling using Radzen CSS variables
+- Responsive design that adapts to different screen sizes
+
+**Dashboard Container**
+- Consistent padding and spacing using theme variables
+- Responsive grid layout that adapts to viewport size
+- Efficient CSS selectors to minimize rendering performance impact
+
+```mermaid
+flowchart TD
+Start([Performance Optimization]) --> Backend["Backend Optimizations"]
+Backend --> QueryOptimization["Optimized database queries"]
+Backend --> AsyncProcessing["Async operations"]
+Backend --> DataLimiting["Result limiting"]
+Start --> Frontend["Frontend Optimizations"]
+Frontend --> ThemeIntegration["Radzen theme compatibility"]
+Frontend --> ResponsiveDesign["Responsive layouts"]
+Frontend --> EfficientSelectors["Optimized CSS selectors"]
+Frontend --> MobileOptimization["Mobile-first design"]
+style Start fill:#4CAF50,stroke:#388E3C
+style Backend fill:#2196F3,stroke:#1976D2
+style Frontend fill:#FF9800,stroke:#F57C00
+```
+
+**Diagram sources**
+- [LowStockAlert.razor.css](file://src/Inventory.UI/Components/Dashboard/LowStockAlert.razor.css)
+- [RecentActivity.razor.css](file://src/Inventory.UI/Components/Dashboard/RecentActivity.razor.css)
+- [Home.razor.css](file://src/Inventory.UI/Pages/Home.razor.css)
+
+**Section sources**
+- [LowStockAlert.razor.css](file://src/Inventory.UI/Components/Dashboard/LowStockAlert.razor.css) - *Updated for Radzen theme*
+- [RecentActivity.razor.css](file://src/Inventory.UI/Components/Dashboard/RecentActivity.razor.css) - *Updated for Radzen theme*
+- [Home.razor.css](file://src/Inventory.UI/Pages/Home.razor.css) - *Updated for Radzen theme*
+
+## Error Handling
+
+The dashboard controller implements comprehensive error handling to ensure system reliability and provide meaningful feedback to users:
+
+### Exception Types Handled
+- **InvalidOperationException**: Database operation errors (connection issues, query failures)
+- **Exception**: Unexpected errors during data retrieval
+- **Security exceptions**: Unauthorized access attempts (handled by Authorize attribute)
+
+### Logging Strategy
+- Detailed logging of successful operations with key metrics
+- Error logging with full exception details for debugging
+- Structured logging with relevant context information
+
+### Client Response
+- 500 Internal Server Error for database and unexpected errors
+- Consistent error response format with Success = false and ErrorMessage
+- No sensitive information exposed in error messages
+
+```mermaid
+flowchart TD
+Start([Request]) --> TryBlock["Try: Execute query"]
+TryBlock --> Success["Success: Return 200 OK"]
+TryBlock --> Failure["Failure: Exception caught"]
+Failure --> InvalidOperationException["InvalidOperationException?"]
+Failure --> GeneralException["Other Exception?"]
+InvalidOperationException --> LogError["Log database error"]
+GeneralException --> LogUnexpected["Log unexpected error"]
+LogError --> Return500["Return 500 with database error message"]
+LogUnexpected --> Return500
+Return500 --> End([Response sent])
+Success --> End
+style Start fill:#4CAF50,stroke:#388E3C
+style End fill:#4CAF50,stroke:#388E3C
+style Success fill:#8BC34A,stroke:#689F38
+style Failure fill:#F44336,stroke:#D32F2F
+```
+
+**Diagram sources**
+- [DashboardController.cs](file://src/Inventory.API/Controllers/DashboardController.cs#L15-L225)
+
+**Section sources**
+- [DashboardController.cs](file://src/Inventory.API/Controllers/DashboardController.cs#L15-L225)
+
+## Integration Testing
+
+The dashboard functionality is validated through comprehensive integration tests that verify end-to-end behavior:
+
+### Test Coverage
+- **DashboardControllerIntegrationTests**: Tests all three endpoints with real database context
+- Response status code validation (200 OK, 500 Internal Server Error)
+- Data structure validation against expected DTOs
+- Error handling verification
+
+### Test Scenarios
+- Successful retrieval of dashboard statistics
+- Proper handling of empty result sets
+- Validation of error responses for database failures
+- Verification of data consistency across related endpoints
+
+```mermaid
+flowchart TD
+Start([Integration Test]) --> Setup["Setup: Seed test data"]
+Setup --> StatsTest["Test GetDashboardStats"]
+StatsTest --> ValidateResponse["Validate 200 OK"]
+ValidateResponse --> ValidateData["Validate data structure"]
+StatsTest --> ErrorTest["Test error handling"]
+ErrorTest --> SimulateFailure["Simulate database failure"]
+ErrorTest --> Validate500["Validate 500 response"]
+Setup --> ActivityTest["Test GetRecentActivity"]
+ActivityTest --> ValidateActivity["Validate recent transactions/products"]
+Setup --> LowStockTest["Test GetLowStockProducts"]
+LowStockTest --> ValidateLowStock["Validate low stock products"]
+style Start fill:#4CAF50,stroke:#388E3C
+style Setup fill:#2196F3,stroke:#1976D2
+style ValidateResponse fill:#8BC34A,stroke:#689F38
+style Validate500 fill:#8BC34A,stroke:#689F38
+```
+
+**Diagram sources**
+- [DashboardControllerIntegrationTests.cs](file://test/Inventory.IntegrationTests/Controllers/DashboardControllerIntegrationTests.cs)
+
+**Section sources**
+- [DashboardControllerIntegrationTests.cs](file://test/Inventory.IntegrationTests/Controllers/DashboardControllerIntegrationTests.cs)
+
+## Common Issues and Solutions
+
+### Data Freshness
+**Issue**: Dashboard metrics may appear stale due to caching or asynchronous processing
+**Solution**: 
+- Ensure ProductOnHandView is properly updated by transaction triggers
+- Implement cache invalidation strategies when inventory changes
+- Use real-time updates via SignalR for critical metrics
+
+### Performance with Large Datasets
+**Issue**: Slow response times with large inventory databases
+**Solutions**:
+- Verify proper indexing on key fields (Product.Id, InventoryTransaction.Date)
+- Consider implementing caching for frequently accessed statistics
+- Optimize database view performance
+- Use pagination for list endpoints if needed
+
+### Theme Compatibility
+**Issue**: UI components not properly displaying with Radzen themes
+**Solutions**:
+- Use Radzen CSS variables (var(--rz-*)) for consistent theming
+- Implement responsive design for different screen sizes
+- Test components with multiple theme variants
+- Follow Radzen UI guidelines for component styling
+
+```mermaid
+flowchart TD
+Start([Common Issues]) --> DataFreshness["Data Freshness Issues"]
+DataFreshness --> ViewRefresh["Ensure ProductOnHandView refreshes"]
+DataFreshness --> CacheInvalidation["Implement cache invalidation"]
+Start --> Performance["Performance Issues"]
+Performance --> Indexing["Verify database indexing"]
+Performance --> Caching["Implement strategic caching"]
+Start --> Theme["Theme Compatibility"]
+Theme --> CSSVariables["Use Radzen CSS variables"]
+Theme --> Responsive["Implement responsive design"]
+style Start fill:#4CAF50,stroke:#388E3C
+style DataFreshness fill:#FF9800,stroke:#F57C00
+style Performance fill:#2196F3,stroke:#1976D2
+style Theme fill:#9C27B0,stroke:#7B1FA2
+```
+
+**Diagram sources**
+- [DashboardController.cs](file://src/Inventory.API/Controllers/DashboardController.cs)
+- [ProductViews.cs](file://src/Inventory.API/Models/ProductViews.cs)
+- [LowStockAlert.razor.css](file://src/Inventory.UI/Components/Dashboard/LowStockAlert.razor.css)
+- [RecentActivity.razor.css](file://src/Inventory.UI/Components/Dashboard/RecentActivity.razor.css)
+
+**Section sources**
+- [DashboardController.cs](file://src/Inventory.API/Controllers/DashboardController.cs)
+- [ProductViews.cs](file://src/Inventory.API/Models/ProductViews.cs)
+- [LowStockAlert.razor.css](file://src/Inventory.UI/Components/Dashboard/LowStockAlert.razor.css) - *Updated for theme compatibility*
+- [RecentActivity.razor.css](file://src/Inventory.UI/Components/Dashboard/RecentActivity.razor.css) - *Updated for theme compatibility*

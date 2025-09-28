@@ -2,13 +2,21 @@
 
 <cite>
 **Referenced Files in This Document**   
-- [AuditController.cs](file://src/Inventory.API/Controllers/AuditController.cs)
-- [AuditLogDto.cs](file://src/Inventory.Shared/DTOs/AuditLogDto.cs)
-- [AuditService.cs](file://src/Inventory.API/Services/AuditService.cs)
-- [AuditLog.cs](file://src/Inventory.API/Models/AuditLog.cs)
-- [ActionType.cs](file://src/Inventory.Shared/Enums/ActionType.cs)
-- [ApiEndpoints.cs](file://src/Inventory.Shared/Constants/ApiEndpoints.cs)
+- [AuditController.cs](file://src/Inventory.API/Controllers/AuditController.cs) - *Updated with comprehensive documentation*
+- [AuditLogDto.cs](file://src/Inventory.Shared/DTOs/AuditLogDto.cs) - *Updated response schema*
+- [AuditService.cs](file://src/Inventory.API/Services/AuditService.cs) - *Updated service implementation*
+- [AuditLog.cs](file://src/Inventory.API/Models/AuditLog.cs) - *Updated model with enhanced fields*
+- [ActionType.cs](file://src/Inventory.Shared/Enums/ActionType.cs) - *Action type enumeration*
+- [ApiEndpoints.cs](file://src/Inventory.Shared/Constants/ApiEndpoints.cs) - *API endpoint definitions*
 </cite>
+
+## Update Summary
+**Changes Made**   
+- Updated documentation to reflect comprehensive audit API functionality
+- Added detailed information about filtering parameters and response structure
+- Enhanced description of specialized endpoints and their use cases
+- Updated response schema to include all available fields
+- Added comprehensive usage examples for various audit scenarios
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -94,12 +102,12 @@ Returns a paginated response with the following structure:
 
 ## Specialized Endpoints
 
-### GET /api/audit/entity/{entityType}/{entityId}
+### GET /api/audit/entity/{entityName}/{entityId}
 
 Retrieves audit logs for a specific entity identified by its type and ID. This endpoint is optimized for viewing the complete history of changes to a particular entity.
 
 **Parameters:**
-- entityType (path): Type of entity (e.g., "Product", "User")
+- entityName (path): Type of entity (e.g., "Product", "User")
 - entityId (path): Unique identifier of the entity
 
 **Example:**
