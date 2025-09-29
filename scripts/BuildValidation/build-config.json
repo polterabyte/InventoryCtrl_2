@@ -1,0 +1,116 @@
+{
+  "buildConfiguration": {
+    "enableParallelBuild": true,
+    "buildTimeout": "00:10:00",
+    "excludedProjects": [],
+    "validateDockerBuilds": true,
+    "validateEnvironmentConfig": true
+  },
+  "errorThresholds": {
+    "critical": {
+      "responseTime": "00:00:15",
+      "escalationTeam": ["on-call", "team-lead"]
+    },
+    "high": {
+      "responseTime": "01:00:00",
+      "escalationTeam": ["development-team"]
+    },
+    "medium": {
+      "responseTime": "04:00:00",
+      "escalationTeam": ["development-team"]
+    },
+    "low": {
+      "responseTime": "1.00:00:00",
+      "escalationTeam": ["development-team"]
+    }
+  },
+  "validationTargets": {
+    "buildOrder": [
+      "Inventory.Shared",
+      "Inventory.UI", 
+      "Inventory.Web.Assets",
+      "Inventory.Web.Client",
+      "Inventory.API"
+    ],
+    "requiredEnvironmentVariables": {
+      "database": [
+        "ConnectionStrings__DefaultConnection",
+        "POSTGRES_DB",
+        "POSTGRES_USER", 
+        "POSTGRES_PASSWORD"
+      ],
+      "authentication": [
+        "Jwt__Key",
+        "Jwt__Issuer",
+        "Jwt__Audience"
+      ],
+      "networking": [
+        "SERVER_IP",
+        "DOMAIN",
+        "ASPNETCORE_URLS"
+      ],
+      "ssl": [
+        "SSL_CERT_PATH",
+        "SSL_KEY_PATH"
+      ]
+    }
+  },
+  "dockerValidation": {
+    "dockerfiles": [
+      "src/Inventory.API/Dockerfile",
+      "src/Inventory.Web.Client/Dockerfile",
+      "deploy/nginx/Dockerfile"
+    ],
+    "composeFiles": [
+      "docker-compose.yml",
+      "docker-compose.production.yml",
+      "docker-compose.staging.yml",
+      "docker-compose.ssl.yml",
+      "docker-compose.test.yml"
+    ],
+    "buildStages": [
+      "base",
+      "restore", 
+      "build",
+      "publish",
+      "runtime"
+    ]
+  },
+  "testingConfiguration": {
+    "testTypes": ["unit", "integration", "component", "errorSimulation"],
+    "testProjectPatterns": {
+      "unit": "*UnitTests.csproj",
+      "integration": "*IntegrationTests.csproj", 
+      "component": "*ComponentTests.csproj"
+    },
+    "errorSimulationScenarios": [
+      "NetworkFailure",
+      "DatabaseUnavailable",
+      "AuthenticationFailure", 
+      "ResourceExhaustion",
+      "ConfigurationError",
+      "DependencyFailure"
+    ]
+  },
+  "monitoringConfiguration": {
+    "healthEndpoints": {
+      "api": "/health",
+      "web": "/",
+      "database": "connection_test"
+    },
+    "metricsCollection": {
+      "interval": 60,
+      "retention": "30d",
+      "categories": ["system", "application", "database", "container"]
+    },
+    "alerting": {
+      "channels": ["email", "webhook"],
+      "thresholds": {
+        "systemDown": "critical",
+        "highErrorRate": "high",
+        "performanceDegradation": "medium",
+        "certificateExpiry": "medium"
+      }
+    }
+  }
+}
