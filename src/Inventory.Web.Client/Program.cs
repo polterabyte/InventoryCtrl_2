@@ -123,6 +123,7 @@ builder.Services.AddScoped<Inventory.UI.Services.IAuthenticationService, Invento
 
 // Register user management service
 builder.Services.AddScoped<IUserManagementService, UserManagementService>();
+builder.Services.AddScoped<IUserWarehouseService, WebUserWarehouseApiService>();
 
 // Register audit services
 builder.Services.AddScoped<IAuditService, WebAuditApiService>();

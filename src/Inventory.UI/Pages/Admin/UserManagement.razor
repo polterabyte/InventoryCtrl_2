@@ -9,6 +9,8 @@
 @using Radzen.Blazor
 
 @inject IUserManagementService UserService
+@inject IUserWarehouseService UserWarehouseService
+@inject IWarehouseService WarehouseService
 @inject IJSRuntime JSRuntime
 @inject NavigationManager Navigation
 @inject DialogService DialogService
@@ -218,12 +220,33 @@
                                 }
                             </Template>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="UserDto" Title="Actions" Width="150px" Sortable="false" Filterable="false">
+                        <RadzenDataGridColumn TItem="UserDto" Title="Warehouses" Width="120px" Sortable="false" Filterable="false">
+                            <Template Context="user">
+                                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                                    @if (user.AssignedWarehouses?.Any() == true)
+                                    {
+                                        <RadzenText TextStyle="TextStyle.Caption">@user.AssignedWarehouses.Count warehouses</RadzenText>
+                                        @if (!string.IsNullOrEmpty(user.DefaultWarehouseName))
+                                        {
+                                            <RadzenBadge Text="@user.DefaultWarehouseName" BadgeStyle="BadgeStyle.Info" BadgeSize="BadgeSize.Small" />
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-warning);">No assignments</RadzenText>
+                                    }
+                                </RadzenStack>
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="UserDto" Title="Actions" Width="200px" Sortable="false" Filterable="false">
                             <Template Context="user">
                                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
                                     <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" 
                                                  Variant="Variant.Outlined" Size="ButtonSize.Small"
                                                  Click="@(() => EditUser(user))" title="Edit User" />
+                                    <RadzenButton Icon="business" ButtonStyle="ButtonStyle.Info" 
+                                                 Variant="Variant.Outlined" Size="ButtonSize.Small"
+                                                 Click="@(() => ManageWarehouseAssignments(user))" title="Manage Warehouses" />
                                     <RadzenButton Icon="key" ButtonStyle="ButtonStyle.Warning" 
                                                  Variant="Variant.Outlined" Size="ButtonSize.Small"
                                                  Click="@(() => ChangePassword(user))" title="Change Password" />
@@ -248,6 +271,8 @@
         </RadzenStack>
     </RadzenCard>
 </RadzenStack>
+
+</AdminGuard>
 
 <!-- Dialogs are now handled by DialogService -->
 
@@ -600,6 +625,52 @@
         }
     }
 
+    // Warehouse assignment management methods
+    private async Task ManageWarehouseAssignments(UserDto user)
+    {
+        try
+        {
+            selectedUser = user;
+            
+            await DialogService.OpenAsync($"Manage Warehouses - {user.UserName}", ds => CreateWarehouseAssignmentDialog(ds), new DialogOptions
+            {
+                Width = "900px",
+                Height = "700px",
+                CloseDialogOnOverlayClick = false,
+                CloseDialogOnEsc = true
+            });
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", "Error managing warehouse assignments:", ex.Message);
+            await JSRuntime.InvokeVoidAsync("alert", $"Error managing warehouse assignments: {ex.Message}");
+        }
+    }
+
+    private RenderFragment CreateWarehouseAssignmentDialog(DialogService ds) => builder =>
+    {
+        builder.OpenComponent<Inventory.UI.Components.Admin.UserWarehouseManagement>(0);
+        builder.AddAttribute(1, "UserId", selectedUser?.Id ?? "");
+        builder.AddAttribute(2, "UserName", selectedUser?.UserName ?? "");
+        builder.AddAttribute(3, "OnAssignmentChanged", EventCallback.Factory.Create(this, async () => 
+        {
+            // Refresh user data when assignments change
+            await LoadUsers();
+        }));
+        builder.CloseComponent();
+
+        builder.OpenElement(1, "div");
+        builder.AddAttribute(2, "style", "margin-top: 1rem; text-align: right;");
+        
+        builder.OpenComponent<RadzenButton>(3);
+        builder.AddAttribute(4, "Text", "Close");
+        builder.AddAttribute(5, "ButtonStyle", ButtonStyle.Light);
+        builder.AddAttribute(6, "Click", EventCallback.Factory.Create(this, () => ds.Close()));
+        builder.CloseComponent();
+        
+        builder.CloseElement();
+    };
+
     private RenderFragment CreateEditUserDialog(DialogService ds) => builder =>
     {
         builder.OpenComponent<RadzenTemplateForm<UpdateUserDto>>(0);
@@ -874,4 +945,3 @@
         public string Text { get; set; } = "";
     }
 }
-</AdminGuard>

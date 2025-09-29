@@ -13,6 +13,10 @@ public class WarehouseDto
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    
+    // User assignment information
+    public List<UserWarehouseDto> AssignedUsers { get; set; } = new();
+    public int TotalAssignedUsers { get; set; }
 }
 
 public class CreateWarehouseDto

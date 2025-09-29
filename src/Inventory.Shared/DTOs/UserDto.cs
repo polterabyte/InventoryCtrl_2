@@ -12,6 +12,11 @@ public class UserDto
     public bool EmailConfirmed { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    
+    // Warehouse assignment information
+    public List<UserWarehouseDto> AssignedWarehouses { get; set; } = new();
+    public int? DefaultWarehouseId { get; set; }
+    public string? DefaultWarehouseName { get; set; }
 }
 
 public class UpdateUserDto
