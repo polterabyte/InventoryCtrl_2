@@ -102,6 +102,7 @@ packages/
 .gitattributes
 
 # Temporary files
+.AgentTool/
 *.tmp
 *.temp
 *.bak
