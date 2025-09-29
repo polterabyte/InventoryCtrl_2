@@ -3,6 +3,7 @@ using Inventory.Shared.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Radzen;
 
 namespace Inventory.ComponentTests;
 
@@ -14,7 +15,8 @@ public abstract class ComponentTestBase : TestContext
     protected ComponentTestBase()
     {
         // Register common services
-        Services.AddSingleton(Mock.Of<ILogger<NotificationService>>());
+        Services.AddSingleton(Mock.Of<ILogger<ErrorHandlingService>>());
+        Services.AddSingleton(Mock.Of<NotificationService>());
         // Services.AddSingleton(Mock.Of<INotificationService>()); // Commented out - interface not found
     }
 

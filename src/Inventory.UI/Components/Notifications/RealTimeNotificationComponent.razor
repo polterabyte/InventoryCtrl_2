@@ -134,6 +134,10 @@
         {
             Logger.LogInformation("RealTimeNotificationComponent first render");
             dotNetRef = DotNetObjectReference.Create(this);
+            
+            // Subscribe to SignalR connection state changes
+            SignalRService.ConnectionStateChanged += OnSignalRConnectionStateChanged;
+            
             // Initialize SignalR directly (using C# client, no JavaScript services needed)
             await InitializeSignalR();
             
@@ -180,7 +184,6 @@
         }
     }
 
-    // Listen for authentication state changes to reconnect SignalR
     protected override async Task OnInitializedAsync()
     {
         Logger.LogInformation("RealTimeNotificationComponent initialized");
@@ -188,6 +191,27 @@
         
         // Initial check of authentication state
         await CheckAuthenticationStateAndManageBanner();
+    }
+    
+    private void OnSignalRConnectionStateChanged(string state)
+    {
+        try
+        {
+            Logger.LogInformation("SignalR connection state changed to: {State}", state);
+            ConnectionState = state;
+            IsConnected = state == "Connected";
+            IsReconnecting = state == "Reconnecting";
+            
+            InvokeAsync(() =>
+            {
+                OnConnectionStateChanged.InvokeAsync(state);
+                StateHasChanged();
+            });
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error handling SignalR connection state change");
+        }
     }
 
     private async void OnAuthenticationStateChanged(Task<AuthenticationState> authStateTask)
@@ -264,19 +288,9 @@
     [JSInvokable]
     public void OnConnectionStateChangedJS(string state, string? error = null)
     {
-        try
-        {
-            ConnectionState = state;
-            IsConnected = state == "Connected";
-            IsReconnecting = state == "Reconnecting";
-            
-            OnConnectionStateChanged.InvokeAsync(state);
-            StateHasChanged();
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error handling connection state change");
-        }
+        // This method is kept for backward compatibility but is no longer used
+        // Connection state changes are now handled through the C# event system
+        Logger.LogDebug("OnConnectionStateChangedJS called (deprecated): {State}", state);
     }
 
     private void DismissNotification(int notificationId)
@@ -395,6 +409,7 @@
         try
         {
             AuthStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
+            SignalRService.ConnectionStateChanged -= OnSignalRConnectionStateChanged;
             StopSignInBannerTimer();
             await SignalRService.DisconnectAsync();
         }

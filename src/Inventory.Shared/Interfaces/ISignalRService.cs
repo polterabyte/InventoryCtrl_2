@@ -9,4 +9,6 @@ public interface ISignalRService
     Task SubscribeToNotificationTypeAsync(string notificationType);
     Task UnsubscribeFromNotificationTypeAsync(string notificationType);
     Task DisconnectAsync();
+    event Action<string>? ConnectionStateChanged;
+    string GetConnectionState();
 }

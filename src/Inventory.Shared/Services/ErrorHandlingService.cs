@@ -1,13 +1,14 @@
 using Inventory.Shared.Models;
 using Microsoft.Extensions.Logging;
+using Radzen;
 
 namespace Inventory.Shared.Services;
 
-public class ErrorHandlingService(ILogger<ErrorHandlingService> logger, IRetryService retryService, IUINotificationService notificationService) : IErrorHandlingService
+public class ErrorHandlingService(ILogger<ErrorHandlingService> logger, IRetryService retryService, NotificationService notificationService) : IErrorHandlingService
 {
     private readonly ILogger<ErrorHandlingService> _logger = logger;
     private readonly IRetryService _retryService = retryService;
-    private readonly IUINotificationService _notificationService = notificationService;
+    private readonly NotificationService _notificationService = notificationService;
 
     public Task HandleErrorAsync(Exception exception, string? context = null, object? additionalData = null)
     {
@@ -16,10 +17,13 @@ public class ErrorHandlingService(ILogger<ErrorHandlingService> logger, IRetrySe
         _logger.LogError(exception, "Error in {Context}: {Message}", context, exception.Message);
         
         // Show user-friendly notification
-        _notificationService.ShowError(
-            "Operation Failed",
-            GetUserFriendlyMessage(exception)
-        );
+        _notificationService.Notify(new Radzen.NotificationMessage
+        {
+            Severity = NotificationSeverity.Error,
+            Summary = "Operation Failed",
+            Detail = GetUserFriendlyMessage(exception),
+            Duration = 5000
+        });
         
         return Task.CompletedTask;
     }
@@ -86,10 +90,13 @@ public class ErrorHandlingService(ILogger<ErrorHandlingService> logger, IRetrySe
         _logger.LogError("API error in {Operation}: {StatusCode} - {ErrorMessage}", 
             operationName, response.StatusCode, errorMessage);
         
-        _notificationService.ShowError(
-            "API Error",
-            $"Operation '{operationName}' failed: {response.StatusCode}"
-        );
+        _notificationService.Notify(new Radzen.NotificationMessage
+        {
+            Severity = NotificationSeverity.Error,
+            Summary = "API Error",
+            Detail = $"Operation '{operationName}' failed: {response.StatusCode}",
+            Duration = 5000
+        });
     }
 
     private static string GetUserFriendlyMessage(Exception exception)

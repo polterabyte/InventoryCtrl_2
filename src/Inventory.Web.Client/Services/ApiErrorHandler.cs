@@ -4,7 +4,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Components;
 using Inventory.Shared.Interfaces;
-using Inventory.Shared.Services;
+using Radzen;
 
 namespace Inventory.Web.Client.Services;
 
@@ -16,13 +16,13 @@ public class ApiErrorHandler : IApiErrorHandler
     private readonly ILogger<ApiErrorHandler> _logger;
     private readonly ITokenManagementService _tokenManagementService;
     private readonly NavigationManager _navigationManager;
-    private readonly IUINotificationService _notificationService;
+    private readonly NotificationService _notificationService;
 
     public ApiErrorHandler(
         ILogger<ApiErrorHandler> logger,
         ITokenManagementService tokenManagementService,
         NavigationManager navigationManager,
-        IUINotificationService notificationService)
+        NotificationService notificationService)
     {
         _logger = logger;
         _tokenManagementService = tokenManagementService;
@@ -142,27 +142,57 @@ public class ApiErrorHandler : IApiErrorHandler
                 // For 500 errors, log but don't redirect to login
                 // These are server errors, not authentication issues
                 _logger.LogError("Server error occurred: {Error}", errorMessage);
-                _notificationService.ShowError("Server Error", "A server error occurred. Please try again in a few moments.");
+                _notificationService.Notify(new Radzen.NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Server Error",
+                    Detail = "A server error occurred. Please try again in a few moments.",
+                    Duration = 5000
+                });
                 break;
                 
             case HttpStatusCode.BadRequest:
                 _logger.LogWarning("Bad request: {Error}", errorMessage);
-                _notificationService.ShowWarning("Invalid Request", errorMessage);
+                _notificationService.Notify(new Radzen.NotificationMessage
+                {
+                    Severity = NotificationSeverity.Warning,
+                    Summary = "Invalid Request",
+                    Detail = errorMessage,
+                    Duration = 4000
+                });
                 break;
                 
             case HttpStatusCode.Forbidden:
                 _logger.LogWarning("Access forbidden: {Error}", errorMessage);
-                _notificationService.ShowError("Access Denied", "You don't have permission to perform this action.");
+                _notificationService.Notify(new Radzen.NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Access Denied",
+                    Detail = "You don't have permission to perform this action.",
+                    Duration = 4000
+                });
                 break;
                 
             case HttpStatusCode.NotFound:
                 _logger.LogWarning("Resource not found: {Error}", errorMessage);
-                _notificationService.ShowWarning("Not Found", "The requested resource was not found.");
+                _notificationService.Notify(new Radzen.NotificationMessage
+                {
+                    Severity = NotificationSeverity.Warning,
+                    Summary = "Not Found",
+                    Detail = "The requested resource was not found.",
+                    Duration = 4000
+                });
                 break;
                 
             case HttpStatusCode.Conflict:
                 _logger.LogWarning("Conflict error: {Error}", errorMessage);
-                _notificationService.ShowWarning("Conflict", errorMessage);
+                _notificationService.Notify(new Radzen.NotificationMessage
+                {
+                    Severity = NotificationSeverity.Warning,
+                    Summary = "Conflict",
+                    Detail = errorMessage,
+                    Duration = 4000
+                });
                 break;
         }
         
@@ -307,7 +337,13 @@ public class ApiErrorHandler : IApiErrorHandler
         await _tokenManagementService.ClearTokensAsync();
         
         // Show notification
-        _notificationService.ShowError("Authentication Required", message);
+        _notificationService.Notify(new Radzen.NotificationMessage
+        {
+            Severity = NotificationSeverity.Error,
+            Summary = "Authentication Required",
+            Detail = message,
+            Duration = 5000
+        });
         
         // Redirect to login page
         _navigationManager.NavigateTo("/login", true);

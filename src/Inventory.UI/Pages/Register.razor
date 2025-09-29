@@ -6,63 +6,72 @@
 @inject IAuthService AuthService
 @inject NavigationManager Navigation
 
-<RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="1.5rem" Style="margin-top: 2rem;">
-    <RadzenText TextStyle="TextStyle.H4" class="rz-text-primary">Регистрация</RadzenText>
+<AuthorizeView Context="authState">
+    <Authorized>
+        <p>Вы уже авторизованы.</p>
+        @* TODO: redirect to home page *@
+    </Authorized>
+    <NotAuthorized>
+        <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="1.5rem" Style="margin-top: 2rem;">
+            <RadzenText TextStyle="TextStyle.H4" class="rz-text-primary">Регистрация</RadzenText>
+            <RadzenCard Style="max-width: 520px; width: 100%;">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+                    <RadzenText TextStyle="TextStyle.H5" class="rz-text-primary">Создать новый аккаунт</RadzenText>
 
-    <RadzenCard Style="max-width: 520px; width: 100%;">
-        <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
-            <RadzenText TextStyle="TextStyle.H5" class="rz-text-primary">Создать новый аккаунт</RadzenText>
+                    <RadzenTemplateForm Data="@registerModel" Submit="@(async (RegisterRequest model) => await HandleRegister(model))">
+                        <RadzenFormField Text="Имя пользователя:">
+                            <RadzenTextBox @bind-Value="registerModel.Username" Name="username" />
+                            <RadzenRequiredValidator Component="username" Text="Имя пользователя обязательно" />
+                        </RadzenFormField>
 
-            <RadzenTemplateForm Data="@registerModel" Submit="@(async (RegisterRequest model) => await HandleRegister(model))">
-                <RadzenFormField Text="Имя пользователя:">
-                    <RadzenTextBox @bind-Value="registerModel.Username" Name="username" />
-                    <RadzenRequiredValidator Component="username" Text="Имя пользователя обязательно" />
-                </RadzenFormField>
+                        <RadzenFormField Text="Email:">
+                            <RadzenTextBox @bind-Value="registerModel.Email" Name="email" />
+                            <RadzenRequiredValidator Component="email" Text="Email обязателен" />
+                            <RadzenEmailValidator Component="email" Text="Неверный формат email" />
+                        </RadzenFormField>
 
-                <RadzenFormField Text="Email:">
-                    <RadzenTextBox @bind-Value="registerModel.Email" Name="email" />
-                    <RadzenRequiredValidator Component="email" Text="Email обязателен" />
-                    <RadzenEmailValidator Component="email" Text="Неверный формат email" />
-                </RadzenFormField>
+                        <RadzenFormField Text="Пароль:">
+                            <RadzenPassword @bind-Value="registerModel.Password" Name="password" />
+                            <RadzenRequiredValidator Component="password" Text="Пароль обязателен" />
+                        </RadzenFormField>
 
-                <RadzenFormField Text="Пароль:">
-                    <RadzenPassword @bind-Value="registerModel.Password" Name="password" />
-                    <RadzenRequiredValidator Component="password" Text="Пароль обязателен" />
-                </RadzenFormField>
+                        <RadzenFormField Text="Подтверждение пароля:">
+                            <RadzenPassword @bind-Value="registerModel.ConfirmPassword" Name="confirmPassword" />
+                            <RadzenRequiredValidator Component="confirmPassword" Text="Подтверждение пароля обязательно" />
+                        </RadzenFormField>
 
-                <RadzenFormField Text="Подтверждение пароля:">
-                    <RadzenPassword @bind-Value="registerModel.ConfirmPassword" Name="confirmPassword" />
-                    <RadzenRequiredValidator Component="confirmPassword" Text="Подтверждение пароля обязательно" />
-                </RadzenFormField>
+                        <RadzenButton Text="Зарегистрироваться"
+                                        ButtonType="ButtonType.Submit"
+                                        ButtonStyle="ButtonStyle.Primary"
+                                        Disabled="@isLoading" />
+                    </RadzenTemplateForm>
 
-                <RadzenButton Text="Зарегистрироваться"
-                              ButtonType="ButtonType.Submit"
-                              ButtonStyle="ButtonStyle.Primary"
-                              Disabled="@isLoading" />
-            </RadzenTemplateForm>
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Danger" class="rz-mt-3" ShowIcon="true">
+                            @errorMessage
+                        </RadzenAlert>
+                    }
 
-            @if (!string.IsNullOrEmpty(errorMessage))
-            {
-                <RadzenAlert AlertStyle="AlertStyle.Danger" class="rz-mt-3" ShowIcon="true">
-                    @errorMessage
-                </RadzenAlert>
-            }
+                    @if (!string.IsNullOrEmpty(successMessage))
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Success" class="rz-mt-3" ShowIcon="true">
+                            @successMessage
+                        </RadzenAlert>
+                    }
 
-            @if (!string.IsNullOrEmpty(successMessage))
-            {
-                <RadzenAlert AlertStyle="AlertStyle.Success" class="rz-mt-3" ShowIcon="true">
-                    @successMessage
-                </RadzenAlert>
-            }
-
-            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center">
-                <RadzenText class="rz-text-secondary">
-                    Уже есть аккаунт? <a href="/login" @onclick="NavigateToLogin" class="rz-text-primary" style="cursor: pointer;">Войти</a>
-                </RadzenText>
-            </RadzenStack>
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center">
+                        <RadzenText class="rz-text-secondary">
+                            Уже есть аккаунт? <a href="/login" @onclick="NavigateToLogin" class="rz-text-primary" style="cursor: pointer;">Войти</a>
+                        </RadzenText>
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenCard>
         </RadzenStack>
-    </RadzenCard>
-</RadzenStack>
+    </NotAuthorized>
+</AuthorizeView>
+
+
 
 @code {
     private RegisterRequest registerModel = new() { Username = string.Empty, Email = string.Empty, Password = string.Empty, ConfirmPassword = string.Empty };
