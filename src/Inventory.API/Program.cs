@@ -41,13 +41,17 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title = "Inventory Control API",
         Version = "v1",
-        Description = "RESTful API for inventory management system",
+        Description = "RESTful API for inventory management system with comprehensive user-warehouse access control",
         Contact = new Microsoft.OpenApi.Models.OpenApiContact
         {
             Name = "Inventory Control Team",
             Email = "support@inventorycontrol.com"
         }
     });
+
+    // Add API operation grouping by tags
+    c.TagActionsBy(api => new[] { api.GroupName ?? api.ActionDescriptor.RouteValues["controller"] });
+    c.DocInclusionPredicate((name, api) => true);
 
     // Add JWT authentication to Swagger
     c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
@@ -81,6 +85,9 @@ builder.Services.AddSwaggerGen(c =>
     {
         c.IncludeXmlComments(xmlPath);
     }
+    
+    // Configure operation grouping for better organization
+    c.EnableAnnotations();
 });
 
 // Add CORS configuration
@@ -270,6 +277,7 @@ builder.Services.AddHttpClient<ILocationService, LocationApiService>(client =>
 
 // Add FluentValidation
 builder.Services.AddScoped<IRequestService, RequestService>();
+builder.Services.AddScoped<IUserWarehouseService, UserWarehouseService>();
 builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
 
 // Add Rate Limiting

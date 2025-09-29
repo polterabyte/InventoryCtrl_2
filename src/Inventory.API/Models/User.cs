@@ -9,4 +9,5 @@ public class User : Microsoft.AspNetCore.Identity.IdentityUser<string>
     public DateTime? RefreshTokenExpiry { get; set; }
     public ICollection<InventoryTransaction> Transactions { get; set; } = new List<InventoryTransaction>();
     public ICollection<ProductHistory> ProductHistories { get; set; } = new List<ProductHistory>();
+    public ICollection<UserWarehouse> UserWarehouses { get; set; } = new List<UserWarehouse>();
 }

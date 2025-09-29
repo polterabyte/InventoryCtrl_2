@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Inventory.API.Models;
+using Inventory.API.Services;
 using Inventory.Shared.DTOs;
 using Serilog;
 using System.Security.Claims;
@@ -13,8 +14,21 @@ namespace Inventory.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class UserController(UserManager<User> userManager, ILogger<UserController> logger) : ControllerBase
+public class UserController : ControllerBase
 {
+    private readonly UserManager<User> __userManager;
+    private readonly IUserWarehouseService _userWarehouseService;
+    private readonly ILogger<UserController> __logger;
+
+    public UserController(
+        UserManager<User> _userManager,
+        IUserWarehouseService userWarehouseService,
+        ILogger<UserController> _logger)
+    {
+        __userManager = _userManager;
+        _userWarehouseService = userWarehouseService;
+        __logger = _logger;
+    }
     [HttpGet("info")]
     public IActionResult GetUserInfo()
     {
@@ -24,7 +38,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
             var roles = User.FindAll(ClaimTypes.Role).Select(r => r.Value).ToArray();
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             
-            logger.LogInformation("User info requested for: {Username}", username);
+            __logger.LogInformation("User info requested for: {Username}", username);
             
             return Ok(ApiResponse<object>.CreateSuccess(new
             {
@@ -35,7 +49,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error retrieving user info");
+            __logger.LogError(ex, "Error retrieving user info");
             return StatusCode(500, new ApiResponse<object>
             {
                 Success = false,
@@ -54,7 +68,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
     {
         try
         {
-            var query = userManager.Users.AsQueryable();
+            var query = _userManager.Users.AsQueryable();
 
             // Apply search filter
             if (!string.IsNullOrEmpty(search))
@@ -65,7 +79,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
             // Apply role filter
             if (!string.IsNullOrEmpty(role))
             {
-                var usersInRole = await userManager.GetUsersInRoleAsync(role);
+                var usersInRole = await _userManager.GetUsersInRoleAsync(role);
                 var userIds = usersInRole.Select(u => u.Id);
                 query = query.Where(u => userIds.Contains(u.Id));
             }
@@ -93,10 +107,10 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
             // Get roles for each user
             foreach (var user in users)
             {
-                var userEntity = await userManager.FindByIdAsync(user.Id);
+                var userEntity = await _userManager.FindByIdAsync(user.Id);
                 if (userEntity != null)
                 {
-                    user.Roles = (await userManager.GetRolesAsync(userEntity)).ToList();
+                    user.Roles = (await _userManager.GetRolesAsync(userEntity)).ToList();
                 }
             }
 
@@ -116,7 +130,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error retrieving users");
+            __logger.LogError(ex, "Error retrieving users");
             return StatusCode(500, new PagedApiResponse<UserDto>
             {
                 Success = false,
@@ -131,7 +145,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
     {
         try
         {
-            var user = await userManager.FindByIdAsync(id);
+            var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
                 return NotFound(new ApiResponse<UserDto>
@@ -141,7 +155,11 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
                 });
             }
 
-            var roles = await userManager.GetRolesAsync(user);
+            var roles = await _userManager.GetRolesAsync(user);
+            
+            // Get user's warehouse assignments
+            var warehouseAssignments = await _userWarehouseService.GetUserWarehousesAsync(id);
+            var defaultWarehouse = warehouseAssignments.FirstOrDefault(w => w.IsDefault);
             
             var userDto = new UserDto
             {
@@ -152,7 +170,10 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
                 Roles = roles.ToList(),
                 EmailConfirmed = user.EmailConfirmed,
                 CreatedAt = user.CreatedAt,
-                UpdatedAt = user.UpdatedAt
+                UpdatedAt = user.UpdatedAt,
+                AssignedWarehouses = warehouseAssignments,
+                DefaultWarehouseId = defaultWarehouse?.WarehouseId,
+                DefaultWarehouseName = defaultWarehouse?.WarehouseName
             };
 
             return Ok(new ApiResponse<UserDto>
@@ -163,7 +184,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error retrieving user {UserId}", id);
+            _logger.LogError(ex, "Error retrieving user {UserId}", id);
             return StatusCode(500, new ApiResponse<UserDto>
             {
                 Success = false,
@@ -188,7 +209,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
                 });
             }
 
-            var user = await userManager.FindByIdAsync(id);
+            var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
                 return NotFound(new ApiResponse<UserDto>
@@ -205,7 +226,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
             user.EmailConfirmed = request.EmailConfirmed;
             user.UpdatedAt = DateTime.UtcNow;
 
-            var result = await userManager.UpdateAsync(user);
+            var result = await _userManager.UpdateAsync(user);
             if (!result.Succeeded)
             {
                 var errors = string.Join(", ", result.Errors.Select(e => e.Description));
@@ -217,11 +238,11 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
             }
 
             // Update roles
-            var currentRoles = await userManager.GetRolesAsync(user);
-            await userManager.RemoveFromRolesAsync(user, currentRoles);
-            await userManager.AddToRoleAsync(user, request.Role);
+            var currentRoles = await _userManager.GetRolesAsync(user);
+            await _userManager.RemoveFromRolesAsync(user, currentRoles);
+            await _userManager.AddToRoleAsync(user, request.Role);
 
-            logger.LogInformation("User updated: {Username} with ID {UserId}", user.UserName, user.Id);
+            _logger.LogInformation("User updated: {Username} with ID {UserId}", user.UserName, user.Id);
 
             var userDto = new UserDto
             {
@@ -243,7 +264,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error updating user {UserId}", id);
+            _logger.LogError(ex, "Error updating user {UserId}", id);
             return StatusCode(500, new ApiResponse<UserDto>
             {
                 Success = false,
@@ -258,7 +279,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
     {
         try
         {
-            var user = await userManager.FindByIdAsync(id);
+            var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
                 return NotFound(new ApiResponse<object>
@@ -279,7 +300,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
                 });
             }
 
-            var result = await userManager.DeleteAsync(user);
+            var result = await _userManager.DeleteAsync(user);
             if (!result.Succeeded)
             {
                 var errors = string.Join(", ", result.Errors.Select(e => e.Description));
@@ -290,7 +311,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
                 });
             }
 
-            logger.LogInformation("User deleted: {Username} with ID {UserId}", user.UserName, user.Id);
+            _logger.LogInformation("User deleted: {Username} with ID {UserId}", user.UserName, user.Id);
 
             return Ok(new ApiResponse<object>
             {
@@ -300,7 +321,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error deleting user {UserId}", id);
+            _logger.LogError(ex, "Error deleting user {UserId}", id);
             return StatusCode(500, new ApiResponse<object>
             {
                 Success = false,
@@ -317,7 +338,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
     {
         try
         {
-            var query = userManager.Users.AsQueryable();
+            var query = _userManager.Users.AsQueryable();
 
             // Apply search filter
             if (!string.IsNullOrEmpty(search))
@@ -328,7 +349,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
             // Apply role filter
             if (!string.IsNullOrEmpty(role))
             {
-                var usersInRole = await userManager.GetUsersInRoleAsync(role);
+                var usersInRole = await _userManager.GetUsersInRoleAsync(role);
                 var userIds = usersInRole.Select(u => u.Id);
                 query = query.Where(u => userIds.Contains(u.Id));
             }
@@ -350,10 +371,10 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
             // Get roles for each user
             foreach (var user in users)
             {
-                var userEntity = await userManager.FindByIdAsync(user.Id);
+                var userEntity = await _userManager.FindByIdAsync(user.Id);
                 if (userEntity != null)
                 {
-                    user.Roles = (await userManager.GetRolesAsync(userEntity)).ToList();
+                    user.Roles = (await _userManager.GetRolesAsync(userEntity)).ToList();
                 }
             }
 
@@ -371,7 +392,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error exporting users");
+            _logger.LogError(ex, "Error exporting users");
             return StatusCode(500, new ApiResponse<object>
             {
                 Success = false,
@@ -396,7 +417,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
                 });
             }
 
-            var user = await userManager.FindByIdAsync(id);
+            var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
                 return NotFound(new ApiResponse<object>
@@ -407,8 +428,8 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
             }
 
             // Remove current password and set new one
-            await userManager.RemovePasswordAsync(user);
-            var result = await userManager.AddPasswordAsync(user, request.NewPassword);
+            await _userManager.RemovePasswordAsync(user);
+            var result = await _userManager.AddPasswordAsync(user, request.NewPassword);
 
             if (!result.Succeeded)
             {
@@ -420,7 +441,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
                 });
             }
 
-            logger.LogInformation("Password changed for user: {Username} with ID {UserId}", user.UserName, user.Id);
+            _logger.LogInformation("Password changed for user: {Username} with ID {UserId}", user.UserName, user.Id);
 
             return Ok(new ApiResponse<object>
             {
@@ -430,7 +451,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error changing password for user {UserId}", id);
+            _logger.LogError(ex, "Error changing password for user {UserId}", id);
             return StatusCode(500, new ApiResponse<object>
             {
                 Success = false,
@@ -456,7 +477,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
             }
 
             // Check if username already exists
-            var existingUser = await userManager.FindByNameAsync(request.UserName);
+            var existingUser = await _userManager.FindByNameAsync(request.UserName);
             if (existingUser != null)
             {
                 return BadRequest(new ApiResponse<UserDto>
@@ -467,7 +488,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
             }
 
             // Check if email already exists
-            var existingEmail = await userManager.FindByEmailAsync(request.Email);
+            var existingEmail = await _userManager.FindByEmailAsync(request.Email);
             if (existingEmail != null)
             {
                 return BadRequest(new ApiResponse<UserDto>
@@ -487,7 +508,7 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
                 CreatedAt = DateTime.UtcNow
             };
 
-            var result = await userManager.CreateAsync(user, request.Password);
+            var result = await _userManager.CreateAsync(user, request.Password);
             if (!result.Succeeded)
             {
                 var errors = string.Join(", ", result.Errors.Select(e => e.Description));
@@ -499,9 +520,9 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
             }
 
             // Assign role to user
-            await userManager.AddToRoleAsync(user, request.Role);
+            await _userManager.AddToRoleAsync(user, request.Role);
 
-            logger.LogInformation("User created: {Username} with role {Role} and ID {UserId}", 
+            _logger.LogInformation("User created: {Username} with role {Role} and ID {UserId}", 
                 user.UserName, user.Role, user.Id);
 
             var userDto = new UserDto
@@ -524,11 +545,324 @@ public class UserController(UserManager<User> userManager, ILogger<UserControlle
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error creating user");
+            _logger.LogError(ex, "Error creating user");
             return StatusCode(500, new ApiResponse<UserDto>
             {
                 Success = false,
                 ErrorMessage = "Failed to create user"
+            });
+        }
+    }
+
+    // Warehouse Assignment Endpoints
+    
+    /// <summary>
+    /// Get user's warehouse assignments
+    /// </summary>
+    /// <param name="id">The unique identifier of the user to retrieve warehouse assignments for</param>
+    /// <returns>Returns a list of warehouse assignments for the specified user</returns>
+    /// <response code="200">Successfully retrieved user's warehouse assignments</response>
+    /// <response code="401">User is not authenticated</response>
+    /// <response code="403">User does not have permission to view warehouse assignments (requires Admin or Manager role)</response>
+    /// <response code="404">User not found</response>
+    /// <response code="500">Internal server error occurred</response>
+    /// <remarks>
+    /// Alternative endpoint for retrieving user warehouse assignments via the User controller.
+    /// For comprehensive warehouse assignment management, consider using the UserWarehouse controller endpoints.
+    /// 
+    /// **Authorization:**
+    /// - Requires Admin or Manager role
+    /// 
+    /// **Response Data:**
+    /// - Complete warehouse assignment details
+    /// - Access levels and default warehouse information
+    /// - Assignment timestamps
+    /// </remarks>
+    [HttpGet("{id}/warehouses")]
+    [Authorize(Roles = "Admin,Manager")]
+    public async Task<IActionResult> GetUserWarehouses(string id)
+    {
+        try
+        {
+            var warehouses = await _userWarehouseService.GetUserWarehousesAsync(id);
+
+            return Ok(new ApiResponse<List<UserWarehouseDto>>
+            {
+                Success = true,
+                Data = warehouses
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting warehouses for user {UserId}", id);
+            return StatusCode(500, new ApiResponse<object>
+            {
+                Success = false,
+                ErrorMessage = "Internal server error"
+            });
+        }
+    }
+
+    /// <summary>
+    /// Assign warehouse to user
+    /// </summary>
+    /// <param name="id">The unique identifier of the user to assign warehouse access to</param>
+    /// <param name="assignmentDto">Assignment configuration including warehouse ID, access level, and default warehouse flag</param>
+    /// <returns>Returns the created warehouse assignment details</returns>
+    /// <response code="200">Warehouse successfully assigned to user</response>
+    /// <response code="400">Invalid request data or business rule violation</response>
+    /// <response code="401">User is not authenticated</response>
+    /// <response code="403">User does not have permission to assign warehouses (requires Admin or Manager role)</response>
+    /// <response code="404">User or warehouse not found</response>
+    /// <response code="500">Internal server error occurred</response>
+    /// <remarks>
+    /// Alternative endpoint for assigning warehouses to users via the User controller.
+    /// For comprehensive warehouse assignment management, consider using the UserWarehouse controller endpoints.
+    /// 
+    /// **Authorization:**
+    /// - Requires Admin or Manager role
+    /// 
+    /// **Business Rules:**
+    /// - Same validation rules as UserWarehouse controller
+    /// - Prevents duplicate assignments
+    /// - Manages default warehouse logic
+    /// </remarks>
+    [HttpPost("{id}/warehouses")]
+    [Authorize(Roles = "Admin,Manager")]
+    public async Task<IActionResult> AssignWarehouseToUser(string id, [FromBody] AssignWarehouseDto assignmentDto)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+
+                return BadRequest(new ApiResponse<object>
+                {
+                    Success = false,
+                    ErrorMessage = "Validation failed",
+                    Errors = errors
+                });
+            }
+
+            var result = await _userWarehouseService.AssignWarehouseToUserAsync(id, assignmentDto);
+
+            if (result.Success)
+            {
+                return Ok(new ApiResponse<UserWarehouseDto>
+                {
+                    Success = true,
+                    Data = result.Data
+                });
+            }
+
+            return BadRequest(new ApiResponse<object>
+            {
+                Success = false,
+                ErrorMessage = result.Error
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error assigning warehouse to user {UserId}", id);
+            return StatusCode(500, new ApiResponse<object>
+            {
+                Success = false,
+                ErrorMessage = "Internal server error"
+            });
+        }
+    }
+
+    /// <summary>
+    /// Remove warehouse assignment from user
+    /// </summary>
+    /// <param name="id">The unique identifier of the user to remove warehouse access from</param>
+    /// <param name="warehouseId">The unique identifier of the warehouse to remove access to</param>
+    /// <returns>Returns success message when assignment is removed</returns>
+    /// <response code="200">Warehouse assignment successfully removed</response>
+    /// <response code="400">Assignment does not exist or cannot be removed</response>
+    /// <response code="401">User is not authenticated</response>
+    /// <response code="403">User does not have permission to remove warehouse assignments (requires Admin or Manager role)</response>
+    /// <response code="404">User, warehouse, or assignment not found</response>
+    /// <response code="500">Internal server error occurred</response>
+    /// <remarks>
+    /// Alternative endpoint for removing warehouse assignments via the User controller.
+    /// For comprehensive warehouse assignment management, consider using the UserWarehouse controller endpoints.
+    /// 
+    /// **Authorization:**
+    /// - Requires Admin or Manager role
+    /// 
+    /// **Important Considerations:**
+    /// - Removing default warehouse clears user's default selection
+    /// - May impact user's existing workflows and transactions
+    /// </remarks>
+    [HttpDelete("{id}/warehouses/{warehouseId}")]
+    [Authorize(Roles = "Admin,Manager")]
+    public async Task<IActionResult> RemoveWarehouseAssignment(string id, int warehouseId)
+    {
+        try
+        {
+            var result = await _userWarehouseService.RemoveWarehouseAssignmentAsync(id, warehouseId);
+
+            if (result.Success)
+            {
+                return Ok(new ApiResponse<object>
+                {
+                    Success = true,
+                    Data = new { message = "Warehouse assignment removed successfully" }
+                });
+            }
+
+            return BadRequest(new ApiResponse<object>
+            {
+                Success = false,
+                ErrorMessage = result.Error
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error removing warehouse {WarehouseId} assignment from user {UserId}", 
+                warehouseId, id);
+            return StatusCode(500, new ApiResponse<object>
+            {
+                Success = false,
+                ErrorMessage = "Internal server error"
+            });
+        }
+    }
+
+    /// <summary>
+    /// Update warehouse assignment for user
+    /// </summary>
+    /// <param name="id">The unique identifier of the user whose warehouse assignment will be updated</param>
+    /// <param name="warehouseId">The unique identifier of the warehouse assignment to update</param>
+    /// <param name="updateDto">Updated assignment configuration including access level and default warehouse flag</param>
+    /// <returns>Returns the updated warehouse assignment details</returns>
+    /// <response code="200">Warehouse assignment successfully updated</response>
+    /// <response code="400">Invalid request data or business rule violation</response>
+    /// <response code="401">User is not authenticated</response>
+    /// <response code="403">User does not have permission to update warehouse assignments (requires Admin or Manager role)</response>
+    /// <response code="404">User, warehouse, or assignment not found</response>
+    /// <response code="500">Internal server error occurred</response>
+    /// <remarks>
+    /// Alternative endpoint for updating warehouse assignments via the User controller.
+    /// For comprehensive warehouse assignment management, consider using the UserWarehouse controller endpoints.
+    /// 
+    /// **Authorization:**
+    /// - Requires Admin or Manager role
+    /// 
+    /// **Updatable Properties:**
+    /// - Access level (Full/ReadOnly/Limited)
+    /// - Default warehouse flag
+    /// </remarks>
+    [HttpPut("{id}/warehouses/{warehouseId}")]
+    [Authorize(Roles = "Admin,Manager")]
+    public async Task<IActionResult> UpdateWarehouseAssignment(string id, int warehouseId, [FromBody] UpdateWarehouseAssignmentDto updateDto)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+
+                return BadRequest(new ApiResponse<object>
+                {
+                    Success = false,
+                    ErrorMessage = "Validation failed",
+                    Errors = errors
+                });
+            }
+
+            var result = await _userWarehouseService.UpdateWarehouseAssignmentAsync(id, warehouseId, updateDto);
+
+            if (result.Success)
+            {
+                return Ok(new ApiResponse<UserWarehouseDto>
+                {
+                    Success = true,
+                    Data = result.Data
+                });
+            }
+
+            return BadRequest(new ApiResponse<object>
+            {
+                Success = false,
+                ErrorMessage = result.Error
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating warehouse {WarehouseId} assignment for user {UserId}", 
+                warehouseId, id);
+            return StatusCode(500, new ApiResponse<object>
+            {
+                Success = false,
+                ErrorMessage = "Internal server error"
+            });
+        }
+    }
+
+    /// <summary>
+    /// Set default warehouse for user
+    /// </summary>
+    /// <param name="id">The unique identifier of the user to set default warehouse for</param>
+    /// <param name="warehouseId">The unique identifier of the warehouse to set as default</param>
+    /// <returns>Returns success message when default warehouse is set</returns>
+    /// <response code="200">Default warehouse successfully set</response>
+    /// <response code="400">User does not have access to the specified warehouse</response>
+    /// <response code="401">User is not authenticated</response>
+    /// <response code="403">User does not have permission to set default warehouses (requires Admin or Manager role)</response>
+    /// <response code="404">User, warehouse, or assignment not found</response>
+    /// <response code="500">Internal server error occurred</response>
+    /// <remarks>
+    /// Alternative endpoint for setting default warehouse via the User controller.
+    /// For comprehensive warehouse assignment management, consider using the UserWarehouse controller endpoints.
+    /// 
+    /// **Authorization:**
+    /// - Requires Admin or Manager role
+    /// 
+    /// **Business Logic:**
+    /// - User must have existing assignment to the warehouse
+    /// - Automatically unsets previous default warehouse
+    /// - Default warehouse used for transaction defaults
+    /// </remarks>
+    [HttpPut("{id}/warehouses/{warehouseId}/default")]
+    [Authorize(Roles = "Admin,Manager")]
+    public async Task<IActionResult> SetDefaultWarehouse(string id, int warehouseId)
+    {
+        try
+        {
+            var result = await _userWarehouseService.SetDefaultWarehouseAsync(id, warehouseId);
+
+            if (result.Success)
+            {
+                return Ok(new ApiResponse<object>
+                {
+                    Success = true,
+                    Data = new { message = "Default warehouse set successfully" }
+                });
+            }
+
+            return BadRequest(new ApiResponse<object>
+            {
+                Success = false,
+                ErrorMessage = result.Error
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error setting default warehouse {WarehouseId} for user {UserId}", 
+                warehouseId, id);
+            return StatusCode(500, new ApiResponse<object>
+            {
+                Success = false,
+                ErrorMessage = "Internal server error"
             });
         }
     }

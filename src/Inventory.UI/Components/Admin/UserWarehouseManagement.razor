@@ -1,0 +1,301 @@
+@using Inventory.Shared.DTOs
+@using Inventory.Shared.Interfaces
+@using Radzen
+@using Radzen.Blazor
+
+@inject IUserWarehouseService UserWarehouseService
+@inject IWarehouseService WarehouseService
+@inject IJSRuntime JSRuntime
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+    <!-- Current Assignments -->
+    <RadzenCard>
+        <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenIcon Icon="business" Style="color: var(--rz-primary);" />
+                <RadzenText TextStyle="TextStyle.H6">Current Warehouse Assignments</RadzenText>
+            </RadzenStack>
+            
+            @if (IsLoadingWarehouses)
+            {
+                <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Small" />
+            }
+            else if (UserWarehouses?.Any() == true)
+            {
+                <RadzenDataGrid Data="@UserWarehouses" TItem="UserWarehouseDto" AllowSorting="true">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="UserWarehouseDto" Property="WarehouseName" Title="Warehouse" Width="200px">
+                            <Template Context="assignment">
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                    <RadzenText TextStyle="TextStyle.Body1">@assignment.WarehouseName</RadzenText>
+                                    @if (assignment.IsDefault)
+                                    {
+                                        <RadzenBadge Text="Default" BadgeStyle="BadgeStyle.Success" BadgeSize="BadgeSize.Small" />
+                                    }
+                                </RadzenStack>
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="UserWarehouseDto" Property="AccessLevel" Title="Access Level" Width="120px">
+                            <Template Context="assignment">
+                                <RadzenBadge Text="@assignment.AccessLevel" BadgeStyle="@GetAccessLevelBadgeStyle(assignment.AccessLevel)" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="UserWarehouseDto" Property="AssignedAt" Title="Assigned" Width="150px">
+                            <Template Context="assignment">
+                                <RadzenText TextStyle="TextStyle.Caption">
+                                    @assignment.AssignedAt.ToString("yyyy-MM-dd HH:mm")
+                                </RadzenText>
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="UserWarehouseDto" Title="Actions" Width="150px" Sortable="false">
+                            <Template Context="assignment">
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
+                                    @if (!assignment.IsDefault)
+                                    {
+                                        <RadzenButton Icon="star" ButtonStyle="ButtonStyle.Success" 
+                                                     Variant="Variant.Outlined" Size="ButtonSize.Small"
+                                                     Click="@(() => SetDefaultWarehouse(assignment))" 
+                                                     title="Set as Default" />
+                                    }
+                                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" 
+                                                 Variant="Variant.Outlined" Size="ButtonSize.Small"
+                                                 Click="@(() => EditAssignment(assignment))" 
+                                                 title="Edit Assignment" />
+                                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" 
+                                                 Variant="Variant.Outlined" Size="ButtonSize.Small"
+                                                 Click="@(() => RemoveWarehouseAssignment(assignment))" 
+                                                 title="Remove Assignment" />
+                                </RadzenStack>
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            }
+            else
+            {
+                <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary);">
+                    No warehouse assignments found. Add warehouses below.
+                </RadzenText>
+            }
+        </RadzenStack>
+    </RadzenCard>
+
+    <!-- Add New Assignment -->
+    <RadzenCard>
+        <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenIcon Icon="add" Style="color: var(--rz-success);" />
+                <RadzenText TextStyle="TextStyle.H6">Assign New Warehouse</RadzenText>
+            </RadzenStack>
+            
+            <RadzenTemplateForm Data="@AssignWarehouseDto" Submit="@AssignWarehouse">
+                <RadzenRow Class="g-3">
+                    <RadzenColumn Size="12" SizeMd="4">
+                        <RadzenFormField Text="Warehouse *">
+                            <RadzenDropDown @bind-Value="@AssignWarehouseDto.WarehouseId" 
+                                           Data="@GetAvailableWarehouses()" 
+                                           ValueProperty="Id" 
+                                           TextProperty="Name"
+                                           Placeholder="Select warehouse..." />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMd="3">
+                        <RadzenFormField Text="Access Level *">
+                            <RadzenDropDown @bind-Value="@AssignWarehouseDto.AccessLevel" 
+                                           Data="@AccessLevelOptions" 
+                                           ValueProperty="Value" 
+                                           TextProperty="Text" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMd="3">
+                        <RadzenFormField Text="Set as Default">
+                            <RadzenCheckBox @bind-Value="@AssignWarehouseDto.IsDefault" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMd="2">
+                        <RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.End" Style="height: 100%;">
+                            <RadzenButton Text="Assign" 
+                                         Icon="add" 
+                                         ButtonStyle="ButtonStyle.Success" 
+                                         ButtonType="ButtonType.Submit"
+                                         Disabled="@IsSaving" />
+                        </RadzenStack>
+                    </RadzenColumn>
+                </RadzenRow>
+            </RadzenTemplateForm>
+        </RadzenStack>
+    </RadzenCard>
+</RadzenStack>
+
+@code {
+    [Parameter] public string UserId { get; set; } = string.Empty;
+    [Parameter] public string UserName { get; set; } = string.Empty;
+    [Parameter] public EventCallback OnAssignmentChanged { get; set; }
+
+    private List<WarehouseDto>? AvailableWarehouses;
+    private List<UserWarehouseDto>? UserWarehouses;
+    private AssignWarehouseDto AssignWarehouseDto = new();
+    private bool IsLoadingWarehouses = false;
+    private bool IsSaving = false;
+
+    private readonly List<AccessLevelOption> AccessLevelOptions = new()
+    {
+        new() { Value = "Full", Text = "Full Access" },
+        new() { Value = "ReadOnly", Text = "Read Only" },
+        new() { Value = "Limited", Text = "Limited Access" }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            IsLoadingWarehouses = true;
+            StateHasChanged();
+
+            var warehousesTask = WarehouseService.GetAllWarehousesAsync();
+            var userWarehousesTask = UserWarehouseService.GetUserWarehousesAsync(UserId);
+
+            await Task.WhenAll(warehousesTask, userWarehousesTask);
+
+            AvailableWarehouses = await warehousesTask;
+            var userWarehousesResponse = await userWarehousesTask;
+            UserWarehouses = userWarehousesResponse?.Success == true ? userWarehousesResponse.Data : new List<UserWarehouseDto>();
+
+            AssignWarehouseDto = new AssignWarehouseDto();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", "Error loading warehouse data:", ex.Message);
+        }
+        finally
+        {
+            IsLoadingWarehouses = false;
+            StateHasChanged();
+        }
+    }
+
+    private List<WarehouseDto> GetAvailableWarehouses()
+    {
+        if (AvailableWarehouses == null) return new List<WarehouseDto>();
+
+        var assignedWarehouseIds = UserWarehouses?.Select(uw => uw.WarehouseId).ToHashSet() ?? new HashSet<int>();
+        return AvailableWarehouses.Where(w => !assignedWarehouseIds.Contains(w.Id)).ToList();
+    }
+
+    private async Task AssignWarehouse()
+    {
+        try
+        {
+            if (AssignWarehouseDto.WarehouseId <= 0)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Please select a warehouse.");
+                return;
+            }
+
+            IsSaving = true;
+            StateHasChanged();
+
+            var result = await UserWarehouseService.AssignWarehouseToUserAsync(UserId, AssignWarehouseDto);
+
+            if (result?.Success == true)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Warehouse assigned successfully!");
+                await LoadData();
+                await OnAssignmentChanged.InvokeAsync();
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Error assigning warehouse: {result?.ErrorMessage ?? "Unknown error"}");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", "Error assigning warehouse:", ex.Message);
+            await JSRuntime.InvokeVoidAsync("alert", $"Error assigning warehouse: {ex.Message}");
+        }
+        finally
+        {
+            IsSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RemoveWarehouseAssignment(UserWarehouseDto assignment)
+    {
+        try
+        {
+            var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to remove warehouse '{assignment.WarehouseName}' assignment?");
+            if (!confirmed) return;
+
+            var result = await UserWarehouseService.RemoveWarehouseAssignmentAsync(UserId, assignment.WarehouseId);
+
+            if (result?.Success == true)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Warehouse assignment removed successfully!");
+                await LoadData();
+                await OnAssignmentChanged.InvokeAsync();
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Error removing warehouse assignment: {result?.ErrorMessage ?? "Unknown error"}");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", "Error removing warehouse assignment:", ex.Message);
+            await JSRuntime.InvokeVoidAsync("alert", $"Error removing warehouse assignment: {ex.Message}");
+        }
+    }
+
+    private async Task SetDefaultWarehouse(UserWarehouseDto assignment)
+    {
+        try
+        {
+            var result = await UserWarehouseService.SetDefaultWarehouseAsync(UserId, assignment.WarehouseId);
+
+            if (result?.Success == true)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Default warehouse set successfully!");
+                await LoadData();
+                await OnAssignmentChanged.InvokeAsync();
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Error setting default warehouse: {result?.ErrorMessage ?? "Unknown error"}");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", "Error setting default warehouse:", ex.Message);
+            await JSRuntime.InvokeVoidAsync("alert", $"Error setting default warehouse: {ex.Message}");
+        }
+    }
+
+    private async Task EditAssignment(UserWarehouseDto assignment)
+    {
+        // TODO: Implement edit assignment functionality
+        await JSRuntime.InvokeVoidAsync("alert", "Edit assignment functionality will be implemented in a future update.");
+    }
+
+    private BadgeStyle GetAccessLevelBadgeStyle(string accessLevel)
+    {
+        return accessLevel switch
+        {
+            "Full" => BadgeStyle.Success,
+            "ReadOnly" => BadgeStyle.Info,
+            "Limited" => BadgeStyle.Warning,
+            _ => BadgeStyle.Secondary
+        };
+    }
+
+    public class AccessLevelOption
+    {
+        public string Value { get; set; } = "";
+        public string Text { get; set; } = "";
+    }
+}

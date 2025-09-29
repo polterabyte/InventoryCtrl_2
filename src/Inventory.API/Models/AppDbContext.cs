@@ -139,6 +139,39 @@ namespace Inventory.API.Models
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
         });
 
+        // Configure UserWarehouse
+        modelBuilder.Entity<UserWarehouse>(entity =>
+        {
+            // Composite primary key
+            entity.HasKey(e => new { e.UserId, e.WarehouseId });
+            
+            // Properties configuration
+            entity.Property(e => e.UserId).IsRequired().HasMaxLength(450);
+            entity.Property(e => e.WarehouseId).IsRequired();
+            entity.Property(e => e.AccessLevel).IsRequired().HasMaxLength(20).HasDefaultValue("Full");
+            entity.Property(e => e.IsDefault).HasDefaultValue(false);
+            entity.Property(e => e.AssignedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            
+            // Foreign key relationships
+            entity.HasOne(e => e.User)
+                  .WithMany(u => u.UserWarehouses)
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+                  
+            entity.HasOne(e => e.Warehouse)
+                  .WithMany(w => w.UserWarehouses)
+                  .HasForeignKey(e => e.WarehouseId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            
+            // Indexes for performance
+            entity.HasIndex(e => e.UserId).HasDatabaseName("IX_UserWarehouses_UserId");
+            entity.HasIndex(e => e.WarehouseId).HasDatabaseName("IX_UserWarehouses_WarehouseId");
+            entity.HasIndex(e => new { e.UserId, e.IsDefault })
+                  .HasDatabaseName("IX_UserWarehouses_UserId_IsDefault")
+                  .HasFilter("IsDefault = true"); // Partial index for default warehouses only
+        });
+
         // Keyless view mappings
         modelBuilder.Entity<ProductPendingView>(entity =>
         {
@@ -191,6 +224,7 @@ namespace Inventory.API.Models
            public DbSet<ProductGroup> ProductGroups { get; set; } = null!;
            public DbSet<ProductTag> ProductTags { get; set; } = null!;
            public DbSet<UnitOfMeasure> UnitOfMeasures { get; set; } = null!;
+           public DbSet<UserWarehouse> UserWarehouses { get; set; } = null!;
            public DbSet<AuditLog> AuditLogs { get; set; } = null!;
            public DbSet<DbNotification> Notifications { get; set; } = null!;
            public DbSet<NotificationRule> NotificationRules { get; set; } = null!;

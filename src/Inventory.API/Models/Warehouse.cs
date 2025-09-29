@@ -10,6 +10,7 @@ public class Warehouse
     public string? ContactInfo { get; set; }
     public bool IsActive { get; set; } = true;
     public ICollection<InventoryTransaction> Transactions { get; set; } = new List<InventoryTransaction>();
+    public ICollection<UserWarehouse> UserWarehouses { get; set; } = new List<UserWarehouse>();
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 }
