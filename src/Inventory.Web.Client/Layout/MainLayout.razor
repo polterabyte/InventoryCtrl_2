@@ -107,11 +107,33 @@
         <RadzenComponents />
     </Authorized>
     <NotAuthorized>
-        <Inventory.UI.Pages.Login />
+        @* Minimal layout for login/register pages *@
+        @* <div style="min-height: 100vh; background-color: var(--rz-base-100, #f5f5f5); display: flex; flex-direction: column;"> *@
+            @* Optional: Simple header for unauthenticated pages *@
+            @* <div style="padding: 1rem; text-align: center; border-bottom: 1px solid var(--rz-border-color, #dee2e6);"> *@
+                <RadzenStack Orientation="Orientation.Horizontal" 
+                             AlignItems="AlignItems.Center" 
+                             JustifyContent="JustifyContent.Center" 
+                             Gap="0.5rem">
+                    <RadzenIcon Icon="warehouse" />
+                    <RadzenLabel Text="Inventory Control" Style="font-weight: bold; font-size: 1.2rem;" />
+                </RadzenStack>
+            @* </div> *@
+            
+            @* Content area for login/register pages *@
+            <div style="flex: 1; display: flex; align-items: top; justify-content: center; padding: 2rem 1rem;">
+                @Body
+            </div>
+            
+            @* Optional: Simple footer *@
+            <div style="text-align: center; padding: 1rem; color: var(--rz-text-disabled-color, #666); font-size: 0.875rem; border-top: 1px solid var(--rz-border-color,rgb(28, 50, 71));">
+                © 2024 CUBY technologies
+            </div>
+        @* </div> *@
+        
+        <RadzenNotificationBridge />
+        <RadzenComponents />
     </NotAuthorized>
-    <Authorizing>
-        <h3>Loading ...</h3>
-    </Authorizing>
 </AuthorizeView>
 
 @code {

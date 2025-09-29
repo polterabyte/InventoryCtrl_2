@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Components.Web;
+﻿﻿using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Inventory.Web.Client;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -113,7 +113,8 @@ builder.Services.AddScoped<ILoggingService, LoggingService>();
 builder.Services.AddScoped<IErrorHandlingService, ErrorHandlingService>();
 
 // Register notification and retry services
-builder.Services.AddScoped<IUINotificationService, Inventory.Shared.Services.NotificationService>();
+// Remove this line - using Radzen notifications directly now
+// builder.Services.AddScoped<IUINotificationService, Inventory.Shared.Services.NotificationService>();
 builder.Services.AddScoped<IRetryService, RetryService>();
 builder.Services.AddScoped<IDebugLogsService, DebugLogsService>();
 

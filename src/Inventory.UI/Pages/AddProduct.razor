@@ -6,7 +6,7 @@
 @using Radzen
 @using Radzen.Blazor
 @inject IProductService ProductService
-@inject IUINotificationService NotificationService
+@inject NotificationService NotificationService
 @inject IErrorHandlingService ErrorHandlingService
 @inject NavigationManager Navigation
 
@@ -45,7 +45,13 @@
     {
         try
         {
-            NotificationService.ShowSuccess("Успех", $"Товар '{product.Name}' успешно добавлен");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Успех",
+                Detail = $"Товар '{product.Name}' успешно добавлен",
+                Duration = 4000
+            });
             Navigation.NavigateTo("/products");
         }
         catch (Exception ex)

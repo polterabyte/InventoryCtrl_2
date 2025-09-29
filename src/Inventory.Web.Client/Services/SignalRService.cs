@@ -10,11 +10,18 @@ public class SignalRService : ISignalRService
     private readonly IApiUrlService _apiUrlService;
     private readonly ILogger<SignalRService> _logger;
     private HubConnection? _connection;
-
+    
+    public event Action<string>? ConnectionStateChanged;
+    
     public SignalRService(IApiUrlService apiUrlService, ILogger<SignalRService> logger)
     {
         _apiUrlService = apiUrlService;
         _logger = logger;
+    }
+    
+    public string GetConnectionState()
+    {
+        return _connection?.State.ToString() ?? "Disconnected";
     }
 
     public async Task<bool> InitializeConnectionAsync<T>(string accessToken, DotNetObjectReference<T> dotNetRef) where T : class
@@ -41,16 +48,28 @@ public class SignalRService : ISignalRService
             _connection.Reconnected += id =>
             {
                 _logger.LogInformation("SignalR reconnected: {Id}", id);
+                ConnectionStateChanged?.Invoke("Connected");
                 return Task.CompletedTask;
             };
             _connection.Closed += ex =>
             {
                 _logger.LogWarning(ex, "SignalR closed");
+                ConnectionStateChanged?.Invoke("Disconnected");
+                return Task.CompletedTask;
+            };
+            _connection.Reconnecting += ex =>
+            {
+                _logger.LogInformation("SignalR reconnecting...");
+                ConnectionStateChanged?.Invoke("Reconnecting");
                 return Task.CompletedTask;
             };
 
             await _connection.StartAsync();
             _logger.LogInformation("SignalR connection started: {State}", _connection.State);
+            
+            // Notify initial connection state
+            ConnectionStateChanged?.Invoke(_connection.State.ToString());
+            
             return true;
         }
         catch (Exception ex)
@@ -99,6 +118,7 @@ public class SignalRService : ISignalRService
                 await _connection.StopAsync();
                 await _connection.DisposeAsync();
                 _connection = null;
+                ConnectionStateChanged?.Invoke("Disconnected");
             }
         }
         catch (Exception ex)
