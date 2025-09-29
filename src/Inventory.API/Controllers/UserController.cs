@@ -16,18 +16,18 @@ namespace Inventory.API.Controllers;
 [Authorize]
 public class UserController : ControllerBase
 {
-    private readonly UserManager<User> __userManager;
+    private readonly UserManager<User> _userManager;
     private readonly IUserWarehouseService _userWarehouseService;
-    private readonly ILogger<UserController> __logger;
+    private readonly ILogger<UserController> _logger;
 
     public UserController(
-        UserManager<User> _userManager,
+        UserManager<User> userManager,
         IUserWarehouseService userWarehouseService,
-        ILogger<UserController> _logger)
+        ILogger<UserController> logger)
     {
-        __userManager = _userManager;
+        _userManager = userManager;
         _userWarehouseService = userWarehouseService;
-        __logger = _logger;
+        _logger = logger;
     }
     [HttpGet("info")]
     public IActionResult GetUserInfo()
@@ -38,7 +38,7 @@ public class UserController : ControllerBase
             var roles = User.FindAll(ClaimTypes.Role).Select(r => r.Value).ToArray();
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             
-            __logger.LogInformation("User info requested for: {Username}", username);
+            _logger.LogInformation("User info requested for: {Username}", username);
             
             return Ok(ApiResponse<object>.CreateSuccess(new
             {
@@ -49,7 +49,7 @@ public class UserController : ControllerBase
         }
         catch (Exception ex)
         {
-            __logger.LogError(ex, "Error retrieving user info");
+            _logger.LogError(ex, "Error retrieving user info");
             return StatusCode(500, new ApiResponse<object>
             {
                 Success = false,
@@ -130,7 +130,7 @@ public class UserController : ControllerBase
         }
         catch (Exception ex)
         {
-            __logger.LogError(ex, "Error retrieving users");
+            _logger.LogError(ex, "Error retrieving users");
             return StatusCode(500, new PagedApiResponse<UserDto>
             {
                 Success = false,

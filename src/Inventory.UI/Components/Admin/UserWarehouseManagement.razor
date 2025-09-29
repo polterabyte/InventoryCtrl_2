@@ -88,7 +88,7 @@
                 <RadzenText TextStyle="TextStyle.H6">Assign New Warehouse</RadzenText>
             </RadzenStack>
             
-            <RadzenTemplateForm Data="@AssignWarehouseDto" Submit="@AssignWarehouse">
+            <RadzenTemplateForm Data="@AssignWarehouseDto" Submit="@(EventCallback.Factory.Create<AssignWarehouseDto>(this, AssignWarehouse))">
                 <RadzenRow Class="g-3">
                     <RadzenColumn Size="12" SizeMd="4">
                         <RadzenFormField Text="Warehouse *">
@@ -187,11 +187,11 @@
         return AvailableWarehouses.Where(w => !assignedWarehouseIds.Contains(w.Id)).ToList();
     }
 
-    private async Task AssignWarehouse()
+    private async Task AssignWarehouse(AssignWarehouseDto dto)
     {
         try
         {
-            if (AssignWarehouseDto.WarehouseId <= 0)
+            if (dto.WarehouseId <= 0)
             {
                 await JSRuntime.InvokeVoidAsync("alert", "Please select a warehouse.");
                 return;
@@ -200,7 +200,7 @@
             IsSaving = true;
             StateHasChanged();
 
-            var result = await UserWarehouseService.AssignWarehouseToUserAsync(UserId, AssignWarehouseDto);
+            var result = await UserWarehouseService.AssignWarehouseToUserAsync(UserId, dto);
 
             if (result?.Success == true)
             {

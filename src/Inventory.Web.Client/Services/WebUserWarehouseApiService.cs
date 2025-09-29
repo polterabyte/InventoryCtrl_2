@@ -82,7 +82,13 @@ public class WebUserWarehouseApiService : WebBaseApiService, IUserWarehouseServi
         try
         {
             var endpoint = $"/api/user/{userId}/warehouses/{warehouseId}";
-            return await DeleteAsync<object>(endpoint);
+            var response = await DeleteAsync(endpoint);
+            return new ApiResponse<object>
+            {
+                Success = response.Success,
+                ErrorMessage = response.ErrorMessage,
+                Data = response.Success ? new { message = "Warehouse assignment removed successfully" } : null
+            };
         }
         catch (Exception ex)
         {

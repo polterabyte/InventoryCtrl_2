@@ -272,6 +272,8 @@
     </RadzenCard>
 </RadzenStack>
 
+</AdminGuard>
+
 <!-- Dialogs are now handled by DialogService -->
 
 @code {
@@ -310,12 +312,6 @@
     private CreateUserDto createUser = new();
     private ChangePasswordDto passwordDto = new();
     private bool isSaving = false;
-
-    // Warehouse assignment states
-    private List<WarehouseDto>? availableWarehouses;
-    private List<UserWarehouseDto>? userWarehouses;
-    private AssignWarehouseDto assignWarehouseDto = new();
-    private bool isLoadingWarehouses = false;
 
     protected override async Task OnInitializedAsync()
     {

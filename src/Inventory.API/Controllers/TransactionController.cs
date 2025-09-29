@@ -14,18 +14,18 @@ namespace Inventory.API.Controllers;
 [Authorize]
 public class TransactionController : ControllerBase
 {
-    private readonly AppDbContext __context;
+    private readonly AppDbContext _context;
     private readonly IUserWarehouseService _userWarehouseService;
-    private readonly ILogger<TransactionController> __logger;
+    private readonly ILogger<TransactionController> _logger;
 
     public TransactionController(
-        AppDbContext _context,
+        AppDbContext context,
         IUserWarehouseService userWarehouseService,
-        ILogger<TransactionController> _logger)
+        ILogger<TransactionController> logger)
     {
-        __context = _context;
+        _context = context;
         _userWarehouseService = userWarehouseService;
-        __logger = _logger;
+        _logger = logger;
     }
     [HttpGet]
     public async Task<IActionResult> GetTransactions(

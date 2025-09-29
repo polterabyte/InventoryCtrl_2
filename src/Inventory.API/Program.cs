@@ -1,4 +1,4 @@
-﻿﻿using Serilog;
+﻿﻿﻿﻿using Serilog;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -277,7 +277,7 @@ builder.Services.AddHttpClient<ILocationService, LocationApiService>(client =>
 
 // Add FluentValidation
 builder.Services.AddScoped<IRequestService, RequestService>();
-builder.Services.AddScoped<IUserWarehouseService, UserWarehouseService>();
+builder.Services.AddScoped<Inventory.API.Services.IUserWarehouseService, UserWarehouseService>();
 builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
 
 // Add Rate Limiting

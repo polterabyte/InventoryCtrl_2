@@ -14,18 +14,18 @@ namespace Inventory.API.Controllers;
 [Authorize]
 public class WarehouseController : ControllerBase
 {
-    private readonly AppDbContext __context;
+    private readonly AppDbContext _context;
     private readonly IUserWarehouseService _userWarehouseService;
-    private readonly ILogger<WarehouseController> __logger;
+    private readonly ILogger<WarehouseController> _logger;
 
     public WarehouseController(
-        AppDbContext _context,
+        AppDbContext context,
         IUserWarehouseService userWarehouseService,
-        ILogger<WarehouseController> _logger)
+        ILogger<WarehouseController> logger)
     {
-        __context = _context;
+        _context = context;
         _userWarehouseService = userWarehouseService;
-        __logger = _logger;
+        _logger = logger;
     }
     [HttpGet]
     public async Task<IActionResult> GetWarehouses(
