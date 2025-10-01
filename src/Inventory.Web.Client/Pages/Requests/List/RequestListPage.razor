@@ -123,7 +123,7 @@
         else
         {
             <RadzenStack Gap="1rem">
-                @foreach (var request in requests)
+                @foreach (var request in requests ?? Enumerable.Empty<RequestDto>())
                 {
                     <RequestCard Request="request" 
                                  OnClick="@(EventCallback.Factory.Create(this, () => ViewRequestDetails(request.Id)))"
@@ -210,24 +210,27 @@
         try
         {
             // Find and update the request in the current list
-            var request = requests?.FirstOrDefault(r => r.Id == requestId);
-            if (request != null)
+            if (requests != null)
             {
-                // Create a new request object with updated status to trigger UI update
-                var updatedRequest = new RequestDto(request.Id, request.Title, request.Description, newStatus, request.CreatedAt);
-                var index = requests.IndexOf(request);
-                requests[index] = updatedRequest;
-                
-                await InvokeAsync(StateHasChanged);
-                
-                // Show notification
-                NotificationService.Notify(new Radzen.NotificationMessage
+                var request = requests.FirstOrDefault(r => r.Id == requestId);
+                if (request != null)
                 {
-                    Severity = NotificationSeverity.Info,
-                    Summary = "Real-time Update",
-                    Detail = $"Request #{requestId} status changed to {newStatus}",
-                    Duration = 3000
-                });
+                    // Create a new request object with updated status to trigger UI update
+                    var updatedRequest = new RequestDto(request.Id, request.Title, request.Description, newStatus, request.CreatedAt);
+                    var index = requests.IndexOf(request);
+                    requests[index] = updatedRequest;
+                
+                    await InvokeAsync(StateHasChanged);
+                
+                    // Show notification
+                    NotificationService.Notify(new Radzen.NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Info,
+                        Summary = "Real-time Update",
+                        Detail = $"Request #{requestId} status changed to {newStatus}",
+                        Duration = 3000
+                    });
+                }
             }
         }
         catch (Exception ex)
@@ -273,11 +276,24 @@
                 status: selectedStatus
             );
 
+            // Проверяем, был ли обновлен токен
+            if (!response.Success && response.ErrorMessage == "TOKEN_REFRESHED")
+            {
+                // Повторно пробуем загрузить данные после обновления токена
+                response = await RequestService.GetPagedRequestsAsync(
+                    page: currentPage,
+                    pageSize: pageSize,
+                    search: string.IsNullOrWhiteSpace(searchTerm) ? null : searchTerm,
+                    status: selectedStatus
+                );
+            }
+
             if (response.Success && response.Data != null)
             {
                 requests = response.Data.Items;
                 totalCount = response.Data.TotalCount;
                 totalPages = response.Data.TotalPages;
+                errorMessage = null; // Очищаем ошибку в случае успеха
             }
             else
             {
