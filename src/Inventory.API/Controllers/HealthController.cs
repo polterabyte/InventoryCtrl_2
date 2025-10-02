@@ -1,3 +1,4 @@
+using Inventory.Shared.DTOs;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Inventory.API.Controllers;
@@ -7,8 +8,9 @@ namespace Inventory.API.Controllers;
 public class HealthController : ControllerBase
 {
     [HttpGet]
-    public IActionResult Get()
+    public ActionResult<ApiResponse<HealthStatusDto>> Get()
     {
-        return Ok(new { status = "healthy", timestamp = DateTime.UtcNow });
+        var healthStatus = new HealthStatusDto();
+        return Ok(ApiResponse<HealthStatusDto>.CreateSuccess(healthStatus, "Health check successful."));
     }
 }

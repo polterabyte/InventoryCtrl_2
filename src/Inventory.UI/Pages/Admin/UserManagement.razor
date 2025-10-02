@@ -337,8 +337,8 @@
             if (result?.Success == true && result.Data != null)
             {
                 users = result.Data.Items?.ToList();
-                totalPages = (int)Math.Ceiling((double)result.Data.TotalCount / pageSize);
-                totalUsers = result.Data.TotalCount;
+                totalPages = (int)Math.Ceiling((double)result.Data.total / pageSize);
+                totalUsers = result.Data.total;
                 
                 await JSRuntime.InvokeVoidAsync("console.log", $"Loaded {users?.Count ?? 0} users");
                 

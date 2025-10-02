@@ -99,8 +99,8 @@ public class ProductControllerRoleTests : IDisposable
         var result = await _controller.CreateProduct(request);
 
         // Assert
-        result.Should().BeOfType<CreatedAtActionResult>();
-        var createdResult = result as CreatedAtActionResult;
+        result.Result.Should().BeOfType<CreatedAtActionResult>();
+        var createdResult = result.Result as CreatedAtActionResult;
         var response = createdResult?.Value as ApiResponse<ProductDto>;
         
         response.Should().NotBeNull();
@@ -181,8 +181,8 @@ public class ProductControllerRoleTests : IDisposable
         var result = await _controller.CreateProduct(request);
 
         // Assert
-        result.Should().BeOfType<CreatedAtActionResult>();
-        var createdResult = result as CreatedAtActionResult;
+        result.Result.Should().BeOfType<CreatedAtActionResult>();
+        var createdResult = result.Result as CreatedAtActionResult;
         var response = createdResult?.Value as ApiResponse<ProductDto>;
         
         response.Should().NotBeNull();
@@ -245,8 +245,8 @@ public class ProductControllerRoleTests : IDisposable
         var result = await _controller.UpdateProduct(product.Id, request);
 
         // Assert
-        result.Should().BeOfType<OkObjectResult>();
-        var okResult = result as OkObjectResult;
+        result.Result.Should().BeOfType<OkObjectResult>();
+        var okResult = result.Result as OkObjectResult;
         var response = okResult?.Value as ApiResponse<ProductDto>;
         
         response.Should().NotBeNull();
@@ -399,8 +399,8 @@ public class ProductControllerRoleTests : IDisposable
         var result = await _controller.DeleteProduct(product.Id);
 
         // Assert
-        result.Should().BeOfType<OkObjectResult>();
-        var okResult = result as OkObjectResult;
+        result.Result.Should().BeOfType<OkObjectResult>();
+        var okResult = result.Result as OkObjectResult;
         var response = okResult?.Value as ApiResponse<object>;
         
         response.Should().NotBeNull();

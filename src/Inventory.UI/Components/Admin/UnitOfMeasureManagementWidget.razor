@@ -175,7 +175,7 @@
             if (response.Success && response.Data != null)
             {
                 data = response.Data.Items;
-                totalCount = response.Data.TotalCount;
+                totalCount = response.Data.total;
                 totalPages = response.Data.TotalPages;
             }
             else

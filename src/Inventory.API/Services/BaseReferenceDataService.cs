@@ -85,8 +85,8 @@ public abstract class BaseReferenceDataService<TEntity, TDto, TCreateDto, TUpdat
             var pagedResponse = new PagedResponse<TDto>
             {
                 Items = dtos,
-                TotalCount = totalCount,
-                PageNumber = page,
+                total = totalCount,
+                page = page,
                 PageSize = pageSize
             };
 

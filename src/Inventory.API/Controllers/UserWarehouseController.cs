@@ -99,7 +99,7 @@ public class UserWarehouseController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> AssignWarehouseToUser(string userId, [FromBody] AssignWarehouseDto assignmentDto)
+    public async Task<ActionResult<ApiResponse<UserWarehouseDto>>> AssignWarehouseToUser(string userId, [FromBody] AssignWarehouseDto assignmentDto)
     {
         try
         {
@@ -110,39 +110,22 @@ public class UserWarehouseController : ControllerBase
                     .Select(e => e.ErrorMessage)
                     .ToList();
 
-                return BadRequest(new ApiResponse<object>
-                {
-                    Success = false,
-                    ErrorMessage = "Validation failed",
-                    Errors = errors
-                });
+                return BadRequest(ApiResponse<UserWarehouseDto>.CreateFailure("Validation failed", errors));
             }
 
             var result = await _userWarehouseService.AssignWarehouseToUserAsync(userId, assignmentDto);
 
-            if (result.Success)
+            if (result.Success && result.Data != null)
             {
-                return Ok(new ApiResponse<UserWarehouseDto>
-                {
-                    Success = true,
-                    Data = result.Data
-                });
+                return Ok(ApiResponse<UserWarehouseDto>.CreateSuccess(result.Data));
             }
 
-            return BadRequest(new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = result.Error
-            });
+            return BadRequest(ApiResponse<UserWarehouseDto>.CreateFailure(result.Error ?? "Failed to assign warehouse."));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error assigning warehouse to user {UserId}", userId);
-            return StatusCode(500, new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = "Internal server error"
-            });
+            return StatusCode(500, ApiResponse<UserWarehouseDto>.CreateFailure("Internal server error"));
         }
     }
 
@@ -172,7 +155,7 @@ public class UserWarehouseController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> RemoveWarehouseAssignment(string userId, int warehouseId)
+    public async Task<ActionResult<ApiResponse<object>>> RemoveWarehouseAssignment(string userId, int warehouseId)
     {
         try
         {
@@ -180,28 +163,16 @@ public class UserWarehouseController : ControllerBase
 
             if (result.Success)
             {
-                return Ok(new ApiResponse<object>
-                {
-                    Success = true,
-                    Data = new { message = "Warehouse assignment removed successfully" }
-                });
+                return Ok(ApiResponse<object>.CreateSuccess(new { message = "Warehouse assignment removed successfully" }));
             }
 
-            return BadRequest(new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = result.Error
-            });
+            return BadRequest(ApiResponse<object>.CreateFailure(result.Error ?? "Failed to remove assignment."));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error removing warehouse {WarehouseId} assignment from user {UserId}", 
                 warehouseId, userId);
-            return StatusCode(500, new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = "Internal server error"
-            });
+            return StatusCode(500, ApiResponse<object>.CreateFailure("Internal server error"));
         }
     }
 
@@ -243,7 +214,7 @@ public class UserWarehouseController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UpdateWarehouseAssignment(string userId, int warehouseId, [FromBody] UpdateWarehouseAssignmentDto updateDto)
+    public async Task<ActionResult<ApiResponse<UserWarehouseDto>>> UpdateWarehouseAssignment(string userId, int warehouseId, [FromBody] UpdateWarehouseAssignmentDto updateDto)
     {
         try
         {
@@ -254,40 +225,23 @@ public class UserWarehouseController : ControllerBase
                     .Select(e => e.ErrorMessage)
                     .ToList();
 
-                return BadRequest(new ApiResponse<object>
-                {
-                    Success = false,
-                    ErrorMessage = "Validation failed",
-                    Errors = errors
-                });
+                return BadRequest(ApiResponse<UserWarehouseDto>.CreateFailure("Validation failed", errors));
             }
 
             var result = await _userWarehouseService.UpdateWarehouseAssignmentAsync(userId, warehouseId, updateDto);
 
-            if (result.Success)
+            if (result.Success && result.Data != null)
             {
-                return Ok(new ApiResponse<UserWarehouseDto>
-                {
-                    Success = true,
-                    Data = result.Data
-                });
+                return Ok(ApiResponse<UserWarehouseDto>.CreateSuccess(result.Data));
             }
 
-            return BadRequest(new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = result.Error
-            });
+            return BadRequest(ApiResponse<UserWarehouseDto>.CreateFailure(result.Error ?? "Failed to update assignment."));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating warehouse {WarehouseId} assignment for user {UserId}", 
                 warehouseId, userId);
-            return StatusCode(500, new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = "Internal server error"
-            });
+            return StatusCode(500, ApiResponse<UserWarehouseDto>.CreateFailure("Internal server error"));
         }
     }
 
@@ -318,7 +272,7 @@ public class UserWarehouseController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> SetDefaultWarehouse(string userId, int warehouseId)
+    public async Task<ActionResult<ApiResponse<object>>> SetDefaultWarehouse(string userId, int warehouseId)
     {
         try
         {
@@ -326,28 +280,16 @@ public class UserWarehouseController : ControllerBase
 
             if (result.Success)
             {
-                return Ok(new ApiResponse<object>
-                {
-                    Success = true,
-                    Data = new { message = "Default warehouse set successfully" }
-                });
+                return Ok(ApiResponse<object>.CreateSuccess(new { message = "Default warehouse set successfully" }));
             }
 
-            return BadRequest(new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = result.Error
-            });
+            return BadRequest(ApiResponse<object>.CreateFailure(result.Error ?? "Failed to set default warehouse."));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error setting default warehouse {WarehouseId} for user {UserId}", 
                 warehouseId, userId);
-            return StatusCode(500, new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = "Internal server error"
-            });
+            return StatusCode(500, ApiResponse<object>.CreateFailure("Internal server error"));
         }
     }
 
@@ -396,7 +338,7 @@ public class UserWarehouseController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<List<UserWarehouseDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetUserWarehouses(string userId)
+    public async Task<ActionResult<ApiResponse<List<UserWarehouseDto>>>> GetUserWarehouses(string userId)
     {
         try
         {
@@ -406,25 +348,17 @@ public class UserWarehouseController : ControllerBase
 
             if (currentUserId != userId && currentUserRole != "Admin" && currentUserRole != "Manager")
             {
-                return Forbid();
+                return StatusCode(StatusCodes.Status403Forbidden, ApiResponse<List<UserWarehouseDto>>.CreateFailure("Forbidden"));
             }
 
             var warehouses = await _userWarehouseService.GetUserWarehousesAsync(userId);
 
-            return Ok(new ApiResponse<List<UserWarehouseDto>>
-            {
-                Success = true,
-                Data = warehouses
-            });
+            return Ok(ApiResponse<List<UserWarehouseDto>>.CreateSuccess(warehouses));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting warehouses for user {UserId}", userId);
-            return StatusCode(500, new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = "Internal server error"
-            });
+            return StatusCode(500, ApiResponse<List<UserWarehouseDto>>.CreateFailure("Internal server error"));
         }
     }
 
@@ -460,26 +394,18 @@ public class UserWarehouseController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<List<UserWarehouseDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetWarehouseUsers(int warehouseId)
+    public async Task<ActionResult<ApiResponse<List<UserWarehouseDto>>>> GetWarehouseUsers(int warehouseId)
     {
         try
         {
             var users = await _userWarehouseService.GetWarehouseUsersAsync(warehouseId);
 
-            return Ok(new ApiResponse<List<UserWarehouseDto>>
-            {
-                Success = true,
-                Data = users
-            });
+            return Ok(ApiResponse<List<UserWarehouseDto>>.CreateSuccess(users));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting users for warehouse {WarehouseId}", warehouseId);
-            return StatusCode(500, new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = "Internal server error"
-            });
+            return StatusCode(500, ApiResponse<List<UserWarehouseDto>>.CreateFailure("Internal server error"));
         }
     }
 
@@ -535,7 +461,7 @@ public class UserWarehouseController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> BulkAssignUsersToWarehouse([FromBody] BulkAssignWarehousesDto bulkAssignDto)
+    public async Task<ActionResult<ApiResponse<object>>> BulkAssignUsersToWarehouse([FromBody] BulkAssignWarehousesDto bulkAssignDto)
     {
         try
         {
@@ -546,39 +472,33 @@ public class UserWarehouseController : ControllerBase
                     .Select(e => e.ErrorMessage)
                     .ToList();
 
-                return BadRequest(new ApiResponse<object>
-                {
-                    Success = false,
-                    ErrorMessage = "Validation failed",
-                    Errors = errors
-                });
+                return BadRequest(ApiResponse<object>.CreateFailure("Validation failed", errors));
             }
 
             var result = await _userWarehouseService.BulkAssignUsersToWarehouseAsync(bulkAssignDto);
 
-            return Ok(new ApiResponse<object>
+            var responseData = new
             {
-                Success = result.Success,
-                Data = new
-                {
-                    SuccessfulAssignments = result.Data,
-                    Errors = result.Errors,
-                    TotalRequested = bulkAssignDto.UserIds.Count,
-                    TotalSuccessful = result.Data.Count,
-                    TotalFailed = result.Errors.Count
-                },
-                ErrorMessage = result.Success ? null : "Some assignments failed",
-                Errors = result.Errors
-            });
+                SuccessfulAssignments = result.Data,
+                Errors = result.Errors,
+                TotalRequested = bulkAssignDto.UserIds.Count,
+                TotalSuccessful = result.Data.Count,
+                TotalFailed = result.Errors.Count
+            };
+
+            if (result.Success)
+            {
+                return Ok(ApiResponse<object>.CreateSuccess(responseData));
+            }
+            
+            var response = ApiResponse<object>.CreateFailure("Some assignments failed", result.Errors);
+            response.Data = responseData;
+            return Ok(response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in bulk assignment to warehouse {WarehouseId}", bulkAssignDto.WarehouseId);
-            return StatusCode(500, new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = "Internal server error"
-            });
+            return StatusCode(500, ApiResponse<object>.CreateFailure("Internal server error"));
         }
     }
 
@@ -628,7 +548,7 @@ public class UserWarehouseController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> CheckWarehouseAccess(string userId, int warehouseId, [FromQuery] string? requiredAccessLevel = null)
+    public async Task<ActionResult<ApiResponse<object>>> CheckWarehouseAccess(string userId, int warehouseId, [FromQuery] string? requiredAccessLevel = null)
     {
         try
         {
@@ -638,33 +558,25 @@ public class UserWarehouseController : ControllerBase
 
             if (currentUserId != userId && currentUserRole != "Admin" && currentUserRole != "Manager")
             {
-                return Forbid();
+                return StatusCode(StatusCodes.Status403Forbidden, ApiResponse<object>.CreateFailure("Forbidden"));
             }
 
             var result = await _userWarehouseService.CheckWarehouseAccessAsync(userId, warehouseId, requiredAccessLevel);
 
-            return Ok(new ApiResponse<object>
+            return Ok(ApiResponse<object>.CreateSuccess(new
             {
-                Success = true,
-                Data = new
-                {
-                    HasAccess = result.HasAccess,
-                    AccessLevel = result.AccessLevel,
-                    WarehouseId = warehouseId,
-                    UserId = userId,
-                    RequiredAccessLevel = requiredAccessLevel
-                }
-            });
+                HasAccess = result.HasAccess,
+                AccessLevel = result.AccessLevel,
+                WarehouseId = warehouseId,
+                UserId = userId,
+                RequiredAccessLevel = requiredAccessLevel
+            }));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error checking warehouse {WarehouseId} access for user {UserId}", 
                 warehouseId, userId);
-            return StatusCode(500, new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = "Internal server error"
-            });
+            return StatusCode(500, ApiResponse<object>.CreateFailure("Internal server error"));
         }
     }
 
@@ -708,7 +620,7 @@ public class UserWarehouseController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<List<int>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetAccessibleWarehouses(string userId)
+    public async Task<ActionResult<ApiResponse<List<int>>>> GetAccessibleWarehouses(string userId)
     {
         try
         {
@@ -718,26 +630,18 @@ public class UserWarehouseController : ControllerBase
 
             if (currentUserId != userId && currentUserRole != "Admin" && currentUserRole != "Manager")
             {
-                return Forbid();
+                return StatusCode(StatusCodes.Status403Forbidden, ApiResponse<List<int>>.CreateFailure("Forbidden"));
             }
 
             var userRole = currentUserId == userId ? currentUserRole! : "User"; // Default to User for non-self queries
             var warehouseIds = await _userWarehouseService.GetAccessibleWarehouseIdsAsync(userId, userRole);
 
-            return Ok(new ApiResponse<List<int>>
-            {
-                Success = true,
-                Data = warehouseIds
-            });
+            return Ok(ApiResponse<List<int>>.CreateSuccess(warehouseIds));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting accessible warehouses for user {UserId}", userId);
-            return StatusCode(500, new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = "Internal server error"
-            });
+            return StatusCode(500, ApiResponse<List<int>>.CreateFailure("Internal server error"));
         }
     }
 }

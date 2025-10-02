@@ -35,7 +35,7 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
         return string.Join(" > ", pathParts);
     }
     [HttpGet]
-    public async Task<IActionResult> GetManufacturers()
+    public async Task<ActionResult<ApiResponse<List<ManufacturerDto>>>> GetManufacturers()
     {
         try
         {
@@ -63,25 +63,17 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
                 manufacturer.LocationFullPath = await GetLocationFullPathAsync(manufacturer.LocationId);
             }
 
-            return Ok(new ApiResponse<List<ManufacturerDto>>
-            {
-                Success = true,
-                Data = manufacturers
-            });
+            return Ok(ApiResponse<List<ManufacturerDto>>.CreateSuccess(manufacturers));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving manufacturers");
-            return StatusCode(500, new ApiResponse<List<ManufacturerDto>>
-            {
-                Success = false,
-                ErrorMessage = "Failed to retrieve manufacturers"
-            });
+            return StatusCode(500, ApiResponse<List<ManufacturerDto>>.CreateFailure("Failed to retrieve manufacturers"));
         }
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetManufacturer(int id)
+    public async Task<ActionResult<ApiResponse<ManufacturerDto>>> GetManufacturer(int id)
     {
         try
         {
@@ -91,11 +83,7 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
                 
             if (manufacturer == null)
             {
-                return NotFound(new ApiResponse<ManufacturerDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Manufacturer not found"
-                });
+                return NotFound(ApiResponse<ManufacturerDto>.CreateFailure("Manufacturer not found"));
             }
 
             var manufacturerDto = new ManufacturerDto
@@ -113,37 +101,25 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
                 UpdatedAt = manufacturer.UpdatedAt
             };
 
-            return Ok(new ApiResponse<ManufacturerDto>
-            {
-                Success = true,
-                Data = manufacturerDto
-            });
+            return Ok(ApiResponse<ManufacturerDto>.CreateSuccess(manufacturerDto));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving manufacturer {ManufacturerId}", id);
-            return StatusCode(500, new ApiResponse<ManufacturerDto>
-            {
-                Success = false,
-                ErrorMessage = "Failed to retrieve manufacturer"
-            });
+            return StatusCode(500, ApiResponse<ManufacturerDto>.CreateFailure("Failed to retrieve manufacturer"));
         }
     }
 
     [HttpPost]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> CreateManufacturer([FromBody] CreateManufacturerDto request)
+    public async Task<ActionResult<ApiResponse<ManufacturerDto>>> CreateManufacturer([FromBody] CreateManufacturerDto request)
     {
         try
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new ApiResponse<ManufacturerDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Invalid model state",
-                    Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList()
-                });
+                var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
+                return BadRequest(ApiResponse<ManufacturerDto>.CreateFailure("Invalid model state", errors));
             }
 
             // Check if manufacturer already exists
@@ -152,11 +128,7 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
 
             if (existingManufacturer != null)
             {
-                return BadRequest(new ApiResponse<ManufacturerDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Manufacturer with this name already exists"
-                });
+                return BadRequest(ApiResponse<ManufacturerDto>.CreateFailure("Manufacturer with this name already exists"));
             }
 
             // Check if location exists
@@ -165,11 +137,7 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
 
             if (location == null)
             {
-                return BadRequest(new ApiResponse<ManufacturerDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Location not found or inactive"
-                });
+                return BadRequest(ApiResponse<ManufacturerDto>.CreateFailure("Location not found or inactive"));
             }
 
             var manufacturer = new Manufacturer
@@ -203,37 +171,25 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
                 UpdatedAt = manufacturer.UpdatedAt
             };
 
-            return CreatedAtAction(nameof(GetManufacturer), new { id = manufacturer.Id }, new ApiResponse<ManufacturerDto>
-            {
-                Success = true,
-                Data = manufacturerDto
-            });
+            return CreatedAtAction(nameof(GetManufacturer), new { id = manufacturer.Id }, ApiResponse<ManufacturerDto>.CreateSuccess(manufacturerDto));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error creating manufacturer");
-            return StatusCode(500, new ApiResponse<ManufacturerDto>
-            {
-                Success = false,
-                ErrorMessage = "Failed to create manufacturer"
-            });
+            return StatusCode(500, ApiResponse<ManufacturerDto>.CreateFailure("Failed to create manufacturer"));
         }
     }
 
     [HttpPut("{id}")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> UpdateManufacturer(int id, [FromBody] UpdateManufacturerDto request)
+    public async Task<ActionResult<ApiResponse<ManufacturerDto>>> UpdateManufacturer(int id, [FromBody] UpdateManufacturerDto request)
     {
         try
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new ApiResponse<ManufacturerDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Invalid model state",
-                    Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList()
-                });
+                var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
+                return BadRequest(ApiResponse<ManufacturerDto>.CreateFailure("Invalid model state", errors));
             }
 
             var manufacturer = await context.Manufacturers
@@ -242,11 +198,7 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
                 
             if (manufacturer == null)
             {
-                return NotFound(new ApiResponse<ManufacturerDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Manufacturer not found"
-                });
+                return NotFound(ApiResponse<ManufacturerDto>.CreateFailure("Manufacturer not found"));
             }
 
             // Check if another manufacturer with the same name exists
@@ -255,11 +207,7 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
 
             if (existingManufacturer != null)
             {
-                return BadRequest(new ApiResponse<ManufacturerDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Manufacturer with this name already exists"
-                });
+                return BadRequest(ApiResponse<ManufacturerDto>.CreateFailure("Manufacturer with this name already exists"));
             }
 
             // Check if location exists
@@ -268,11 +216,7 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
 
             if (location == null)
             {
-                return BadRequest(new ApiResponse<ManufacturerDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Location not found or inactive"
-                });
+                return BadRequest(ApiResponse<ManufacturerDto>.CreateFailure("Location not found or inactive"));
             }
 
             manufacturer.Name = request.Name;
@@ -303,37 +247,25 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
                 UpdatedAt = manufacturer.UpdatedAt
             };
 
-            return Ok(new ApiResponse<ManufacturerDto>
-            {
-                Success = true,
-                Data = manufacturerDto
-            });
+            return Ok(ApiResponse<ManufacturerDto>.CreateSuccess(manufacturerDto));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error updating manufacturer {ManufacturerId}", id);
-            return StatusCode(500, new ApiResponse<ManufacturerDto>
-            {
-                Success = false,
-                ErrorMessage = "Failed to update manufacturer"
-            });
+            return StatusCode(500, ApiResponse<ManufacturerDto>.CreateFailure("Failed to update manufacturer"));
         }
     }
 
     [HttpDelete("{id}")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> DeleteManufacturer(int id)
+    public async Task<ActionResult<ApiResponse<object>>> DeleteManufacturer(int id)
     {
         try
         {
             var manufacturer = await context.Manufacturers.FindAsync(id);
             if (manufacturer == null)
             {
-                return NotFound(new ApiResponse<object>
-                {
-                    Success = false,
-                    ErrorMessage = "Manufacturer not found"
-                });
+                return NotFound(ApiResponse<object>.CreateFailure("Manufacturer not found"));
             }
 
             // Check if manufacturer has products
@@ -342,11 +274,7 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
 
             if (hasProducts)
             {
-                return BadRequest(new ApiResponse<object>
-                {
-                    Success = false,
-                    ErrorMessage = "Cannot delete manufacturer with products"
-                });
+                return BadRequest(ApiResponse<object>.CreateFailure("Cannot delete manufacturer with products"));
             }
 
             context.Manufacturers.Remove(manufacturer);
@@ -354,20 +282,12 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
 
             logger.LogInformation("Manufacturer deleted: {ManufacturerName} with ID {ManufacturerId}", manufacturer.Name, manufacturer.Id);
 
-            return Ok(new ApiResponse<object>
-            {
-                Success = true,
-                Data = new { message = "Manufacturer deleted successfully" }
-            });
+            return Ok(ApiResponse<object>.CreateSuccess(new { message = "Manufacturer deleted successfully" }));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error deleting manufacturer {ManufacturerId}", id);
-            return StatusCode(500, new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = "Failed to delete manufacturer"
-            });
+            return StatusCode(500, ApiResponse<object>.CreateFailure("Failed to delete manufacturer"));
         }
     }
 }

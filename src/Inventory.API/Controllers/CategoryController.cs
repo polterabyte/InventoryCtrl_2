@@ -14,7 +14,7 @@ namespace Inventory.API.Controllers;
 public class CategoryController(AppDbContext context, ILogger<CategoryController> logger) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetCategories(
+    public async Task<ActionResult<PagedApiResponse<CategoryDto>>> GetCategories(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
         [FromQuery] string? search = null,
@@ -90,8 +90,8 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
             var pagedResponse = new PagedResponse<CategoryDto>
             {
                 Items = categories,
-                TotalCount = totalCount,
-                PageNumber = page,
+                total = totalCount,
+                page = page,
                 PageSize = pageSize
             };
 
@@ -105,7 +105,7 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetCategory(int id)
+    public async Task<ActionResult<ApiResponse<CategoryDto>>> GetCategory(int id)
     {
         try
         {
@@ -140,7 +140,7 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
     }
 
     [HttpGet("root")]
-    public async Task<IActionResult> GetRootCategories()
+    public async Task<ActionResult<ApiResponse<List<CategoryDto>>>> GetRootCategories()
     {
         try
         {
@@ -158,25 +158,17 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
                 })
                 .ToListAsync();
 
-            return Ok(new ApiResponse<List<CategoryDto>>
-            {
-                Success = true,
-                Data = rootCategories
-            });
+            return Ok(ApiResponse<List<CategoryDto>>.CreateSuccess(rootCategories));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving root categories");
-            return StatusCode(500, new ApiResponse<List<CategoryDto>>
-            {
-                Success = false,
-                ErrorMessage = "Failed to retrieve root categories"
-            });
+            return StatusCode(500, ApiResponse<List<CategoryDto>>.CreateFailure("Failed to retrieve root categories"));
         }
     }
 
     [HttpGet("{parentId}/sub")]
-    public async Task<IActionResult> GetSubCategories(int parentId)
+    public async Task<ActionResult<ApiResponse<List<CategoryDto>>>> GetSubCategories(int parentId)
     {
         try
         {
@@ -195,37 +187,25 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
                 })
                 .ToListAsync();
 
-            return Ok(new ApiResponse<List<CategoryDto>>
-            {
-                Success = true,
-                Data = subCategories
-            });
+            return Ok(ApiResponse<List<CategoryDto>>.CreateSuccess(subCategories));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving subcategories for parent {ParentId}", parentId);
-            return StatusCode(500, new ApiResponse<List<CategoryDto>>
-            {
-                Success = false,
-                ErrorMessage = "Failed to retrieve subcategories"
-            });
+            return StatusCode(500, ApiResponse<List<CategoryDto>>.CreateFailure("Failed to retrieve subcategories"));
         }
     }
 
     [HttpPost]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> CreateCategory([FromBody] CreateCategoryDto request)
+    public async Task<ActionResult<ApiResponse<CategoryDto>>> CreateCategory([FromBody] CreateCategoryDto request)
     {
         try
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new ApiResponse<CategoryDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Invalid model state",
-                    Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList()
-                });
+                var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
+                return BadRequest(ApiResponse<CategoryDto>.CreateFailure("Invalid model state", errors));
             }
 
             // Check if parent category exists (if specified)
@@ -236,11 +216,7 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
                 
                 if (parentCategory == null)
                 {
-                    return BadRequest(new ApiResponse<CategoryDto>
-                    {
-                        Success = false,
-                        ErrorMessage = "Parent category not found"
-                    });
+                    return BadRequest(ApiResponse<CategoryDto>.CreateFailure("Parent category not found"));
                 }
             }
 
@@ -274,28 +250,20 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
         catch (Exception ex)
         {
             logger.LogError(ex, "Error creating category");
-            return StatusCode(500, new ApiResponse<CategoryDto>
-            {
-                Success = false,
-                ErrorMessage = "Failed to create category"
-            });
+            return StatusCode(500, ApiResponse<CategoryDto>.CreateFailure("Failed to create category"));
         }
     }
 
     [HttpPut("{id}")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> UpdateCategory(int id, [FromBody] UpdateCategoryDto request)
+    public async Task<ActionResult<ApiResponse<CategoryDto>>> UpdateCategory(int id, [FromBody] UpdateCategoryDto request)
     {
         try
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new ApiResponse<CategoryDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Invalid model state",
-                    Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList()
-                });
+                var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
+                return BadRequest(ApiResponse<CategoryDto>.CreateFailure("Invalid model state", errors));
             }
 
             var category = await context.Categories.FindAsync(id);
@@ -312,11 +280,7 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
                 
                 if (parentCategory == null)
                 {
-                    return BadRequest(new ApiResponse<CategoryDto>
-                    {
-                        Success = false,
-                        ErrorMessage = "Parent category not found"
-                    });
+                    return BadRequest(ApiResponse<CategoryDto>.CreateFailure("Parent category not found"));
                 }
             }
 
@@ -346,28 +310,20 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
         catch (Exception ex)
         {
             logger.LogError(ex, "Error updating category {CategoryId}", id);
-            return StatusCode(500, new ApiResponse<CategoryDto>
-            {
-                Success = false,
-                ErrorMessage = "Failed to update category"
-            });
+            return StatusCode(500, ApiResponse<CategoryDto>.CreateFailure("Failed to update category"));
         }
     }
 
     [HttpDelete("{id}")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> DeleteCategory(int id)
+    public async Task<ActionResult<ApiResponse<object>>> DeleteCategory(int id)
     {
         try
         {
             var category = await context.Categories.FindAsync(id);
             if (category == null)
             {
-                return NotFound(new ApiResponse<object>
-                {
-                    Success = false,
-                    ErrorMessage = "Category not found"
-                });
+                return NotFound(ApiResponse<object>.CreateFailure("Category not found"));
             }
 
             // Check if category has subcategories
@@ -376,11 +332,7 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
 
             if (hasSubCategories)
             {
-                return BadRequest(new ApiResponse<object>
-                {
-                    Success = false,
-                    ErrorMessage = "Cannot delete category with subcategories"
-                });
+                return BadRequest(ApiResponse<object>.CreateFailure("Cannot delete category with subcategories"));
             }
 
             // Check if category has products
@@ -389,11 +341,7 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
 
             if (hasProducts)
             {
-                return BadRequest(new ApiResponse<object>
-                {
-                    Success = false,
-                    ErrorMessage = "Cannot delete category with products"
-                });
+                return BadRequest(ApiResponse<object>.CreateFailure("Cannot delete category with products"));
             }
 
             // Soft delete - set IsActive to false
@@ -404,20 +352,12 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
 
             logger.LogInformation("Category deleted (soft): {CategoryName} with ID {CategoryId}", category.Name, category.Id);
 
-            return Ok(new ApiResponse<object>
-            {
-                Success = true,
-                Data = new { message = "Category deleted successfully" }
-            });
+            return Ok(ApiResponse<object>.CreateSuccess(new { message = "Category deleted successfully" }));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error deleting category {CategoryId}", id);
-            return StatusCode(500, new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = "Failed to delete category"
-            });
+            return StatusCode(500, ApiResponse<object>.CreateFailure("Failed to delete category"));
         }
     }
 }

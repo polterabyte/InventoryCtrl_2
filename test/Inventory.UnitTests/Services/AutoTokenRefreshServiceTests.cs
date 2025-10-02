@@ -109,8 +109,8 @@ namespace Inventory.UnitTests.Services
                 Data = new PagedResponse<string>
                 {
                     Items = new List<string> { "test data" },
-                    TotalCount = 1,
-                    PageNumber = 1,
+                    total = 1,
+                    page = 1,
                     PageSize = 10
                 }
             };
@@ -123,7 +123,7 @@ namespace Inventory.UnitTests.Services
             Assert.NotNull(result.Data);
             Assert.NotNull(expectedResponse.Data);
             Assert.Equal(expectedResponse.Data.Items, result.Data.Items);
-            Assert.Equal(expectedResponse.Data.TotalCount, result.Data.TotalCount);
+            Assert.Equal(expectedResponse.Data.total, result.Data.total);
             _mockTokenManagement.Verify(x => x.TryRefreshTokenAsync(), Times.Never);
         }
 
@@ -143,8 +143,8 @@ namespace Inventory.UnitTests.Services
                 Data = new PagedResponse<string>
                 {
                     Items = new List<string> { "test data" },
-                    TotalCount = 1,
-                    PageNumber = 1,
+                    total = 1,
+                    page = 1,
                     PageSize = 10
                 }
             };
@@ -167,7 +167,7 @@ namespace Inventory.UnitTests.Services
             Assert.NotNull(result.Data);
             Assert.NotNull(successResponse.Data);
             Assert.Equal(successResponse.Data.Items, result.Data.Items);
-            Assert.Equal(successResponse.Data.TotalCount, result.Data.TotalCount);
+            Assert.Equal(successResponse.Data.total, result.Data.total);
             Assert.Equal(2, callCount);
             _mockTokenManagement.Verify(x => x.TryRefreshTokenAsync(), Times.Once);
         }

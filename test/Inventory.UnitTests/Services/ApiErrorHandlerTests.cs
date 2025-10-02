@@ -266,8 +266,8 @@ namespace Inventory.UnitTests.Services
                 Data = new PagedResponse<string>
                 {
                     Items = new List<string> { "Item1", "Item2" },
-                    TotalCount = 2,
-                    PageNumber = 1,
+                    total = 2,
+                    page = 1,
                     PageSize = 10
                 }
             };
@@ -283,7 +283,7 @@ namespace Inventory.UnitTests.Services
             // Assert
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
-            Assert.Equal(2, result.Data.TotalCount);
+            Assert.Equal(2, result.Data.total);
         }
 
         public void Dispose()

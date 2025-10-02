@@ -38,41 +38,56 @@ public class ManufacturerControllerTests : IDisposable
     public async Task GetManufacturers_ReturnsOkResult()
     {
         // Arrange
+        var location = new Location { Id = 1, Name = "Test Location" };
+        _context.Locations.Add(location);
+        await _context.SaveChangesAsync();
+
         var manufacturers = new List<Manufacturer>
         {
-            new() { Id = 1, Name = "Test Manufacturer 1", CreatedAt = DateTime.UtcNow },
-            new() { Id = 2, Name = "Test Manufacturer 2", CreatedAt = DateTime.UtcNow }
+            new() { Id = 1, Name = "Test Manufacturer 1", CreatedAt = DateTime.UtcNow, LocationId = 1 },
+            new() { Id = 2, Name = "Test Manufacturer 2", CreatedAt = DateTime.UtcNow, LocationId = 1 }
         };
 
         _context.Manufacturers.AddRange(manufacturers);
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _controller.GetManufacturers();
+        var actionResult = await _controller.GetManufacturers();
 
         // Assert
-        result.Should().BeOfType<OkObjectResult>();
-        var okResult = result as OkObjectResult;
+        actionResult.Result.Should().BeOfType<OkObjectResult>();
+        var okResult = actionResult.Result as OkObjectResult;
         okResult!.Value.Should().BeOfType<ApiResponse<List<ManufacturerDto>>>();
+        var apiResponse = okResult.Value as ApiResponse<List<ManufacturerDto>>;
+        apiResponse!.Success.Should().BeTrue();
+        apiResponse.Data.Should().HaveCount(2);
     }
 
     [Fact]
     public async Task GetManufacturer_WithValidId_ReturnsOkResult()
     {
         // Arrange
+        var location = new Location { Id = 1, Name = "Test Location" };
+        _context.Locations.Add(location);
+        await _context.SaveChangesAsync();
+        
         var id = 1;
-        var manufacturer = new Manufacturer { Id = id, Name = "Test Manufacturer", CreatedAt = DateTime.UtcNow };
+        var manufacturer = new Manufacturer { Id = id, Name = "Test Manufacturer", CreatedAt = DateTime.UtcNow, LocationId = 1 };
 
         _context.Manufacturers.Add(manufacturer);
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _controller.GetManufacturer(id);
+        var actionResult = await _controller.GetManufacturer(id);
 
         // Assert
-        result.Should().BeOfType<OkObjectResult>();
-        var okResult = result as OkObjectResult;
+        actionResult.Result.Should().BeOfType<OkObjectResult>();
+        var okResult = actionResult.Result as OkObjectResult;
         okResult!.Value.Should().BeOfType<ApiResponse<ManufacturerDto>>();
+        var apiResponse = okResult.Value as ApiResponse<ManufacturerDto>;
+        apiResponse!.Success.Should().BeTrue();
+        apiResponse.Data.Should().NotBeNull();
+        apiResponse.Data!.Id.Should().Be(id);
     }
 
     [Fact]
@@ -82,29 +97,42 @@ public class ManufacturerControllerTests : IDisposable
         var id = 999;
 
         // Act
-        var result = await _controller.GetManufacturer(id);
+        var actionResult = await _controller.GetManufacturer(id);
 
         // Assert
-        result.Should().BeOfType<NotFoundObjectResult>();
+        actionResult.Result.Should().BeOfType<NotFoundObjectResult>();
+        var notFoundResult = actionResult.Result as NotFoundObjectResult;
+        notFoundResult!.Value.Should().BeOfType<ApiResponse<ManufacturerDto>>();
+        var apiResponse = notFoundResult.Value as ApiResponse<ManufacturerDto>;
+        apiResponse!.Success.Should().BeFalse();
     }
 
     [Fact]
     public async Task CreateManufacturer_WithValidData_ReturnsCreatedResult()
     {
         // Arrange
+        var location = new Location { Id = 1, Name = "Test Location", IsActive = true };
+        _context.Locations.Add(location);
+        await _context.SaveChangesAsync();
+
         var createRequest = new CreateManufacturerDto
         {
             Name = "New Manufacturer",
-            Description = "Test Description"
+            Description = "Test Description",
+            LocationId = 1
         };
 
         // Act
-        var result = await _controller.CreateManufacturer(createRequest);
+        var actionResult = await _controller.CreateManufacturer(createRequest);
 
         // Assert
-        result.Should().BeOfType<CreatedAtActionResult>();
-        var createdResult = result as CreatedAtActionResult;
+        actionResult.Result.Should().BeOfType<CreatedAtActionResult>();
+        var createdResult = actionResult.Result as CreatedAtActionResult;
         createdResult!.Value.Should().BeOfType<ApiResponse<ManufacturerDto>>();
+        var apiResponse = createdResult.Value as ApiResponse<ManufacturerDto>;
+        apiResponse!.Success.Should().BeTrue();
+        apiResponse.Data.Should().NotBeNull();
+        apiResponse.Data!.Name.Should().Be(createRequest.Name);
     }
 
     public void Dispose()

@@ -30,7 +30,7 @@ public class UserController : ControllerBase
         _logger = logger;
     }
     [HttpGet("info")]
-    public IActionResult GetUserInfo()
+    public ActionResult<ApiResponse<object>> GetUserInfo()
     {
         try
         {
@@ -50,17 +50,13 @@ public class UserController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving user info");
-            return StatusCode(500, new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = "Failed to retrieve user info"
-            });
+            return StatusCode(500, ApiResponse<object>.CreateFailure("Failed to retrieve user info"));
         }
     }
 
     [HttpGet]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> GetUsers(
+    public async Task<ActionResult<PagedApiResponse<UserDto>>> GetUsers(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
         [FromQuery] string? search = null,
@@ -117,42 +113,30 @@ public class UserController : ControllerBase
             var pagedResponse = new PagedResponse<UserDto>
             {
                 Items = users,
-                TotalCount = totalCount,
-                PageNumber = page,
+                total = totalCount,
+                page = page,
                 PageSize = pageSize
             };
 
-            return Ok(new PagedApiResponse<UserDto>
-            {
-                Success = true,
-                Data = pagedResponse
-            });
+            return Ok(PagedApiResponse<UserDto>.CreateSuccess(pagedResponse));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving users");
-            return StatusCode(500, new PagedApiResponse<UserDto>
-            {
-                Success = false,
-                ErrorMessage = "Failed to retrieve users"
-            });
+            return StatusCode(500, PagedApiResponse<UserDto>.CreateFailure("Failed to retrieve users"));
         }
     }
 
     [HttpGet("{id}")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> GetUser(string id)
+    public async Task<ActionResult<ApiResponse<UserDto>>> GetUser(string id)
     {
         try
         {
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
-                return NotFound(new ApiResponse<UserDto>
-                {
-                    Success = false,
-                    ErrorMessage = "User not found"
-                });
+                return NotFound(ApiResponse<UserDto>.CreateFailure("User not found"));
             }
 
             var roles = await _userManager.GetRolesAsync(user);
@@ -176,47 +160,31 @@ public class UserController : ControllerBase
                 DefaultWarehouseName = defaultWarehouse?.WarehouseName
             };
 
-            return Ok(new ApiResponse<UserDto>
-            {
-                Success = true,
-                Data = userDto
-            });
+            return Ok(ApiResponse<UserDto>.CreateSuccess(userDto));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving user {UserId}", id);
-            return StatusCode(500, new ApiResponse<UserDto>
-            {
-                Success = false,
-                ErrorMessage = "Failed to retrieve user"
-            });
+            return StatusCode(500, ApiResponse<UserDto>.CreateFailure("Failed to retrieve user"));
         }
     }
 
     [HttpPut("{id}")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> UpdateUser(string id, [FromBody] UpdateUserDto request)
+    public async Task<ActionResult<ApiResponse<UserDto>>> UpdateUser(string id, [FromBody] UpdateUserDto request)
     {
         try
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new ApiResponse<UserDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Invalid model state",
-                    Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList()
-                });
+                var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
+                return BadRequest(ApiResponse<UserDto>.CreateFailure("Invalid model state", errors));
             }
 
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
-                return NotFound(new ApiResponse<UserDto>
-                {
-                    Success = false,
-                    ErrorMessage = "User not found"
-                });
+                return NotFound(ApiResponse<UserDto>.CreateFailure("User not found"));
             }
 
             // Update user properties
@@ -230,11 +198,7 @@ public class UserController : ControllerBase
             if (!result.Succeeded)
             {
                 var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                return BadRequest(new ApiResponse<UserDto>
-                {
-                    Success = false,
-                    ErrorMessage = errors
-                });
+                return BadRequest(ApiResponse<UserDto>.CreateFailure(errors));
             }
 
             // Update roles
@@ -256,77 +220,49 @@ public class UserController : ControllerBase
                 UpdatedAt = user.UpdatedAt
             };
 
-            return Ok(new ApiResponse<UserDto>
-            {
-                Success = true,
-                Data = userDto
-            });
+            return Ok(ApiResponse<UserDto>.CreateSuccess(userDto));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating user {UserId}", id);
-            return StatusCode(500, new ApiResponse<UserDto>
-            {
-                Success = false,
-                ErrorMessage = "Failed to update user"
-            });
+            return StatusCode(500, ApiResponse<UserDto>.CreateFailure("Failed to update user"));
         }
     }
 
     [HttpDelete("{id}")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> DeleteUser(string id)
+    public async Task<ActionResult<ApiResponse<object>>> DeleteUser(string id)
     {
         try
         {
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
-                return NotFound(new ApiResponse<object>
-                {
-                    Success = false,
-                    ErrorMessage = "User not found"
-                });
+                return NotFound(ApiResponse<object>.CreateFailure("User not found"));
             }
 
             // Prevent deletion of the current user
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (id == currentUserId)
             {
-                return BadRequest(new ApiResponse<object>
-                {
-                    Success = false,
-                    ErrorMessage = "Cannot delete your own account"
-                });
+                return BadRequest(ApiResponse<object>.CreateFailure("Cannot delete your own account"));
             }
 
             var result = await _userManager.DeleteAsync(user);
             if (!result.Succeeded)
             {
                 var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                return BadRequest(new ApiResponse<object>
-                {
-                    Success = false,
-                    ErrorMessage = errors
-                });
+                return BadRequest(ApiResponse<object>.CreateFailure(errors));
             }
 
             _logger.LogInformation("User deleted: {Username} with ID {UserId}", user.UserName, user.Id);
 
-            return Ok(new ApiResponse<object>
-            {
-                Success = true,
-                Data = new { message = "User deleted successfully" }
-            });
+            return Ok(ApiResponse<object>.CreateSuccess(new { message = "User deleted successfully" }));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting user {UserId}", id);
-            return StatusCode(500, new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = "Failed to delete user"
-            });
+            return StatusCode(500, ApiResponse<object>.CreateFailure("Failed to delete user"));
         }
     }
 
@@ -393,38 +329,26 @@ public class UserController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error exporting users");
-            return StatusCode(500, new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = "Failed to export users"
-            });
+            return StatusCode(500, ApiResponse<object>.CreateFailure("Failed to export users"));
         }
     }
 
     [HttpPost("{id}/change-password")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> ChangePassword(string id, [FromBody] ChangePasswordDto request)
+    public async Task<ActionResult<ApiResponse<object>>> ChangePassword(string id, [FromBody] ChangePasswordDto request)
     {
         try
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new ApiResponse<object>
-                {
-                    Success = false,
-                    ErrorMessage = "Invalid model state",
-                    Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList()
-                });
+                var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
+                return BadRequest(ApiResponse<object>.CreateFailure("Invalid model state", errors));
             }
 
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
-                return NotFound(new ApiResponse<object>
-                {
-                    Success = false,
-                    ErrorMessage = "User not found"
-                });
+                return NotFound(ApiResponse<object>.CreateFailure("User not found"));
             }
 
             // Remove current password and set new one
@@ -434,68 +358,44 @@ public class UserController : ControllerBase
             if (!result.Succeeded)
             {
                 var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                return BadRequest(new ApiResponse<object>
-                {
-                    Success = false,
-                    ErrorMessage = errors
-                });
+                return BadRequest(ApiResponse<object>.CreateFailure(errors));
             }
 
             _logger.LogInformation("Password changed for user: {Username} with ID {UserId}", user.UserName, user.Id);
 
-            return Ok(new ApiResponse<object>
-            {
-                Success = true,
-                Data = new { message = "Password changed successfully" }
-            });
+            return Ok(ApiResponse<object>.CreateSuccess(new { message = "Password changed successfully" }));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error changing password for user {UserId}", id);
-            return StatusCode(500, new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = "Failed to change password"
-            });
+            return StatusCode(500, ApiResponse<object>.CreateFailure("Failed to change password"));
         }
     }
 
     [HttpPost]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> CreateUser([FromBody] CreateUserDto request)
+    public async Task<ActionResult<ApiResponse<UserDto>>> CreateUser([FromBody] CreateUserDto request)
     {
         try
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new ApiResponse<UserDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Invalid model state",
-                    Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList()
-                });
+                var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
+                return BadRequest(ApiResponse<UserDto>.CreateFailure("Invalid model state", errors));
             }
 
             // Check if username already exists
             var existingUser = await _userManager.FindByNameAsync(request.UserName);
             if (existingUser != null)
             {
-                return BadRequest(new ApiResponse<UserDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Username already exists"
-                });
+                return BadRequest(ApiResponse<UserDto>.CreateFailure("Username already exists"));
             }
 
             // Check if email already exists
             var existingEmail = await _userManager.FindByEmailAsync(request.Email);
             if (existingEmail != null)
             {
-                return BadRequest(new ApiResponse<UserDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Email already exists"
-                });
+                return BadRequest(ApiResponse<UserDto>.CreateFailure("Email already exists"));
             }
 
             var user = new Inventory.API.Models.User
@@ -512,11 +412,7 @@ public class UserController : ControllerBase
             if (!result.Succeeded)
             {
                 var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                return BadRequest(new ApiResponse<UserDto>
-                {
-                    Success = false,
-                    ErrorMessage = errors
-                });
+                return BadRequest(ApiResponse<UserDto>.CreateFailure(errors));
             }
 
             // Assign role to user
@@ -537,20 +433,12 @@ public class UserController : ControllerBase
                 UpdatedAt = user.UpdatedAt
             };
 
-            return Created($"/api/user/{user.Id}", new ApiResponse<UserDto>
-            {
-                Success = true,
-                Data = userDto
-            });
+            return Created($"/api/user/{user.Id}", ApiResponse<UserDto>.CreateSuccess(userDto));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating user");
-            return StatusCode(500, new ApiResponse<UserDto>
-            {
-                Success = false,
-                ErrorMessage = "Failed to create user"
-            });
+            return StatusCode(500, ApiResponse<UserDto>.CreateFailure("Failed to create user"));
         }
     }
 
@@ -580,26 +468,18 @@ public class UserController : ControllerBase
     /// </remarks>
     [HttpGet("{id}/warehouses")]
     [Authorize(Roles = "Admin,Manager")]
-    public async Task<IActionResult> GetUserWarehouses(string id)
+    public async Task<ActionResult<ApiResponse<List<UserWarehouseDto>>>> GetUserWarehouses(string id)
     {
         try
         {
             var warehouses = await _userWarehouseService.GetUserWarehousesAsync(id);
 
-            return Ok(new ApiResponse<List<UserWarehouseDto>>
-            {
-                Success = true,
-                Data = warehouses
-            });
+            return Ok(ApiResponse<List<UserWarehouseDto>>.CreateSuccess(warehouses));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting warehouses for user {UserId}", id);
-            return StatusCode(500, new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = "Internal server error"
-            });
+            return StatusCode(500, ApiResponse<object>.CreateFailure("Internal server error"));
         }
     }
 
@@ -629,7 +509,7 @@ public class UserController : ControllerBase
     /// </remarks>
     [HttpPost("{id}/warehouses")]
     [Authorize(Roles = "Admin,Manager")]
-    public async Task<IActionResult> AssignWarehouseToUser(string id, [FromBody] AssignWarehouseDto assignmentDto)
+    public async Task<ActionResult<ApiResponse<UserWarehouseDto>>> AssignWarehouseToUser(string id, [FromBody] AssignWarehouseDto assignmentDto)
     {
         try
         {
@@ -640,39 +520,22 @@ public class UserController : ControllerBase
                     .Select(e => e.ErrorMessage)
                     .ToList();
 
-                return BadRequest(new ApiResponse<object>
-                {
-                    Success = false,
-                    ErrorMessage = "Validation failed",
-                    Errors = errors
-                });
+                return BadRequest(ApiResponse<object>.CreateFailure("Validation failed", errors));
             }
 
             var result = await _userWarehouseService.AssignWarehouseToUserAsync(id, assignmentDto);
 
             if (result.Success)
             {
-                return Ok(new ApiResponse<UserWarehouseDto>
-                {
-                    Success = true,
-                    Data = result.Data
-                });
+                return Ok(ApiResponse<UserWarehouseDto>.CreateSuccess(result.Data!));
             }
 
-            return BadRequest(new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = result.Error
-            });
+            return BadRequest(ApiResponse<object>.CreateFailure(result.Error!));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error assigning warehouse to user {UserId}", id);
-            return StatusCode(500, new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = "Internal server error"
-            });
+            return StatusCode(500, ApiResponse<object>.CreateFailure("Internal server error"));
         }
     }
 
@@ -701,7 +564,7 @@ public class UserController : ControllerBase
     /// </remarks>
     [HttpDelete("{id}/warehouses/{warehouseId}")]
     [Authorize(Roles = "Admin,Manager")]
-    public async Task<IActionResult> RemoveWarehouseAssignment(string id, int warehouseId)
+    public async Task<ActionResult<ApiResponse<object>>> RemoveWarehouseAssignment(string id, int warehouseId)
     {
         try
         {
@@ -709,28 +572,16 @@ public class UserController : ControllerBase
 
             if (result.Success)
             {
-                return Ok(new ApiResponse<object>
-                {
-                    Success = true,
-                    Data = new { message = "Warehouse assignment removed successfully" }
-                });
+                return Ok(ApiResponse<object>.CreateSuccess(new { message = "Warehouse assignment removed successfully" }));
             }
 
-            return BadRequest(new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = result.Error
-            });
+            return BadRequest(ApiResponse<object>.CreateFailure(result.Error!));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error removing warehouse {WarehouseId} assignment from user {UserId}", 
                 warehouseId, id);
-            return StatusCode(500, new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = "Internal server error"
-            });
+            return StatusCode(500, ApiResponse<object>.CreateFailure("Internal server error"));
         }
     }
 
@@ -760,7 +611,7 @@ public class UserController : ControllerBase
     /// </remarks>
     [HttpPut("{id}/warehouses/{warehouseId}")]
     [Authorize(Roles = "Admin,Manager")]
-    public async Task<IActionResult> UpdateWarehouseAssignment(string id, int warehouseId, [FromBody] UpdateWarehouseAssignmentDto updateDto)
+    public async Task<ActionResult<ApiResponse<UserWarehouseDto>>> UpdateWarehouseAssignment(string id, int warehouseId, [FromBody] UpdateWarehouseAssignmentDto updateDto)
     {
         try
         {
@@ -771,40 +622,23 @@ public class UserController : ControllerBase
                     .Select(e => e.ErrorMessage)
                     .ToList();
 
-                return BadRequest(new ApiResponse<object>
-                {
-                    Success = false,
-                    ErrorMessage = "Validation failed",
-                    Errors = errors
-                });
+                return BadRequest(ApiResponse<object>.CreateFailure("Validation failed", errors));
             }
 
             var result = await _userWarehouseService.UpdateWarehouseAssignmentAsync(id, warehouseId, updateDto);
 
             if (result.Success)
             {
-                return Ok(new ApiResponse<UserWarehouseDto>
-                {
-                    Success = true,
-                    Data = result.Data
-                });
+                return Ok(ApiResponse<UserWarehouseDto>.CreateSuccess(result.Data!));
             }
 
-            return BadRequest(new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = result.Error
-            });
+            return BadRequest(ApiResponse<object>.CreateFailure(result.Error!));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating warehouse {WarehouseId} assignment for user {UserId}", 
                 warehouseId, id);
-            return StatusCode(500, new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = "Internal server error"
-            });
+            return StatusCode(500, ApiResponse<object>.CreateFailure("Internal server error"));
         }
     }
 
@@ -834,7 +668,7 @@ public class UserController : ControllerBase
     /// </remarks>
     [HttpPut("{id}/warehouses/{warehouseId}/default")]
     [Authorize(Roles = "Admin,Manager")]
-    public async Task<IActionResult> SetDefaultWarehouse(string id, int warehouseId)
+    public async Task<ActionResult<ApiResponse<object>>> SetDefaultWarehouse(string id, int warehouseId)
     {
         try
         {
@@ -842,28 +676,16 @@ public class UserController : ControllerBase
 
             if (result.Success)
             {
-                return Ok(new ApiResponse<object>
-                {
-                    Success = true,
-                    Data = new { message = "Default warehouse set successfully" }
-                });
+                return Ok(ApiResponse<object>.CreateSuccess(new { message = "Default warehouse set successfully" }));
             }
 
-            return BadRequest(new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = result.Error
-            });
+            return BadRequest(ApiResponse<object>.CreateFailure(result.Error!));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error setting default warehouse {WarehouseId} for user {UserId}", 
                 warehouseId, id);
-            return StatusCode(500, new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = "Internal server error"
-            });
+            return StatusCode(500, ApiResponse<object>.CreateFailure("Internal server error"));
         }
     }
 }

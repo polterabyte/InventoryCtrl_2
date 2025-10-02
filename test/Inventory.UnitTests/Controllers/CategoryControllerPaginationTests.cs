@@ -114,19 +114,18 @@ public class CategoryControllerPaginationTests : IDisposable
         var pageSize = 2;
 
         // Act
-        var result = await _controller.GetCategories(page, pageSize);
+        var actionResult = await _controller.GetCategories(page, pageSize);
 
         // Assert
-        result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
-        var response = okResult?.Value as PagedApiResponse<CategoryDto>;
+        actionResult.Should().NotBeNull();
+        var okResult = actionResult.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<PagedApiResponse<CategoryDto>>().Subject;
         
-        response.Should().NotBeNull();
-        response!.Success.Should().BeTrue();
+        response.Success.Should().BeTrue();
         response.Data.Should().NotBeNull();
         response.Data!.Items.Should().HaveCount(2); // Page size is 2
-        response.Data.TotalCount.Should().Be(4); // 4 total categories (Admin sees all)
-        response.Data.PageNumber.Should().Be(1);
+        response.Data.total.Should().Be(4); // 4 total categories (Admin sees all)
+        response.Data.page.Should().Be(1);
         response.Data.PageSize.Should().Be(2);
         response.Data.TotalPages.Should().Be(2);
     }
@@ -138,15 +137,14 @@ public class CategoryControllerPaginationTests : IDisposable
         var search = "Electronics";
 
         // Act
-        var result = await _controller.GetCategories(1, 10, search);
+        var actionResult = await _controller.GetCategories(1, 10, search);
 
         // Assert
-        result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
-        var response = okResult?.Value as PagedApiResponse<CategoryDto>;
+        actionResult.Should().NotBeNull();
+        var okResult = actionResult.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<PagedApiResponse<CategoryDto>>().Subject;
         
-        response.Should().NotBeNull();
-        response!.Success.Should().BeTrue();
+        response.Success.Should().BeTrue();
         response.Data!.Items.Should().HaveCount(1);
         response.Data.Items.First().Name.Should().Contain("Electronics");
     }
@@ -158,15 +156,14 @@ public class CategoryControllerPaginationTests : IDisposable
         var parentId = 1; // Electronics
 
         // Act
-        var result = await _controller.GetCategories(1, 10, null, parentId);
+        var actionResult = await _controller.GetCategories(1, 10, null, parentId);
 
         // Assert
-        result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
-        var response = okResult?.Value as PagedApiResponse<CategoryDto>;
+        actionResult.Should().NotBeNull();
+        var okResult = actionResult.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<PagedApiResponse<CategoryDto>>().Subject;
         
-        response.Should().NotBeNull();
-        response!.Success.Should().BeTrue();
+        response.Success.Should().BeTrue();
         response.Data!.Items.Should().HaveCount(1);
         response.Data.Items.First().Name.Should().Be("Laptops");
     }
@@ -178,15 +175,14 @@ public class CategoryControllerPaginationTests : IDisposable
         var isActive = false;
 
         // Act
-        var result = await _controller.GetCategories(1, 10, null, null, isActive);
+        var actionResult = await _controller.GetCategories(1, 10, null, null, isActive);
 
         // Assert
-        result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
-        var response = okResult?.Value as PagedApiResponse<CategoryDto>;
+        actionResult.Should().NotBeNull();
+        var okResult = actionResult.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<PagedApiResponse<CategoryDto>>().Subject;
         
-        response.Should().NotBeNull();
-        response!.Success.Should().BeTrue();
+        response.Success.Should().BeTrue();
         response.Data!.Items.Should().HaveCount(1);
         response.Data.Items.First().IsActive.Should().BeFalse();
     }
@@ -207,15 +203,14 @@ public class CategoryControllerPaginationTests : IDisposable
         };
 
         // Act
-        var result = await _controller.GetCategories();
+        var actionResult = await _controller.GetCategories();
 
         // Assert
-        result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
-        var response = okResult?.Value as PagedApiResponse<CategoryDto>;
+        actionResult.Should().NotBeNull();
+        var okResult = actionResult.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<PagedApiResponse<CategoryDto>>().Subject;
         
-        response.Should().NotBeNull();
-        response!.Success.Should().BeTrue();
+        response.Success.Should().BeTrue();
         response.Data!.Items.Should().HaveCount(3); // Only active categories
         response.Data.Items.All(c => c.IsActive).Should().BeTrue();
     }
@@ -236,15 +231,14 @@ public class CategoryControllerPaginationTests : IDisposable
         };
 
         // Act
-        var result = await _controller.GetCategories();
+        var actionResult = await _controller.GetCategories();
 
         // Assert
-        result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
-        var response = okResult?.Value as PagedApiResponse<CategoryDto>;
+        actionResult.Should().NotBeNull();
+        var okResult = actionResult.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<PagedApiResponse<CategoryDto>>().Subject;
         
-        response.Should().NotBeNull();
-        response!.Success.Should().BeTrue();
+        response.Success.Should().BeTrue();
         response.Data!.Items.Should().HaveCount(4); // All categories including inactive
     }
 
@@ -270,12 +264,12 @@ public class CategoryControllerPaginationTests : IDisposable
         };
 
         // Act
-        var result = await _controller.CreateCategory(request);
+        var actionResult = await _controller.CreateCategory(request);
 
         // Assert
         // In Unit Tests, authorization is not enforced, so this will return success
         // This test should be moved to Integration Tests where authorization is properly enforced
-        result.Should().NotBeNull();
+        actionResult.Should().NotBeNull();
     }
 
     [Fact]
@@ -300,15 +294,13 @@ public class CategoryControllerPaginationTests : IDisposable
         };
 
         // Act
-        var result = await _controller.CreateCategory(request);
+        var actionResult = await _controller.CreateCategory(request);
 
         // Assert
-        result.Should().BeOfType<CreatedAtActionResult>();
-        var createdResult = result as CreatedAtActionResult;
-        var response = createdResult?.Value as ApiResponse<CategoryDto>;
+        var createdResult = actionResult.Result.Should().BeOfType<CreatedAtActionResult>().Subject;
+        var response = createdResult.Value.Should().BeOfType<ApiResponse<CategoryDto>>().Subject;
         
-        response.Should().NotBeNull();
-        response!.Success.Should().BeTrue();
+        response.Success.Should().BeTrue();
         response.Data!.Name.Should().Be("Test Category");
         response.Data.IsActive.Should().BeTrue(); // Categories are created as active by default
     }

@@ -291,7 +291,7 @@
             if (response.Success && response.Data != null)
             {
                 requests = response.Data.Items;
-                totalCount = response.Data.TotalCount;
+                totalCount = response.Data.total;
                 totalPages = response.Data.TotalPages;
                 errorMessage = null; // Очищаем ошибку в случае успеха
             }

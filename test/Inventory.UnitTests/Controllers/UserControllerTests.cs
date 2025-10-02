@@ -77,7 +77,7 @@ public class UserControllerTests : IDisposable
 
         // Assert
         result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
+        var okResult = result.Result as OkObjectResult;
         okResult!.Value.Should().NotBeNull();
         
         var response = okResult.Value as ApiResponse<object>;
@@ -96,7 +96,7 @@ public class UserControllerTests : IDisposable
 
         // Assert
         result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
+        var okResult = result.Result as OkObjectResult;
         okResult!.Value.Should().NotBeNull();
         
         var response = okResult.Value as PagedApiResponse<UserDto>;
@@ -120,7 +120,7 @@ public class UserControllerTests : IDisposable
 
         // Assert
         result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
+        var okResult = result.Result as OkObjectResult;
         okResult!.Value.Should().NotBeNull();
         
         var response = okResult.Value as PagedApiResponse<UserDto>;
@@ -140,7 +140,7 @@ public class UserControllerTests : IDisposable
 
         // Assert
         result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
+        var okResult = result.Result as OkObjectResult;
         okResult!.Value.Should().NotBeNull();
         
         var response = okResult.Value as PagedApiResponse<UserDto>;
@@ -160,15 +160,15 @@ public class UserControllerTests : IDisposable
 
         // Assert
         result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
+        var okResult = result.Result as OkObjectResult;
         okResult!.Value.Should().NotBeNull();
         
         var response = okResult.Value as PagedApiResponse<UserDto>;
         response!.Success.Should().BeTrue();
         response.Data.Items.Should().HaveCount(1);
-        response.Data.PageNumber.Should().Be(1);
+        response.Data.page.Should().Be(1);
         response.Data.PageSize.Should().Be(1);
-        response.Data.TotalCount.Should().Be(2);
+        response.Data.total.Should().Be(2);
     }
 
     [Fact]
@@ -183,7 +183,7 @@ public class UserControllerTests : IDisposable
 
         // Assert
         result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
+        var okResult = result.Result as OkObjectResult;
         okResult!.Value.Should().NotBeNull();
         
         var response = okResult.Value as ApiResponse<UserDto>;
@@ -203,7 +203,7 @@ public class UserControllerTests : IDisposable
 
         // Assert
         result.Should().NotBeNull();
-        var notFoundResult = result as NotFoundObjectResult ?? result as ObjectResult;
+        var notFoundResult = result.Result as NotFoundObjectResult;
         notFoundResult!.Value.Should().NotBeNull();
         
         var response = notFoundResult.Value as ApiResponse<UserDto>;
@@ -229,10 +229,10 @@ public class UserControllerTests : IDisposable
 
         // Assert
         result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
+        var okResult = result.Result as OkObjectResult;
         okResult!.Value.Should().NotBeNull();
         
-        var response = okResult.Value as ApiResponse<UserDto>;
+        var response = okResult.Value as ApiResponse<object>;
         if (!response!.Success)
         {
             Console.WriteLine($"Error: {response.ErrorMessage}");
@@ -258,10 +258,10 @@ public class UserControllerTests : IDisposable
 
         // Assert
         result.Should().NotBeNull();
-        var notFoundResult = result as NotFoundObjectResult ?? result as ObjectResult;
+        var notFoundResult = result.Result as NotFoundObjectResult;
         notFoundResult!.Value.Should().NotBeNull();
         
-        var response = notFoundResult.Value as ApiResponse<UserDto>;
+        var response = notFoundResult.Value as ApiResponse<object>;
         response!.Success.Should().BeFalse();
         response.ErrorMessage.Should().Be("User not found");
     }
@@ -278,10 +278,10 @@ public class UserControllerTests : IDisposable
 
         // Assert
         result.Should().NotBeNull();
-        var badRequestResult = result as BadRequestObjectResult ?? result as ObjectResult;
+        var badRequestResult = result.Result as BadRequestObjectResult;
         badRequestResult!.Value.Should().NotBeNull();
         
-        var response = badRequestResult.Value as ApiResponse<UserDto>;
+        var response = badRequestResult.Value as ApiResponse<object>;
         response!.Success.Should().BeFalse();
         response.ErrorMessage.Should().NotBeNull();
     }
@@ -304,10 +304,10 @@ public class UserControllerTests : IDisposable
 
         // Assert
         result.Should().NotBeNull();
-        var badRequestResult = result as BadRequestObjectResult ?? result as ObjectResult;
+        var badRequestResult = result.Result as BadRequestObjectResult;
         badRequestResult!.Value.Should().NotBeNull();
         
-        var response = badRequestResult.Value as ApiResponse<UserDto>;
+        var response = badRequestResult.Value as ApiResponse<object>;
         response!.Success.Should().BeFalse();
         response.ErrorMessage.Should().NotBeNull();
     }

@@ -76,16 +76,15 @@ public class TransactionControllerTests : IDisposable
         await SeedTestDataAsync();
 
         // Act
-        var result = await _controller.GetTransactions();
+        var actionResult = await _controller.GetTransactions();
 
         // Assert
-        result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
-        okResult!.Value.Should().NotBeNull();
+        actionResult.Should().NotBeNull();
+        var okResult = actionResult.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<PagedApiResponse<InventoryTransactionDto>>().Subject;
         
-        var response = okResult.Value as PagedApiResponse<InventoryTransactionDto>;
-        response.Should().NotBeNull();
-        response!.Success.Should().BeTrue();
+        response.Success.Should().BeTrue();
+        response.Data.Should().NotBeNull();
         response.Data.Items.Should().HaveCount(2);
         response.Data.Items.Should().Contain(t => t.Type == "Income");
         response.Data.Items.Should().Contain(t => t.Type == "Outcome");
@@ -98,15 +97,15 @@ public class TransactionControllerTests : IDisposable
         await CleanupDatabaseAsync();
 
         // Act
-        var result = await _controller.GetTransactions();
+        var actionResult = await _controller.GetTransactions();
 
         // Assert
-        result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
-        okResult!.Value.Should().NotBeNull();
-        
-        var response = okResult.Value as PagedApiResponse<InventoryTransactionDto>;
-        response!.Success.Should().BeTrue();
+        actionResult.Should().NotBeNull();
+        var okResult = actionResult.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<PagedApiResponse<InventoryTransactionDto>>().Subject;
+
+        response.Success.Should().BeTrue();
+        response.Data.Should().NotBeNull();
         response.Data.Items.Should().BeEmpty();
     }
 
@@ -118,15 +117,15 @@ public class TransactionControllerTests : IDisposable
         var product = _context.Products.First();
 
         // Act
-        var result = await _controller.GetTransactions(productId: product.Id);
+        var actionResult = await _controller.GetTransactions(productId: product.Id);
 
         // Assert
-        result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
-        okResult!.Value.Should().NotBeNull();
-        
-        var response = okResult.Value as PagedApiResponse<InventoryTransactionDto>;
-        response!.Success.Should().BeTrue();
+        actionResult.Should().NotBeNull();
+        var okResult = actionResult.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<PagedApiResponse<InventoryTransactionDto>>().Subject;
+
+        response.Success.Should().BeTrue();
+        response.Data.Should().NotBeNull();
         response.Data.Items.Should().HaveCount(2); // Ожидаем 2 транзакции для продукта
         response.Data.Items.Should().OnlyContain(t => t.ProductId == product.Id);
     }
@@ -139,15 +138,15 @@ public class TransactionControllerTests : IDisposable
         var warehouse = _context.Warehouses.First();
 
         // Act
-        var result = await _controller.GetTransactions(warehouseId: warehouse.Id);
+        var actionResult = await _controller.GetTransactions(warehouseId: warehouse.Id);
 
         // Assert
-        result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
-        okResult!.Value.Should().NotBeNull();
-        
-        var response = okResult.Value as PagedApiResponse<InventoryTransactionDto>;
-        response!.Success.Should().BeTrue();
+        actionResult.Should().NotBeNull();
+        var okResult = actionResult.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<PagedApiResponse<InventoryTransactionDto>>().Subject;
+
+        response.Success.Should().BeTrue();
+        response.Data.Should().NotBeNull();
         response.Data.Items.Should().HaveCount(2); // Ожидаем 2 транзакции для склада
         response.Data.Items.Should().OnlyContain(t => t.WarehouseId == warehouse.Id);
     }
@@ -159,15 +158,15 @@ public class TransactionControllerTests : IDisposable
         await SeedTestDataAsync();
 
         // Act
-        var result = await _controller.GetTransactions(type: "Income");
+        var actionResult = await _controller.GetTransactions(type: "Income");
 
         // Assert
-        result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
-        okResult!.Value.Should().NotBeNull();
-        
-        var response = okResult.Value as PagedApiResponse<InventoryTransactionDto>;
-        response!.Success.Should().BeTrue();
+        actionResult.Should().NotBeNull();
+        var okResult = actionResult.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<PagedApiResponse<InventoryTransactionDto>>().Subject;
+
+        response.Success.Should().BeTrue();
+        response.Data.Should().NotBeNull();
         response.Data.Items.Should().HaveCount(1);
         response.Data.Items.Should().OnlyContain(t => t.Type == "Income");
     }
@@ -181,15 +180,15 @@ public class TransactionControllerTests : IDisposable
         var endDate = DateTime.UtcNow.AddDays(1);
 
         // Act
-        var result = await _controller.GetTransactions(startDate: startDate, endDate: endDate);
+        var actionResult = await _controller.GetTransactions(startDate: startDate, endDate: endDate);
 
         // Assert
-        result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
-        okResult!.Value.Should().NotBeNull();
-        
-        var response = okResult.Value as PagedApiResponse<InventoryTransactionDto>;
-        response!.Success.Should().BeTrue();
+        actionResult.Should().NotBeNull();
+        var okResult = actionResult.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<PagedApiResponse<InventoryTransactionDto>>().Subject;
+
+        response.Success.Should().BeTrue();
+        response.Data.Should().NotBeNull();
         response.Data.Items.Should().HaveCount(2);
     }
 
@@ -200,18 +199,18 @@ public class TransactionControllerTests : IDisposable
         await SeedTestDataAsync();
 
         // Act
-        var result = await _controller.GetTransactions(page: 1, pageSize: 1);
+        var actionResult = await _controller.GetTransactions(page: 1, pageSize: 1);
 
         // Assert
-        result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
-        okResult!.Value.Should().NotBeNull();
-        
-        var response = okResult.Value as PagedApiResponse<InventoryTransactionDto>;
-        response!.Success.Should().BeTrue();
+        actionResult.Should().NotBeNull();
+        var okResult = actionResult.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<PagedApiResponse<InventoryTransactionDto>>().Subject;
+
+        response.Success.Should().BeTrue();
+        response.Data.Should().NotBeNull();
         response.Data.Items.Should().HaveCount(1);
-        response.Data.TotalCount.Should().Be(2);
-        response.Data.PageNumber.Should().Be(1);
+        response.Data.total.Should().Be(2);
+        response.Data.page.Should().Be(1);
         response.Data.PageSize.Should().Be(1);
     }
 
@@ -223,15 +222,14 @@ public class TransactionControllerTests : IDisposable
         var transaction = _context.InventoryTransactions.First();
 
         // Act
-        var result = await _controller.GetTransaction(transaction.Id);
+        var actionResult = await _controller.GetTransaction(transaction.Id);
 
         // Assert
-        result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
-        okResult!.Value.Should().NotBeNull();
-        
-        var response = okResult.Value as ApiResponse<InventoryTransactionDto>;
-        response!.Success.Should().BeTrue();
+        actionResult.Should().NotBeNull();
+        var okResult = actionResult.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<ApiResponse<InventoryTransactionDto>>().Subject;
+
+        response.Success.Should().BeTrue();
         response.Data.Should().NotBeNull();
         response.Data!.Id.Should().Be(transaction.Id);
         response.Data.ProductName.Should().NotBeNullOrEmpty();
@@ -245,15 +243,14 @@ public class TransactionControllerTests : IDisposable
         await CleanupDatabaseAsync();
 
         // Act
-        var result = await _controller.GetTransaction(999);
+        var actionResult = await _controller.GetTransaction(999);
 
         // Assert
-        result.Should().NotBeNull();
-        var notFoundResult = result as NotFoundObjectResult ?? result as ObjectResult;
-        notFoundResult!.Value.Should().NotBeNull();
-        
-        var response = notFoundResult.Value as ApiResponse<InventoryTransactionDto>;
-        response!.Success.Should().BeFalse();
+        actionResult.Should().NotBeNull();
+        var notFoundResult = actionResult.Result.Should().BeOfType<NotFoundObjectResult>().Subject;
+        var response = notFoundResult.Value.Should().BeOfType<ApiResponse<InventoryTransactionDto>>().Subject;
+
+        response.Success.Should().BeFalse();
         response.ErrorMessage.Should().Be("Transaction not found");
     }
 
@@ -265,15 +262,15 @@ public class TransactionControllerTests : IDisposable
         var product = _context.Products.First();
 
         // Act
-        var result = await _controller.GetTransactionsByProduct(product.Id);
+        var actionResult = await _controller.GetTransactionsByProduct(product.Id);
 
         // Assert
-        result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
-        okResult!.Value.Should().NotBeNull();
-        
-        var response = okResult.Value as PagedApiResponse<InventoryTransactionDto>;
-        response!.Success.Should().BeTrue();
+        actionResult.Should().NotBeNull();
+        var okResult = actionResult.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<PagedApiResponse<InventoryTransactionDto>>().Subject;
+
+        response.Success.Should().BeTrue();
+        response.Data.Should().NotBeNull();
         response.Data.Items.Should().HaveCount(2); // Ожидаем 2 транзакции для продукта
         response.Data.Items.Should().OnlyContain(t => t.ProductId == product.Id);
     }
@@ -285,15 +282,15 @@ public class TransactionControllerTests : IDisposable
         await CleanupDatabaseAsync();
 
         // Act
-        var result = await _controller.GetTransactionsByProduct(999);
+        var actionResult = await _controller.GetTransactionsByProduct(999);
 
         // Assert
-        result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
-        okResult!.Value.Should().NotBeNull();
-        
-        var response = okResult.Value as PagedApiResponse<InventoryTransactionDto>;
-        response!.Success.Should().BeTrue();
+        actionResult.Should().NotBeNull();
+        var okResult = actionResult.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<PagedApiResponse<InventoryTransactionDto>>().Subject;
+
+        response.Success.Should().BeTrue();
+        response.Data.Should().NotBeNull();
         response.Data.Items.Should().BeEmpty();
     }
 
@@ -316,16 +313,15 @@ public class TransactionControllerTests : IDisposable
         };
 
         // Act
-        var result = await _controller.CreateTransaction(request);
+        var actionResult = await _controller.CreateTransaction(request);
 
         // Assert
-        result.Should().NotBeNull();
-        var createdResult = result as CreatedAtActionResult ?? result as ObjectResult;
-        createdResult!.Value.Should().NotBeNull();
-        
-        var response = createdResult.Value as ApiResponse<InventoryTransactionDto>;
+        actionResult.Should().NotBeNull();
+        var createdResult = actionResult.Result.Should().BeOfType<CreatedAtActionResult>().Subject;
+        var response = createdResult.Value.Should().BeOfType<ApiResponse<InventoryTransactionDto>>().Subject;
+
         response.Should().NotBeNull();
-        response!.Success.Should().BeTrue();
+        response.Success.Should().BeTrue();
         response.Data.Should().NotBeNull();
         response.Data!.Type.Should().Be("Income");
         response.Data.Quantity.Should().Be(10);
@@ -358,15 +354,14 @@ public class TransactionControllerTests : IDisposable
         };
 
         // Act
-        var result = await _controller.CreateTransaction(request);
+        var actionResult = await _controller.CreateTransaction(request);
 
         // Assert
-        result.Should().NotBeNull();
-        var createdResult = result as CreatedAtActionResult ?? result as ObjectResult;
-        createdResult!.Value.Should().NotBeNull();
-        
-        var response = createdResult.Value as ApiResponse<InventoryTransactionDto>;
-        response!.Success.Should().BeTrue();
+        actionResult.Should().NotBeNull();
+        var createdResult = actionResult.Result.Should().BeOfType<CreatedAtActionResult>().Subject;
+        var response = createdResult.Value.Should().BeOfType<ApiResponse<InventoryTransactionDto>>().Subject;
+
+        response.Success.Should().BeTrue();
         response.Data.Should().NotBeNull();
         response.Data!.Type.Should().Be("Outcome");
         response.Data.Quantity.Should().Be(5);
@@ -393,15 +388,14 @@ public class TransactionControllerTests : IDisposable
         };
 
         // Act
-        var result = await _controller.CreateTransaction(request);
+        var actionResult = await _controller.CreateTransaction(request);
 
         // Assert
-        result.Should().NotBeNull();
-        var badRequestResult = result as BadRequestObjectResult ?? result as ObjectResult;
-        badRequestResult!.Value.Should().NotBeNull();
-        
-        var response = badRequestResult.Value as ApiResponse<InventoryTransactionDto>;
-        response!.Success.Should().BeFalse();
+        actionResult.Should().NotBeNull();
+        var badRequestResult = actionResult.Result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        var response = badRequestResult.Value.Should().BeOfType<ApiResponse<InventoryTransactionDto>>().Subject;
+
+        response.Success.Should().BeFalse();
         response.ErrorMessage.Should().Be("Insufficient stock for this transaction");
     }
 
@@ -421,15 +415,14 @@ public class TransactionControllerTests : IDisposable
         };
 
         // Act
-        var result = await _controller.CreateTransaction(request);
+        var actionResult = await _controller.CreateTransaction(request);
 
         // Assert
-        result.Should().NotBeNull();
-        var badRequestResult = result as BadRequestObjectResult ?? result as ObjectResult;
-        badRequestResult!.Value.Should().NotBeNull();
-        
-        var response = badRequestResult.Value as ApiResponse<InventoryTransactionDto>;
-        response!.Success.Should().BeFalse();
+        actionResult.Should().NotBeNull();
+        var badRequestResult = actionResult.Result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        var response = badRequestResult.Value.Should().BeOfType<ApiResponse<InventoryTransactionDto>>().Subject;
+
+        response.Success.Should().BeFalse();
         response.ErrorMessage.Should().Be("Product not found");
     }
 
@@ -449,15 +442,14 @@ public class TransactionControllerTests : IDisposable
         };
 
         // Act
-        var result = await _controller.CreateTransaction(request);
+        var actionResult = await _controller.CreateTransaction(request);
 
         // Assert
-        result.Should().NotBeNull();
-        var badRequestResult = result as BadRequestObjectResult ?? result as ObjectResult;
-        badRequestResult!.Value.Should().NotBeNull();
-        
-        var response = badRequestResult.Value as ApiResponse<InventoryTransactionDto>;
-        response!.Success.Should().BeFalse();
+        actionResult.Should().NotBeNull();
+        var badRequestResult = actionResult.Result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        var response = badRequestResult.Value.Should().BeOfType<ApiResponse<InventoryTransactionDto>>().Subject;
+
+        response.Success.Should().BeFalse();
         response.ErrorMessage.Should().Be("Warehouse not found");
     }
 
@@ -479,15 +471,14 @@ public class TransactionControllerTests : IDisposable
         };
 
         // Act
-        var result = await _controller.CreateTransaction(request);
+        var actionResult = await _controller.CreateTransaction(request);
 
         // Assert
-        result.Should().NotBeNull();
-        var badRequestResult = result as BadRequestObjectResult ?? result as ObjectResult;
-        badRequestResult!.Value.Should().NotBeNull();
-        
-        var response = badRequestResult.Value as ApiResponse<InventoryTransactionDto>;
-        response!.Success.Should().BeFalse();
+        actionResult.Should().NotBeNull();
+        var badRequestResult = actionResult.Result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        var response = badRequestResult.Value.Should().BeOfType<ApiResponse<InventoryTransactionDto>>().Subject;
+
+        response.Success.Should().BeFalse();
         response.ErrorMessage.Should().Be("Location not found");
     }
 
@@ -509,15 +500,14 @@ public class TransactionControllerTests : IDisposable
         };
 
         // Act
-        var result = await _controller.CreateTransaction(request);
+        var actionResult = await _controller.CreateTransaction(request);
 
         // Assert
-        result.Should().NotBeNull();
-        var createdResult = result as CreatedAtActionResult ?? result as ObjectResult;
-        createdResult!.Value.Should().NotBeNull();
-        
-        var response = createdResult.Value as ApiResponse<InventoryTransactionDto>;
-        response!.Success.Should().BeTrue();
+        actionResult.Should().NotBeNull();
+        var createdResult = actionResult.Result.Should().BeOfType<CreatedAtActionResult>().Subject;
+        var response = createdResult.Value.Should().BeOfType<ApiResponse<InventoryTransactionDto>>().Subject;
+
+        response.Success.Should().BeTrue();
         
         // Verify product quantity was not changed for Install type
         var updatedProduct = await _context.Products.FindAsync(product.Id);

@@ -159,8 +159,8 @@ public class WarehouseControllerTests : IDisposable
         var response = okResult.Value as PagedApiResponse<WarehouseDto>;
         response!.Success.Should().BeTrue();
         response.Data.Items.Should().HaveCount(1);
-        response.Data.TotalCount.Should().Be(2);
-        response.Data.PageNumber.Should().Be(1);
+        response.Data.total.Should().Be(2);
+        response.Data.page.Should().Be(1);
         response.Data.PageSize.Should().Be(1);
     }
 

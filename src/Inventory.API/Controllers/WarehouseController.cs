@@ -102,8 +102,8 @@ public class WarehouseController : ControllerBase
             var pagedResponse = new PagedResponse<WarehouseDto>
             {
                 Items = warehouses,
-                TotalCount = totalCount,
-                PageNumber = page,
+                total = totalCount,
+                page = page,
                 PageSize = pageSize
             };
 

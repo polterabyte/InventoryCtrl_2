@@ -121,12 +121,12 @@ public class ApiResponse<T> : ApiResponseBase
 public class PagedResponse<T>
 {
     public List<T> Items { get; set; } = new();
-    public int TotalCount { get; set; }
-    public int PageNumber { get; set; }
+    public int total { get; set; }
+    public int page { get; set; }
     public int PageSize { get; set; }
-    public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
-    public bool HasPreviousPage => PageNumber > 1;
-    public bool HasNextPage => PageNumber < TotalPages;
+    public int TotalPages => (int)Math.Ceiling((double)total / PageSize);
+    public bool HasPreviousPage => page > 1;
+    public bool HasNextPage => page < TotalPages;
 }
 
 /// <summary>

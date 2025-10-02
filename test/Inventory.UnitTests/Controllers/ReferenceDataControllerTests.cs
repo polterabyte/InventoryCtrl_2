@@ -41,8 +41,8 @@ public class ReferenceDataControllerTests
                 {
                     new() { Id = 1, Name = "Test Unit", Symbol = "TU", IsActive = true }
                 },
-                TotalCount = 1,
-                PageNumber = page,
+                total = 1,
+                page = page,
                 PageSize = pageSize
             }
         };
@@ -54,8 +54,8 @@ public class ReferenceDataControllerTests
         var result = await _controller.GetAll(page, pageSize, search, isActive);
 
         // Assert
-        result.Should().BeOfType<OkObjectResult>();
-        var okResult = result as OkObjectResult;
+        result.Result.Should().BeOfType<OkObjectResult>();
+        var okResult = result.Result as OkObjectResult;
         okResult!.Value.Should().BeEquivalentTo(expectedResponse);
     }
 
@@ -70,8 +70,8 @@ public class ReferenceDataControllerTests
         var result = await _controller.GetAll();
 
         // Assert
-        result.Should().BeOfType<ObjectResult>();
-        var objectResult = result as ObjectResult;
+        result.Result.Should().BeOfType<ObjectResult>();
+        var objectResult = result.Result as ObjectResult;
         objectResult!.StatusCode.Should().Be(500);
         objectResult.Value.Should().BeOfType<PagedApiResponse<UnitOfMeasureDto>>();
     }
@@ -94,8 +94,8 @@ public class ReferenceDataControllerTests
         var result = await _controller.GetById(id);
 
         // Assert
-        result.Should().BeOfType<OkObjectResult>();
-        var okResult = result as OkObjectResult;
+        result.Result.Should().BeOfType<OkObjectResult>();
+        var okResult = result.Result as OkObjectResult;
         okResult!.Value.Should().BeEquivalentTo(expectedResponse);
     }
 
@@ -117,8 +117,8 @@ public class ReferenceDataControllerTests
         var result = await _controller.GetById(id);
 
         // Assert
-        result.Should().BeOfType<NotFoundObjectResult>();
-        var notFoundResult = result as NotFoundObjectResult;
+        result.Result.Should().BeOfType<NotFoundObjectResult>();
+        var notFoundResult = result.Result as NotFoundObjectResult;
         notFoundResult!.Value.Should().BeEquivalentTo(expectedResponse);
     }
 
@@ -146,8 +146,8 @@ public class ReferenceDataControllerTests
         var result = await _controller.Create(createDto);
 
         // Assert
-        result.Should().BeOfType<CreatedAtActionResult>();
-        var createdResult = result as CreatedAtActionResult;
+        result.Result.Should().BeOfType<CreatedAtActionResult>();
+        var createdResult = result.Result as CreatedAtActionResult;
         createdResult!.Value.Should().BeEquivalentTo(expectedResponse);
     }
 
@@ -162,8 +162,8 @@ public class ReferenceDataControllerTests
         var result = await _controller.Create(createDto);
 
         // Assert
-        result.Should().BeOfType<BadRequestObjectResult>();
-        var badRequestResult = result as BadRequestObjectResult;
+        result.Result.Should().BeOfType<BadRequestObjectResult>();
+        var badRequestResult = result.Result as BadRequestObjectResult;
         badRequestResult!.Value.Should().BeOfType<ApiResponse<UnitOfMeasureDto>>();
     }
 
@@ -193,8 +193,8 @@ public class ReferenceDataControllerTests
         var result = await _controller.Update(id, updateDto);
 
         // Assert
-        result.Should().BeOfType<OkObjectResult>();
-        var okResult = result as OkObjectResult;
+        result.Result.Should().BeOfType<OkObjectResult>();
+        var okResult = result.Result as OkObjectResult;
         okResult!.Value.Should().BeEquivalentTo(expectedResponse);
     }
 
@@ -217,8 +217,8 @@ public class ReferenceDataControllerTests
         var result = await _controller.Update(id, updateDto);
 
         // Assert
-        result.Should().BeOfType<NotFoundObjectResult>();
-        var notFoundResult = result as NotFoundObjectResult;
+        result.Result.Should().BeOfType<NotFoundObjectResult>();
+        var notFoundResult = result.Result as NotFoundObjectResult;
         notFoundResult!.Value.Should().BeEquivalentTo(expectedResponse);
     }
 
@@ -240,8 +240,8 @@ public class ReferenceDataControllerTests
         var result = await _controller.Delete(id);
 
         // Assert
-        result.Should().BeOfType<OkObjectResult>();
-        var okResult = result as OkObjectResult;
+        result.Result.Should().BeOfType<OkObjectResult>();
+        var okResult = result.Result as OkObjectResult;
         okResult!.Value.Should().BeEquivalentTo(expectedResponse);
     }
 
@@ -263,8 +263,8 @@ public class ReferenceDataControllerTests
         var result = await _controller.Delete(id);
 
         // Assert
-        result.Should().BeOfType<NotFoundObjectResult>();
-        var notFoundResult = result as NotFoundObjectResult;
+        result.Result.Should().BeOfType<NotFoundObjectResult>();
+        var notFoundResult = result.Result as NotFoundObjectResult;
         notFoundResult!.Value.Should().BeEquivalentTo(expectedResponse);
     }
 
@@ -286,8 +286,8 @@ public class ReferenceDataControllerTests
         var result = await _controller.Exists(identifier);
 
         // Assert
-        result.Should().BeOfType<OkObjectResult>();
-        var okResult = result as OkObjectResult;
+        result.Result.Should().BeOfType<OkObjectResult>();
+        var okResult = result.Result as OkObjectResult;
         okResult!.Value.Should().BeEquivalentTo(expectedResponse);
     }
 
@@ -310,8 +310,8 @@ public class ReferenceDataControllerTests
         var result = await _controller.GetCount(isActive);
 
         // Assert
-        result.Should().BeOfType<OkObjectResult>();
-        var okResult = result as OkObjectResult;
+        result.Result.Should().BeOfType<OkObjectResult>();
+        var okResult = result.Result as OkObjectResult;
         okResult!.Value.Should().BeEquivalentTo(expectedResponse);
     }
 }
