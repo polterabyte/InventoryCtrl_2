@@ -11,9 +11,12 @@ public class WebDashboardApiService : WebBaseApiService, IDashboardService
     public WebDashboardApiService(
         HttpClient httpClient, 
         IUrlBuilderService urlBuilderService, 
-        IResilientApiService resilientApiService, IApiErrorHandler errorHandler,        IRequestValidator requestValidator, 
+        IResilientApiService resilientApiService,
+        IApiErrorHandler errorHandler,
+        IRequestValidator requestValidator, 
+        IAutoTokenRefreshService autoTokenRefreshService,
         ILogger<WebDashboardApiService> logger) 
-        : base(httpClient, urlBuilderService, resilientApiService, errorHandler, requestValidator, logger)
+        : base(httpClient, urlBuilderService, resilientApiService, errorHandler, requestValidator, autoTokenRefreshService, logger)
     {
     }
 

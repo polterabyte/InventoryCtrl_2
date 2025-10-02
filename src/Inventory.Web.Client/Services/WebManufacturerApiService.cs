@@ -15,9 +15,10 @@ public class WebManufacturerApiService : WebApiServiceBase<ManufacturerDto, Crea
         IUrlBuilderService urlBuilderService, 
         IResilientApiService resilientApiService, 
         IApiErrorHandler errorHandler, 
-        IRequestValidator requestValidator, 
+        IRequestValidator requestValidator,
+        IAutoTokenRefreshService autoTokenRefreshService,
         ILogger<WebManufacturerApiService> logger) 
-        : base(httpClient, urlBuilderService, resilientApiService, errorHandler, requestValidator, logger)
+        : base(httpClient, urlBuilderService, resilientApiService, errorHandler, requestValidator, autoTokenRefreshService, logger)
     {
     }
 

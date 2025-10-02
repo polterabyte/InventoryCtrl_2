@@ -18,8 +18,9 @@ public class WebUserWarehouseApiService : WebBaseApiService, IUserWarehouseServi
         IResilientApiService resilientApiService,
         IApiErrorHandler errorHandler,
         IRequestValidator requestValidator,
+        IAutoTokenRefreshService autoTokenRefreshService,
         ILogger<WebUserWarehouseApiService> logger)
-        : base(httpClient, urlBuilderService, resilientApiService, errorHandler, requestValidator, logger)
+        : base(httpClient, urlBuilderService, resilientApiService, errorHandler, requestValidator, autoTokenRefreshService, logger)
     {
     }
 

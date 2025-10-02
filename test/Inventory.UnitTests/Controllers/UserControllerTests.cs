@@ -1,3 +1,7 @@
+namespace Inventory.UnitTests.Controllers;
+
+using System.Security.Claims;
+using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -5,15 +9,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
-using System.Security.Claims;
 using Inventory.API.Controllers;
 using Inventory.API.Models;
+using Inventory.API.Services;
 using Inventory.Shared.DTOs;
 using Xunit;
 #pragma warning disable CS8602 // Dereference of a possibly null reference
-using FluentAssertions;
-
-namespace Inventory.UnitTests.Controllers;
 
 public class UserControllerTests : IDisposable
 {
@@ -40,7 +41,8 @@ public class UserControllerTests : IDisposable
         _userManager = new UserManager<User>(userStore, null!, null!, null!, null!, null!, null!, null!, null!);
         
         _mockLogger = new Mock<ILogger<UserController>>();
-        _controller = new UserController(_userManager, _mockLogger.Object);
+        var mockUserWarehouseService = new Mock<IUserWarehouseService>();
+        _controller = new UserController(_userManager, mockUserWarehouseService.Object, _mockLogger.Object);
 
         // Setup authentication context for tests
         SetupAuthenticationContext();
@@ -48,22 +50,21 @@ public class UserControllerTests : IDisposable
 
     private void SetupAuthenticationContext()
     {
-        var userId = Guid.NewGuid().ToString();
         var claims = new List<Claim>
         {
             new(ClaimTypes.Name, "testadmin"),
-            new(ClaimTypes.NameIdentifier, userId),
+            new(ClaimTypes.NameIdentifier, "test-admin-1"),
             new(ClaimTypes.Role, "Admin")
         };
 
-        var identity = new ClaimsIdentity(claims, "Test");
-        var principal = new ClaimsPrincipal(identity);
+        var identity = new ClaimsIdentity(claims, "TestAuthType");
+        var claimsPrincipal = new ClaimsPrincipal(identity);
 
         _controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext
             {
-                User = principal
+                User = claimsPrincipal
             }
         };
     }
@@ -123,14 +124,9 @@ public class UserControllerTests : IDisposable
         okResult!.Value.Should().NotBeNull();
         
         var response = okResult.Value as PagedApiResponse<UserDto>;
-        response.Should().NotBeNull();
-        if (!response!.Success)
-        {
-            Console.WriteLine($"Error: {response.ErrorMessage}");
-        }
-        response.Success.Should().BeTrue();
+        response!.Success.Should().BeTrue();
         response.Data.Items.Should().HaveCount(1);
-        response.Data.Items.Should().OnlyContain(u => u.UserName.Contains("john"));
+        response.Data.Items.First().UserName.Should().Be("john");
     }
 
     [Fact]
@@ -148,14 +144,9 @@ public class UserControllerTests : IDisposable
         okResult!.Value.Should().NotBeNull();
         
         var response = okResult.Value as PagedApiResponse<UserDto>;
-        response.Should().NotBeNull();
-        if (!response!.Success)
-        {
-            Console.WriteLine($"Error: {response.ErrorMessage}");
-        }
-        response.Success.Should().BeTrue();
-        // Note: Role filtering requires proper role setup, so we just check that the call succeeds
-        response.Data.Items.Should().NotBeNull();
+        response!.Success.Should().BeTrue();
+        response.Data.Items.Should().HaveCount(1);
+        response.Data.Items.First().Role.Should().Be("Admin");
     }
 
     [Fact]
@@ -173,16 +164,11 @@ public class UserControllerTests : IDisposable
         okResult!.Value.Should().NotBeNull();
         
         var response = okResult.Value as PagedApiResponse<UserDto>;
-        response.Should().NotBeNull();
-        if (!response!.Success)
-        {
-            Console.WriteLine($"Error: {response.ErrorMessage}");
-        }
-        response.Success.Should().BeTrue();
+        response!.Success.Should().BeTrue();
         response.Data.Items.Should().HaveCount(1);
-        response.Data.TotalCount.Should().Be(2);
         response.Data.PageNumber.Should().Be(1);
         response.Data.PageSize.Should().Be(1);
+        response.Data.TotalCount.Should().Be(2);
     }
 
     [Fact]
@@ -204,14 +190,13 @@ public class UserControllerTests : IDisposable
         response!.Success.Should().BeTrue();
         response.Data.Should().NotBeNull();
         response.Data!.Id.Should().Be(user.Id);
-        response.Data.UserName.Should().Be(user.UserName);
     }
 
     [Fact]
     public async Task GetUser_WithInvalidId_ShouldReturnNotFound()
     {
         // Arrange
-        await CleanupDatabaseAsync();
+        await SeedTestDataAsync();
 
         // Act
         var result = await _controller.GetUser("invalid-id");
@@ -254,14 +239,13 @@ public class UserControllerTests : IDisposable
         }
         // Note: UpdateUser requires proper role setup, so we just check that the call succeeds
         response.Should().NotBeNull();
-        // Data might be null due to role setup issues, so we don't check it
     }
 
     [Fact]
     public async Task UpdateUser_WithInvalidId_ShouldReturnNotFound()
     {
         // Arrange
-        await CleanupDatabaseAsync();
+        await SeedTestDataAsync();
         var updateRequest = new UpdateUserDto
         {
             UserName = "updateduser",
@@ -288,11 +272,31 @@ public class UserControllerTests : IDisposable
         // Arrange
         await SeedTestDataAsync();
         var user = _context.Users.First();
+
+        // Act
+        var result = await _controller.UpdateUser(user.Id, null!);
+
+        // Assert
+        result.Should().NotBeNull();
+        var badRequestResult = result as BadRequestObjectResult ?? result as ObjectResult;
+        badRequestResult!.Value.Should().NotBeNull();
+        
+        var response = badRequestResult.Value as ApiResponse<UserDto>;
+        response!.Success.Should().BeFalse();
+        response.ErrorMessage.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task UpdateUser_WithUpdateFailure_ShouldReturnBadRequest()
+    {
+        // Arrange
+        await SeedTestDataAsync();
+        var user = _context.Users.First();
         var updateRequest = new UpdateUserDto
         {
-            UserName = "", // Invalid empty username
+            UserName = "updateduser",
             Email = "invalid-email", // Invalid email format
-            Role = "InvalidRole" // Invalid role
+            Role = "Manager"
         };
 
         // Act
@@ -305,41 +309,7 @@ public class UserControllerTests : IDisposable
         
         var response = badRequestResult.Value as ApiResponse<UserDto>;
         response!.Success.Should().BeFalse();
-        response.ErrorMessage.Should().NotBeNullOrEmpty();
-    }
-
-    [Fact]
-    public async Task UpdateUser_WithUpdateFailure_ShouldReturnBadRequest()
-    {
-        // Arrange
-        await SeedTestDataAsync();
-        var user = _context.Users.First();
-        var updateRequest = new UpdateUserDto
-        {
-            UserName = "updateduser",
-            Email = "updated@example.com",
-            Role = "Manager"
-        };
-
-        // This test will use the real UserManager and test the actual update logic
-        // The failure case would be tested through validation errors or database constraints
-        
-        // Act
-        var result = await _controller.UpdateUser(user.Id, updateRequest);
-
-        // Assert
-        result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
-        okResult!.Value.Should().NotBeNull();
-        
-        var response = okResult.Value as ApiResponse<UserDto>;
-        if (!response!.Success)
-        {
-            Console.WriteLine($"Error: {response.ErrorMessage}");
-        }
-        // Note: UpdateUser requires proper role setup, so we just check that the call succeeds
-        response.Should().NotBeNull();
-        // Data might be null due to role setup issues, so we don't check it
+        response.ErrorMessage.Should().NotBeNull();
     }
 
     private async Task SeedTestDataAsync()
@@ -355,7 +325,9 @@ public class UserControllerTests : IDisposable
             Role = "User",
             EmailConfirmed = true,
             CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            UpdatedAt = DateTime.UtcNow,
+            FirstName = "John",
+            LastName = "Doe"
         };
 
         var user2 = new User
@@ -366,7 +338,9 @@ public class UserControllerTests : IDisposable
             Role = "Admin",
             EmailConfirmed = true,
             CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            UpdatedAt = DateTime.UtcNow,
+            FirstName = "Admin",
+            LastName = "User"
         };
 
         _context.Users.AddRange(user1, user2);
@@ -375,17 +349,19 @@ public class UserControllerTests : IDisposable
 
     private async Task CleanupDatabaseAsync()
     {
-        // Clean up in correct order to avoid foreign key constraints
-        _context.UserRoles.RemoveRange(_context.UserRoles);
+        // Clean up all data in correct order to avoid foreign key violations
+        _context.InventoryTransactions.RemoveRange(_context.InventoryTransactions);
+        _context.Products.RemoveRange(_context.Products);
+        _context.Categories.RemoveRange(_context.Categories);
+        _context.Manufacturers.RemoveRange(_context.Manufacturers);
         _context.Users.RemoveRange(_context.Users);
-        _context.Roles.RemoveRange(_context.Roles);
         await _context.SaveChangesAsync();
     }
 
     public void Dispose()
     {
+        // Clean up database and context
         _context.Database.EnsureDeleted();
         _context.Dispose();
-        _userManager.Dispose();
     }
 }

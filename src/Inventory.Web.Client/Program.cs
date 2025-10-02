@@ -131,6 +131,9 @@ builder.Services.AddScoped<IAuditService, WebAuditApiService>();
 // Register request services
 builder.Services.AddScoped<IRequestApiService, WebRequestApiService>();
 
+// Register auto token refresh service
+builder.Services.AddScoped<IAutoTokenRefreshService, AutoTokenRefreshService>();
+
 // Initialize validators
 builder.Services.AddScoped(provider =>
 {

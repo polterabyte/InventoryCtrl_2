@@ -44,9 +44,9 @@ public class UserWarehouseServiceTests : IDisposable
         // Add test users
         var users = new List<User>
         {
-            new() { Id = "user1", UserName = "testuser1", Email = "user1@test.com", Role = "User" },
-            new() { Id = "user2", UserName = "testuser2", Email = "user2@test.com", Role = "Manager" },
-            new() { Id = "admin1", UserName = "admin1", Email = "admin@test.com", Role = "Admin" }
+            new() { Id = "user1", UserName = "testuser1", Email = "user1@test.com", Role = "User", FirstName = "Test", LastName = "User1" },
+            new() { Id = "user2", UserName = "testuser2", Email = "user2@test.com", Role = "Manager", FirstName = "Test", LastName = "User2" },
+            new() { Id = "admin1", UserName = "admin1", Email = "admin@test.com", Role = "Admin", FirstName = "Admin", LastName = "User" }
         };
         _context.Users.AddRange(users);
 

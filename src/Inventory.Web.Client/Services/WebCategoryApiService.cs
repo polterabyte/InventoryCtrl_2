@@ -13,9 +13,12 @@ public class WebCategoryApiService : WebApiServiceBase<CategoryDto, CreateCatego
     public WebCategoryApiService(
         HttpClient httpClient, 
         IUrlBuilderService urlBuilderService, 
-        IResilientApiService resilientApiService, IApiErrorHandler errorHandler,        IRequestValidator requestValidator, 
+        IResilientApiService resilientApiService,
+        IApiErrorHandler errorHandler,
+        IRequestValidator requestValidator, 
+        IAutoTokenRefreshService autoTokenRefreshService,
         ILogger<WebCategoryApiService> logger) 
-        : base(httpClient, urlBuilderService, resilientApiService, errorHandler, requestValidator, logger)
+        : base(httpClient, urlBuilderService, resilientApiService, errorHandler, requestValidator, autoTokenRefreshService, logger)
     {
     }
 

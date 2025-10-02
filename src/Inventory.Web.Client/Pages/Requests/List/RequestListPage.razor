@@ -1,6 +1,7 @@
 @using Inventory.Shared.DTOs
 @using Inventory.Shared.Interfaces
 @using Inventory.Web.Client.Components.Shared
+@using Inventory.Web.Client.Extensions
 @using Inventory.Web.Client.Services
 @using Microsoft.JSInterop
 @using Radzen
@@ -276,10 +277,9 @@
                 status: selectedStatus
             );
 
-            // Проверяем, был ли обновлен токен
-            if (!response.Success && response.ErrorMessage == "TOKEN_REFRESHED")
+            // Если токен был обновлен, повторяем запрос автоматически
+            if (response.IsTokenRefreshed())
             {
-                // Повторно пробуем загрузить данные после обновления токена
                 response = await RequestService.GetPagedRequestsAsync(
                     page: currentPage,
                     pageSize: pageSize,

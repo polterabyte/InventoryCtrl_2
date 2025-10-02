@@ -102,7 +102,9 @@ public abstract class IntegrationTestBase : IClassFixture<WebApplicationFactory<
             UserName = "testadmin",
             Email = "testadmin@example.com",
             EmailConfirmed = true,
-            Role = "Admin"
+            Role = "Admin",
+            FirstName = "Test",
+            LastName = "Admin"
         };
 
         var regularUser = new User
@@ -111,7 +113,9 @@ public abstract class IntegrationTestBase : IClassFixture<WebApplicationFactory<
             UserName = "testuser",
             Email = "testuser@example.com",
             EmailConfirmed = true,
-            Role = "User"
+            Role = "User",
+            FirstName = "Test",
+            LastName = "User"
         };
 
         // Create or update users
@@ -283,7 +287,9 @@ public abstract class IntegrationTestBase : IClassFixture<WebApplicationFactory<
             UserName = "testadmin",
             Email = "testadmin@example.com",
             EmailConfirmed = true,
-            Role = "Admin"
+            Role = "Admin",
+            FirstName = "Test",
+            LastName = "Admin"
         };
 
         var regularUser = new User
@@ -292,7 +298,9 @@ public abstract class IntegrationTestBase : IClassFixture<WebApplicationFactory<
             UserName = "testuser",
             Email = "testuser@example.com",
             EmailConfirmed = true,
-            Role = "User"
+            Role = "User",
+            FirstName = "Test",
+            LastName = "User"
         };
 
         // Create or update users

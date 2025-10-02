@@ -11,9 +11,11 @@ public class WebAuditApiService : WebBaseApiService, IAuditService
         HttpClient httpClient, 
         IUrlBuilderService urlBuilderService, 
         IResilientApiService resilientApiService, 
-        IApiErrorHandler errorHandler,        IRequestValidator requestValidator, 
+        IApiErrorHandler errorHandler,
+        IRequestValidator requestValidator,
+        IAutoTokenRefreshService autoTokenRefreshService,
         ILogger<WebAuditApiService> logger) 
-        : base(httpClient, urlBuilderService, resilientApiService, errorHandler, requestValidator, logger)
+        : base(httpClient, urlBuilderService, resilientApiService, errorHandler, requestValidator, autoTokenRefreshService, logger)
     {
     }
 

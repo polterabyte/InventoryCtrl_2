@@ -6,6 +6,7 @@ using Moq;
 using System.Security.Claims;
 using Inventory.API.Controllers;
 using Inventory.API.Models;
+using Inventory.API.Services;
 using Inventory.Shared.DTOs;
 using Xunit;
 #pragma warning disable CS8602 // Dereference of a possibly null reference
@@ -20,6 +21,7 @@ public class TransactionControllerTests : IDisposable
     private readonly AppDbContext _context;
     private readonly TransactionController _controller;
     private readonly Mock<ILogger<TransactionController>> _mockLogger;
+    private readonly Mock<IUserWarehouseService> _mockUserWarehouseService;
     private readonly string _testDatabaseName;
     private readonly string _testUserId;
 
@@ -39,7 +41,8 @@ public class TransactionControllerTests : IDisposable
         _context.Database.EnsureCreated();
         
         _mockLogger = new Mock<ILogger<TransactionController>>();
-        _controller = new TransactionController(_context, _mockLogger.Object);
+        _mockUserWarehouseService = new Mock<IUserWarehouseService>();
+        _controller = new TransactionController(_context, _mockUserWarehouseService.Object, _mockLogger.Object);
 
         // Setup authentication context for tests
         SetupAuthenticationContext();
@@ -532,7 +535,7 @@ public class TransactionControllerTests : IDisposable
         _context.Locations.Add(loc);
         await _context.SaveChangesAsync();
         var warehouse = new Warehouse { Name = "Test Warehouse", LocationId = loc.Id, IsActive = true, CreatedAt = DateTime.UtcNow };
-        var user = new User { Id = _testUserId, UserName = "testuser", Email = "test@example.com", Role = "Admin" };
+        var user = new User { Id = _testUserId, UserName = "testuser", Email = "test@example.com", Role = "Admin", FirstName = "Test", LastName = "User" };
         var productGroup = new ProductGroup { Name = "Test Product Group", IsActive = true, CreatedAt = DateTime.UtcNow };
         
         _context.Categories.Add(category);
@@ -600,7 +603,7 @@ public class TransactionControllerTests : IDisposable
         _context.Locations.Add(loc);
         await _context.SaveChangesAsync();
         var warehouse = new Warehouse { Name = "Test Warehouse", LocationId = loc.Id, IsActive = true, CreatedAt = DateTime.UtcNow };
-        var user = new User { Id = _testUserId, UserName = "testuser", Email = "test@example.com", Role = "Admin" };
+        var user = new User { Id = _testUserId, UserName = "testuser", Email = "test@example.com", Role = "Admin", FirstName = "Test", LastName = "User" };
         var productGroup = new ProductGroup { Name = "Test Product Group", IsActive = true, CreatedAt = DateTime.UtcNow };
         
         _context.Categories.Add(category);

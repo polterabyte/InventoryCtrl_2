@@ -43,8 +43,16 @@ public class SimpleAuthServiceTests
         var context = new AppDbContext(options);
         context.Database.EnsureCreated();
 
-        var mockRefreshTokenService = new Mock<RefreshTokenService>(Mock.Of<ILogger<RefreshTokenService>>());
-        var mockAuditService = new Mock<AuditService>(context, Mock.Of<IHttpContextAccessor>(), Mock.Of<ILogger<AuditService>>());
+        var mockRefreshTokenService = new Mock<RefreshTokenService>(
+            _userManagerMock.Object,
+            _configMock.Object,
+            Mock.Of<ILogger<RefreshTokenService>>());
+        var safeSerializationService = new SafeSerializationService(Mock.Of<ILogger<SafeSerializationService>>());
+        var mockAuditService = new Mock<AuditService>(
+            context,
+            Mock.Of<IHttpContextAccessor>(),
+            Mock.Of<ILogger<AuditService>>(),
+            safeSerializationService);
 
         var authController = new AuthController(
             _userManagerMock.Object,
@@ -82,6 +90,8 @@ public class SimpleAuthServiceTests
         user.UserName.Should().BeNull();
         user.Email.Should().BeNull();
         user.Role.Should().BeEmpty();
+        user.FirstName.Should().BeEmpty();
+        user.LastName.Should().BeEmpty();
         user.Transactions.Should().NotBeNull();
         user.Transactions.Should().BeEmpty();
     }

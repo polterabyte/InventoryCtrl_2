@@ -7,6 +7,7 @@ using System.Security.Claims;
 using Inventory.API.Controllers;
 using Inventory.API.Models;
 using Inventory.Shared.DTOs;
+using Inventory.API.Services;
 using Xunit;
 #pragma warning disable CS8602 // Dereference of a possibly null reference
 using FluentAssertions;
@@ -33,7 +34,8 @@ public class WarehouseControllerTests : IDisposable
         _context.Database.EnsureCreated();
         
         _mockLogger = new Mock<ILogger<WarehouseController>>();
-        _controller = new WarehouseController(_context, _mockLogger.Object);
+        var mockUserWarehouseService = new Mock<IUserWarehouseService>();
+        _controller = new WarehouseController(_context, mockUserWarehouseService.Object, _mockLogger.Object);
 
         // Setup authentication context for tests
         SetupAuthenticationContext();

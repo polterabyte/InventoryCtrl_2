@@ -84,9 +84,9 @@ public class UserWarehouseControllerTests : IClassFixture<WebApplicationFactory<
         // Add test users
         var users = new List<User>
         {
-            new() { Id = "user1", UserName = "testuser1", Email = "user1@test.com", Role = "User", EmailConfirmed = true },
-            new() { Id = "user2", UserName = "testuser2", Email = "user2@test.com", Role = "Manager", EmailConfirmed = true },
-            new() { Id = "admin1", UserName = "admin1", Email = "admin@test.com", Role = "Admin", EmailConfirmed = true }
+            new() { Id = "user1", UserName = "testuser1", Email = "user1@test.com", Role = "User", EmailConfirmed = true, FirstName = "Test", LastName = "User1" },
+            new() { Id = "user2", UserName = "testuser2", Email = "user2@test.com", Role = "Manager", EmailConfirmed = true, FirstName = "Test", LastName = "User2" },
+            new() { Id = "admin1", UserName = "admin1", Email = "admin@test.com", Role = "Admin", EmailConfirmed = true, FirstName = "Admin", LastName = "User" }
         };
 
         foreach (var user in users)

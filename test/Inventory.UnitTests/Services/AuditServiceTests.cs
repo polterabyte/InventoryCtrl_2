@@ -33,7 +33,8 @@ public class AuditServiceTests : TestBase
         
         _httpContextAccessorMock.Setup(x => x.HttpContext).Returns(_httpContext);
         
-        _auditService = new AuditService(Context, _httpContextAccessorMock.Object, _loggerMock.Object);
+        var mockSafeSerializer = new Mock<SafeSerializationService>();
+        _auditService = new AuditService(Context, _httpContextAccessorMock.Object, _loggerMock.Object, mockSafeSerializer.Object);
     }
 
     [Fact]

@@ -169,7 +169,7 @@ namespace Inventory.API.Models
             entity.HasIndex(e => e.WarehouseId).HasDatabaseName("IX_UserWarehouses_WarehouseId");
             entity.HasIndex(e => new { e.UserId, e.IsDefault })
                   .HasDatabaseName("IX_UserWarehouses_UserId_IsDefault")
-                  .HasFilter("IsDefault = true"); // Partial index for default warehouses only
+                  .HasFilter("\"IsDefault\" = true"); // Partial index for default warehouses only
         });
 
         // Keyless view mappings

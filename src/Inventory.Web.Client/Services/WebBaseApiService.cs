@@ -12,6 +12,7 @@ public abstract class WebBaseApiService(
     IResilientApiService resilientApiService,
     IApiErrorHandler errorHandler,
     IRequestValidator requestValidator,
+    IAutoTokenRefreshService autoTokenRefreshService,
     ILogger logger)
 {
     protected readonly HttpClient HttpClient = httpClient;
@@ -19,6 +20,7 @@ public abstract class WebBaseApiService(
     protected readonly IResilientApiService ResilientApiService = resilientApiService;
     protected readonly IApiErrorHandler ErrorHandler = errorHandler;
     protected readonly IRequestValidator RequestValidator = requestValidator;
+    protected readonly IAutoTokenRefreshService AutoTokenRefreshService = autoTokenRefreshService;
     protected readonly ILogger Logger = logger;
 
     public async Task<string> GetApiUrlAsync()
@@ -209,7 +211,8 @@ public abstract class WebBaseApiService(
     {
         try
         {
-            return await ExecuteHttpRequestAsync<ApiResponse<T>>(HttpMethod.Get, endpoint);
+            return await AutoTokenRefreshService.ExecuteWithAutoRefreshAsync(async () =>
+                await ExecuteHttpRequestAsync<ApiResponse<T>>(HttpMethod.Get, endpoint));
         }
         catch (Exception ex)
         {
@@ -221,7 +224,8 @@ public abstract class WebBaseApiService(
     {
         try
         {
-            return await ExecuteHttpRequestAsync<PagedApiResponse<T>>(HttpMethod.Get, endpoint);
+            return await AutoTokenRefreshService.ExecutePagedWithAutoRefreshAsync(async () =>
+                await ExecuteHttpRequestAsync<PagedApiResponse<T>>(HttpMethod.Get, endpoint));
         }
         catch (Exception ex)
         {
