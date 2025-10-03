@@ -32,19 +32,32 @@ public class TokenRefreshService : ITokenRefreshService
         _urlBuilderService = urlBuilderService;
     }
 
-    public async Task<AuthResult> RefreshTokenAsync(string refreshToken)
+    public async Task<AuthResult> RefreshTokenAsync(string username, string refreshToken)
     {
         try
         {
-            _logger.LogDebug("Attempting to refresh token");
+            if (string.IsNullOrWhiteSpace(username))
+            {
+                _logger.LogWarning("Token refresh aborted: username is missing");
+                return new AuthResult
+                {
+                    Success = false,
+                    ErrorMessage = "Token refresh failed: missing username"
+                };
+            }
+
+            _logger.LogDebug("Attempting to refresh token for user {Username}", username);
 
             var request = new RefreshRequest
             {
-                Username = string.Empty,
+                Username = username,
                 RefreshToken = refreshToken
             };
 
-            var json = JsonSerializer.Serialize(request);
+            var json = JsonSerializer.Serialize(request, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
             var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
             // Build absolute refresh URL to avoid wrong base/cors issues
@@ -72,7 +85,8 @@ public class TokenRefreshService : ITokenRefreshService
                 }
             }
 
-            _logger.LogWarning("Token refresh failed with status: {StatusCode}", response.StatusCode);
+            var errorContent = await response.Content.ReadAsStringAsync();
+            _logger.LogWarning("Token refresh failed with status: {StatusCode}. Body: {Body}", response.StatusCode, errorContent);
             return new AuthResult
             {
                 Success = false,

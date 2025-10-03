@@ -1,4 +1,4 @@
-﻿﻿using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Inventory.Web.Client;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -79,15 +79,11 @@ builder.Services.AddHttpClient("API", client =>
     })
     .AddHttpMessageHandler<JwtHttpInterceptor>();
 
-// Register a scoped HttpClient that uses the IHttpClientFactory.
-// This is no longer the default. Services should inject IHttpClientFactory and create clients manually.
+// Register HttpClient for API services - uses the "API" client with JWT interceptor
 builder.Services.AddScoped(sp =>
 {
     var factory = sp.GetRequiredService<IHttpClientFactory>();
-    // DO NOT return the "API" client here by default, as it causes circular dependencies.
-    // Services needing the interceptor should create the "API" client explicitly.
-    // Services needed BY the interceptor should create a default client.
-    return factory.CreateClient(); 
+    return factory.CreateClient("API");
 });
 
 

@@ -262,53 +262,16 @@ public class ApiErrorHandler : IApiErrorHandler
     }
 
     /// <summary>
-    /// Handles 401 Unauthorized errors with intelligent token refresh and redirect logic
+    /// Handles 401 Unauthorized errors - token refresh is handled by JwtHttpInterceptor
     /// </summary>
     private async Task<ApiResponse<T>> HandleUnauthorizedResponseAsync<T>(HttpResponseMessage response)
     {
-        _logger.LogInformation("Handling 401 Unauthorized response - attempting token refresh");
-        
-        try
-        {
-            // Check if we have valid tokens to refresh
-            var hasRefreshToken = await _tokenManagementService.HasValidRefreshTokenAsync();
-            if (!hasRefreshToken)
-            {
-                _logger.LogInformation("No valid refresh token available, redirecting to login");
-                await RedirectToLoginAsync("Session expired. Please log in again.");
-                return CreateAuthFailureResponse<T>();
-            }
+        _logger.LogInformation("Handling 401 Unauthorized response - token refresh should have been handled by interceptor");
 
-            // Attempt token refresh
-            var refreshSuccess = await _tokenManagementService.TryRefreshTokenAsync();
-            
-            if (refreshSuccess)
-            {
-                _logger.LogInformation("Token refresh successful, returning retry indication");
-                
-                // Return special response indicating that the request should be retried
-                return new ApiResponse<T>
-                {
-                    Success = false,
-                    ErrorMessage = "TOKEN_REFRESHED", // Special code for retry
-                    Data = default(T)
-                };
-            }
-            else
-            {
-                _logger.LogWarning("Token refresh failed, redirecting to login");
-                await RedirectToLoginAsync("Session expired. Please log in again.");
-                return CreateAuthFailureResponse<T>();
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error handling 401 response");
-            
-            // In case of error, also redirect to login
-            await RedirectToLoginAsync("Authentication error. Please log in again.");
-            return CreateAuthFailureResponse<T>();
-        }
+        // Since the interceptor handles token refresh and retry, if we get here it means refresh failed
+        // Just redirect to login
+        await RedirectToLoginAsync("Session expired. Please log in again.");
+        return CreateAuthFailureResponse<T>();
     }
 
     /// <summary>

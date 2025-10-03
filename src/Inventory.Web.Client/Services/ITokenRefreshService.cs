@@ -13,5 +13,5 @@ public interface ITokenRefreshService
     /// </summary>
     /// <param name="refreshToken">Refresh токен</param>
     /// <returns>Результат обновления токена</returns>
-    Task<AuthResult> RefreshTokenAsync(string refreshToken);
+    Task<AuthResult> RefreshTokenAsync(string username, string refreshToken);
 }

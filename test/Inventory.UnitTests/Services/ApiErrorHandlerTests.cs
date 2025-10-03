@@ -119,7 +119,7 @@ namespace Inventory.UnitTests.Services
 
             _mockTokenManagement.Setup(x => x.HasValidRefreshTokenAsync())
                 .ReturnsAsync(true);
-            _mockTokenManagement.Setup(x => x.TryRefreshTokenAsync())
+            _mockTokenManagement.Setup(x => x.TryRefreshTokenAsync(It.IsAny<bool>()))
                 .ReturnsAsync(true);
 
             // Act
@@ -128,7 +128,7 @@ namespace Inventory.UnitTests.Services
             // Assert
             Assert.False(result.Success);
             Assert.Equal("TOKEN_REFRESHED", result.ErrorMessage);
-            _mockTokenManagement.Verify(x => x.TryRefreshTokenAsync(), Times.Once);
+            _mockTokenManagement.Verify(x => x.TryRefreshTokenAsync(It.IsAny<bool>()), Times.Once);
         }
 
         [Fact]
@@ -165,7 +165,7 @@ namespace Inventory.UnitTests.Services
 
             _mockTokenManagement.Setup(x => x.HasValidRefreshTokenAsync())
                 .ReturnsAsync(true);
-            _mockTokenManagement.Setup(x => x.TryRefreshTokenAsync())
+            _mockTokenManagement.Setup(x => x.TryRefreshTokenAsync(It.IsAny<bool>()))
                 .ReturnsAsync(false);
 
             // Act

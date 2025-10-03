@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -23,12 +24,18 @@ public class JwtHttpInterceptor : DelegatingHandler
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("JwtHttpInterceptor: Sending request to {Url}", request.RequestUri);
+        _logger.LogInformation("JwtHttpInterceptor: Sending request to {Url}", request.RequestUri);
 
         var token = await _tokenManagementService.GetStoredTokenAsync();
+        _logger.LogInformation("JwtHttpInterceptor: Retrieved token: {HasToken}", !string.IsNullOrEmpty(token));
         if (!string.IsNullOrEmpty(token))
         {
             request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            _logger.LogInformation("JwtHttpInterceptor: Added Authorization header to request");
+        }
+        else
+        {
+            _logger.LogWarning("JwtHttpInterceptor: No token available for request");
         }
 
         var response = await base.SendAsync(request, cancellationToken);
@@ -36,14 +43,23 @@ public class JwtHttpInterceptor : DelegatingHandler
         if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
         {
             _logger.LogInformation("JwtHttpInterceptor: Unauthorized response. Attempting to refresh token.");
-            
-            var refreshed = await _tokenManagementService.TryRefreshTokenAsync();
+
+            var refreshed = await _tokenManagementService.TryRefreshTokenAsync(forceRefresh: true);
             if (refreshed)
             {
-                _logger.LogInformation("JwtHttpInterceptor: Token refreshed successfully. The original request will be retried by the resilient handler.");
-                // Не повторяем запрос здесь. Просто позволяем оригинальному ответу 401 пройти.
-                // ResilientApiService поймает ошибку и повторит запрос, 
-                // который уже будет использовать новый токен.
+                _logger.LogInformation("JwtHttpInterceptor: Token refreshed successfully. Retrying request with new token.");
+
+                // Clone the request and add the new token
+                var retryRequest = await CloneHttpRequestMessageAsync(request);
+                var newToken = await _tokenManagementService.GetStoredTokenAsync();
+                if (!string.IsNullOrEmpty(newToken))
+                {
+                    retryRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", newToken);
+                }
+
+                // Retry the request with the new token
+                response = await base.SendAsync(retryRequest, cancellationToken);
+                _logger.LogDebug("JwtHttpInterceptor: Retry completed with status {StatusCode}", response.StatusCode);
             }
             else
             {
@@ -52,7 +68,9 @@ public class JwtHttpInterceptor : DelegatingHandler
         }
 
         return response;
-    }    private async Task<HttpRequestMessage> CloneHttpRequestMessageAsync(HttpRequestMessage req)
+    }
+
+    private async Task<HttpRequestMessage> CloneHttpRequestMessageAsync(HttpRequestMessage req)
     {
         var clone = new HttpRequestMessage(req.Method, req.RequestUri);
 
