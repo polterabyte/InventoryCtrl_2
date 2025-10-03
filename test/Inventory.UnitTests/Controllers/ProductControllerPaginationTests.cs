@@ -35,7 +35,8 @@ public class ProductControllerPaginationTests : IDisposable
         _context.Database.EnsureCreated();
         
         _mockLogger = new Mock<ILogger<ProductController>>();
-        var mockAuditService = new Mock<AuditService>(_context, Mock.Of<IHttpContextAccessor>(), Mock.Of<ILogger<AuditService>>());
+        var safeSerializationService = new SafeSerializationService(Mock.Of<ILogger<SafeSerializationService>>());
+        var mockAuditService = new Mock<AuditService>(_context, Mock.Of<IHttpContextAccessor>(), Mock.Of<ILogger<AuditService>>(), safeSerializationService);
         _controller = new ProductController(_context, _mockLogger.Object, mockAuditService.Object);
         
         // Setup authentication context

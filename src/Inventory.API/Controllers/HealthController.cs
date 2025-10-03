@@ -11,6 +11,6 @@ public class HealthController : ControllerBase
     public ActionResult<ApiResponse<HealthStatusDto>> Get()
     {
         var healthStatus = new HealthStatusDto();
-        return Ok(ApiResponse<HealthStatusDto>.CreateSuccess(healthStatus, "Health check successful."));
+        return Ok(new ApiResponse<HealthStatusDto> { Success = true, Data = healthStatus });
     }
 }

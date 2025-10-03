@@ -13,9 +13,8 @@ public class WebLocationApiService : WebBaseApiService, ILocationService
         IResilientApiService resilientApiService, 
         IApiErrorHandler errorHandler,
         IRequestValidator requestValidator,
-        IAutoTokenRefreshService autoTokenRefreshService,
         ILogger<WebLocationApiService> logger)
-        : base(httpClient, urlBuilderService, resilientApiService, errorHandler, requestValidator, autoTokenRefreshService, logger)
+        : base(httpClient, urlBuilderService, resilientApiService, errorHandler, requestValidator, logger)
     {
     }
 

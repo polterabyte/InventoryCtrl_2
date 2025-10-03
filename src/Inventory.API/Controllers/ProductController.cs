@@ -145,7 +145,7 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
 
             if (product == null)
             {
-                return NotFound(ApiResponse<ProductDto>.CreateFailure("Product not found"));
+                return NotFound(ApiResponse<ProductDto>.ErrorResult("Product not found"));
             }
 
             var productDto = new ProductDto
@@ -181,12 +181,12 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 .FirstOrDefaultAsync();
             productDto.Quantity = onHandQuantity;
 
-            return Ok(ApiResponse<ProductDto>.CreateSuccess(productDto));
+            return Ok(ApiResponse<ProductDto>.SuccessResult(productDto));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving product {ProductId}", id);
-            return StatusCode(500, ApiResponse<ProductDto>.CreateFailure("Failed to retrieve product"));
+            return StatusCode(500, ApiResponse<ProductDto>.ErrorResult("Failed to retrieve product"));
         }
     }
 
@@ -204,7 +204,7 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
 
             if (product == null)
             {
-                return NotFound(ApiResponse<ProductDto>.CreateFailure("Product not found"));
+                return NotFound(ApiResponse<ProductDto>.ErrorResult("Product not found"));
             }
 
             var productDto = new ProductDto
@@ -240,12 +240,12 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 .FirstOrDefaultAsync();
             productDto.Quantity = onHandQuantity;
 
-            return Ok(ApiResponse<ProductDto>.CreateSuccess(productDto));
+            return Ok(ApiResponse<ProductDto>.SuccessResult(productDto));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving product by SKU {SKU}", sku);
-            return StatusCode(500, ApiResponse<ProductDto>.CreateFailure("Failed to retrieve product"));
+            return StatusCode(500, ApiResponse<ProductDto>.ErrorResult("Failed to retrieve product"));
         }
     }
 
@@ -257,21 +257,21 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
-                return BadRequest(ApiResponse<ProductDto>.CreateFailure("Invalid model state", errors));
+                return BadRequest(ApiResponse<ProductDto>.ErrorResult("Invalid model state", errors));
             }
 
             // Check if user has permission to set IsActive
             var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
             if (userRole != "Admin" && request.IsActive != true)
             {
-                return StatusCode(StatusCodes.Status403Forbidden, ApiResponse<ProductDto>.CreateFailure("Only administrators can create inactive products"));
+                return StatusCode(StatusCodes.Status403Forbidden, ApiResponse<ProductDto>.ErrorResult("Only administrators can create inactive products"));
             }
 
             // Check if SKU already exists
             var existingProduct = await context.Products.FirstOrDefaultAsync(p => p.SKU == request.SKU);
             if (existingProduct != null)
             {
-                return BadRequest(ApiResponse<ProductDto>.CreateFailure("Product with this SKU already exists"));
+                return BadRequest(ApiResponse<ProductDto>.ErrorResult("Product with this SKU already exists"));
             }
 
             var product = new Product
@@ -367,12 +367,12 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
 
             logger.LogInformation("Product created: {ProductName} with SKU {SKU}", product.Name, product.SKU);
 
-            return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, ApiResponse<ProductDto>.CreateSuccess(productDto));
+            return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, ApiResponse<ProductDto>.SuccessResult(productDto));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error creating product");
-            return StatusCode(500, ApiResponse<ProductDto>.CreateFailure("Failed to create product"));
+            return StatusCode(500, ApiResponse<ProductDto>.ErrorResult("Failed to create product"));
         }
     }
 
@@ -384,20 +384,20 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
-                return BadRequest(ApiResponse<ProductDto>.CreateFailure("Invalid model state", errors));
+                return BadRequest(ApiResponse<ProductDto>.ErrorResult("Invalid model state", errors));
             }
 
             var product = await context.Products.FindAsync(id);
             if (product == null)
             {
-                return NotFound(ApiResponse<ProductDto>.CreateFailure("Product not found"));
+                return NotFound(ApiResponse<ProductDto>.ErrorResult("Product not found"));
             }
 
             // Check if user has permission to modify IsActive
             var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
             if (userRole != "Admin" && product.IsActive != request.IsActive)
             {
-                return StatusCode(StatusCodes.Status403Forbidden, ApiResponse<ProductDto>.CreateFailure("Only administrators can modify the IsActive status of products"));
+                return StatusCode(StatusCodes.Status403Forbidden, ApiResponse<ProductDto>.ErrorResult("Only administrators can modify the IsActive status of products"));
             }
 
             // Store old values for audit
@@ -491,12 +491,12 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 CreatedAt = product.CreatedAt,
                 UpdatedAt = product.UpdatedAt
             };
-            return Ok(ApiResponse<ProductDto>.CreateSuccess(updatedDto));
+            return Ok(ApiResponse<ProductDto>.SuccessResult(updatedDto));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error updating product {ProductId}", id);
-            return StatusCode(500, ApiResponse<ProductDto>.CreateFailure("Failed to update product"));
+            return StatusCode(500, ApiResponse<ProductDto>.ErrorResult("Failed to update product"));
         }
     }
 
@@ -509,7 +509,7 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
             var product = await context.Products.FindAsync(id);
             if (product == null)
             {
-                return NotFound(ApiResponse<object>.CreateFailure("Product not found"));
+                return NotFound(ApiResponse<object>.ErrorResult("Product not found"));
             }
 
             // Store old values for audit
@@ -553,12 +553,12 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
 
             logger.LogInformation("Product deleted (soft): {ProductName} with ID {ProductId}", product.Name, product.Id);
 
-            return Ok(ApiResponse<object>.CreateSuccess(new { message = "Product deleted successfully" }));
+            return Ok(ApiResponse<object>.SuccessResult(new { message = "Product deleted successfully" }));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error deleting product {ProductId}", id);
-            return StatusCode(500, ApiResponse<object>.CreateFailure("Failed to delete product"));
+            return StatusCode(500, ApiResponse<object>.ErrorResult("Failed to delete product"));
         }
     }
 
@@ -570,13 +570,13 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
-                return BadRequest(ApiResponse<object>.CreateFailure("Invalid model state", errors));
+                return BadRequest(ApiResponse<object>.ErrorResult("Invalid model state", errors));
             }
 
             var product = await context.Products.FindAsync(id);
             if (product == null)
             {
-                return NotFound(ApiResponse<object>.CreateFailure("Product not found"));
+                return NotFound(ApiResponse<object>.ErrorResult("Product not found"));
             }
 
             // Get current quantity from ProductOnHandView for logging purposes
@@ -619,12 +619,12 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 newQuantity = newQuantity,
                 adjustment = request.Quantity
             };
-            return Ok(ApiResponse<object>.CreateSuccess(responseData));
+            return Ok(ApiResponse<object>.SuccessResult(responseData));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error adjusting stock for product {ProductId}", id);
-            return StatusCode(500, ApiResponse<object>.CreateFailure("Failed to adjust stock"));
+            return StatusCode(500, ApiResponse<object>.ErrorResult("Failed to adjust stock"));
         }
     }
 }

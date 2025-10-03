@@ -86,12 +86,12 @@ public class ProductGroupController(AppDbContext context, ILogger<ProductGroupCo
                 })
                 .ToListAsync();
 
-            return Ok(ApiResponse<List<ProductGroupDto>>.CreateSuccess(productGroups));
+            return Ok(ApiResponse<List<ProductGroupDto>>.SuccessResult(productGroups));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving all product groups");
-            return StatusCode(500, ApiResponse<List<ProductGroupDto>>.CreateFailure("Failed to retrieve product groups"));
+            return StatusCode(500, ApiResponse<List<ProductGroupDto>>.ErrorResult("Failed to retrieve product groups"));
         }
     }
 
@@ -104,7 +104,7 @@ public class ProductGroupController(AppDbContext context, ILogger<ProductGroupCo
 
             if (productGroup == null)
             {
-                return NotFound(ApiResponse<ProductGroupDto>.CreateFailure("Product group not found"));
+                return NotFound(ApiResponse<ProductGroupDto>.ErrorResult("Product group not found"));
             }
 
             var productGroupDto = new ProductGroupDto
@@ -116,12 +116,12 @@ public class ProductGroupController(AppDbContext context, ILogger<ProductGroupCo
                 UpdatedAt = productGroup.UpdatedAt
             };
 
-            return Ok(ApiResponse<ProductGroupDto>.CreateSuccess(productGroupDto));
+            return Ok(ApiResponse<ProductGroupDto>.SuccessResult(productGroupDto));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving product group {ProductGroupId}", id);
-            return StatusCode(500, ApiResponse<ProductGroupDto>.CreateFailure("Failed to retrieve product group"));
+            return StatusCode(500, ApiResponse<ProductGroupDto>.ErrorResult("Failed to retrieve product group"));
         }
     }
 
@@ -133,7 +133,7 @@ public class ProductGroupController(AppDbContext context, ILogger<ProductGroupCo
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ApiResponse<ProductGroupDto>.CreateFailure("Invalid model data"));
+                return BadRequest(ApiResponse<ProductGroupDto>.ErrorResult("Invalid model data"));
             }
 
             var productGroup = new ProductGroup
@@ -157,12 +157,12 @@ public class ProductGroupController(AppDbContext context, ILogger<ProductGroupCo
 
             logger.LogInformation("Product group {ProductGroupName} created with ID {ProductGroupId}", productGroup.Name, productGroup.Id);
 
-            return CreatedAtAction(nameof(GetProductGroup), new { id = productGroup.Id }, ApiResponse<ProductGroupDto>.CreateSuccess(productGroupDto));
+            return CreatedAtAction(nameof(GetProductGroup), new { id = productGroup.Id }, ApiResponse<ProductGroupDto>.SuccessResult(productGroupDto));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error creating product group");
-            return StatusCode(500, ApiResponse<ProductGroupDto>.CreateFailure("Failed to create product group"));
+            return StatusCode(500, ApiResponse<ProductGroupDto>.ErrorResult("Failed to create product group"));
         }
     }
 
@@ -174,13 +174,13 @@ public class ProductGroupController(AppDbContext context, ILogger<ProductGroupCo
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ApiResponse<ProductGroupDto>.CreateFailure("Invalid model data"));
+                return BadRequest(ApiResponse<ProductGroupDto>.ErrorResult("Invalid model data"));
             }
 
             var productGroup = await context.ProductGroups.FindAsync(id);
             if (productGroup == null)
             {
-                return NotFound(ApiResponse<ProductGroupDto>.CreateFailure("Product group not found"));
+                return NotFound(ApiResponse<ProductGroupDto>.ErrorResult("Product group not found"));
             }
 
             productGroup.Name = updateProductGroupDto.Name;
@@ -200,12 +200,12 @@ public class ProductGroupController(AppDbContext context, ILogger<ProductGroupCo
 
             logger.LogInformation("Product group {ProductGroupId} updated", id);
 
-            return Ok(ApiResponse<ProductGroupDto>.CreateSuccess(productGroupDto));
+            return Ok(ApiResponse<ProductGroupDto>.SuccessResult(productGroupDto));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error updating product group {ProductGroupId}", id);
-            return StatusCode(500, ApiResponse<ProductGroupDto>.CreateFailure("Failed to update product group"));
+            return StatusCode(500, ApiResponse<ProductGroupDto>.ErrorResult("Failed to update product group"));
         }
     }
 
@@ -218,14 +218,14 @@ public class ProductGroupController(AppDbContext context, ILogger<ProductGroupCo
             var productGroup = await context.ProductGroups.FindAsync(id);
             if (productGroup == null)
             {
-                return NotFound(ApiResponse<bool>.CreateFailure("Product group not found"));
+                return NotFound(ApiResponse<bool>.ErrorResult("Product group not found"));
             }
 
             // Check if product group is used by any products
             var hasProducts = await context.Products.AnyAsync(p => p.ProductGroupId == id);
             if (hasProducts)
             {
-                return BadRequest(ApiResponse<bool>.CreateFailure("Cannot delete product group that is used by products"));
+                return BadRequest(ApiResponse<bool>.ErrorResult("Cannot delete product group that is used by products"));
             }
 
             context.ProductGroups.Remove(productGroup);
@@ -233,12 +233,12 @@ public class ProductGroupController(AppDbContext context, ILogger<ProductGroupCo
 
             logger.LogInformation("Product group {ProductGroupId} deleted", id);
 
-            return Ok(ApiResponse<bool>.CreateSuccess(true));
+            return Ok(ApiResponse<bool>.SuccessResult(true));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error deleting product group {ProductGroupId}", id);
-            return StatusCode(500, ApiResponse<bool>.CreateFailure("Failed to delete product group"));
+            return StatusCode(500, ApiResponse<bool>.ErrorResult("Failed to delete product group"));
         }
     }
 }

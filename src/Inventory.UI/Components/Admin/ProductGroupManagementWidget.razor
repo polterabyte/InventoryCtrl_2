@@ -172,7 +172,7 @@
             }
             else
             {
-                UiNotificationService.ShowError("Error", response.ErrorMessage ?? "Failed to load data");
+                                UiNotificationService.ShowError("Error", response.Error ?? "Failed to load data");
                 data = new();
             }
         }

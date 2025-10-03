@@ -12,7 +12,6 @@ public abstract class WebBaseApiService(
     IResilientApiService resilientApiService,
     IApiErrorHandler errorHandler,
     IRequestValidator requestValidator,
-    IAutoTokenRefreshService autoTokenRefreshService,
     ILogger logger)
 {
     protected readonly HttpClient HttpClient = httpClient;
@@ -20,7 +19,6 @@ public abstract class WebBaseApiService(
     protected readonly IResilientApiService ResilientApiService = resilientApiService;
     protected readonly IApiErrorHandler ErrorHandler = errorHandler;
     protected readonly IRequestValidator RequestValidator = requestValidator;
-    protected readonly IAutoTokenRefreshService AutoTokenRefreshService = autoTokenRefreshService;
     protected readonly ILogger Logger = logger;
 
     public async Task<string> GetApiUrlAsync()
@@ -81,18 +79,18 @@ public abstract class WebBaseApiService(
     /// </summary>
     protected async Task<ApiResponse<T>> ExecuteWithValidationAsync<T>(HttpMethod method, string endpoint, object? data = null)
     {
-        // Р’Р°Р»РёРґРёСЂСѓРµРј РґР°РЅРЅС‹Рµ РµСЃР»Рё РѕРЅРё РµСЃС‚СЊ
+        // Валидируем данные если они есть
         if (data != null)
         {
             var validationResult = await ValidateRequestAsync(data);
             if (!validationResult.IsValid)
             {
                 Logger.LogWarning("Request validation failed, skipping API call. Errors: {Errors}", validationResult.Summary);
-                return ApiResponse<T>.CreateValidationFailure(validationResult.Errors.Select(e => e.Message).ToList());
+                return new ApiResponse<T> { Success = false, ValidationErrors = validationResult.Errors.Select(e => e.Message).ToList() };
             }
         }
 
-        // Р’С‹РїРѕР»РЅСЏРµРј HTTP Р·Р°РїСЂРѕСЃ
+        // Выполняем HTTP запрос
         return await ExecuteHttpRequestAsync<ApiResponse<T>>(method, endpoint, data);
     }
 
@@ -110,7 +108,7 @@ public abstract class WebBaseApiService(
             var fullUrl = await BuildFullUrlAsync(endpoint);
             var request = new HttpRequestMessage(method, fullUrl);
             
-            // Р”РѕР±Р°РІР»СЏРµРј РєРѕРЅС‚РµРЅС‚ РґР»СЏ POST/PUT Р·Р°РїСЂРѕСЃРѕРІ
+            // Добавляем контент для POST/PUT запросов
             if (data != null && (method == HttpMethod.Post || method == HttpMethod.Put))
             {
                 request.Content = JsonContent.Create(data);
@@ -124,30 +122,10 @@ public abstract class WebBaseApiService(
                 Logger.LogDebug("Received response with status {StatusCode} for {Method} {FullUrl}", 
                     response.StatusCode, method, fullUrl);
                 
-                // РСЃРїРѕР»СЊР·СѓРµРј РєР°СЃС‚РѕРјРЅС‹Р№ РѕР±СЂР°Р±РѕС‚С‡РёРє РёР»Рё СЃС‚Р°РЅРґР°СЂС‚РЅС‹Р№
+                // Используем кастомный обработчик или стандартный
                 return customResponseHandler != null 
                     ? await customResponseHandler(response)
                     : await HandleStandardResponseAsync<T>(response);
-            }
-            catch (TokenRefreshedException)
-            {
-                // РўРѕРєРµРЅ Р±С‹Р» РѕР±РЅРѕРІР»РµРЅ, РїРѕРІС‚РѕСЂСЏРµРј Р·Р°РїСЂРѕСЃ
-                Logger.LogInformation("Token was refreshed, retrying {Method} request to {FullUrl}", method, fullUrl);
-                
-                // РЎРѕР·РґР°РµРј РЅРѕРІС‹Р№ Р·Р°РїСЂРѕСЃ СЃ РѕР±РЅРѕРІР»РµРЅРЅС‹Рј С‚РѕРєРµРЅРѕРј
-                var retryRequest = new HttpRequestMessage(method, fullUrl);
-                if (data != null && (method == HttpMethod.Post || method == HttpMethod.Put))
-                {
-                    retryRequest.Content = JsonContent.Create(data);
-                }
-                
-                var retryResponse = await HttpClient.SendAsync(retryRequest);
-                Logger.LogDebug("Retry response with status {StatusCode} for {Method} {FullUrl}", 
-                    retryResponse.StatusCode, method, fullUrl);
-                
-                return customResponseHandler != null 
-                    ? await customResponseHandler(retryResponse)
-                    : await HandleStandardResponseAsync<T>(retryResponse);
             }
             catch (HttpRequestException ex)
             {
@@ -182,13 +160,6 @@ public abstract class WebBaseApiService(
             
             if (!apiResponse.Success)
             {
-                // РџСЂРѕРІРµСЂСЏРµРј, РЅСѓР¶РЅРѕ Р»Рё РїРѕРІС‚РѕСЂРёС‚СЊ Р·Р°РїСЂРѕСЃ РїРѕСЃР»Рµ РѕР±РЅРѕРІР»РµРЅРёСЏ С‚РѕРєРµРЅР°
-                if (apiResponse.ErrorMessage == "TOKEN_REFRESHED")
-                {
-                    Logger.LogInformation("Token was refreshed, retrying original request");
-                    throw new TokenRefreshedException("Token was refreshed, retry required");
-                }
-                
                 Logger.LogError("API request failed: {ErrorMessage}", apiResponse.ErrorMessage);
                 throw new HttpRequestException($"API request failed: {apiResponse.ErrorMessage}");
             }
@@ -211,8 +182,7 @@ public abstract class WebBaseApiService(
     {
         try
         {
-            return await AutoTokenRefreshService.ExecuteWithAutoRefreshAsync(async () =>
-                await ExecuteHttpRequestAsync<ApiResponse<T>>(HttpMethod.Get, endpoint));
+            return await ExecuteHttpRequestAsync<ApiResponse<T>>(HttpMethod.Get, endpoint);
         }
         catch (Exception ex)
         {
@@ -224,8 +194,7 @@ public abstract class WebBaseApiService(
     {
         try
         {
-            return await AutoTokenRefreshService.ExecutePagedWithAutoRefreshAsync(async () =>
-                await ExecuteHttpRequestAsync<PagedApiResponse<T>>(HttpMethod.Get, endpoint));
+            return await ExecuteHttpRequestAsync<PagedApiResponse<T>>(HttpMethod.Get, endpoint);
         }
         catch (Exception ex)
         {
@@ -249,15 +218,15 @@ public abstract class WebBaseApiService(
     {
         try
         {
-            // Р’Р°Р»РёРґРёСЂСѓРµРј РґР°РЅРЅС‹Рµ РїРµСЂРµРґ РѕС‚РїСЂР°РІРєРѕР№
+            // Валидируем данные перед отправкой
             var validationResult = await ValidateRequestAsync(data);
             if (!validationResult.IsValid)
             {
                 Logger.LogWarning("PUT request validation failed, skipping API call. Errors: {Errors}", validationResult.Summary);
-                return ApiResponse<T>.CreateValidationFailure(validationResult.Errors.Select(e => e.Message).ToList());
+                return new ApiResponse<T> { Success = false, ValidationErrors = validationResult.Errors.Select(e => e.Message).ToList() };
             }
 
-            // Р”Р»СЏ PUT Р·Р°РїСЂРѕСЃРѕРІ РЅСѓР¶РµРЅ СЃРїРµС†РёР°Р»СЊРЅС‹Р№ РѕР±СЂР°Р±РѕС‚С‡РёРє РѕС‚РІРµС‚Р°
+            // Для PUT запросов нужен специальный обработчик ответа
             return await ExecuteHttpRequestAsync<ApiResponse<T>>(HttpMethod.Put, endpoint, data, 
                 async response =>
                 {
@@ -265,7 +234,7 @@ public abstract class WebBaseApiService(
                     {
                         var result = await response.Content.ReadFromJsonAsync<T>();
                         Logger.LogDebug("PUT request successful for {StatusCode}", response.StatusCode);
-                        return ApiResponse<T>.CreateSuccess(result!);
+                        return new ApiResponse<T> { Success = true, Data = result };
                     }
                     else
                     {
@@ -295,12 +264,12 @@ public abstract class WebBaseApiService(
             if (response.IsSuccessStatusCode)
             {
                 Logger.LogDebug("DELETE request successful for {StatusCode}", response.StatusCode);
-                return ApiResponse<bool>.CreateSuccess(true);
+                return new ApiResponse<bool> { Success = true, Data = true };
             }
             else
             {
                 var errorResponse = await ErrorHandler.HandleResponseAsync<bool>(response);
-                return ApiResponse<bool>.CreateFailure(errorResponse.ErrorMessage ?? "Delete operation failed");
+                return new ApiResponse<bool> { Success = false, ErrorMessage = errorResponse.ErrorMessage ?? "Delete operation failed" };
             }
         }
         catch (Exception ex)

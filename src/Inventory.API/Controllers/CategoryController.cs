@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Inventory.API.Models;
+using Inventory.API.Interfaces;
 using Inventory.Shared.DTOs;
-using Serilog;
 using System.Security.Claims;
 
 namespace Inventory.API.Controllers;
@@ -11,7 +9,7 @@ namespace Inventory.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class CategoryController(AppDbContext context, ILogger<CategoryController> logger) : ControllerBase
+public class CategoryController(ICategoryService categoryService) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<PagedApiResponse<CategoryDto>>> GetCategories(
@@ -21,343 +19,97 @@ public class CategoryController(AppDbContext context, ILogger<CategoryController
         [FromQuery] int? parentId = null,
         [FromQuery] bool? isActive = null)
     {
-        try
+        var isAdmin = User.IsInRole("Admin");
+        var response = await categoryService.GetCategoriesAsync(page, pageSize, search, parentId, isActive, isAdmin);
+        if (!response.Success)
         {
-            // Log user information for debugging
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var userName = User.FindFirst(ClaimTypes.Name)?.Value;
-            var userRoles = User.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToList();
-            
-            logger.LogInformation("GetCategories called by user: {UserId}, Name: {UserName}, Roles: {Roles}", 
-                userId, userName, string.Join(", ", userRoles));
-
-            var query = context.Categories
-                .Include(c => c.ParentCategory)
-                .AsQueryable();
-
-            // Apply filters
-            if (!string.IsNullOrEmpty(search))
-            {
-                query = query.Where(c => c.Name.Contains(search) || 
-                    (c.Description != null && c.Description.Contains(search)));
-            }
-
-            if (parentId.HasValue)
-            {
-                query = query.Where(c => c.ParentCategoryId == parentId.Value);
-            }
-
-            if (isActive.HasValue)
-            {
-                query = query.Where(c => c.IsActive == isActive.Value);
-            }
-            else
-            {
-                // By default, show only active categories for non-admin users
-                var isAdmin = userRoles.Contains("Admin");
-                
-                if (!isAdmin)
-                {
-                    query = query.Where(c => c.IsActive);
-                }
-            }
-
-            // Get total count
-            var totalCount = await query.CountAsync();
-            
-            logger.LogInformation("Found {TotalCount} categories after filtering", totalCount);
-
-            // Apply pagination
-            var categories = await query
-                .OrderBy(c => c.Name)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(c => new CategoryDto
-                {
-                    Id = c.Id,
-                    Name = c.Name,
-                    Description = c.Description,
-                    IsActive = c.IsActive,
-                    ParentCategoryId = c.ParentCategoryId,
-                    ParentCategoryName = c.ParentCategory != null ? c.ParentCategory.Name : null,
-                    CreatedAt = c.CreatedAt,
-                    UpdatedAt = c.UpdatedAt
-                })
-                .ToListAsync();
-                
-            logger.LogInformation("Returning {CategoryCount} categories for page {Page}", categories.Count, page);
-
-            var pagedResponse = new PagedResponse<CategoryDto>
-            {
-                Items = categories,
-                total = totalCount,
-                page = page,
-                PageSize = pageSize
-            };
-
-            return Ok(PagedApiResponse<CategoryDto>.CreateSuccess(pagedResponse));
+            return StatusCode(500, response);
         }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error retrieving categories");
-            return StatusCode(500, PagedApiResponse<CategoryDto>.CreateFailure("Failed to retrieve categories"));
-        }
+        return Ok(response);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<ApiResponse<CategoryDto>>> GetCategory(int id)
     {
-        try
+        var response = await categoryService.GetCategoryByIdAsync(id);
+        if (!response.Success)
         {
-            var category = await context.Categories
-                .Include(c => c.ParentCategory)
-                .FirstOrDefaultAsync(c => c.Id == id && c.IsActive);
-
-            if (category == null)
-            {
-                return NotFound(ApiResponse<CategoryDto>.CreateFailure("Category not found"));
-            }
-
-            var categoryDto = new CategoryDto
-            {
-                Id = category.Id,
-                Name = category.Name,
-                Description = category.Description,
-                IsActive = category.IsActive,
-                ParentCategoryId = category.ParentCategoryId,
-                ParentCategoryName = category.ParentCategory?.Name,
-                CreatedAt = category.CreatedAt,
-                UpdatedAt = category.UpdatedAt
-            };
-
-            return Ok(ApiResponse<CategoryDto>.CreateSuccess(categoryDto));
+            return NotFound(response);
         }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error retrieving category {CategoryId}", id);
-            return StatusCode(500, ApiResponse<CategoryDto>.CreateFailure("Failed to retrieve category"));
-        }
+        return Ok(response);
     }
 
     [HttpGet("root")]
     public async Task<ActionResult<ApiResponse<List<CategoryDto>>>> GetRootCategories()
     {
-        try
+        var response = await categoryService.GetRootCategoriesAsync();
+        if (!response.Success)
         {
-            var rootCategories = await context.Categories
-                .Where(c => c.IsActive && c.ParentCategoryId == null)
-                .Select(c => new CategoryDto
-                {
-                    Id = c.Id,
-                    Name = c.Name,
-                    Description = c.Description,
-                    IsActive = c.IsActive,
-                    ParentCategoryId = c.ParentCategoryId,
-                    CreatedAt = c.CreatedAt,
-                    UpdatedAt = c.UpdatedAt
-                })
-                .ToListAsync();
-
-            return Ok(ApiResponse<List<CategoryDto>>.CreateSuccess(rootCategories));
+            return StatusCode(500, response);
         }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error retrieving root categories");
-            return StatusCode(500, ApiResponse<List<CategoryDto>>.CreateFailure("Failed to retrieve root categories"));
-        }
+        return Ok(response);
     }
 
     [HttpGet("{parentId}/sub")]
     public async Task<ActionResult<ApiResponse<List<CategoryDto>>>> GetSubCategories(int parentId)
     {
-        try
+        var response = await categoryService.GetSubCategoriesAsync(parentId);
+        if (!response.Success)
         {
-            var subCategories = await context.Categories
-                .Where(c => c.IsActive && c.ParentCategoryId == parentId)
-                .Select(c => new CategoryDto
-                {
-                    Id = c.Id,
-                    Name = c.Name,
-                    Description = c.Description,
-                    IsActive = c.IsActive,
-                    ParentCategoryId = c.ParentCategoryId,
-                    ParentCategoryName = c.ParentCategory != null ? c.ParentCategory.Name : null,
-                    CreatedAt = c.CreatedAt,
-                    UpdatedAt = c.UpdatedAt
-                })
-                .ToListAsync();
-
-            return Ok(ApiResponse<List<CategoryDto>>.CreateSuccess(subCategories));
+            return StatusCode(500, response);
         }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error retrieving subcategories for parent {ParentId}", parentId);
-            return StatusCode(500, ApiResponse<List<CategoryDto>>.CreateFailure("Failed to retrieve subcategories"));
-        }
+        return Ok(response);
     }
 
     [HttpPost]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<ApiResponse<CategoryDto>>> CreateCategory([FromBody] CreateCategoryDto request)
     {
-        try
+        if (!ModelState.IsValid)
         {
-            if (!ModelState.IsValid)
-            {
-                var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
-                return BadRequest(ApiResponse<CategoryDto>.CreateFailure("Invalid model state", errors));
-            }
-
-            // Check if parent category exists (if specified)
-            if (request.ParentCategoryId.HasValue)
-            {
-                var parentCategory = await context.Categories
-                    .FirstOrDefaultAsync(c => c.Id == request.ParentCategoryId.Value && c.IsActive);
-                
-                if (parentCategory == null)
-                {
-                    return BadRequest(ApiResponse<CategoryDto>.CreateFailure("Parent category not found"));
-                }
-            }
-
-            var category = new Category
-            {
-                Name = request.Name,
-                Description = request.Description,
-                ParentCategoryId = request.ParentCategoryId,
-                IsActive = true, // Categories are created as active by default
-                CreatedAt = DateTime.UtcNow
-            };
-
-            context.Categories.Add(category);
-            await context.SaveChangesAsync();
-
-            logger.LogInformation("Category created: {CategoryName} with ID {CategoryId}", category.Name, category.Id);
-
-            var categoryDto = new CategoryDto
-            {
-                Id = category.Id,
-                Name = category.Name,
-                Description = category.Description,
-                IsActive = category.IsActive,
-                ParentCategoryId = category.ParentCategoryId,
-                CreatedAt = category.CreatedAt,
-                UpdatedAt = category.UpdatedAt
-            };
-
-            return CreatedAtAction(nameof(GetCategory), new { id = category.Id }, ApiResponse<CategoryDto>.CreateSuccess(categoryDto));
+            var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
+            return BadRequest(ApiResponse<CategoryDto>.ErrorResult("Invalid model state", errors));
         }
-        catch (Exception ex)
+
+        var response = await categoryService.CreateCategoryAsync(request);
+        if (!response.Success)
         {
-            logger.LogError(ex, "Error creating category");
-            return StatusCode(500, ApiResponse<CategoryDto>.CreateFailure("Failed to create category"));
+            return BadRequest(response);
         }
+        return CreatedAtAction(nameof(GetCategory), new { id = response.Data!.Id }, response);
     }
 
     [HttpPut("{id}")]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<ApiResponse<CategoryDto>>> UpdateCategory(int id, [FromBody] UpdateCategoryDto request)
     {
-        try
+        if (!ModelState.IsValid)
         {
-            if (!ModelState.IsValid)
-            {
-                var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
-                return BadRequest(ApiResponse<CategoryDto>.CreateFailure("Invalid model state", errors));
-            }
-
-            var category = await context.Categories.FindAsync(id);
-            if (category == null)
-            {
-                return NotFound(ApiResponse<CategoryDto>.CreateFailure("Category not found"));
-            }
-
-            // Check if parent category exists (if specified)
-            if (request.ParentCategoryId.HasValue)
-            {
-                var parentCategory = await context.Categories
-                    .FirstOrDefaultAsync(c => c.Id == request.ParentCategoryId.Value && c.IsActive);
-                
-                if (parentCategory == null)
-                {
-                    return BadRequest(ApiResponse<CategoryDto>.CreateFailure("Parent category not found"));
-                }
-            }
-
-            category.Name = request.Name;
-            category.Description = request.Description;
-            category.IsActive = request.IsActive; // Only Admin can modify IsActive
-            category.ParentCategoryId = request.ParentCategoryId;
-            category.UpdatedAt = DateTime.UtcNow;
-
-            await context.SaveChangesAsync();
-
-            logger.LogInformation("Category updated: {CategoryName} with ID {CategoryId}", category.Name, category.Id);
-
-            var categoryDto = new CategoryDto
-            {
-                Id = category.Id,
-                Name = category.Name,
-                Description = category.Description,
-                IsActive = category.IsActive,
-                ParentCategoryId = category.ParentCategoryId,
-                CreatedAt = category.CreatedAt,
-                UpdatedAt = category.UpdatedAt
-            };
-
-            return Ok(ApiResponse<CategoryDto>.CreateSuccess(categoryDto));
+            var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
+            return BadRequest(ApiResponse<CategoryDto>.ErrorResult("Invalid model state", errors));
         }
-        catch (Exception ex)
+
+        var response = await categoryService.UpdateCategoryAsync(id, request);
+        if (!response.Success)
         {
-            logger.LogError(ex, "Error updating category {CategoryId}", id);
-            return StatusCode(500, ApiResponse<CategoryDto>.CreateFailure("Failed to update category"));
+            if (response.ErrorMessage != null && response.ErrorMessage.Contains("not found"))
+                return NotFound(response);
+            return BadRequest(response);
         }
+        return Ok(response);
     }
 
     [HttpDelete("{id}")]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<ApiResponse<object>>> DeleteCategory(int id)
     {
-        try
+        var response = await categoryService.DeleteCategoryAsync(id);
+        if (!response.Success)
         {
-            var category = await context.Categories.FindAsync(id);
-            if (category == null)
-            {
-                return NotFound(ApiResponse<object>.CreateFailure("Category not found"));
-            }
-
-            // Check if category has subcategories
-            var hasSubCategories = await context.Categories
-                .AnyAsync(c => c.ParentCategoryId == id && c.IsActive);
-
-            if (hasSubCategories)
-            {
-                return BadRequest(ApiResponse<object>.CreateFailure("Cannot delete category with subcategories"));
-            }
-
-            // Check if category has products
-            var hasProducts = await context.Products
-                .AnyAsync(p => p.CategoryId == id && p.IsActive);
-
-            if (hasProducts)
-            {
-                return BadRequest(ApiResponse<object>.CreateFailure("Cannot delete category with products"));
-            }
-
-            // Soft delete - set IsActive to false
-            category.IsActive = false;
-            category.UpdatedAt = DateTime.UtcNow;
-
-            await context.SaveChangesAsync();
-
-            logger.LogInformation("Category deleted (soft): {CategoryName} with ID {CategoryId}", category.Name, category.Id);
-
-            return Ok(ApiResponse<object>.CreateSuccess(new { message = "Category deleted successfully" }));
+            if (response.ErrorMessage != null && response.ErrorMessage.Contains("not found"))
+                return NotFound(response);
+            return BadRequest(response);
         }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error deleting category {CategoryId}", id);
-            return StatusCode(500, ApiResponse<object>.CreateFailure("Failed to delete category"));
-        }
+        return Ok(response);
     }
 }

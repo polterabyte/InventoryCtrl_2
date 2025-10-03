@@ -21,6 +21,6 @@ public static class ApiResponseExtensions
     /// </summary>
     public static bool IsTokenRefreshed<T>(this PagedApiResponse<T> response)
     {
-        return !response.Success && response.ErrorMessage == ApiResponseCodes.TokenRefreshed;
+        return !response.Success && response.Error == ApiResponseCodes.TokenRefreshed;
     }
 }

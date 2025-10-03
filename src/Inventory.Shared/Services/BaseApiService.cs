@@ -1,6 +1,6 @@
-using System.Net.Http.Json;
 using Inventory.Shared.Constants;
 using Inventory.Shared.DTOs;
+using System.Net.Http.Json;
 using Microsoft.Extensions.Logging;
 
 namespace Inventory.Shared.Services;
@@ -52,20 +52,20 @@ public abstract class BaseApiService(HttpClient httpClient, string baseUrl, ILog
             {
                 var apiResponse = await response.Content.ReadFromJsonAsync<PagedApiResponse<T>>();
                 Logger.LogDebug("GET request successful for {Endpoint}", endpoint);
-                return apiResponse ?? new PagedApiResponse<T> { Success = false, ErrorMessage = "Failed to deserialize response" };
+                return apiResponse ?? new PagedApiResponse<T> { Success = false, Error = "Failed to deserialize response" };
             }
             else
             {
                 var errorMessage = await response.Content.ReadAsStringAsync();
                 Logger.LogWarning("GET request failed for {Endpoint}. Status: {StatusCode}, Error: {Error}", 
                     endpoint, response.StatusCode, errorMessage);
-                return new PagedApiResponse<T> { Success = false, ErrorMessage = errorMessage };
+                return new PagedApiResponse<T> { Success = false, Error = errorMessage };
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Exception occurred during GET request to {Endpoint}", endpoint);
-            return new PagedApiResponse<T> { Success = false, ErrorMessage = ex.Message };
+            return new PagedApiResponse<T> { Success = false, Error = ex.Message };
         }
     }
 

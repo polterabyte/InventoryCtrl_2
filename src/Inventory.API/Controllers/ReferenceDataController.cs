@@ -68,7 +68,7 @@ public abstract class ReferenceDataController<TDto, TCreateDto, TUpdateDto> : Co
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving all {TypeName} data", typeof(TDto).Name);
-            return StatusCode(500, ApiResponse<List<TDto>>.CreateFailure($"Failed to retrieve {typeof(TDto).Name.ToLower()} data"));
+            return StatusCode(500, ApiResponse<List<TDto>>.ErrorResult($"Failed to retrieve {typeof(TDto).Name.ToLower()} data"));
         }
     }
 
@@ -92,7 +92,7 @@ public abstract class ReferenceDataController<TDto, TCreateDto, TUpdateDto> : Co
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving {TypeName} with ID {Id}", typeof(TDto).Name, id);
-            return StatusCode(500, ApiResponse<TDto>.CreateFailure($"Failed to retrieve {typeof(TDto).Name.ToLower()}"));
+            return StatusCode(500, ApiResponse<TDto>.ErrorResult($"Failed to retrieve {typeof(TDto).Name.ToLower()}"));
         }
     }
 
@@ -108,7 +108,7 @@ public abstract class ReferenceDataController<TDto, TCreateDto, TUpdateDto> : Co
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
-                return BadRequest(ApiResponse<TDto>.CreateFailure("Invalid model state", errors));
+                return BadRequest(ApiResponse<TDto>.ErrorResult("Invalid model state", errors));
             }
 
             var result = await _service.CreateAsync(createDto);
@@ -123,7 +123,7 @@ public abstract class ReferenceDataController<TDto, TCreateDto, TUpdateDto> : Co
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating {TypeName}", typeof(TDto).Name);
-            return StatusCode(500, ApiResponse<TDto>.CreateFailure($"Failed to create {typeof(TDto).Name.ToLower()}"));
+            return StatusCode(500, ApiResponse<TDto>.ErrorResult($"Failed to create {typeof(TDto).Name.ToLower()}"));
         }
     }
 
@@ -139,7 +139,7 @@ public abstract class ReferenceDataController<TDto, TCreateDto, TUpdateDto> : Co
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
-                return BadRequest(ApiResponse<TDto>.CreateFailure("Invalid model state", errors));
+                return BadRequest(ApiResponse<TDto>.ErrorResult("Invalid model state", errors));
             }
 
             var result = await _service.UpdateAsync(id, updateDto);
@@ -158,7 +158,7 @@ public abstract class ReferenceDataController<TDto, TCreateDto, TUpdateDto> : Co
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating {TypeName} with ID {Id}", typeof(TDto).Name, id);
-            return StatusCode(500, ApiResponse<TDto>.CreateFailure($"Failed to update {typeof(TDto).Name.ToLower()}"));
+            return StatusCode(500, ApiResponse<TDto>.ErrorResult($"Failed to update {typeof(TDto).Name.ToLower()}"));
         }
     }
 
@@ -187,7 +187,7 @@ public abstract class ReferenceDataController<TDto, TCreateDto, TUpdateDto> : Co
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting {TypeName} with ID {Id}", typeof(TDto).Name, id);
-            return StatusCode(500, ApiResponse<object>.CreateFailure($"Failed to delete {typeof(TDto).Name.ToLower()}"));
+            return StatusCode(500, ApiResponse<object>.ErrorResult($"Failed to delete {typeof(TDto).Name.ToLower()}"));
         }
     }
 
@@ -200,12 +200,12 @@ public abstract class ReferenceDataController<TDto, TCreateDto, TUpdateDto> : Co
         try
         {
             var exists = await _service.ExistsAsync(identifier);
-            return Ok(ApiResponse<bool>.CreateSuccess(exists));
+            return Ok(ApiResponse<bool>.SuccessResult(exists));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error checking {TypeName} existence", typeof(TDto).Name);
-            return StatusCode(500, ApiResponse<bool>.CreateFailure($"Failed to check {typeof(TDto).Name.ToLower()} existence"));
+            return StatusCode(500, ApiResponse<bool>.ErrorResult($"Failed to check {typeof(TDto).Name.ToLower()} existence"));
         }
     }
 
@@ -218,12 +218,12 @@ public abstract class ReferenceDataController<TDto, TCreateDto, TUpdateDto> : Co
         try
         {
             var count = await _service.GetCountAsync(isActive);
-            return Ok(ApiResponse<int>.CreateSuccess(count));
+            return Ok(ApiResponse<int>.SuccessResult(count));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting {TypeName} count", typeof(TDto).Name);
-            return StatusCode(500, ApiResponse<int>.CreateFailure($"Failed to get {typeof(TDto).Name.ToLower()} count"));
+            return StatusCode(500, ApiResponse<int>.ErrorResult($"Failed to get {typeof(TDto).Name.ToLower()} count"));
         }
     }
 

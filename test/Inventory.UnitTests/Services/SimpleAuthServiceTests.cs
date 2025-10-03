@@ -10,56 +10,36 @@ using Inventory.API.Services;
 using Xunit;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Inventory.API.Interfaces;
 
 namespace Inventory.UnitTests.Services;
 
 public class SimpleAuthServiceTests
 {
-    private readonly Mock<UserManager<User>> _userManagerMock;
-    private readonly Mock<IConfiguration> _configMock;
+    private readonly Mock<AuthService> _authServiceMock;
     private readonly Mock<ILogger<AuthController>> _loggerMock;
+    private readonly Mock<IRefreshTokenService> _refreshTokenServiceMock;
 
     public SimpleAuthServiceTests()
     {
-        _userManagerMock = new Mock<UserManager<User>>(
-            Mock.Of<IUserStore<User>>(), null!, null!, null!, null!, null!, null!, null!, null!);
-        _configMock = new Mock<IConfiguration>();
+        _refreshTokenServiceMock = new Mock<IRefreshTokenService>();
+        _authServiceMock = new Mock<AuthService>(
+            new Mock<UserManager<User>>(Mock.Of<IUserStore<User>>(), null!, null!, null!, null!, null!, null!, null!, null!).Object,
+            new Mock<IConfiguration>().Object,
+            _refreshTokenServiceMock.Object,
+            new Mock<IInternalAuditService>().Object,
+            new Mock<Serilog.ILogger>().Object
+            );
         _loggerMock = new Mock<ILogger<AuthController>>();
-
-        // Mock configuration
-        _configMock.Setup(x => x["Jwt:Key"]).Returns("YourSuperSecretKeyThatIsAtLeast32CharactersLong");
-        _configMock.Setup(x => x["Jwt:Issuer"]).Returns("InventoryControl");
-        _configMock.Setup(x => x["Jwt:Audience"]).Returns("InventoryControl");
     }
 
     [Fact]
     public void AuthController_ShouldBeCreated()
     {
         // Arrange
-        var testDatabaseName = $"inventory_unit_test_{Guid.NewGuid():N}_{DateTime.UtcNow:yyyyMMddHHmmss}";
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(testDatabaseName)
-            .Options;
-        var context = new AppDbContext(options);
-        context.Database.EnsureCreated();
-
-        var mockRefreshTokenService = new Mock<RefreshTokenService>(
-            _userManagerMock.Object,
-            _configMock.Object,
-            Mock.Of<ILogger<RefreshTokenService>>());
-        var safeSerializationService = new SafeSerializationService(Mock.Of<ILogger<SafeSerializationService>>());
-        var mockAuditService = new Mock<AuditService>(
-            context,
-            Mock.Of<IHttpContextAccessor>(),
-            Mock.Of<ILogger<AuditService>>(),
-            safeSerializationService);
-
         var authController = new AuthController(
-            _userManagerMock.Object,
-            _configMock.Object,
-            _loggerMock.Object,
-            mockRefreshTokenService.Object,
-            mockAuditService.Object);
+            _authServiceMock.Object,
+            _loggerMock.Object);
 
         // Assert
         authController.Should().NotBeNull();

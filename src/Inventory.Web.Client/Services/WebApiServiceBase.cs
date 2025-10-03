@@ -21,9 +21,8 @@ public abstract class WebApiServiceBase<TEntity, TCreateDto, TUpdateDto> : WebBa
         IResilientApiService resilientApiService,
         IApiErrorHandler errorHandler,
         IRequestValidator requestValidator,
-        IAutoTokenRefreshService autoTokenRefreshService,
         ILogger logger) 
-        : base(httpClient, urlBuilderService, resilientApiService, errorHandler, requestValidator, autoTokenRefreshService, logger)
+        : base(httpClient, urlBuilderService, resilientApiService, errorHandler, requestValidator, logger)
     {
     }
 

@@ -297,7 +297,7 @@
             }
             else
             {
-                errorMessage = response.ErrorMessage ?? "Failed to load requests";
+                errorMessage = response.Error ?? "Failed to load requests";
                 requests = new List<RequestDto>();
             }
         }

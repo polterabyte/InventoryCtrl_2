@@ -103,7 +103,7 @@ public class UserControllerTests : IDisposable
         response.Should().NotBeNull();
         if (!response!.Success)
         {
-            Console.WriteLine($"Error: {response.ErrorMessage}");
+            Console.WriteLine($"Error: {response.Error}");
         }
         response.Success.Should().BeTrue();
         response.Data.Items.Should().HaveCount(2);

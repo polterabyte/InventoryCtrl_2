@@ -13,9 +13,8 @@ public class WebAuthApiService : WebBaseApiService, IAuthService
         IResilientApiService resilientApiService, 
         IApiErrorHandler errorHandler,
         IRequestValidator requestValidator,
-        IAutoTokenRefreshService autoTokenRefreshService,
         ILogger<WebAuthApiService> logger) 
-        : base(httpClient, urlBuilderService, resilientApiService, errorHandler, requestValidator, autoTokenRefreshService, logger)
+        : base(httpClient, urlBuilderService, resilientApiService, errorHandler, requestValidator, logger)
     {
     }
 

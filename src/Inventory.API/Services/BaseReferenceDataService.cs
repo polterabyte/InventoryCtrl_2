@@ -90,20 +90,12 @@ public abstract class BaseReferenceDataService<TEntity, TDto, TCreateDto, TUpdat
                 PageSize = pageSize
             };
 
-            return new PagedApiResponse<TDto>
-            {
-                Success = true,
-                Data = pagedResponse
-            };
+            return PagedApiResponse<TDto>.CreateSuccess(pagedResponse);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving {TypeName} data", typeof(TEntity).Name);
-            return new PagedApiResponse<TDto>
-            {
-                Success = false,
-                ErrorMessage = $"Failed to retrieve {typeof(TEntity).Name.ToLower()} data"
-            };
+            return PagedApiResponse<TDto>.CreateFailure($"Failed to retrieve {typeof(TEntity).Name.ToLower()} data");
         }
     }
 
@@ -126,20 +118,12 @@ public abstract class BaseReferenceDataService<TEntity, TDto, TCreateDto, TUpdat
 
             var dtos = entities.Select(MapToDto).ToList();
 
-            return new ApiResponse<List<TDto>>
-            {
-                Success = true,
-                Data = dtos
-            };
+            return ApiResponse<List<TDto>>.SuccessResult(dtos);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving all {TypeName} data", typeof(TEntity).Name);
-            return new ApiResponse<List<TDto>>
-            {
-                Success = false,
-                ErrorMessage = $"Failed to retrieve {typeof(TEntity).Name.ToLower()} data"
-            };
+            return ApiResponse<List<TDto>>.ErrorResult($"Failed to retrieve {typeof(TEntity).Name.ToLower()} data");
         }
     }
 
@@ -151,29 +135,17 @@ public abstract class BaseReferenceDataService<TEntity, TDto, TCreateDto, TUpdat
 
             if (entity == null)
             {
-                return new ApiResponse<TDto>
-                {
-                    Success = false,
-                    ErrorMessage = $"{typeof(TEntity).Name} not found"
-                };
+                return ApiResponse<TDto>.ErrorResult($"{typeof(TEntity).Name} not found");
             }
 
             var dto = MapToDto(entity);
 
-            return new ApiResponse<TDto>
-            {
-                Success = true,
-                Data = dto
-            };
+            return ApiResponse<TDto>.SuccessResult(dto);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving {TypeName} with ID {Id}", typeof(TEntity).Name, id);
-            return new ApiResponse<TDto>
-            {
-                Success = false,
-                ErrorMessage = $"Failed to retrieve {typeof(TEntity).Name.ToLower()}"
-            };
+            return ApiResponse<TDto>.ErrorResult($"Failed to retrieve {typeof(TEntity).Name.ToLower()}");
         }
     }
 
@@ -185,11 +157,7 @@ public abstract class BaseReferenceDataService<TEntity, TDto, TCreateDto, TUpdat
             var identifier = GetIdentifierFromCreateDto(createDto);
             if (!string.IsNullOrEmpty(identifier) && await ExistsAsync(identifier))
             {
-                return new ApiResponse<TDto>
-                {
-                    Success = false,
-                    ErrorMessage = $"{typeof(TEntity).Name} with this identifier already exists"
-                };
+                return ApiResponse<TDto>.ErrorResult($"{typeof(TEntity).Name} with this identifier already exists");
             }
 
             var entity = MapToEntity(createDto);
@@ -203,20 +171,12 @@ public abstract class BaseReferenceDataService<TEntity, TDto, TCreateDto, TUpdat
 
             var dto = MapToDto(entity);
 
-            return new ApiResponse<TDto>
-            {
-                Success = true,
-                Data = dto
-            };
+            return ApiResponse<TDto>.SuccessResult(dto);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating {TypeName}", typeof(TEntity).Name);
-            return new ApiResponse<TDto>
-            {
-                Success = false,
-                ErrorMessage = $"Failed to create {typeof(TEntity).Name.ToLower()}"
-            };
+            return ApiResponse<TDto>.ErrorResult($"Failed to create {typeof(TEntity).Name.ToLower()}");
         }
     }
 
@@ -227,11 +187,7 @@ public abstract class BaseReferenceDataService<TEntity, TDto, TCreateDto, TUpdat
             var entity = await DbSet.FindAsync(id);
             if (entity == null)
             {
-                return new ApiResponse<TDto>
-                {
-                    Success = false,
-                    ErrorMessage = $"{typeof(TEntity).Name} not found"
-                };
+                return ApiResponse<TDto>.ErrorResult($"{typeof(TEntity).Name} not found");
             }
 
             // Check if another item with the same identifier exists
@@ -243,11 +199,7 @@ public abstract class BaseReferenceDataService<TEntity, TDto, TCreateDto, TUpdat
                 
                 if (existingEntity != null && GetIdFromEntity(existingEntity) != id)
                 {
-                    return new ApiResponse<TDto>
-                    {
-                        Success = false,
-                        ErrorMessage = $"{typeof(TEntity).Name} with this identifier already exists"
-                    };
+                    return ApiResponse<TDto>.ErrorResult($"{typeof(TEntity).Name} with this identifier already exists");
                 }
             }
 
@@ -261,20 +213,12 @@ public abstract class BaseReferenceDataService<TEntity, TDto, TCreateDto, TUpdat
 
             var dto = MapToDto(entity);
 
-            return new ApiResponse<TDto>
-            {
-                Success = true,
-                Data = dto
-            };
+            return ApiResponse<TDto>.SuccessResult(dto);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating {TypeName} with ID {Id}", typeof(TEntity).Name, id);
-            return new ApiResponse<TDto>
-            {
-                Success = false,
-                ErrorMessage = $"Failed to update {typeof(TEntity).Name.ToLower()}"
-            };
+            return ApiResponse<TDto>.ErrorResult($"Failed to update {typeof(TEntity).Name.ToLower()}");
         }
     }
 
@@ -285,21 +229,13 @@ public abstract class BaseReferenceDataService<TEntity, TDto, TCreateDto, TUpdat
             var entity = await DbSet.FindAsync(id);
             if (entity == null)
             {
-                return new ApiResponse<object>
-                {
-                    Success = false,
-                    ErrorMessage = $"{typeof(TEntity).Name} not found"
-                };
+                return ApiResponse<object>.ErrorResult($"{typeof(TEntity).Name} not found");
             }
 
             // Check if entity has dependencies
             if (HasDependencies(entity))
             {
-                return new ApiResponse<object>
-                {
-                    Success = false,
-                    ErrorMessage = $"Cannot delete {typeof(TEntity).Name.ToLower()} with dependencies"
-                };
+                return ApiResponse<object>.ErrorResult($"Cannot delete {typeof(TEntity).Name.ToLower()} with dependencies");
             }
 
             // Soft delete - set IsActive to false
@@ -310,20 +246,12 @@ public abstract class BaseReferenceDataService<TEntity, TDto, TCreateDto, TUpdat
             _logger.LogInformation("{TypeName} deleted (soft): {Name} with ID {Id}", 
                 typeof(TEntity).Name, GetNameProperty(entity), GetIdFromEntity(entity));
 
-            return new ApiResponse<object>
-            {
-                Success = true,
-                Data = new { message = $"{typeof(TEntity).Name} deleted successfully" }
-            };
+            return ApiResponse<object>.SuccessResult(new { message = $"{typeof(TEntity).Name} deleted successfully" });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting {TypeName} with ID {Id}", typeof(TEntity).Name, id);
-            return new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = $"Failed to delete {typeof(TEntity).Name.ToLower()}"
-            };
+            return ApiResponse<object>.ErrorResult($"Failed to delete {typeof(TEntity).Name.ToLower()}");
         }
     }
 

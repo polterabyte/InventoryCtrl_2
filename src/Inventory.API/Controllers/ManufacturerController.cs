@@ -63,12 +63,12 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
                 manufacturer.LocationFullPath = await GetLocationFullPathAsync(manufacturer.LocationId);
             }
 
-            return Ok(ApiResponse<List<ManufacturerDto>>.CreateSuccess(manufacturers));
+            return Ok(ApiResponse<List<ManufacturerDto>>.SuccessResult(manufacturers));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving manufacturers");
-            return StatusCode(500, ApiResponse<List<ManufacturerDto>>.CreateFailure("Failed to retrieve manufacturers"));
+            return StatusCode(500, ApiResponse<List<ManufacturerDto>>.ErrorResult("Failed to retrieve manufacturers"));
         }
     }
 
@@ -83,7 +83,7 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
                 
             if (manufacturer == null)
             {
-                return NotFound(ApiResponse<ManufacturerDto>.CreateFailure("Manufacturer not found"));
+                return NotFound(ApiResponse<ManufacturerDto>.ErrorResult("Manufacturer not found"));
             }
 
             var manufacturerDto = new ManufacturerDto
@@ -101,12 +101,12 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
                 UpdatedAt = manufacturer.UpdatedAt
             };
 
-            return Ok(ApiResponse<ManufacturerDto>.CreateSuccess(manufacturerDto));
+            return Ok(ApiResponse<ManufacturerDto>.SuccessResult(manufacturerDto));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving manufacturer {ManufacturerId}", id);
-            return StatusCode(500, ApiResponse<ManufacturerDto>.CreateFailure("Failed to retrieve manufacturer"));
+            return StatusCode(500, ApiResponse<ManufacturerDto>.ErrorResult("Failed to retrieve manufacturer"));
         }
     }
 
@@ -119,7 +119,7 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
-                return BadRequest(ApiResponse<ManufacturerDto>.CreateFailure("Invalid model state", errors));
+                return BadRequest(ApiResponse<ManufacturerDto>.ErrorResult("Invalid model state", errors));
             }
 
             // Check if manufacturer already exists
@@ -128,7 +128,7 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
 
             if (existingManufacturer != null)
             {
-                return BadRequest(ApiResponse<ManufacturerDto>.CreateFailure("Manufacturer with this name already exists"));
+                return BadRequest(ApiResponse<ManufacturerDto>.ErrorResult("Manufacturer with this name already exists"));
             }
 
             // Check if location exists
@@ -137,7 +137,7 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
 
             if (location == null)
             {
-                return BadRequest(ApiResponse<ManufacturerDto>.CreateFailure("Location not found or inactive"));
+                return BadRequest(ApiResponse<ManufacturerDto>.ErrorResult("Location not found or inactive"));
             }
 
             var manufacturer = new Manufacturer
@@ -171,12 +171,12 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
                 UpdatedAt = manufacturer.UpdatedAt
             };
 
-            return CreatedAtAction(nameof(GetManufacturer), new { id = manufacturer.Id }, ApiResponse<ManufacturerDto>.CreateSuccess(manufacturerDto));
+            return CreatedAtAction(nameof(GetManufacturer), new { id = manufacturer.Id }, ApiResponse<ManufacturerDto>.SuccessResult(manufacturerDto));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error creating manufacturer");
-            return StatusCode(500, ApiResponse<ManufacturerDto>.CreateFailure("Failed to create manufacturer"));
+            return StatusCode(500, ApiResponse<ManufacturerDto>.ErrorResult("Failed to create manufacturer"));
         }
     }
 
@@ -189,7 +189,7 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
-                return BadRequest(ApiResponse<ManufacturerDto>.CreateFailure("Invalid model state", errors));
+                return BadRequest(ApiResponse<ManufacturerDto>.ErrorResult("Invalid model state", errors));
             }
 
             var manufacturer = await context.Manufacturers
@@ -198,7 +198,7 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
                 
             if (manufacturer == null)
             {
-                return NotFound(ApiResponse<ManufacturerDto>.CreateFailure("Manufacturer not found"));
+                return NotFound(ApiResponse<ManufacturerDto>.ErrorResult("Manufacturer not found"));
             }
 
             // Check if another manufacturer with the same name exists
@@ -207,7 +207,7 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
 
             if (existingManufacturer != null)
             {
-                return BadRequest(ApiResponse<ManufacturerDto>.CreateFailure("Manufacturer with this name already exists"));
+                return BadRequest(ApiResponse<ManufacturerDto>.ErrorResult("Manufacturer with this name already exists"));
             }
 
             // Check if location exists
@@ -216,7 +216,7 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
 
             if (location == null)
             {
-                return BadRequest(ApiResponse<ManufacturerDto>.CreateFailure("Location not found or inactive"));
+                return BadRequest(ApiResponse<ManufacturerDto>.ErrorResult("Location not found or inactive"));
             }
 
             manufacturer.Name = request.Name;
@@ -247,12 +247,12 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
                 UpdatedAt = manufacturer.UpdatedAt
             };
 
-            return Ok(ApiResponse<ManufacturerDto>.CreateSuccess(manufacturerDto));
+            return Ok(ApiResponse<ManufacturerDto>.SuccessResult(manufacturerDto));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error updating manufacturer {ManufacturerId}", id);
-            return StatusCode(500, ApiResponse<ManufacturerDto>.CreateFailure("Failed to update manufacturer"));
+            return StatusCode(500, ApiResponse<ManufacturerDto>.ErrorResult("Failed to update manufacturer"));
         }
     }
 
@@ -265,7 +265,7 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
             var manufacturer = await context.Manufacturers.FindAsync(id);
             if (manufacturer == null)
             {
-                return NotFound(ApiResponse<object>.CreateFailure("Manufacturer not found"));
+                return NotFound(ApiResponse<object>.ErrorResult("Manufacturer not found"));
             }
 
             // Check if manufacturer has products
@@ -274,7 +274,7 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
 
             if (hasProducts)
             {
-                return BadRequest(ApiResponse<object>.CreateFailure("Cannot delete manufacturer with products"));
+                return BadRequest(ApiResponse<object>.ErrorResult("Cannot delete manufacturer with products"));
             }
 
             context.Manufacturers.Remove(manufacturer);
@@ -282,12 +282,12 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
 
             logger.LogInformation("Manufacturer deleted: {ManufacturerName} with ID {ManufacturerId}", manufacturer.Name, manufacturer.Id);
 
-            return Ok(ApiResponse<object>.CreateSuccess(new { message = "Manufacturer deleted successfully" }));
+            return Ok(ApiResponse<object>.SuccessResult(new { message = "Manufacturer deleted successfully" }));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error deleting manufacturer {ManufacturerId}", id);
-            return StatusCode(500, ApiResponse<object>.CreateFailure("Failed to delete manufacturer"));
+            return StatusCode(500, ApiResponse<object>.ErrorResult("Failed to delete manufacturer"));
         }
     }
 }

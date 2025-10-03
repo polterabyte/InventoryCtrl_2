@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Blazored.LocalStorage;
 using Inventory.Shared.Interfaces;
 using Inventory.Web.Client.Configuration;
+using Inventory.Shared.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -18,31 +19,32 @@ namespace Inventory.Web.Client.Services;
 /// </summary>
 public class TokenManagementService : ITokenManagementService
 {
-    private readonly ILocalStorageService _localStorage;
-    private readonly ITokenRefreshService _tokenRefreshService;
-    private readonly HttpClient _httpClient;
-    private readonly TokenConfiguration _config;
-    private readonly ILogger<TokenManagementService> _logger;
-    
-    // Семафор для предотвращения дублирующих запросов обновления
-    private readonly SemaphoreSlim _refreshSemaphore = new(1, 1);
-    private volatile bool _isRefreshing = false;
-
-    private const string AccessTokenKey = "authToken";
+    private const string AccessTokenKey = "accessToken";
     private const string RefreshTokenKey = "refreshToken";
 
+    private readonly HttpClient _httpClient;
+    private readonly ILocalStorageService _localStorage;
+    private readonly ILogger<TokenManagementService> _logger;
+    private readonly ITokenRefreshService _tokenRefreshService;
+    private readonly IApiUrlService _apiUrlService;
+    private readonly TokenManagementOptions _config;
+    private readonly SemaphoreSlim _refreshTokenSemaphore = new(1, 1);
+
     public TokenManagementService(
+        IHttpClientFactory httpClientFactory,
         ILocalStorageService localStorage,
+        ILogger<TokenManagementService> logger,
         ITokenRefreshService tokenRefreshService,
-        HttpClient httpClient,
-        IOptions<TokenConfiguration> config,
-        ILogger<TokenManagementService> logger)
+        IApiUrlService apiUrlService,
+        IOptions<TokenManagementOptions> tokenOptions)
     {
+        // Создаем HttpClient без перехватчиков, чтобы избежать рекурсии
+        _httpClient = httpClientFactory.CreateClient();
         _localStorage = localStorage;
-        _tokenRefreshService = tokenRefreshService;
-        _httpClient = httpClient;
-        _config = config.Value;
         _logger = logger;
+        _tokenRefreshService = tokenRefreshService;
+        _apiUrlService = apiUrlService;
+        _config = tokenOptions.Value;
     }
 
     public async Task<bool> IsTokenExpiringSoonAsync()
@@ -83,43 +85,34 @@ public class TokenManagementService : ITokenManagementService
 
     public async Task<bool> TryRefreshTokenAsync()
     {
-        // Проверяем, не идет ли уже обновление
-        if (_isRefreshing)
-        {
-            _logger.LogDebug("Token refresh already in progress, waiting...");
-            await _refreshSemaphore.WaitAsync();
-            _refreshSemaphore.Release();
-            return true; // Предполагаем успех, так как другой поток уже обновляет
-        }
-
-        await _refreshSemaphore.WaitAsync();
+        _logger.LogDebug("Attempting to acquire refresh semaphore.");
+        await _refreshTokenSemaphore.WaitAsync();
         try
         {
-            if (_isRefreshing)
+            // После получения семафора, проверяем, не истек ли токен снова.
+            // Возможно, пока мы ждали, другой поток уже все обновил.
+            if (!await IsTokenExpiringSoonAsync())
             {
-                _logger.LogDebug("Token refresh already completed by another thread");
+                _logger.LogDebug("Token was already refreshed by another thread while waiting.");
                 return true;
             }
 
-            _isRefreshing = true;
-            _logger.LogInformation("Starting token refresh process");
+            _logger.LogInformation("Starting token refresh process.");
 
             var refreshToken = await _localStorage.GetItemAsStringAsync(RefreshTokenKey);
             if (string.IsNullOrEmpty(refreshToken))
             {
-                _logger.LogWarning("No refresh token available");
+                _logger.LogWarning("No refresh token available.");
                 return false;
             }
 
-            // Проверяем, не истек ли refresh токен
             if (!await HasValidRefreshTokenAsync())
             {
-                _logger.LogWarning("Refresh token has expired");
+                _logger.LogWarning("Refresh token has expired.");
                 await ClearTokensAsync();
                 return false;
             }
 
-            // Выполняем обновление с повторными попытками
             for (int attempt = 1; attempt <= _config.MaxRefreshRetries; attempt++)
             {
                 try
@@ -132,10 +125,6 @@ public class TokenManagementService : ITokenManagementService
                     {
                         await SaveTokensAsync(result.Token, result.RefreshToken ?? refreshToken);
                         
-                        // Обновляем заголовок авторизации
-                        _httpClient.DefaultRequestHeaders.Authorization = 
-                            new AuthenticationHeaderValue("Bearer", result.Token);
-
                         _logger.LogInformation("Token refresh successful on attempt {Attempt}", attempt);
                         return true;
                     }
@@ -159,14 +148,14 @@ public class TokenManagementService : ITokenManagementService
                 }
             }
 
-            _logger.LogError("Token refresh failed after {MaxRetries} attempts", _config.MaxRefreshRetries);
+            _logger.LogError("Token refresh failed after {MaxRetries} attempts. Clearing tokens.", _config.MaxRefreshRetries);
             await ClearTokensAsync();
             return false;
         }
         finally
         {
-            _isRefreshing = false;
-            _refreshSemaphore.Release();
+            _logger.LogDebug("Releasing refresh semaphore.");
+            _refreshTokenSemaphore.Release();
         }
     }
 
@@ -207,8 +196,9 @@ public class TokenManagementService : ITokenManagementService
             await _localStorage.SetItemAsStringAsync(AccessTokenKey, accessToken);
             await _localStorage.SetItemAsStringAsync(RefreshTokenKey, refreshToken);
             
-            _httpClient.DefaultRequestHeaders.Authorization = 
-                new AuthenticationHeaderValue("Bearer", accessToken);
+            // Не обновляем здесь DefaultRequestHeaders, так как это делает интерцептор
+            // _httpClient.DefaultRequestHeaders.Authorization = 
+            //     new AuthenticationHeaderValue("Bearer", accessToken);
             
             _logger.LogDebug("Tokens saved successfully");
         }
@@ -288,6 +278,6 @@ public class TokenManagementService : ITokenManagementService
 
     public void Dispose()
     {
-        _refreshSemaphore?.Dispose();
+        _refreshTokenSemaphore?.Dispose();
     }
 }

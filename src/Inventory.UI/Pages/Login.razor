@@ -89,7 +89,7 @@
             if (result.Success && !string.IsNullOrEmpty(result.Token))
             {
                 var customAuthProvider = (ICustomAuthenticationStateProvider)AuthStateProvider;
-                await customAuthProvider.MarkUserAsAuthenticatedAsync(result.Token);
+                await customAuthProvider.MarkUserAsAuthenticatedAsync(result.Token, result.RefreshToken ?? string.Empty);
 
                 successMessage = "Login successful! Redirecting...";
                 isRedirecting = true;

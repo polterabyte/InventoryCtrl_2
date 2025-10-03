@@ -40,7 +40,7 @@ public class UserController : ControllerBase
             
             _logger.LogInformation("User info requested for: {Username}", username);
             
-            return Ok(ApiResponse<object>.CreateSuccess(new
+            return Ok(ApiResponse<object>.SuccessResult(new
             {
                 Username = username,
                 UserId = userId,
@@ -50,7 +50,7 @@ public class UserController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving user info");
-            return StatusCode(500, ApiResponse<object>.CreateFailure("Failed to retrieve user info"));
+            return StatusCode(500, ApiResponse<object>.ErrorResult("Failed to retrieve user info"));
         }
     }
 
@@ -136,7 +136,7 @@ public class UserController : ControllerBase
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
-                return NotFound(ApiResponse<UserDto>.CreateFailure("User not found"));
+                return NotFound(ApiResponse<UserDto>.ErrorResult("User not found"));
             }
 
             var roles = await _userManager.GetRolesAsync(user);
@@ -160,12 +160,12 @@ public class UserController : ControllerBase
                 DefaultWarehouseName = defaultWarehouse?.WarehouseName
             };
 
-            return Ok(ApiResponse<UserDto>.CreateSuccess(userDto));
+            return Ok(ApiResponse<UserDto>.SuccessResult(userDto));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving user {UserId}", id);
-            return StatusCode(500, ApiResponse<UserDto>.CreateFailure("Failed to retrieve user"));
+            return StatusCode(500, ApiResponse<UserDto>.ErrorResult("Failed to retrieve user"));
         }
     }
 
@@ -178,13 +178,13 @@ public class UserController : ControllerBase
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
-                return BadRequest(ApiResponse<UserDto>.CreateFailure("Invalid model state", errors));
+                return BadRequest(ApiResponse<UserDto>.ErrorResult("Invalid model state", errors));
             }
 
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
-                return NotFound(ApiResponse<UserDto>.CreateFailure("User not found"));
+                return NotFound(ApiResponse<UserDto>.ErrorResult("User not found"));
             }
 
             // Update user properties
@@ -198,7 +198,7 @@ public class UserController : ControllerBase
             if (!result.Succeeded)
             {
                 var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                return BadRequest(ApiResponse<UserDto>.CreateFailure(errors));
+                return BadRequest(ApiResponse<UserDto>.ErrorResult(errors));
             }
 
             // Update roles
@@ -220,12 +220,12 @@ public class UserController : ControllerBase
                 UpdatedAt = user.UpdatedAt
             };
 
-            return Ok(ApiResponse<UserDto>.CreateSuccess(userDto));
+            return Ok(ApiResponse<UserDto>.SuccessResult(userDto));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating user {UserId}", id);
-            return StatusCode(500, ApiResponse<UserDto>.CreateFailure("Failed to update user"));
+            return StatusCode(500, ApiResponse<UserDto>.ErrorResult("Failed to update user"));
         }
     }
 
@@ -238,31 +238,31 @@ public class UserController : ControllerBase
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
-                return NotFound(ApiResponse<object>.CreateFailure("User not found"));
+                return NotFound(ApiResponse<object>.ErrorResult("User not found"));
             }
 
             // Prevent deletion of the current user
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (id == currentUserId)
             {
-                return BadRequest(ApiResponse<object>.CreateFailure("Cannot delete your own account"));
+                return BadRequest(ApiResponse<object>.ErrorResult("Cannot delete your own account"));
             }
 
             var result = await _userManager.DeleteAsync(user);
             if (!result.Succeeded)
             {
                 var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                return BadRequest(ApiResponse<object>.CreateFailure(errors));
+                return BadRequest(ApiResponse<object>.ErrorResult(errors));
             }
 
             _logger.LogInformation("User deleted: {Username} with ID {UserId}", user.UserName, user.Id);
 
-            return Ok(ApiResponse<object>.CreateSuccess(new { message = "User deleted successfully" }));
+            return Ok(ApiResponse<object>.SuccessResult(new { message = "User deleted successfully" }));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting user {UserId}", id);
-            return StatusCode(500, ApiResponse<object>.CreateFailure("Failed to delete user"));
+            return StatusCode(500, ApiResponse<object>.ErrorResult("Failed to delete user"));
         }
     }
 
@@ -329,7 +329,7 @@ public class UserController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error exporting users");
-            return StatusCode(500, ApiResponse<object>.CreateFailure("Failed to export users"));
+            return StatusCode(500, ApiResponse<object>.ErrorResult("Failed to export users"));
         }
     }
 
@@ -342,13 +342,13 @@ public class UserController : ControllerBase
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
-                return BadRequest(ApiResponse<object>.CreateFailure("Invalid model state", errors));
+                return BadRequest(ApiResponse<object>.ErrorResult("Invalid model state", errors));
             }
 
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
-                return NotFound(ApiResponse<object>.CreateFailure("User not found"));
+                return NotFound(ApiResponse<object>.ErrorResult("User not found"));
             }
 
             // Remove current password and set new one
@@ -358,17 +358,17 @@ public class UserController : ControllerBase
             if (!result.Succeeded)
             {
                 var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                return BadRequest(ApiResponse<object>.CreateFailure(errors));
+                return BadRequest(ApiResponse<object>.ErrorResult(errors));
             }
 
             _logger.LogInformation("Password changed for user: {Username} with ID {UserId}", user.UserName, user.Id);
 
-            return Ok(ApiResponse<object>.CreateSuccess(new { message = "Password changed successfully" }));
+            return Ok(ApiResponse<object>.SuccessResult(new { message = "Password changed successfully" }));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error changing password for user {UserId}", id);
-            return StatusCode(500, ApiResponse<object>.CreateFailure("Failed to change password"));
+            return StatusCode(500, ApiResponse<object>.ErrorResult("Failed to change password"));
         }
     }
 
@@ -381,21 +381,21 @@ public class UserController : ControllerBase
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
-                return BadRequest(ApiResponse<UserDto>.CreateFailure("Invalid model state", errors));
+                return BadRequest(ApiResponse<UserDto>.ErrorResult("Invalid model state", errors));
             }
 
             // Check if username already exists
             var existingUser = await _userManager.FindByNameAsync(request.UserName);
             if (existingUser != null)
             {
-                return BadRequest(ApiResponse<UserDto>.CreateFailure("Username already exists"));
+                return BadRequest(ApiResponse<UserDto>.ErrorResult("Username already exists"));
             }
 
             // Check if email already exists
             var existingEmail = await _userManager.FindByEmailAsync(request.Email);
             if (existingEmail != null)
             {
-                return BadRequest(ApiResponse<UserDto>.CreateFailure("Email already exists"));
+                return BadRequest(ApiResponse<UserDto>.ErrorResult("Email already exists"));
             }
 
             var user = new Inventory.API.Models.User
@@ -412,7 +412,7 @@ public class UserController : ControllerBase
             if (!result.Succeeded)
             {
                 var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                return BadRequest(ApiResponse<UserDto>.CreateFailure(errors));
+                return BadRequest(ApiResponse<UserDto>.ErrorResult(errors));
             }
 
             // Assign role to user
@@ -433,12 +433,12 @@ public class UserController : ControllerBase
                 UpdatedAt = user.UpdatedAt
             };
 
-            return Created($"/api/user/{user.Id}", ApiResponse<UserDto>.CreateSuccess(userDto));
+            return Created($"/api/user/{user.Id}", ApiResponse<UserDto>.SuccessResult(userDto));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating user");
-            return StatusCode(500, ApiResponse<UserDto>.CreateFailure("Failed to create user"));
+            return StatusCode(500, ApiResponse<UserDto>.ErrorResult("Failed to create user"));
         }
     }
 
@@ -474,12 +474,12 @@ public class UserController : ControllerBase
         {
             var warehouses = await _userWarehouseService.GetUserWarehousesAsync(id);
 
-            return Ok(ApiResponse<List<UserWarehouseDto>>.CreateSuccess(warehouses));
+            return Ok(ApiResponse<List<UserWarehouseDto>>.SuccessResult(warehouses));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting warehouses for user {UserId}", id);
-            return StatusCode(500, ApiResponse<object>.CreateFailure("Internal server error"));
+            return StatusCode(500, ApiResponse<object>.ErrorResult("Internal server error"));
         }
     }
 
@@ -520,22 +520,22 @@ public class UserController : ControllerBase
                     .Select(e => e.ErrorMessage)
                     .ToList();
 
-                return BadRequest(ApiResponse<object>.CreateFailure("Validation failed", errors));
+                return BadRequest(ApiResponse<object>.ErrorResult("Validation failed", errors));
             }
 
             var result = await _userWarehouseService.AssignWarehouseToUserAsync(id, assignmentDto);
 
             if (result.Success)
             {
-                return Ok(ApiResponse<UserWarehouseDto>.CreateSuccess(result.Data!));
+                return Ok(ApiResponse<UserWarehouseDto>.SuccessResult(result.Data!));
             }
 
-            return BadRequest(ApiResponse<object>.CreateFailure(result.Error!));
+            return BadRequest(ApiResponse<object>.ErrorResult(result.Error!));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error assigning warehouse to user {UserId}", id);
-            return StatusCode(500, ApiResponse<object>.CreateFailure("Internal server error"));
+            return StatusCode(500, ApiResponse<object>.ErrorResult("Internal server error"));
         }
     }
 
@@ -572,16 +572,16 @@ public class UserController : ControllerBase
 
             if (result.Success)
             {
-                return Ok(ApiResponse<object>.CreateSuccess(new { message = "Warehouse assignment removed successfully" }));
+                return Ok(ApiResponse<object>.SuccessResult(new { message = "Warehouse assignment removed successfully" }));
             }
 
-            return BadRequest(ApiResponse<object>.CreateFailure(result.Error!));
+            return BadRequest(ApiResponse<object>.ErrorResult(result.Error!));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error removing warehouse {WarehouseId} assignment from user {UserId}", 
                 warehouseId, id);
-            return StatusCode(500, ApiResponse<object>.CreateFailure("Internal server error"));
+            return StatusCode(500, ApiResponse<object>.ErrorResult("Internal server error"));
         }
     }
 
@@ -622,23 +622,23 @@ public class UserController : ControllerBase
                     .Select(e => e.ErrorMessage)
                     .ToList();
 
-                return BadRequest(ApiResponse<object>.CreateFailure("Validation failed", errors));
+                return BadRequest(ApiResponse<object>.ErrorResult("Validation failed", errors));
             }
 
             var result = await _userWarehouseService.UpdateWarehouseAssignmentAsync(id, warehouseId, updateDto);
 
             if (result.Success)
             {
-                return Ok(ApiResponse<UserWarehouseDto>.CreateSuccess(result.Data!));
+                return Ok(ApiResponse<UserWarehouseDto>.SuccessResult(result.Data!));
             }
 
-            return BadRequest(ApiResponse<object>.CreateFailure(result.Error!));
+            return BadRequest(ApiResponse<object>.ErrorResult(result.Error!));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating warehouse {WarehouseId} assignment for user {UserId}", 
                 warehouseId, id);
-            return StatusCode(500, ApiResponse<object>.CreateFailure("Internal server error"));
+            return StatusCode(500, ApiResponse<object>.ErrorResult("Internal server error"));
         }
     }
 
@@ -676,16 +676,16 @@ public class UserController : ControllerBase
 
             if (result.Success)
             {
-                return Ok(ApiResponse<object>.CreateSuccess(new { message = "Default warehouse set successfully" }));
+                return Ok(ApiResponse<object>.SuccessResult(new { message = "Default warehouse set successfully" }));
             }
 
-            return BadRequest(ApiResponse<object>.CreateFailure(result.Error!));
+            return BadRequest(ApiResponse<object>.ErrorResult(result.Error!));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error setting default warehouse {WarehouseId} for user {UserId}", 
                 warehouseId, id);
-            return StatusCode(500, ApiResponse<object>.CreateFailure("Internal server error"));
+            return StatusCode(500, ApiResponse<object>.ErrorResult("Internal server error"));
         }
     }
 }

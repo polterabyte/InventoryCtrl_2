@@ -1,4 +1,4 @@
-﻿﻿﻿﻿using Serilog;
+﻿﻿using Serilog;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -16,6 +16,7 @@ using Inventory.API.Validators;
 using Inventory.API.Hubs;
 using Microsoft.AspNetCore.Components.WebAssembly.Server;
 using Inventory.API.Configuration;
+using Inventory.API.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -228,7 +229,9 @@ builder.Services.AddScoped<Inventory.Shared.Interfaces.INotificationService, Inv
 // Remove this line - using Radzen notifications directly now
 // builder.Services.AddScoped<Inventory.Shared.Services.IUINotificationService, Inventory.Shared.Services.NotificationService>();
 builder.Services.AddScoped<IErrorHandlingService, ErrorHandlingService>();
-builder.Services.AddScoped<RefreshTokenService>();
+builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
 
 // Add audit services
 builder.Services.AddScoped<SafeSerializationService>();

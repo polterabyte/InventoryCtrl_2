@@ -110,22 +110,22 @@ public class UserWarehouseController : ControllerBase
                     .Select(e => e.ErrorMessage)
                     .ToList();
 
-                return BadRequest(ApiResponse<UserWarehouseDto>.CreateFailure("Validation failed", errors));
+                return BadRequest(ApiResponse<UserWarehouseDto>.ErrorResult("Validation failed", errors));
             }
 
             var result = await _userWarehouseService.AssignWarehouseToUserAsync(userId, assignmentDto);
 
             if (result.Success && result.Data != null)
             {
-                return Ok(ApiResponse<UserWarehouseDto>.CreateSuccess(result.Data));
+                return Ok(ApiResponse<UserWarehouseDto>.SuccessResult(result.Data));
             }
 
-            return BadRequest(ApiResponse<UserWarehouseDto>.CreateFailure(result.Error ?? "Failed to assign warehouse."));
+            return BadRequest(ApiResponse<UserWarehouseDto>.ErrorResult(result.Error ?? "Failed to assign warehouse."));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error assigning warehouse to user {UserId}", userId);
-            return StatusCode(500, ApiResponse<UserWarehouseDto>.CreateFailure("Internal server error"));
+            return StatusCode(500, ApiResponse<UserWarehouseDto>.ErrorResult("Internal server error"));
         }
     }
 
@@ -163,16 +163,16 @@ public class UserWarehouseController : ControllerBase
 
             if (result.Success)
             {
-                return Ok(ApiResponse<object>.CreateSuccess(new { message = "Warehouse assignment removed successfully" }));
+                return Ok(ApiResponse<object>.SuccessResult(new { message = "Warehouse assignment removed successfully" }));
             }
 
-            return BadRequest(ApiResponse<object>.CreateFailure(result.Error ?? "Failed to remove assignment."));
+            return BadRequest(ApiResponse<object>.ErrorResult(result.Error ?? "Failed to remove assignment."));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error removing warehouse {WarehouseId} assignment from user {UserId}", 
                 warehouseId, userId);
-            return StatusCode(500, ApiResponse<object>.CreateFailure("Internal server error"));
+            return StatusCode(500, ApiResponse<object>.ErrorResult("Internal server error"));
         }
     }
 
@@ -225,23 +225,23 @@ public class UserWarehouseController : ControllerBase
                     .Select(e => e.ErrorMessage)
                     .ToList();
 
-                return BadRequest(ApiResponse<UserWarehouseDto>.CreateFailure("Validation failed", errors));
+                return BadRequest(ApiResponse<UserWarehouseDto>.ErrorResult("Validation failed", errors));
             }
 
             var result = await _userWarehouseService.UpdateWarehouseAssignmentAsync(userId, warehouseId, updateDto);
 
             if (result.Success && result.Data != null)
             {
-                return Ok(ApiResponse<UserWarehouseDto>.CreateSuccess(result.Data));
+                return Ok(ApiResponse<UserWarehouseDto>.SuccessResult(result.Data));
             }
 
-            return BadRequest(ApiResponse<UserWarehouseDto>.CreateFailure(result.Error ?? "Failed to update assignment."));
+            return BadRequest(ApiResponse<UserWarehouseDto>.ErrorResult(result.Error ?? "Failed to update assignment."));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating warehouse {WarehouseId} assignment for user {UserId}", 
                 warehouseId, userId);
-            return StatusCode(500, ApiResponse<UserWarehouseDto>.CreateFailure("Internal server error"));
+            return StatusCode(500, ApiResponse<UserWarehouseDto>.ErrorResult("Internal server error"));
         }
     }
 
@@ -280,16 +280,16 @@ public class UserWarehouseController : ControllerBase
 
             if (result.Success)
             {
-                return Ok(ApiResponse<object>.CreateSuccess(new { message = "Default warehouse set successfully" }));
+                return Ok(ApiResponse<object>.SuccessResult(new { message = "Default warehouse set successfully" }));
             }
 
-            return BadRequest(ApiResponse<object>.CreateFailure(result.Error ?? "Failed to set default warehouse."));
+            return BadRequest(ApiResponse<object>.ErrorResult(result.Error ?? "Failed to set default warehouse."));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error setting default warehouse {WarehouseId} for user {UserId}", 
                 warehouseId, userId);
-            return StatusCode(500, ApiResponse<object>.CreateFailure("Internal server error"));
+            return StatusCode(500, ApiResponse<object>.ErrorResult("Internal server error"));
         }
     }
 
@@ -348,17 +348,17 @@ public class UserWarehouseController : ControllerBase
 
             if (currentUserId != userId && currentUserRole != "Admin" && currentUserRole != "Manager")
             {
-                return StatusCode(StatusCodes.Status403Forbidden, ApiResponse<List<UserWarehouseDto>>.CreateFailure("Forbidden"));
+                return StatusCode(StatusCodes.Status403Forbidden, ApiResponse<List<UserWarehouseDto>>.ErrorResult("Forbidden"));
             }
 
             var warehouses = await _userWarehouseService.GetUserWarehousesAsync(userId);
 
-            return Ok(ApiResponse<List<UserWarehouseDto>>.CreateSuccess(warehouses));
+            return Ok(ApiResponse<List<UserWarehouseDto>>.SuccessResult(warehouses));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting warehouses for user {UserId}", userId);
-            return StatusCode(500, ApiResponse<List<UserWarehouseDto>>.CreateFailure("Internal server error"));
+            return StatusCode(500, ApiResponse<List<UserWarehouseDto>>.ErrorResult("Internal server error"));
         }
     }
 
@@ -400,12 +400,12 @@ public class UserWarehouseController : ControllerBase
         {
             var users = await _userWarehouseService.GetWarehouseUsersAsync(warehouseId);
 
-            return Ok(ApiResponse<List<UserWarehouseDto>>.CreateSuccess(users));
+            return Ok(ApiResponse<List<UserWarehouseDto>>.SuccessResult(users));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting users for warehouse {WarehouseId}", warehouseId);
-            return StatusCode(500, ApiResponse<List<UserWarehouseDto>>.CreateFailure("Internal server error"));
+            return StatusCode(500, ApiResponse<List<UserWarehouseDto>>.ErrorResult("Internal server error"));
         }
     }
 
@@ -472,7 +472,7 @@ public class UserWarehouseController : ControllerBase
                     .Select(e => e.ErrorMessage)
                     .ToList();
 
-                return BadRequest(ApiResponse<object>.CreateFailure("Validation failed", errors));
+                return BadRequest(ApiResponse<object>.ErrorResult("Validation failed", errors));
             }
 
             var result = await _userWarehouseService.BulkAssignUsersToWarehouseAsync(bulkAssignDto);
@@ -488,17 +488,17 @@ public class UserWarehouseController : ControllerBase
 
             if (result.Success)
             {
-                return Ok(ApiResponse<object>.CreateSuccess(responseData));
+                return Ok(ApiResponse<object>.SuccessResult(responseData));
             }
             
-            var response = ApiResponse<object>.CreateFailure("Some assignments failed", result.Errors);
+            var response = ApiResponse<object>.ErrorResult("Some assignments failed", result.Errors);
             response.Data = responseData;
             return Ok(response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in bulk assignment to warehouse {WarehouseId}", bulkAssignDto.WarehouseId);
-            return StatusCode(500, ApiResponse<object>.CreateFailure("Internal server error"));
+            return StatusCode(500, ApiResponse<object>.ErrorResult("Internal server error"));
         }
     }
 
@@ -558,12 +558,12 @@ public class UserWarehouseController : ControllerBase
 
             if (currentUserId != userId && currentUserRole != "Admin" && currentUserRole != "Manager")
             {
-                return StatusCode(StatusCodes.Status403Forbidden, ApiResponse<object>.CreateFailure("Forbidden"));
+                return StatusCode(StatusCodes.Status403Forbidden, ApiResponse<object>.ErrorResult("Forbidden"));
             }
 
             var result = await _userWarehouseService.CheckWarehouseAccessAsync(userId, warehouseId, requiredAccessLevel);
 
-            return Ok(ApiResponse<object>.CreateSuccess(new
+            return Ok(ApiResponse<object>.SuccessResult(new
             {
                 HasAccess = result.HasAccess,
                 AccessLevel = result.AccessLevel,
@@ -576,7 +576,7 @@ public class UserWarehouseController : ControllerBase
         {
             _logger.LogError(ex, "Error checking warehouse {WarehouseId} access for user {UserId}", 
                 warehouseId, userId);
-            return StatusCode(500, ApiResponse<object>.CreateFailure("Internal server error"));
+            return StatusCode(500, ApiResponse<object>.ErrorResult("Internal server error"));
         }
     }
 
@@ -630,18 +630,18 @@ public class UserWarehouseController : ControllerBase
 
             if (currentUserId != userId && currentUserRole != "Admin" && currentUserRole != "Manager")
             {
-                return StatusCode(StatusCodes.Status403Forbidden, ApiResponse<List<int>>.CreateFailure("Forbidden"));
+                return StatusCode(StatusCodes.Status403Forbidden, ApiResponse<List<int>>.ErrorResult("Forbidden"));
             }
 
             var userRole = currentUserId == userId ? currentUserRole! : "User"; // Default to User for non-self queries
             var warehouseIds = await _userWarehouseService.GetAccessibleWarehouseIdsAsync(userId, userRole);
 
-            return Ok(ApiResponse<List<int>>.CreateSuccess(warehouseIds));
+            return Ok(ApiResponse<List<int>>.SuccessResult(warehouseIds));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting accessible warehouses for user {UserId}", userId);
-            return StatusCode(500, ApiResponse<List<int>>.CreateFailure("Internal server error"));
+            return StatusCode(500, ApiResponse<List<int>>.ErrorResult("Internal server error"));
         }
     }
 }

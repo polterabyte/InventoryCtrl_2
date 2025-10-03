@@ -52,7 +52,7 @@ public static class ServiceCollectionExtensions
     
     public static IServiceCollection AddAuditServices(this IServiceCollection services)
     {
-        services.AddScoped<AuditService>();
+        services.AddScoped<IInternalAuditService, AuditService>();
         services.AddHttpContextAccessor();
         return services;
     }

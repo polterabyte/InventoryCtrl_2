@@ -8,6 +8,11 @@ using System.Data.Common;
 using Xunit;
 using Microsoft.AspNetCore.Identity;
 using System.Net.Http.Json;
+using System.Net.Http.Headers;
+using Inventory.Shared.Interfaces;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using System.Text.Json;
 
 namespace Inventory.IntegrationTests;
 
@@ -23,42 +28,94 @@ public abstract class IntegrationTestBase : IClassFixture<WebApplicationFactory<
 
     protected IntegrationTestBase(WebApplicationFactory<Program> factory)
     {
-        TestDatabaseName = $"inventory_test_{Guid.NewGuid():N}_{DateTime.UtcNow:yyyyMMddHHmmss}";
+        TestDatabaseName = $"inventory_test_{Guid.NewGuid():N}";
         
         // Set testing environment
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Testing");
         
         Factory = factory.WithWebHostBuilder(builder =>
         {
-            builder.ConfigureServices(services =>
-            {
-                // Remove the existing DbContext registration
-                var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
-                if (descriptor != null) services.Remove(descriptor);
-
-                // Add test database connection with unique name
-                services.AddDbContext<AppDbContext>(options =>
-                {
-                    var connectionString = $"Host=localhost;Port=5432;Database={TestDatabaseName};Username=postgres;Password=postgres;Pooling=false;";
-                    options.UseNpgsql(connectionString);
-                });
-            });
-
-            // Add test configuration
+            // Add test configuration first
             builder.ConfigureAppConfiguration((context, config) =>
             {
                 config.AddInMemoryCollection(new Dictionary<string, string?>
                 {
-                    ["ConnectionStrings:DefaultConnection"] = $"Host=localhost;Port=5432;Database={TestDatabaseName};Username=postgres;Password=postgres;Pooling=false;",
+                    ["ConnectionStrings:DefaultConnection"] = $"Host=localhost;Port=5433;Database={TestDatabaseName};Username=postgres;Password=postgres;Pooling=false;",
                     ["Jwt:Key"] = "TestKeyThatIsAtLeast32CharactersLongForTestingPurposes",
                     ["Jwt:Issuer"] = "InventoryTest",
                     ["Jwt:Audience"] = "InventoryTestUsers"
                 });
             });
+
+            builder.ConfigureServices((context, services) =>
+            {
+                // Remove existing registrations to avoid conflicts
+                var identityUserOptionsDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IUserStore<User>));
+                if (identityUserOptionsDescriptor != null)
+                {
+                    var identityServices = services.Where(s => s.ServiceType.FullName?.Contains("Microsoft.AspNetCore.Identity") == true).ToList();
+                    foreach (var service in identityServices)
+                    {
+                        services.Remove(service);
+                    }
+                }
+
+                var authenticationServiceDescriptors = services.Where(d => d.ServiceType.FullName?.Contains("Microsoft.AspNetCore.Authentication") == true).ToList();
+                foreach (var service in authenticationServiceDescriptors)
+                {
+                    services.Remove(service);
+                }
+
+                // Remove the existing DbContext registration
+                var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
+                if (descriptor != null) services.Remove(descriptor);
+
+                // Remove SSL requirement for testing
+                var dbSslRequirement = services.SingleOrDefault(d => d.ServiceType == typeof(DbConnection));
+                if (dbSslRequirement != null) services.Remove(dbSslRequirement);
+
+                services.AddDbContext<AppDbContext>(options =>
+                {
+                    options.UseNpgsql(context.Configuration.GetConnectionString("DefaultConnection"));
+                });
+
+                // Configure Identity to match Program.cs
+                services.AddIdentity<User, IdentityRole>(options =>
+                {
+                    options.Password.RequireDigit = true;
+                    options.Password.RequireUppercase = true;
+                    options.Password.RequireLowercase = true;
+                    options.Password.RequiredLength = 6;
+                })
+                .AddEntityFrameworkStores<AppDbContext>()
+                .AddDefaultTokenProviders();
+
+                var jwtSettings = context.Configuration.GetSection("Jwt");
+                services.AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = "Bearer";
+                    options.DefaultChallengeScheme = "Bearer";
+                })
+                .AddJwtBearer("Bearer", options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidIssuer = jwtSettings["Issuer"],
+                        ValidAudience = jwtSettings["Audience"],
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!))
+                    };
+                });
+            });
         });
 
         Client = Factory.CreateClient();
-        Context = Factory.Services.GetRequiredService<AppDbContext>();
+        
+        var scope = Factory.Services.CreateScope();
+        Context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         
         // Ensure database is created
         Context.Database.EnsureCreated();
@@ -69,10 +126,11 @@ public abstract class IntegrationTestBase : IClassFixture<WebApplicationFactory<
     /// </summary>
     protected async Task InitializeAsync()
     {
-        // Create roles for testing
+        // Create roles and users first
         await CreateTestRolesAsync();
+        await CreateTestUsersAsync();
         
-        // Create test users
+        // Then seed the rest of the data
         await SeedTestDataAsync();
     }
     
@@ -141,42 +199,43 @@ public abstract class IntegrationTestBase : IClassFixture<WebApplicationFactory<
     }
 
     /// <summary>
-    /// Get authentication token for test user
+    /// Set authentication header for client
     /// </summary>
-    protected async Task<string> GetAuthTokenAsync(string username = "testadmin", string password = "Admin123!")
+    protected async Task SetAuthHeaderAsync(string role = "Admin")
     {
-        var loginRequest = new { Username = username, Password = password };
-        var response = await Client.PostAsJsonAsync("/api/auth/login", loginRequest);
-        
-        if (response.IsSuccessStatusCode)
-        {
-            var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<LoginResult>>();
-            return apiResponse?.Data?.Token ?? string.Empty;
-        }
-        else
-        {
-            var errorContent = await response.Content.ReadAsStringAsync();
-            Console.WriteLine($"Login failed for {username}: {response.StatusCode} - {errorContent}");
-        }
-        
-        return string.Empty;
+        var token = await GetAuthTokenAsync(role);
+        Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 
     /// <summary>
-    /// Set authentication header for client
+    /// Get authentication token for test user
     /// </summary>
-    protected async Task SetAuthHeaderAsync(string username = "testadmin", string password = "Admin123!")
+    protected async Task<string> GetAuthTokenAsync(string role = "Admin")
     {
-        var token = await GetAuthTokenAsync(username, password);
-        if (!string.IsNullOrEmpty(token))
+        // Ensure a clean state before creating users and logging in
+        await CleanupDatabaseAsync();
+        await InitializeEmptyAsync();
+
+        var request = new LoginRequest
         {
-            Client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-        }
-        else
+            Username = $"test{role.ToLower()}",
+            Password = $"{role}123!"
+        };
+
+        var content = JsonContent.Create(request);
+        var response = await Client.PostAsJsonAsync("/api/auth/login", request);
+        var responseContent = await response.Content.ReadAsStringAsync();
+
+        if (!response.IsSuccessStatusCode)
         {
-            // Clear any existing auth header if token is empty
-            Client.DefaultRequestHeaders.Authorization = null;
+            var errorMessage = $"Failed to get auth token for user {request.Username} (Role: {role}). " +
+                               $"Status Code: {response.StatusCode}. " +
+                               $"Response: {responseContent}";
+            throw new Exception(errorMessage);
         }
+
+        var authResult = await response.Content.ReadFromJsonAsync<AuthResult>();
+        return authResult?.Token ?? throw new Exception("Failed to get auth token");
     }
 
     /// <summary>
@@ -274,272 +333,202 @@ public abstract class IntegrationTestBase : IClassFixture<WebApplicationFactory<
     /// </summary>
     protected async Task SeedTestDataAsync()
     {
-        // Ensure roles exist first
-        await CreateTestRolesAsync();
-        
-        // Create test users through UserManager
-        using var scope = Factory.Services.CreateScope();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-        
-        var adminUser = new User
-        {
-            Id = "test-admin-1",
-            UserName = "testadmin",
-            Email = "testadmin@example.com",
-            EmailConfirmed = true,
-            Role = "Admin",
-            FirstName = "Test",
-            LastName = "Admin"
-        };
+        Location locationA, locationB;
+        Category electronicsCategory, smartphonesCategory;
 
-        var regularUser = new User
+        if (!Context.Locations.Any())
         {
-            Id = "test-user-1", 
-            UserName = "testuser",
-            Email = "testuser@example.com",
-            EmailConfirmed = true,
-            Role = "User",
-            FirstName = "Test",
-            LastName = "User"
-        };
-
-        // Create or update users
-        var existingAdmin = await userManager.FindByNameAsync("testadmin");
-        if (existingAdmin == null)
-        {
-            var createResult = await userManager.CreateAsync(adminUser, "Admin123!");
-            if (createResult.Succeeded)
-            {
-                await userManager.AddToRoleAsync(adminUser, "Admin");
-            }
-            else
-            {
-                Console.WriteLine($"Failed to create admin user: {string.Join(", ", createResult.Errors.Select(e => e.Description))}");
-            }
+            // Create locations for warehouses
+            locationA = new Location { Name = "Building A", IsActive = true, CreatedAt = DateTime.UtcNow };
+            locationB = new Location { Name = "Building B", IsActive = true, CreatedAt = DateTime.UtcNow };
+            Context.Locations.AddRange(locationA, locationB);
+            await Context.SaveChangesAsync();
         }
         else
         {
-            // Update password if user exists
-            await userManager.RemovePasswordAsync(existingAdmin);
-            var passwordResult = await userManager.AddPasswordAsync(existingAdmin, "Admin123!");
-            if (passwordResult.Succeeded)
-            {
-                if (!await userManager.IsInRoleAsync(existingAdmin, "Admin"))
-                {
-                    await userManager.AddToRoleAsync(existingAdmin, "Admin");
-                }
-            }
-            else
-            {
-                Console.WriteLine($"Failed to update admin password: {string.Join(", ", passwordResult.Errors.Select(e => e.Description))}");
-            }
-        }
-
-        var existingUser = await userManager.FindByNameAsync("testuser");
-        if (existingUser == null)
-        {
-            var createResult = await userManager.CreateAsync(regularUser, "User123!");
-            if (createResult.Succeeded)
-            {
-                await userManager.AddToRoleAsync(regularUser, "User");
-            }
-            else
-            {
-                Console.WriteLine($"Failed to create regular user: {string.Join(", ", createResult.Errors.Select(e => e.Description))}");
-            }
-        }
-        else
-        {
-            // Update password if user exists
-            await userManager.RemovePasswordAsync(existingUser);
-            var passwordResult = await userManager.AddPasswordAsync(existingUser, "User123!");
-            if (passwordResult.Succeeded)
-            {
-                if (!await userManager.IsInRoleAsync(existingUser, "User"))
-                {
-                    await userManager.AddToRoleAsync(existingUser, "User");
-                }
-            }
-            else
-            {
-                Console.WriteLine($"Failed to update regular user password: {string.Join(", ", passwordResult.Errors.Select(e => e.Description))}");
-            }
+            locationA = await Context.Locations.FirstAsync(l => l.Name == "Building A");
+            locationB = await Context.Locations.FirstAsync(l => l.Name == "Building B");
         }
 
         // Create test categories
-        var electronicsCategory = new Category
+        if (!Context.Categories.Any())
         {
-            Name = "Electronics",
-            Description = "Electronic devices",
-            IsActive = true,
-            ParentCategoryId = null,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
+            electronicsCategory = new Category { Name = "Electronics" };
+            smartphonesCategory = new Category { Name = "Smartphones" };
+            Context.Categories.AddRange(electronicsCategory, smartphonesCategory);
+            await Context.SaveChangesAsync();
 
-        var smartphonesCategory = new Category
+            smartphonesCategory.ParentCategoryId = electronicsCategory.Id;
+            await Context.SaveChangesAsync();
+        }
+        else
         {
-            Name = "Smartphones",
-            Description = "Mobile phones",
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        Context.Categories.AddRange(electronicsCategory, smartphonesCategory);
-        await Context.SaveChangesAsync();
-        
-        // Set parent category after saving
-        smartphonesCategory.ParentCategoryId = electronicsCategory.Id;
-        await Context.SaveChangesAsync();
+            electronicsCategory = await Context.Categories.FirstAsync(c => c.Name == "Electronics");
+            smartphonesCategory = await Context.Categories.FirstAsync(c => c.Name == "Smartphones");
+        }
 
         // Create test manufacturers
-        var appleManufacturer = new Manufacturer
+        if (!Context.Manufacturers.Any())
         {
-            Name = "Apple"
-        };
+            var appleManufacturer = new Manufacturer
+            {
+                Name = "Apple",
+                LocationId = locationA.Id
+            };
 
-        var samsungManufacturer = new Manufacturer
-        {
-            Name = "Samsung"
-        };
+            var samsungManufacturer = new Manufacturer
+            {
+                Name = "Samsung",
+                LocationId = locationB.Id
+            };
 
-        Context.Manufacturers.AddRange(appleManufacturer, samsungManufacturer);
-        await Context.SaveChangesAsync();
+            Context.Manufacturers.AddRange(appleManufacturer, samsungManufacturer);
+            await Context.SaveChangesAsync();
+        }
 
         // Create test product groups
-        var phoneGroup = new ProductGroup
+        if (!Context.ProductGroups.Any())
         {
-            Name = "Phones"
-        };
+            var phoneGroup = new ProductGroup
+            {
+                Name = "Phones"
+            };
 
-        var tabletGroup = new ProductGroup
-        {
-            Name = "Tablets"
-        };
+            var tabletGroup = new ProductGroup
+            {
+                Name = "Tablets"
+            };
 
-        Context.ProductGroups.AddRange(phoneGroup, tabletGroup);
-        await Context.SaveChangesAsync();
+            Context.ProductGroups.AddRange(phoneGroup, tabletGroup);
+            await Context.SaveChangesAsync();
+        }
 
         // Create test product models
-        var iphoneModel = new ProductModel
+        if (!Context.ProductModels.Any())
         {
-            Name = "iPhone 15",
-            ManufacturerId = appleManufacturer.Id
-        };
+            var iphoneModel = new ProductModel
+            {
+                Name = "iPhone 15",
+                ManufacturerId = (await Context.Manufacturers.FirstAsync(m => m.Name == "Apple")).Id
+            };
 
-        var galaxyModel = new ProductModel
-        {
-            Name = "Galaxy S24",
-            ManufacturerId = samsungManufacturer.Id
-        };
+            var galaxyModel = new ProductModel
+            {
+                Name = "Galaxy S24",
+                ManufacturerId = (await Context.Manufacturers.FirstAsync(m => m.Name == "Samsung")).Id
+            };
 
-        Context.ProductModels.AddRange(iphoneModel, galaxyModel);
-        await Context.SaveChangesAsync();
+            Context.ProductModels.AddRange(iphoneModel, galaxyModel);
+            await Context.SaveChangesAsync();
+        }
 
         // Create test warehouses
-        // Create locations for warehouses
-        var locationA = new Location { Name = "Building A", IsActive = true, CreatedAt = DateTime.UtcNow };
-        var locationB = new Location { Name = "Building B", IsActive = true, CreatedAt = DateTime.UtcNow };
-        Context.Locations.AddRange(locationA, locationB);
-        await Context.SaveChangesAsync();
-
-        var mainWarehouse = new Warehouse
+        if (!Context.Warehouses.Any())
         {
-            Name = "Main Warehouse",
-            LocationId = locationA.Id,
-            IsActive = true
-        };
-
-        var secondaryWarehouse = new Warehouse
-        {
-            Name = "Secondary Warehouse", 
-            LocationId = locationB.Id,
-            IsActive = true
-        };
-
-        Context.Warehouses.AddRange(mainWarehouse, secondaryWarehouse);
-        await Context.SaveChangesAsync();
+            var mainWarehouse = new Warehouse
+            {
+                Name = "Main Warehouse",
+                LocationId = locationA.Id,
+                IsActive = true
+            };
+            var secondaryWarehouse = new Warehouse
+            {
+                Name = "Secondary Warehouse",
+                LocationId = locationB.Id,
+                IsActive = true
+            };
+            Context.Warehouses.AddRange(mainWarehouse, secondaryWarehouse);
+            await Context.SaveChangesAsync();
+        }
 
         // Create test unit of measures
-        var unitOfMeasure = new UnitOfMeasure
+        if (!Context.UnitOfMeasures.Any())
         {
-            Name = "Pieces",
-            Symbol = "pcs",
-            Description = "Individual items",
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow
-        };
+            var unitOfMeasure = new UnitOfMeasure
+            {
+                Name = "Pieces",
+                Symbol = "pcs",
+                Description = "Individual items",
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
 
-        Context.UnitOfMeasures.Add(unitOfMeasure);
-        await Context.SaveChangesAsync();
+            Context.UnitOfMeasures.Add(unitOfMeasure);
+            await Context.SaveChangesAsync();
+        }
 
         // Create test products
-        var iphoneProduct = new Product
+        if (!Context.Products.Any())
         {
-            Name = "iPhone 15",
-            SKU = "IPHONE15-001",
-            Description = "Latest iPhone model",
-            CurrentQuantity = 50,
-                UnitOfMeasureId = unitOfMeasure.Id,
-            IsActive = true,
-            CategoryId = smartphonesCategory.Id,
-            ManufacturerId = appleManufacturer.Id,
-            ProductModelId = iphoneModel.Id,
-            ProductGroupId = phoneGroup.Id,
-            MinStock = 10,
-            MaxStock = 100,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
+            var iphoneProduct = new Product
+            {
+                Name = "iPhone 15",
+                SKU = "IPHONE15-001",
+                Description = "Latest iPhone model",
+                CurrentQuantity = 50,
+                UnitOfMeasureId = (await Context.UnitOfMeasures.FirstAsync()).Id,
+                IsActive = true,
+                CategoryId = smartphonesCategory.Id,
+                ManufacturerId = (await Context.Manufacturers.FirstAsync(m => m.Name == "Apple")).Id,
+                ProductModelId = (await Context.ProductModels.FirstAsync(m => m.Name == "iPhone 15")).Id,
+                ProductGroupId = (await Context.ProductGroups.FirstAsync(g => g.Name == "Phones")).Id,
+                MinStock = 10,
+                MaxStock = 100,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
 
-        var samsungProduct = new Product
-        {
-            Name = "Samsung Galaxy S24",
-            SKU = "GALAXYS24-001", 
-            Description = "Latest Samsung Galaxy model",
-            CurrentQuantity = 30,
-                UnitOfMeasureId = unitOfMeasure.Id,
-            IsActive = true,
-            CategoryId = smartphonesCategory.Id,
-            ManufacturerId = samsungManufacturer.Id,
-            ProductModelId = galaxyModel.Id,
-            ProductGroupId = phoneGroup.Id,
-            MinStock = 5,
-            MaxStock = 80,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
+            var samsungProduct = new Product
+            {
+                Name = "Samsung Galaxy S24",
+                SKU = "GALAXYS24-001", 
+                Description = "Latest Samsung Galaxy model",
+                CurrentQuantity = 30,
+                UnitOfMeasureId = (await Context.UnitOfMeasures.FirstAsync()).Id,
+                IsActive = true,
+                CategoryId = smartphonesCategory.Id,
+                ManufacturerId = (await Context.Manufacturers.FirstAsync(m => m.Name == "Samsung")).Id,
+                ProductModelId = (await Context.ProductModels.FirstAsync(m => m.Name == "Galaxy S24")).Id,
+                ProductGroupId = (await Context.ProductGroups.FirstAsync(g => g.Name == "Phones")).Id,
+                MinStock = 5,
+                MaxStock = 80,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
 
-        Context.Products.AddRange(iphoneProduct, samsungProduct);
-        await Context.SaveChangesAsync();
+            Context.Products.AddRange(iphoneProduct, samsungProduct);
+            await Context.SaveChangesAsync();
+        }
 
         // Create test transactions
-        var incomeTransaction = new InventoryTransaction
+        if (!Context.InventoryTransactions.Any())
         {
-            ProductId = iphoneProduct.Id,
-            WarehouseId = mainWarehouse.Id,
-            Type = TransactionType.Income,
-            Quantity = 20,
-            Date = DateTime.UtcNow.AddDays(-1),
-            UserId = "test-admin-1",
-            Description = "Initial stock"
-        };
+            var incomeTransaction = new InventoryTransaction
+            {
+                ProductId = (await Context.Products.FirstAsync(p => p.Name == "iPhone 15")).Id,
+                WarehouseId = (await Context.Warehouses.FirstAsync(w => w.Name == "Main Warehouse")).Id,
+                Type = TransactionType.Income,
+                Quantity = 20,
+                Date = DateTime.UtcNow.AddDays(-1),
+                UserId = "test-admin-1",
+                Description = "Initial stock"
+            };
 
-        var outcomeTransaction = new InventoryTransaction
-        {
-            ProductId = samsungProduct.Id,
-            WarehouseId = mainWarehouse.Id,
-            Type = TransactionType.Outcome,
-            Quantity = 5,
-            Date = DateTime.UtcNow.AddDays(-2),
-            UserId = "test-user-1",
-            Description = "Sale transaction"
-        };
+            var outcomeTransaction = new InventoryTransaction
+            {
+                ProductId = (await Context.Products.FirstAsync(p => p.Name == "Samsung Galaxy S24")).Id,
+                WarehouseId = (await Context.Warehouses.FirstAsync(w => w.Name == "Main Warehouse")).Id,
+                Type = TransactionType.Outcome,
+                Quantity = 5,
+                Date = DateTime.UtcNow.AddDays(-2),
+                UserId = "test-user-1",
+                Description = "Sale transaction"
+            };
 
-        Context.InventoryTransactions.AddRange(incomeTransaction, outcomeTransaction);
+            Context.InventoryTransactions.AddRange(incomeTransaction, outcomeTransaction);
 
-        await Context.SaveChangesAsync();
+            await Context.SaveChangesAsync();
+        }
     }
 
     public void Dispose()

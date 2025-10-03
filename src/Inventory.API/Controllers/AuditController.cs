@@ -41,7 +41,7 @@ public class AuditController(AuditService auditService, ILogger<AuditController>
     /// <param name="pageSize">Page size (default: 50, max: 100)</param>
     /// <returns>Paginated audit logs</returns>
     [HttpGet]
-        public async Task<ActionResult<ApiResponse<PagedResponse<AuditLogDto>>>> GetAuditLogs(
+        public async Task<ActionResult<PagedApiResponse<AuditLogDto>>> GetAuditLogs(
         [FromQuery] string? entityName = null,
         [FromQuery] string? action = null,
         [FromQuery] ActionType? actionType = null,
@@ -109,13 +109,13 @@ public class AuditController(AuditService auditService, ILogger<AuditController>
         try
         {
             var logs = await _auditService.GetEntityAuditLogsAsync(entityName, entityId);
-            return Ok(ApiResponse<List<AuditLogDto>>.CreateSuccess(logs.Select(MapToDto).ToList()));
+            return Ok(ApiResponse<List<AuditLogDto>>.SuccessResult(logs.Select(MapToDto).ToList()));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving audit logs for entity {EntityName} {EntityId}", 
                 entityName, entityId);
-            return StatusCode(500, ApiResponse<List<AuditLogDto>>.CreateFailure("An error occurred while retrieving entity audit logs"));
+            return StatusCode(500, ApiResponse<List<AuditLogDto>>.ErrorResult("An error occurred while retrieving entity audit logs"));
         }
     }
 
@@ -133,15 +133,15 @@ public class AuditController(AuditService auditService, ILogger<AuditController>
         try
         {
             if (days < 1 || days > 365)
-                return BadRequest(ApiResponse<List<AuditLogDto>>.CreateFailure("Days must be between 1 and 365"));
+                return BadRequest(ApiResponse<List<AuditLogDto>>.ErrorResult("Days must be between 1 and 365"));
 
             var logs = await _auditService.GetUserAuditLogsAsync(userId, days);
-            return Ok(ApiResponse<List<AuditLogDto>>.CreateSuccess(logs.Select(MapToDto).ToList()));
+            return Ok(ApiResponse<List<AuditLogDto>>.SuccessResult(logs.Select(MapToDto).ToList()));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving audit logs for user {UserId}", userId);
-            return StatusCode(500, ApiResponse<List<AuditLogDto>>.CreateFailure("An error occurred while retrieving user audit logs"));
+            return StatusCode(500, ApiResponse<List<AuditLogDto>>.ErrorResult("An error occurred while retrieving user audit logs"));
         }
     }
 
@@ -156,7 +156,7 @@ public class AuditController(AuditService auditService, ILogger<AuditController>
         try
         {
             if (days < 1 || days > 365)
-                return BadRequest(ApiResponse<AuditStatisticsDto>.CreateFailure("Days must be between 1 and 365"));
+                return BadRequest(ApiResponse<AuditStatisticsDto>.ErrorResult("Days must be between 1 and 365"));
 
             var startDate = DateTime.UtcNow.AddDays(-days);
             var (logs, _) = await _auditService.GetAuditLogsAsync(
@@ -194,12 +194,12 @@ public class AuditController(AuditService auditService, ILogger<AuditController>
                     .ToDictionary(g => g.Key, g => g.Count())
             };
 
-            return Ok(ApiResponse<AuditStatisticsDto>.CreateSuccess(statistics));
+            return Ok(ApiResponse<AuditStatisticsDto>.SuccessResult(statistics));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving audit statistics");
-            return StatusCode(500, ApiResponse<AuditStatisticsDto>.CreateFailure("An error occurred while retrieving audit statistics"));
+            return StatusCode(500, ApiResponse<AuditStatisticsDto>.ErrorResult("An error occurred while retrieving audit statistics"));
         }
     }
 
@@ -296,12 +296,12 @@ public class AuditController(AuditService auditService, ILogger<AuditController>
         try
         {
             var (logs, _) = await _auditService.GetAuditLogsAsync(requestId: requestId, pageSize: int.MaxValue);
-            return Ok(ApiResponse<List<AuditLogDto>>.CreateSuccess(logs.Select(MapToDto).ToList()));
+            return Ok(ApiResponse<List<AuditLogDto>>.SuccessResult(logs.Select(MapToDto).ToList()));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving audit logs for request {RequestId}", requestId);
-            return StatusCode(500, ApiResponse<List<AuditLogDto>>.CreateFailure("An error occurred while retrieving audit logs for request"));
+            return StatusCode(500, ApiResponse<List<AuditLogDto>>.ErrorResult("An error occurred while retrieving audit logs for request"));
         }
     }
 
@@ -366,7 +366,7 @@ public class AuditController(AuditService auditService, ILogger<AuditController>
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error exporting audit logs");
-            var response = ApiResponse<string>.CreateFailure("An error occurred while exporting audit logs");
+            var response = ApiResponse<string>.ErrorResult("An error occurred while exporting audit logs");
             return StatusCode(500, response);
         }
     }
@@ -383,7 +383,7 @@ public class AuditController(AuditService auditService, ILogger<AuditController>
         try
         {
             if (daysToKeep < 30)
-                return BadRequest(ApiResponse<CleanupResultDto>.CreateFailure("Days to keep must be at least 30"));
+                return BadRequest(ApiResponse<CleanupResultDto>.ErrorResult("Days to keep must be at least 30"));
 
             var deletedCount = await _auditService.CleanupOldLogsAsync(daysToKeep);
             
@@ -394,12 +394,12 @@ public class AuditController(AuditService auditService, ILogger<AuditController>
                 CleanupDate = DateTime.UtcNow
             };
 
-            return Ok(ApiResponse<CleanupResultDto>.CreateSuccess(result));
+            return Ok(ApiResponse<CleanupResultDto>.SuccessResult(result));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error cleaning up old audit logs");
-            return StatusCode(500, ApiResponse<CleanupResultDto>.CreateFailure("An error occurred while cleaning up audit logs"));
+            return StatusCode(500, ApiResponse<CleanupResultDto>.ErrorResult("An error occurred while cleaning up audit logs"));
         }
     }
 

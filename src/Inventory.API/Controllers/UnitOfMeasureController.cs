@@ -93,7 +93,7 @@ public class UnitOfMeasureController(AppDbContext context, ILogger<UnitOfMeasure
 
             if (unitOfMeasure == null)
             {
-                return NotFound(ApiResponse<UnitOfMeasureDto>.CreateFailure("Unit of measure not found"));
+                return NotFound(ApiResponse<UnitOfMeasureDto>.ErrorResult("Unit of measure not found"));
             }
 
             var unitOfMeasureDto = new UnitOfMeasureDto
@@ -107,12 +107,12 @@ public class UnitOfMeasureController(AppDbContext context, ILogger<UnitOfMeasure
                 UpdatedAt = unitOfMeasure.UpdatedAt
             };
 
-            return Ok(ApiResponse<UnitOfMeasureDto>.CreateSuccess(unitOfMeasureDto));
+            return Ok(ApiResponse<UnitOfMeasureDto>.SuccessResult(unitOfMeasureDto));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving unit of measure {UnitOfMeasureId}", id);
-            return StatusCode(500, ApiResponse<UnitOfMeasureDto>.CreateFailure("Failed to retrieve unit of measure"));
+            return StatusCode(500, ApiResponse<UnitOfMeasureDto>.ErrorResult("Failed to retrieve unit of measure"));
         }
     }
 
@@ -144,12 +144,12 @@ public class UnitOfMeasureController(AppDbContext context, ILogger<UnitOfMeasure
                 })
                 .ToListAsync();
 
-            return Ok(ApiResponse<List<UnitOfMeasureDto>>.CreateSuccess(unitOfMeasures));
+            return Ok(ApiResponse<List<UnitOfMeasureDto>>.SuccessResult(unitOfMeasures));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving all unit of measures");
-            return StatusCode(500, ApiResponse<List<UnitOfMeasureDto>>.CreateFailure("Failed to retrieve unit of measures"));
+            return StatusCode(500, ApiResponse<List<UnitOfMeasureDto>>.ErrorResult("Failed to retrieve unit of measures"));
         }
     }
 
@@ -162,7 +162,7 @@ public class UnitOfMeasureController(AppDbContext context, ILogger<UnitOfMeasure
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
-                return BadRequest(ApiResponse<UnitOfMeasureDto>.CreateFailure("Invalid model state", errors));
+                return BadRequest(ApiResponse<UnitOfMeasureDto>.ErrorResult("Invalid model state", errors));
             }
 
             // Check if unit of measure with same symbol already exists
@@ -171,7 +171,7 @@ public class UnitOfMeasureController(AppDbContext context, ILogger<UnitOfMeasure
 
             if (existingUnit != null)
             {
-                return BadRequest(ApiResponse<UnitOfMeasureDto>.CreateFailure("Unit of measure with this symbol already exists"));
+                return BadRequest(ApiResponse<UnitOfMeasureDto>.ErrorResult("Unit of measure with this symbol already exists"));
             }
 
             var unitOfMeasure = new UnitOfMeasure
@@ -199,12 +199,12 @@ public class UnitOfMeasureController(AppDbContext context, ILogger<UnitOfMeasure
                 UpdatedAt = unitOfMeasure.UpdatedAt
             };
 
-            return CreatedAtAction(nameof(GetUnitOfMeasure), new { id = unitOfMeasure.Id }, ApiResponse<UnitOfMeasureDto>.CreateSuccess(unitOfMeasureDto));
+            return CreatedAtAction(nameof(GetUnitOfMeasure), new { id = unitOfMeasure.Id }, ApiResponse<UnitOfMeasureDto>.SuccessResult(unitOfMeasureDto));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error creating unit of measure");
-            return StatusCode(500, ApiResponse<UnitOfMeasureDto>.CreateFailure("Failed to create unit of measure"));
+            return StatusCode(500, ApiResponse<UnitOfMeasureDto>.ErrorResult("Failed to create unit of measure"));
         }
     }
 
@@ -217,13 +217,13 @@ public class UnitOfMeasureController(AppDbContext context, ILogger<UnitOfMeasure
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
-                return BadRequest(ApiResponse<UnitOfMeasureDto>.CreateFailure("Invalid model state", errors));
+                return BadRequest(ApiResponse<UnitOfMeasureDto>.ErrorResult("Invalid model state", errors));
             }
 
             var unitOfMeasure = await context.UnitOfMeasures.FindAsync(id);
             if (unitOfMeasure == null)
             {
-                return NotFound(ApiResponse<UnitOfMeasureDto>.CreateFailure("Unit of measure not found"));
+                return NotFound(ApiResponse<UnitOfMeasureDto>.ErrorResult("Unit of measure not found"));
             }
 
             // Check if another unit of measure with the same symbol exists
@@ -232,7 +232,7 @@ public class UnitOfMeasureController(AppDbContext context, ILogger<UnitOfMeasure
 
             if (existingUnit != null)
             {
-                return BadRequest(ApiResponse<UnitOfMeasureDto>.CreateFailure("Unit of measure with this symbol already exists"));
+                return BadRequest(ApiResponse<UnitOfMeasureDto>.ErrorResult("Unit of measure with this symbol already exists"));
             }
 
             unitOfMeasure.Name = request.Name;
@@ -256,12 +256,12 @@ public class UnitOfMeasureController(AppDbContext context, ILogger<UnitOfMeasure
                 UpdatedAt = unitOfMeasure.UpdatedAt
             };
 
-            return Ok(ApiResponse<UnitOfMeasureDto>.CreateSuccess(unitOfMeasureDto));
+            return Ok(ApiResponse<UnitOfMeasureDto>.SuccessResult(unitOfMeasureDto));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error updating unit of measure {UnitOfMeasureId}", id);
-            return StatusCode(500, ApiResponse<UnitOfMeasureDto>.CreateFailure("Failed to update unit of measure"));
+            return StatusCode(500, ApiResponse<UnitOfMeasureDto>.ErrorResult("Failed to update unit of measure"));
         }
     }
 
@@ -274,7 +274,7 @@ public class UnitOfMeasureController(AppDbContext context, ILogger<UnitOfMeasure
             var unitOfMeasure = await context.UnitOfMeasures.FindAsync(id);
             if (unitOfMeasure == null)
             {
-                return NotFound(ApiResponse<object>.CreateFailure("Unit of measure not found"));
+                return NotFound(ApiResponse<object>.ErrorResult("Unit of measure not found"));
             }
 
             // Check if unit of measure has products
@@ -283,7 +283,7 @@ public class UnitOfMeasureController(AppDbContext context, ILogger<UnitOfMeasure
 
             if (hasProducts)
             {
-                return BadRequest(ApiResponse<object>.CreateFailure("Cannot delete unit of measure with products"));
+                return BadRequest(ApiResponse<object>.ErrorResult("Cannot delete unit of measure with products"));
             }
 
             // Soft delete - set IsActive to false
@@ -294,12 +294,12 @@ public class UnitOfMeasureController(AppDbContext context, ILogger<UnitOfMeasure
 
             logger.LogInformation("Unit of measure deleted (soft): {UnitName} with ID {UnitId}", unitOfMeasure.Name, unitOfMeasure.Id);
 
-            return Ok(ApiResponse<object>.CreateSuccess(new { message = "Unit of measure deleted successfully" }));
+            return Ok(ApiResponse<object>.SuccessResult(new { message = "Unit of measure deleted successfully" }));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error deleting unit of measure {UnitOfMeasureId}", id);
-            return StatusCode(500, ApiResponse<object>.CreateFailure("Failed to delete unit of measure"));
+            return StatusCode(500, ApiResponse<object>.ErrorResult("Failed to delete unit of measure"));
         }
     }
 }

@@ -1,14 +1,15 @@
+using FluentAssertions;
+using Inventory.API.Controllers;
+using Inventory.API.Interfaces;
+using Inventory.API.Models;
+using Inventory.Shared.DTOs;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.Security.Claims;
-using Inventory.API.Controllers;
-using Inventory.API.Models;
-using Inventory.Shared.DTOs;
 using Xunit;
-using FluentAssertions;
 
 namespace Inventory.UnitTests.Controllers;
 
@@ -16,7 +17,7 @@ public class CategoryControllerPaginationTests : IDisposable
 {
     private readonly AppDbContext _context;
     private readonly CategoryController _controller;
-    private readonly Mock<ILogger<CategoryController>> _mockLogger;
+    private readonly Mock<ICategoryService> _mockCategoryService;
     private readonly string _testDatabaseName;
 
     public CategoryControllerPaginationTests()
@@ -33,8 +34,8 @@ public class CategoryControllerPaginationTests : IDisposable
         // Ensure database is created
         _context.Database.EnsureCreated();
         
-        _mockLogger = new Mock<ILogger<CategoryController>>();
-        _controller = new CategoryController(_context, _mockLogger.Object);
+        _mockCategoryService = new Mock<ICategoryService>();
+        _controller = new CategoryController(_mockCategoryService.Object);
 
         // Setup authentication context for tests
         SetupAuthenticationContext();
@@ -112,6 +113,15 @@ public class CategoryControllerPaginationTests : IDisposable
         // Arrange
         var page = 1;
         var pageSize = 2;
+        var pagedResponse = new PagedResponse<CategoryDto>
+        {
+            Items = new List<CategoryDto> { new CategoryDto(), new CategoryDto() },
+            total = 4,
+            page = page,
+            PageSize = pageSize
+        };
+        _mockCategoryService.Setup(s => s.GetCategoriesAsync(page, pageSize, null, null, null, true))
+            .ReturnsAsync(PagedApiResponse<CategoryDto>.CreateSuccess(pagedResponse));
 
         // Act
         var actionResult = await _controller.GetCategories(page, pageSize);
@@ -135,6 +145,15 @@ public class CategoryControllerPaginationTests : IDisposable
     {
         // Arrange
         var search = "Electronics";
+        var pagedResponse = new PagedResponse<CategoryDto>
+        {
+            Items = new List<CategoryDto> { new CategoryDto { Name = "Electronics" } },
+            total = 1,
+            page = 1,
+            PageSize = 10
+        };
+        _mockCategoryService.Setup(s => s.GetCategoriesAsync(1, 10, search, null, null, true))
+            .ReturnsAsync(PagedApiResponse<CategoryDto>.CreateSuccess(pagedResponse));
 
         // Act
         var actionResult = await _controller.GetCategories(1, 10, search);
@@ -154,6 +173,15 @@ public class CategoryControllerPaginationTests : IDisposable
     {
         // Arrange
         var parentId = 1; // Electronics
+        var pagedResponse = new PagedResponse<CategoryDto>
+        {
+            Items = new List<CategoryDto> { new CategoryDto { Name = "Laptops" } },
+            total = 1,
+            page = 1,
+            PageSize = 10
+        };
+        _mockCategoryService.Setup(s => s.GetCategoriesAsync(1, 10, null, parentId, null, true))
+            .ReturnsAsync(PagedApiResponse<CategoryDto>.CreateSuccess(pagedResponse));
 
         // Act
         var actionResult = await _controller.GetCategories(1, 10, null, parentId);
@@ -173,6 +201,15 @@ public class CategoryControllerPaginationTests : IDisposable
     {
         // Arrange
         var isActive = false;
+        var pagedResponse = new PagedResponse<CategoryDto>
+        {
+            Items = new List<CategoryDto> { new CategoryDto { IsActive = false } },
+            total = 1,
+            page = 1,
+            PageSize = 10
+        };
+        _mockCategoryService.Setup(s => s.GetCategoriesAsync(1, 10, null, null, isActive, true))
+            .ReturnsAsync(PagedApiResponse<CategoryDto>.CreateSuccess(pagedResponse));
 
         // Act
         var actionResult = await _controller.GetCategories(1, 10, null, null, isActive);
@@ -201,6 +238,15 @@ public class CategoryControllerPaginationTests : IDisposable
         {
             HttpContext = new DefaultHttpContext { User = user }
         };
+        var pagedResponse = new PagedResponse<CategoryDto>
+        {
+            Items = new List<CategoryDto> { new CategoryDto { IsActive = true }, new CategoryDto { IsActive = true }, new CategoryDto { IsActive = true } },
+            total = 3,
+            page = 1,
+            PageSize = 10
+        };
+        _mockCategoryService.Setup(s => s.GetCategoriesAsync(1, 10, null, null, null, false))
+            .ReturnsAsync(PagedApiResponse<CategoryDto>.CreateSuccess(pagedResponse));
 
         // Act
         var actionResult = await _controller.GetCategories();
@@ -229,6 +275,15 @@ public class CategoryControllerPaginationTests : IDisposable
         {
             HttpContext = new DefaultHttpContext { User = user }
         };
+        var pagedResponse = new PagedResponse<CategoryDto>
+        {
+            Items = new List<CategoryDto> { new CategoryDto(), new CategoryDto(), new CategoryDto(), new CategoryDto() },
+            total = 4,
+            page = 1,
+            PageSize = 10
+        };
+        _mockCategoryService.Setup(s => s.GetCategoriesAsync(1, 10, null, null, null, true))
+            .ReturnsAsync(PagedApiResponse<CategoryDto>.CreateSuccess(pagedResponse));
 
         // Act
         var actionResult = await _controller.GetCategories();
@@ -262,6 +317,9 @@ public class CategoryControllerPaginationTests : IDisposable
             Name = "Test Category",
             Description = "Test description"
         };
+        _mockCategoryService.Setup(s => s.CreateCategoryAsync(request))
+            .ReturnsAsync(ApiResponse<CategoryDto>.ErrorResult("Forbidden"));
+
 
         // Act
         var actionResult = await _controller.CreateCategory(request);
@@ -292,6 +350,9 @@ public class CategoryControllerPaginationTests : IDisposable
             Name = "Test Category",
             Description = "Test description"
         };
+        var createdCategory = new CategoryDto { Id = 5, Name = "Test Category", IsActive = true };
+        _mockCategoryService.Setup(s => s.CreateCategoryAsync(request))
+            .ReturnsAsync(ApiResponse<CategoryDto>.SuccessResult(createdCategory));
 
         // Act
         var actionResult = await _controller.CreateCategory(request);

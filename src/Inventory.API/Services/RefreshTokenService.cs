@@ -11,14 +11,21 @@ namespace Inventory.API.Services;
 /// <summary>
 /// Service for managing JWT refresh tokens
 /// </summary>
-public class RefreshTokenService(
-    UserManager<User> userManager,
-    IConfiguration configuration,
-    ILogger<RefreshTokenService> logger)
+public class RefreshTokenService : IRefreshTokenService
 {
-    private readonly UserManager<User> _userManager = userManager;
-    private readonly IConfiguration _configuration = configuration;
-    private readonly ILogger<RefreshTokenService> _logger = logger;
+    private readonly UserManager<User> _userManager;
+    private readonly IConfiguration _configuration;
+    private readonly ILogger<RefreshTokenService> _logger;
+
+    public RefreshTokenService(
+        UserManager<User> userManager,
+        IConfiguration configuration,
+        ILogger<RefreshTokenService> logger)
+    {
+        _userManager = userManager;
+        _configuration = configuration;
+        _logger = logger;
+    }
 
     /// <summary>
     /// Generates a new refresh token

@@ -40,7 +40,18 @@ public class ApiErrorHandler : IApiErrorHandler
                 {
                     var data = await response.Content.ReadFromJsonAsync<T>();
                     _logger.LogDebug("API request successful. Status: {StatusCode}", response.StatusCode);
-                    return new ApiResponse<T> { Success = true, Data = data };
+
+                    if (data == null)
+                    {
+                        // Если T - это bool, и мы не можем десериализовать, предположим, что это успешная операция DELETE
+                        if (typeof(T) == typeof(bool))
+                        {
+                            return ApiResponse<T>.SuccessResult((T)(object)true);
+                        }
+                        _logger.LogWarning("Deserialized data is null for type {Type}, but a value was expected.", typeof(T).Name);
+                        return ApiResponse<T>.ErrorResult($"Failed to deserialize response for {typeof(T).Name}. Content was empty or null.");
+                    }
+                    return ApiResponse<T>.SuccessResult(data);
                 }
                 catch (System.Text.Json.JsonException jsonEx)
                 {
@@ -51,14 +62,10 @@ public class ApiErrorHandler : IApiErrorHandler
                     if (typeof(T) == typeof(bool))
                     {
                         _logger.LogInformation("Assuming success for boolean response that couldn't be deserialized");
-                        return new ApiResponse<T> { Success = true, Data = (T)(object)true };
+                        return ApiResponse<T>.SuccessResult((T)(object)true);
                     }
                     
-                    return new ApiResponse<T> 
-                    { 
-                        Success = false, 
-                        ErrorMessage = "Failed to deserialize response data"
-                    };
+                    return ApiResponse<T>.ErrorResult("Failed to deserialize response data");
                 }
             }
 
@@ -67,11 +74,7 @@ public class ApiErrorHandler : IApiErrorHandler
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error handling API response");
-            return new ApiResponse<T> 
-            { 
-                Success = false, 
-                ErrorMessage = "Failed to process API response"
-            };
+            return ApiResponse<T>.ErrorResult("Failed to process API response");
         }
     }
 
@@ -83,7 +86,7 @@ public class ApiErrorHandler : IApiErrorHandler
             {
                 var data = await response.Content.ReadFromJsonAsync<PagedApiResponse<T>>();
                 _logger.LogDebug("API paged request successful. Status: {StatusCode}", response.StatusCode);
-                return data ?? new PagedApiResponse<T> { Success = false, ErrorMessage = "Failed to deserialize paged response" };
+                return data ?? PagedApiResponse<T>.CreateFailure("Failed to deserialize paged response");
             }
 
             return await HandlePagedErrorResponseAsync<T>(response);
@@ -91,11 +94,7 @@ public class ApiErrorHandler : IApiErrorHandler
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error handling API paged response");
-            return new PagedApiResponse<T> 
-            { 
-                Success = false, 
-                ErrorMessage = "Failed to process API paged response"
-            };
+            return PagedApiResponse<T>.CreateFailure("Failed to process API paged response");
         }
     }
 
@@ -105,11 +104,7 @@ public class ApiErrorHandler : IApiErrorHandler
         
         var errorMessage = GetUserFriendlyErrorMessage(exception);
         
-        return Task.FromResult(new ApiResponse<T> 
-        { 
-            Success = false, 
-            ErrorMessage = errorMessage
-        });
+        return Task.FromResult(ApiResponse<T>.ErrorResult(errorMessage));
     }
 
     public Task<PagedApiResponse<T>> HandlePagedExceptionAsync<T>(Exception exception, string operation)
@@ -118,11 +113,7 @@ public class ApiErrorHandler : IApiErrorHandler
         
         var errorMessage = GetUserFriendlyErrorMessage(exception);
         
-        return Task.FromResult(new PagedApiResponse<T> 
-        { 
-            Success = false, 
-            ErrorMessage = errorMessage
-        });
+        return Task.FromResult(PagedApiResponse<T>.CreateFailure(errorMessage));
     }
 
     private async Task<ApiResponse<T>> HandleErrorResponseAsync<T>(HttpResponseMessage response)
@@ -196,11 +187,7 @@ public class ApiErrorHandler : IApiErrorHandler
                 break;
         }
         
-        return new ApiResponse<T> 
-        { 
-            Success = false, 
-            ErrorMessage = errorMessage
-        };
+        return ApiResponse<T>.ErrorResult(errorMessage);
     }
 
     private async Task<PagedApiResponse<T>> HandlePagedErrorResponseAsync<T>(HttpResponseMessage response)
@@ -210,11 +197,7 @@ public class ApiErrorHandler : IApiErrorHandler
         
         _logger.LogWarning("API paged request failed. Status: {StatusCode}, Error: {Error}", statusCode, errorMessage);
         
-        return new PagedApiResponse<T> 
-        { 
-            Success = false, 
-            ErrorMessage = errorMessage
-        };
+        return PagedApiResponse<T>.CreateFailure(errorMessage);
     }
 
     private async Task<string> GetErrorMessageAsync(HttpResponseMessage response)
@@ -354,10 +337,6 @@ public class ApiErrorHandler : IApiErrorHandler
     /// </summary>
     private ApiResponse<T> CreateAuthFailureResponse<T>()
     {
-        return new ApiResponse<T>
-        {
-            Success = false,
-            ErrorMessage = "Authentication required. Please log in again."
-        };
+        return ApiResponse<T>.ErrorResult("Authentication required. Please log in again.");
     }
 }

@@ -143,7 +143,7 @@ public class TransactionController : ControllerBase
 
             if (string.IsNullOrEmpty(currentUserId))
             {
-                return Unauthorized(ApiResponse<InventoryTransactionDto>.CreateFailure("User not authenticated"));
+                return Unauthorized(ApiResponse<InventoryTransactionDto>.ErrorResult("User not authenticated"));
             }
 
             var transaction = await _context.InventoryTransactions
@@ -155,14 +155,14 @@ public class TransactionController : ControllerBase
 
             if (transaction == null)
             {
-                return NotFound(ApiResponse<InventoryTransactionDto>.CreateFailure("Transaction not found"));
+                return NotFound(ApiResponse<InventoryTransactionDto>.ErrorResult("Transaction not found"));
             }
 
             // Check if user has access to this warehouse
             var hasAccess = await _userWarehouseService.CheckWarehouseAccessAsync(currentUserId, transaction.WarehouseId);
             if (!hasAccess.HasAccess)
             {
-                return StatusCode(403, ApiResponse<InventoryTransactionDto>.CreateFailure("Access denied to this warehouse."));
+                return StatusCode(403, ApiResponse<InventoryTransactionDto>.ErrorResult("Access denied to this warehouse."));
             }
 
             var transactionDto = new InventoryTransactionDto
@@ -183,12 +183,12 @@ public class TransactionController : ControllerBase
                 Description = transaction.Description
             };
 
-            return Ok(ApiResponse<InventoryTransactionDto>.CreateSuccess(transactionDto));
+            return Ok(ApiResponse<InventoryTransactionDto>.SuccessResult(transactionDto));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving transaction {TransactionId}", id);
-            return StatusCode(500, ApiResponse<InventoryTransactionDto>.CreateFailure("Failed to retrieve transaction"));
+            return StatusCode(500, ApiResponse<InventoryTransactionDto>.ErrorResult("Failed to retrieve transaction"));
         }
     }
 
@@ -271,21 +271,21 @@ public class TransactionController : ControllerBase
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
-                return BadRequest(ApiResponse<InventoryTransactionDto>.CreateValidationFailure(errors));
+                return BadRequest(ApiResponse<InventoryTransactionDto>.ErrorResult("Validation failed", errors));
             }
 
             // Verify product exists
             var product = await _context.Products.FindAsync(request.ProductId);
             if (product == null)
             {
-                return BadRequest(ApiResponse<InventoryTransactionDto>.CreateFailure("Product not found"));
+                return BadRequest(ApiResponse<InventoryTransactionDto>.ErrorResult("Product not found"));
             }
 
             // Verify warehouse exists
             var warehouse = await _context.Warehouses.FindAsync(request.WarehouseId);
             if (warehouse == null)
             {
-                return BadRequest(ApiResponse<InventoryTransactionDto>.CreateFailure("Warehouse not found"));
+                return BadRequest(ApiResponse<InventoryTransactionDto>.ErrorResult("Warehouse not found"));
             }
 
             // Verify location exists (if specified)
@@ -294,7 +294,7 @@ public class TransactionController : ControllerBase
                 var location = await _context.Locations.FindAsync(request.LocationId.Value);
                 if (location == null)
                 {
-                    return BadRequest(ApiResponse<InventoryTransactionDto>.CreateFailure("Location not found"));
+                    return BadRequest(ApiResponse<InventoryTransactionDto>.ErrorResult("Location not found"));
                 }
             }
 
@@ -308,7 +308,7 @@ public class TransactionController : ControllerBase
                     
                 if (currentQuantity < request.Quantity)
                 {
-                    return BadRequest(ApiResponse<InventoryTransactionDto>.CreateFailure($"Insufficient stock for this transaction. Available: {currentQuantity}, Requested: {request.Quantity}"));
+                    return BadRequest(ApiResponse<InventoryTransactionDto>.ErrorResult($"Insufficient stock for this transaction. Available: {currentQuantity}, Requested: {request.Quantity}"));
                 }
             }
 
@@ -359,12 +359,12 @@ public class TransactionController : ControllerBase
                 Description = createdTransaction.Description
             };
 
-            return CreatedAtAction(nameof(GetTransaction), new { id = transaction.Id }, ApiResponse<InventoryTransactionDto>.CreateSuccess(transactionDto));
+            return CreatedAtAction(nameof(GetTransaction), new { id = transaction.Id }, ApiResponse<InventoryTransactionDto>.SuccessResult(transactionDto));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating transaction");
-            return StatusCode(500, ApiResponse<InventoryTransactionDto>.CreateFailure("Failed to create transaction"));
+            return StatusCode(500, ApiResponse<InventoryTransactionDto>.ErrorResult("Failed to create transaction"));
         }
     }
 }

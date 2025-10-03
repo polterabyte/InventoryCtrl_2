@@ -180,7 +180,7 @@
             }
             else
             {
-                UiNotificationService.ShowError("Error", response.ErrorMessage ?? "Failed to load data");
+                                UiNotificationService.ShowError("Error", response.Error ?? "Failed to load data");
                 data = new();
             }
         }
@@ -314,9 +314,9 @@
             else
             {
                 var errorMessage = response.ErrorMessage ?? "Failed to save unit";
-                if (response.Errors != null && response.Errors.Any())
+                if (response.ValidationErrors != null && response.ValidationErrors.Any())
                 {
-                    var validationErrors = string.Join(", ", response.Errors);
+                    var validationErrors = string.Join(", ", response.ValidationErrors);
                     errorMessage = $"{errorMessage}: {validationErrors}";
                 }
                 UiNotificationService.ShowError("Error", errorMessage);

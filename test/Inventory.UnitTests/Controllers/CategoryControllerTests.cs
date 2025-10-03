@@ -4,11 +4,12 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using FluentAssertions;
 using Inventory.API.Controllers;
+using Inventory.API.Interfaces;
 using Inventory.API.Models;
 using Inventory.Shared.DTOs;
-using Xunit;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
+using Xunit;
 
 namespace Inventory.UnitTests.Controllers;
 
@@ -16,6 +17,7 @@ public class CategoryControllerTests : IDisposable
 {
     private readonly AppDbContext _context;
     private readonly CategoryController _controller;
+    private readonly Mock<ICategoryService> _mockCategoryService;
 
     public CategoryControllerTests()
     {
@@ -28,7 +30,9 @@ public class CategoryControllerTests : IDisposable
 
         _context = new AppDbContext(options);
         _context.Database.EnsureCreated();
-        _controller = new CategoryController(_context, Mock.Of<ILogger<CategoryController>>());
+        
+        _mockCategoryService = new Mock<ICategoryService>();
+        _controller = new CategoryController(_mockCategoryService.Object);
         
         // Setup authentication context for tests
         SetupAuthenticationContext();
@@ -39,6 +43,15 @@ public class CategoryControllerTests : IDisposable
     {
         // Arrange
         await SeedTestDataAsync();
+        var pagedResponse = new PagedResponse<CategoryDto>
+        {
+            Items = new List<CategoryDto> { new(), new(), new() },
+            total = 3,
+            page = 1,
+            PageSize = 10
+        };
+        _mockCategoryService.Setup(s => s.GetCategoriesAsync(1, 10, null, null, null, true))
+            .ReturnsAsync(PagedApiResponse<CategoryDto>.CreateSuccess(pagedResponse));
 
         // Act
         var actionResult = await _controller.GetCategories();
@@ -57,6 +70,17 @@ public class CategoryControllerTests : IDisposable
     [Fact]
     public async Task GetCategories_WithEmptyDatabase_ShouldReturnEmptyList()
     {
+        // Arrange
+        var pagedResponse = new PagedResponse<CategoryDto>
+        {
+            Items = new List<CategoryDto>(),
+            total = 0,
+            page = 1,
+            PageSize = 10
+        };
+        _mockCategoryService.Setup(s => s.GetCategoriesAsync(1, 10, null, null, null, true))
+            .ReturnsAsync(PagedApiResponse<CategoryDto>.CreateSuccess(pagedResponse));
+        
         // Act
         var actionResult = await _controller.GetCategories();
 
@@ -75,6 +99,9 @@ public class CategoryControllerTests : IDisposable
         // Arrange
         await SeedTestDataAsync();
         var categoryId = 1;
+        var categoryDto = new CategoryDto { Id = categoryId, Name = "Electronics" };
+        _mockCategoryService.Setup(s => s.GetCategoryByIdAsync(categoryId))
+            .ReturnsAsync(ApiResponse<CategoryDto>.SuccessResult(categoryDto));
 
         // Act
         var actionResult = await _controller.GetCategory(categoryId);
@@ -93,6 +120,8 @@ public class CategoryControllerTests : IDisposable
     {
         // Arrange
         var categoryId = 999;
+        _mockCategoryService.Setup(s => s.GetCategoryByIdAsync(categoryId))
+            .ReturnsAsync(ApiResponse<CategoryDto>.ErrorResult("Category not found."));
 
         // Act
         var actionResult = await _controller.GetCategory(categoryId);
@@ -109,6 +138,9 @@ public class CategoryControllerTests : IDisposable
     {
         // Arrange
         await SeedTestDataAsync();
+        var rootCategories = new List<CategoryDto> { new() { Name = "Electronics" } };
+        _mockCategoryService.Setup(s => s.GetRootCategoriesAsync())
+            .ReturnsAsync(ApiResponse<List<CategoryDto>>.SuccessResult(rootCategories));
 
         // Act
         var actionResult = await _controller.GetRootCategories();
@@ -128,6 +160,9 @@ public class CategoryControllerTests : IDisposable
         // Arrange
         await SeedTestDataAsync();
         var parentId = 1;
+        var subCategories = new List<CategoryDto> { new() { Name = "Smartphones" } };
+        _mockCategoryService.Setup(s => s.GetSubCategoriesAsync(parentId))
+            .ReturnsAsync(ApiResponse<List<CategoryDto>>.SuccessResult(subCategories));
 
         // Act
         var actionResult = await _controller.GetSubCategories(parentId);
@@ -146,6 +181,8 @@ public class CategoryControllerTests : IDisposable
     {
         // Arrange
         var parentId = 999;
+        _mockCategoryService.Setup(s => s.GetSubCategoriesAsync(parentId))
+            .ReturnsAsync(ApiResponse<List<CategoryDto>>.SuccessResult(new List<CategoryDto>()));
 
         // Act
         var actionResult = await _controller.GetSubCategories(parentId);
@@ -169,6 +206,9 @@ public class CategoryControllerTests : IDisposable
             Description = "Test Description",
             ParentCategoryId = null
         };
+        var createdCategory = new CategoryDto { Id = 4, Name = "Test Category" };
+        _mockCategoryService.Setup(s => s.CreateCategoryAsync(createRequest))
+            .ReturnsAsync(ApiResponse<CategoryDto>.SuccessResult(createdCategory));
 
         // Act
         var actionResult = await _controller.CreateCategory(createRequest);
@@ -191,6 +231,8 @@ public class CategoryControllerTests : IDisposable
             Description = "Test Description",
             ParentCategoryId = 999 // Invalid: non-existent parent
         };
+        _mockCategoryService.Setup(s => s.CreateCategoryAsync(createRequest))
+            .ReturnsAsync(ApiResponse<CategoryDto>.ErrorResult("Parent category not found."));
 
         // Act
         var actionResult = await _controller.CreateCategory(createRequest);
@@ -213,6 +255,9 @@ public class CategoryControllerTests : IDisposable
             Name = "Updated Category",
             Description = "Updated Description"
         };
+        var updatedCategory = new CategoryDto { Id = categoryId, Name = "Updated Category" };
+        _mockCategoryService.Setup(s => s.UpdateCategoryAsync(categoryId, updateRequest))
+            .ReturnsAsync(ApiResponse<CategoryDto>.SuccessResult(updatedCategory));
 
         // Act
         var actionResult = await _controller.UpdateCategory(categoryId, updateRequest);
@@ -236,6 +281,8 @@ public class CategoryControllerTests : IDisposable
             Name = "Updated Category",
             Description = "Updated Description"
         };
+        _mockCategoryService.Setup(s => s.UpdateCategoryAsync(categoryId, updateRequest))
+            .ReturnsAsync(ApiResponse<CategoryDto>.ErrorResult("Category not found."));
 
         // Act
         var actionResult = await _controller.UpdateCategory(categoryId, updateRequest);
@@ -251,21 +298,9 @@ public class CategoryControllerTests : IDisposable
     public async Task DeleteCategory_WithValidId_ShouldDeleteCategory()
     {
         // Arrange
-        // Create a category without subcategories
-        var category = new Category
-        {
-            Id = 4,
-            Name = "Test Category",
-            Description = "Test Description",
-            IsActive = true,
-            ParentCategoryId = null,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-        _context.Categories.Add(category);
-        await _context.SaveChangesAsync();
-
         var categoryId = 4;
+        _mockCategoryService.Setup(s => s.DeleteCategoryAsync(categoryId))
+            .ReturnsAsync(ApiResponse<object>.SuccessResult(new { Message = "Category deleted successfully." }));
 
         // Act
         var actionResult = await _controller.DeleteCategory(categoryId);
@@ -283,6 +318,8 @@ public class CategoryControllerTests : IDisposable
     {
         // Arrange
         var categoryId = 999;
+        _mockCategoryService.Setup(s => s.DeleteCategoryAsync(categoryId))
+            .ReturnsAsync(ApiResponse<object>.ErrorResult("Category not found."));
 
         // Act
         var actionResult = await _controller.DeleteCategory(categoryId);
