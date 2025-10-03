@@ -34,7 +34,7 @@
         <RadzenCard Class="rz-p-4">
             <RadzenStack Gap="1rem">
                 <RadzenRow Gap="1rem">
-                    <RadzenColumn Size="12" SizeMD="4">
+                    <RadzenColumn Size="12">
                         <RadzenLabel Text="Search" Component="searchInput" />
                         <RadzenTextBox @bind-Value="searchTerm" 
                                        Name="searchInput"
@@ -42,7 +42,7 @@
                                        Style="width: 100%"
                                        @onkeypress="@HandleSearchKeyPress" />
                     </RadzenColumn>
-                    <RadzenColumn Size="12" SizeMD="3">
+                    <RadzenColumn Size="12">
                         <RadzenLabel Text="Status" Component="statusFilter" />
                         <RadzenDropDown @bind-Value="selectedStatus" 
                                         Data="statusOptions"
@@ -53,14 +53,14 @@
                                         AllowClear="true"
                                         Style="width: 100%" />
                     </RadzenColumn>
-                    <RadzenColumn Size="12" SizeMD="3">
+                    <RadzenColumn Size="12">
                         <RadzenLabel Text="Page Size" Component="pageSizeSelect" />
                         <RadzenDropDown @bind-Value="pageSize" 
                                         Data="pageSizeOptions"
                                         Name="pageSizeSelect"
                                         Style="width: 100%" />
                     </RadzenColumn>
-                    <RadzenColumn Size="12" SizeMD="2">
+                    <RadzenColumn Size="12">
                         <RadzenLabel Text="&nbsp;" />
                         <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
                             <RadzenButton Text="Search" 

@@ -90,7 +90,7 @@
             
             <RadzenTemplateForm Data="@AssignWarehouseDto" Submit="@(EventCallback.Factory.Create<AssignWarehouseDto>(this, AssignWarehouse))">
                 <RadzenRow Class="g-3">
-                    <RadzenColumn Size="12" SizeMd="4">
+                    <RadzenColumn Size="12">
                         <RadzenFormField Text="Warehouse *">
                             <RadzenDropDown @bind-Value="@AssignWarehouseDto.WarehouseId" 
                                            Data="@GetAvailableWarehouses()" 
@@ -99,7 +99,7 @@
                                            Placeholder="Select warehouse..." />
                         </RadzenFormField>
                     </RadzenColumn>
-                    <RadzenColumn Size="12" SizeMd="3">
+                    <RadzenColumn Size="12">
                         <RadzenFormField Text="Access Level *">
                             <RadzenDropDown @bind-Value="@AssignWarehouseDto.AccessLevel" 
                                            Data="@AccessLevelOptions" 
@@ -107,12 +107,12 @@
                                            TextProperty="Text" />
                         </RadzenFormField>
                     </RadzenColumn>
-                    <RadzenColumn Size="12" SizeMd="3">
+                    <RadzenColumn Size="12">
                         <RadzenFormField Text="Set as Default">
                             <RadzenCheckBox @bind-Value="@AssignWarehouseDto.IsDefault" />
                         </RadzenFormField>
                     </RadzenColumn>
-                    <RadzenColumn Size="12" SizeMd="2">
+                    <RadzenColumn Size="12">
                         <RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.End" Style="height: 100%;">
                             <RadzenButton Text="Assign" 
                                          Icon="add" 
