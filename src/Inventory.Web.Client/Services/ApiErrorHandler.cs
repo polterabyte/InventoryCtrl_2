@@ -5,6 +5,7 @@ using System.Net.Http.Json;
 using Microsoft.AspNetCore.Components;
 using Inventory.Shared.Interfaces;
 using Radzen;
+using System.Text.Json;
 
 namespace Inventory.Web.Client.Services;
 
@@ -82,11 +83,45 @@ public class ApiErrorHandler : IApiErrorHandler
     {
         try
         {
+            var responseContent = await response.Content.ReadAsStringAsync();
+
             if (response.IsSuccessStatusCode)
             {
-                var data = await response.Content.ReadFromJsonAsync<PagedApiResponse<T>>();
-                _logger.LogDebug("API paged request successful. Status: {StatusCode}", response.StatusCode);
-                return data ?? PagedApiResponse<T>.CreateFailure("Failed to deserialize paged response");
+                var serializerOptions = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+
+                try
+                {
+                    var wrappedResponse = JsonSerializer.Deserialize<PagedApiResponse<T>>(responseContent, serializerOptions);
+                    if (wrappedResponse != null && (wrappedResponse.Success || wrappedResponse.Data != null))
+                    {
+                        _logger.LogDebug("API paged request successful (wrapped format). Status: {StatusCode}", response.StatusCode);
+                        return wrappedResponse;
+                    }
+                }
+                catch (JsonException jsonEx)
+                {
+                    _logger.LogDebug(jsonEx, "Failed to deserialize wrapped paged response. Falling back to legacy format.");
+                }
+
+                try
+                {
+                    var legacyResponse = JsonSerializer.Deserialize<PagedResponse<T>>(responseContent, serializerOptions);
+                    if (legacyResponse != null)
+                    {
+                        _logger.LogDebug("API paged request successful (legacy format). Status: {StatusCode}", response.StatusCode);
+                        return PagedApiResponse<T>.CreateSuccess(legacyResponse);
+                    }
+                }
+                catch (JsonException legacyEx)
+                {
+                    _logger.LogWarning(legacyEx, "Failed to deserialize legacy paged response format.");
+                }
+
+                _logger.LogWarning("Paged response deserialization failed for type {Type}. Content: {Content}", typeof(T).Name, responseContent);
+                return PagedApiResponse<T>.CreateFailure("Failed to deserialize paged response");
             }
 
             return await HandlePagedErrorResponseAsync<T>(response);
