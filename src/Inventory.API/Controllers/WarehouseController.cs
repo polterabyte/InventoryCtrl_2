@@ -42,11 +42,7 @@ public class WarehouseController : ControllerBase
 
             if (string.IsNullOrEmpty(currentUserId))
             {
-                return Unauthorized(new PagedApiResponse<WarehouseDto>
-                {
-                    Success = false,
-                    ErrorMessage = "User not authenticated"
-                });
+                return Unauthorized(PagedApiResponse<WarehouseDto>.CreateFailure("User not authenticated"));
             }
 
             // Get accessible warehouse IDs for the current user
@@ -102,8 +98,8 @@ public class WarehouseController : ControllerBase
             var pagedResponse = new PagedResponse<WarehouseDto>
             {
                 Items = warehouses,
-                TotalCount = totalCount,
-                PageNumber = page,
+                total = totalCount,
+                page = page,
                 PageSize = pageSize
             };
 
@@ -116,11 +112,7 @@ public class WarehouseController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving warehouses");
-            return StatusCode(500, new PagedApiResponse<WarehouseDto>
-            {
-                Success = false,
-                ErrorMessage = "Failed to retrieve warehouses"
-            });
+            return StatusCode(500, PagedApiResponse<WarehouseDto>.CreateFailure("Failed to retrieve warehouses"));
         }
     }
 
@@ -135,11 +127,7 @@ public class WarehouseController : ControllerBase
 
             if (string.IsNullOrEmpty(currentUserId))
             {
-                return Unauthorized(new ApiResponse<WarehouseDto>
-                {
-                    Success = false,
-                    ErrorMessage = "User not authenticated"
-                });
+                return Unauthorized(ApiResponse<WarehouseDto>.ErrorResult("User not authenticated"));
             }
 
             // Check if user has access to this warehouse
@@ -155,11 +143,7 @@ public class WarehouseController : ControllerBase
 
             if (warehouse == null)
             {
-                return NotFound(new ApiResponse<WarehouseDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Warehouse not found"
-                });
+                return NotFound(ApiResponse<WarehouseDto>.ErrorResult("Warehouse not found"));
             }
 
             // Get warehouse user assignments
@@ -180,20 +164,12 @@ public class WarehouseController : ControllerBase
                 TotalAssignedUsers = userAssignments.Count
             };
 
-            return Ok(new ApiResponse<WarehouseDto>
-            {
-                Success = true,
-                Data = warehouseDto
-            });
+            return Ok(ApiResponse<WarehouseDto>.SuccessResult(warehouseDto));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving warehouse {WarehouseId}", id);
-            return StatusCode(500, new ApiResponse<WarehouseDto>
-            {
-                Success = false,
-                ErrorMessage = "Failed to retrieve warehouse"
-            });
+            return StatusCode(500, ApiResponse<WarehouseDto>.ErrorResult("Failed to retrieve warehouse"));
         }
     }
 
@@ -205,12 +181,7 @@ public class WarehouseController : ControllerBase
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new ApiResponse<WarehouseDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Invalid model state",
-                    Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList()
-                });
+                return BadRequest(ApiResponse<WarehouseDto>.ErrorResult("Invalid model state", ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList()));
             }
 
             // Check if warehouse already exists
@@ -219,11 +190,7 @@ public class WarehouseController : ControllerBase
 
             if (existingWarehouse != null)
             {
-                return BadRequest(new ApiResponse<WarehouseDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Warehouse with this name already exists"
-                });
+                return BadRequest(ApiResponse<WarehouseDto>.ErrorResult("Warehouse with this name already exists"));
             }
 
             var warehouse = new Warehouse
@@ -254,20 +221,12 @@ public class WarehouseController : ControllerBase
                 UpdatedAt = warehouse.UpdatedAt
             };
 
-            return CreatedAtAction(nameof(GetWarehouse), new { id = warehouse.Id }, new ApiResponse<WarehouseDto>
-            {
-                Success = true,
-                Data = warehouseDto
-            });
+            return CreatedAtAction(nameof(GetWarehouse), new { id = warehouse.Id }, ApiResponse<WarehouseDto>.SuccessResult(warehouseDto));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating warehouse");
-            return StatusCode(500, new ApiResponse<WarehouseDto>
-            {
-                Success = false,
-                ErrorMessage = "Failed to create warehouse"
-            });
+            return StatusCode(500, ApiResponse<WarehouseDto>.ErrorResult("Failed to create warehouse"));
         }
     }
 
@@ -279,22 +238,13 @@ public class WarehouseController : ControllerBase
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new ApiResponse<WarehouseDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Invalid model state",
-                    Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList()
-                });
+                return BadRequest(ApiResponse<WarehouseDto>.ErrorResult("Invalid model state", ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList()));
             }
 
             var warehouse = await _context.Warehouses.FindAsync(id);
             if (warehouse == null)
             {
-                return NotFound(new ApiResponse<WarehouseDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Warehouse not found"
-                });
+                return NotFound(ApiResponse<WarehouseDto>.ErrorResult("Warehouse not found"));
             }
 
             // Check if another warehouse with the same name exists
@@ -303,11 +253,7 @@ public class WarehouseController : ControllerBase
 
             if (existingWarehouse != null)
             {
-                return BadRequest(new ApiResponse<WarehouseDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Warehouse with this name already exists"
-                });
+                return BadRequest(ApiResponse<WarehouseDto>.ErrorResult("Warehouse with this name already exists"));
             }
 
             warehouse.Name = request.Name;
@@ -334,20 +280,12 @@ public class WarehouseController : ControllerBase
                 UpdatedAt = warehouse.UpdatedAt
             };
 
-            return Ok(new ApiResponse<WarehouseDto>
-            {
-                Success = true,
-                Data = warehouseDto
-            });
+            return Ok(ApiResponse<WarehouseDto>.SuccessResult(warehouseDto));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating warehouse {WarehouseId}", id);
-            return StatusCode(500, new ApiResponse<WarehouseDto>
-            {
-                Success = false,
-                ErrorMessage = "Failed to update warehouse"
-            });
+            return StatusCode(500, ApiResponse<WarehouseDto>.ErrorResult("Failed to update warehouse"));
         }
     }
 
@@ -360,11 +298,7 @@ public class WarehouseController : ControllerBase
             var warehouse = await _context.Warehouses.FindAsync(id);
             if (warehouse == null)
             {
-                return NotFound(new ApiResponse<object>
-                {
-                    Success = false,
-                    ErrorMessage = "Warehouse not found"
-                });
+                return NotFound(ApiResponse<object>.ErrorResult("Warehouse not found"));
             }
 
             // Check if warehouse has transactions
@@ -373,11 +307,7 @@ public class WarehouseController : ControllerBase
 
             if (hasTransactions)
             {
-                return BadRequest(new ApiResponse<object>
-                {
-                    Success = false,
-                    ErrorMessage = "Cannot delete warehouse with transactions"
-                });
+                return BadRequest(ApiResponse<object>.ErrorResult("Cannot delete warehouse with transactions"));
             }
 
             // Soft delete - set IsActive to false
@@ -388,20 +318,12 @@ public class WarehouseController : ControllerBase
 
             _logger.LogInformation("Warehouse deleted (soft): {WarehouseName} with ID {WarehouseId}", warehouse.Name, warehouse.Id);
 
-            return Ok(new ApiResponse<object>
-            {
-                Success = true,
-                Data = new { message = "Warehouse deleted successfully" }
-            });
+            return Ok(ApiResponse<object>.SuccessResult(new { message = "Warehouse deleted successfully" }));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting warehouse {WarehouseId}", id);
-            return StatusCode(500, new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = "Failed to delete warehouse"
-            });
+            return StatusCode(500, ApiResponse<object>.ErrorResult("Failed to delete warehouse"));
         }
     }
 
@@ -443,20 +365,12 @@ public class WarehouseController : ControllerBase
         {
             var users = await _userWarehouseService.GetWarehouseUsersAsync(id);
 
-            return Ok(new ApiResponse<List<UserWarehouseDto>>
-            {
-                Success = true,
-                Data = users
-            });
+            return Ok(ApiResponse<List<UserWarehouseDto>>.SuccessResult(users));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting users for warehouse {WarehouseId}", id);
-            return StatusCode(500, new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = "Internal server error"
-            });
+            return StatusCode(500, ApiResponse<object>.ErrorResult("Internal server error"));
         }
     }
 
@@ -521,12 +435,7 @@ public class WarehouseController : ControllerBase
                     .Select(e => e.ErrorMessage)
                     .ToList();
 
-                return BadRequest(new ApiResponse<object>
-                {
-                    Success = false,
-                    ErrorMessage = "Validation failed",
-                    Errors = errors
-                });
+                return BadRequest(ApiResponse<object>.ErrorResult("Validation failed", errors));
             }
 
             var result = await _userWarehouseService.BulkAssignUsersToWarehouseAsync(bulkAssignDto);
@@ -539,21 +448,17 @@ public class WarehouseController : ControllerBase
                     SuccessfulAssignments = result.Data,
                     Errors = result.Errors,
                     TotalRequested = bulkAssignDto.UserIds.Count,
-                    TotalSuccessful = result.Data.Count,
-                    TotalFailed = result.Errors.Count
+                    TotalSuccessful = result.Data?.Count ?? 0,
+                    TotalFailed = result.Errors?.Count ?? 0
                 },
                 ErrorMessage = result.Success ? null : "Some assignments failed",
-                Errors = result.Errors
+                ValidationErrors = result.Errors
             });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in bulk assignment to warehouse {WarehouseId}", bulkAssignDto.WarehouseId);
-            return StatusCode(500, new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = "Internal server error"
-            });
+            return StatusCode(500, ApiResponse<object>.ErrorResult("Internal server error"));
         }
     }
 }

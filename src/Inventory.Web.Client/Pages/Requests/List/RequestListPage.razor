@@ -1,6 +1,7 @@
 @using Inventory.Shared.DTOs
 @using Inventory.Shared.Interfaces
 @using Inventory.Web.Client.Components.Shared
+@using Inventory.Web.Client.Extensions
 @using Inventory.Web.Client.Services
 @using Microsoft.JSInterop
 @using Radzen
@@ -33,7 +34,7 @@
         <RadzenCard Class="rz-p-4">
             <RadzenStack Gap="1rem">
                 <RadzenRow Gap="1rem">
-                    <RadzenColumn Size="12" SizeMD="4">
+                    <RadzenColumn Size="12">
                         <RadzenLabel Text="Search" Component="searchInput" />
                         <RadzenTextBox @bind-Value="searchTerm" 
                                        Name="searchInput"
@@ -41,7 +42,7 @@
                                        Style="width: 100%"
                                        @onkeypress="@HandleSearchKeyPress" />
                     </RadzenColumn>
-                    <RadzenColumn Size="12" SizeMD="3">
+                    <RadzenColumn Size="12">
                         <RadzenLabel Text="Status" Component="statusFilter" />
                         <RadzenDropDown @bind-Value="selectedStatus" 
                                         Data="statusOptions"
@@ -52,14 +53,14 @@
                                         AllowClear="true"
                                         Style="width: 100%" />
                     </RadzenColumn>
-                    <RadzenColumn Size="12" SizeMD="3">
+                    <RadzenColumn Size="12">
                         <RadzenLabel Text="Page Size" Component="pageSizeSelect" />
                         <RadzenDropDown @bind-Value="pageSize" 
                                         Data="pageSizeOptions"
                                         Name="pageSizeSelect"
                                         Style="width: 100%" />
                     </RadzenColumn>
-                    <RadzenColumn Size="12" SizeMD="2">
+                    <RadzenColumn Size="12">
                         <RadzenLabel Text="&nbsp;" />
                         <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
                             <RadzenButton Text="Search" 
@@ -123,7 +124,7 @@
         else
         {
             <RadzenStack Gap="1rem">
-                @foreach (var request in requests)
+                @foreach (var request in requests ?? Enumerable.Empty<RequestDto>())
                 {
                     <RequestCard Request="request" 
                                  OnClick="@(EventCallback.Factory.Create(this, () => ViewRequestDetails(request.Id)))"
@@ -210,24 +211,27 @@
         try
         {
             // Find and update the request in the current list
-            var request = requests?.FirstOrDefault(r => r.Id == requestId);
-            if (request != null)
+            if (requests != null)
             {
-                // Create a new request object with updated status to trigger UI update
-                var updatedRequest = new RequestDto(request.Id, request.Title, request.Description, newStatus, request.CreatedAt);
-                var index = requests.IndexOf(request);
-                requests[index] = updatedRequest;
-                
-                await InvokeAsync(StateHasChanged);
-                
-                // Show notification
-                NotificationService.Notify(new Radzen.NotificationMessage
+                var request = requests.FirstOrDefault(r => r.Id == requestId);
+                if (request != null)
                 {
-                    Severity = NotificationSeverity.Info,
-                    Summary = "Real-time Update",
-                    Detail = $"Request #{requestId} status changed to {newStatus}",
-                    Duration = 3000
-                });
+                    // Create a new request object with updated status to trigger UI update
+                    var updatedRequest = new RequestDto(request.Id, request.Title, request.Description, newStatus, request.CreatedAt);
+                    var index = requests.IndexOf(request);
+                    requests[index] = updatedRequest;
+                
+                    await InvokeAsync(StateHasChanged);
+                
+                    // Show notification
+                    NotificationService.Notify(new Radzen.NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Info,
+                        Summary = "Real-time Update",
+                        Detail = $"Request #{requestId} status changed to {newStatus}",
+                        Duration = 3000
+                    });
+                }
             }
         }
         catch (Exception ex)
@@ -273,15 +277,27 @@
                 status: selectedStatus
             );
 
+            // Если токен был обновлен, повторяем запрос автоматически
+            if (response.IsTokenRefreshed())
+            {
+                response = await RequestService.GetPagedRequestsAsync(
+                    page: currentPage,
+                    pageSize: pageSize,
+                    search: string.IsNullOrWhiteSpace(searchTerm) ? null : searchTerm,
+                    status: selectedStatus
+                );
+            }
+
             if (response.Success && response.Data != null)
             {
                 requests = response.Data.Items;
-                totalCount = response.Data.TotalCount;
+                totalCount = response.Data.total;
                 totalPages = response.Data.TotalPages;
+                errorMessage = null; // Очищаем ошибку в случае успеха
             }
             else
             {
-                errorMessage = response.ErrorMessage ?? "Failed to load requests";
+                errorMessage = response.Error ?? "Failed to load requests";
                 requests = new List<RequestDto>();
             }
         }

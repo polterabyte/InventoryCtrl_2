@@ -13,7 +13,7 @@ namespace Inventory.API.Controllers;
 public class ProductModelController(AppDbContext context, ILogger<ProductModelController> logger) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetProductModels()
+    public async Task<ActionResult<ApiResponse<List<ProductModelDto>>>> GetProductModels()
     {
         try
         {
@@ -31,25 +31,17 @@ public class ProductModelController(AppDbContext context, ILogger<ProductModelCo
                 })
                 .ToListAsync();
 
-            return Ok(new ApiResponse<List<ProductModelDto>>
-            {
-                Success = true,
-                Data = productModels
-            });
+            return Ok(ApiResponse<List<ProductModelDto>>.SuccessResult(productModels));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving product models");
-            return StatusCode(500, new ApiResponse<List<ProductModelDto>>
-            {
-                Success = false,
-                ErrorMessage = "Failed to retrieve product models"
-            });
+            return StatusCode(500, ApiResponse<List<ProductModelDto>>.ErrorResult("Failed to retrieve product models"));
         }
     }
 
     [HttpGet("manufacturer/{manufacturerId}")]
-    public async Task<IActionResult> GetProductModelsByManufacturer(int manufacturerId)
+    public async Task<ActionResult<ApiResponse<List<ProductModelDto>>>> GetProductModelsByManufacturer(int manufacturerId)
     {
         try
         {
@@ -68,25 +60,17 @@ public class ProductModelController(AppDbContext context, ILogger<ProductModelCo
                 })
                 .ToListAsync();
 
-            return Ok(new ApiResponse<List<ProductModelDto>>
-            {
-                Success = true,
-                Data = productModels
-            });
+            return Ok(ApiResponse<List<ProductModelDto>>.SuccessResult(productModels));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving product models for manufacturer {ManufacturerId}", manufacturerId);
-            return StatusCode(500, new ApiResponse<List<ProductModelDto>>
-            {
-                Success = false,
-                ErrorMessage = "Failed to retrieve product models"
-            });
+            return StatusCode(500, ApiResponse<List<ProductModelDto>>.ErrorResult("Failed to retrieve product models"));
         }
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetProductModel(int id)
+    public async Task<ActionResult<ApiResponse<ProductModelDto>>> GetProductModel(int id)
     {
         try
         {
@@ -96,11 +80,7 @@ public class ProductModelController(AppDbContext context, ILogger<ProductModelCo
 
             if (productModel == null)
             {
-                return NotFound(new ApiResponse<ProductModelDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Product model not found"
-                });
+                return NotFound(ApiResponse<ProductModelDto>.ErrorResult("Product model not found"));
             }
 
             var productModelDto = new ProductModelDto
@@ -114,26 +94,18 @@ public class ProductModelController(AppDbContext context, ILogger<ProductModelCo
                 UpdatedAt = productModel.UpdatedAt
             };
 
-            return Ok(new ApiResponse<ProductModelDto>
-            {
-                Success = true,
-                Data = productModelDto
-            });
+            return Ok(ApiResponse<ProductModelDto>.SuccessResult(productModelDto));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving product model {ProductModelId}", id);
-            return StatusCode(500, new ApiResponse<ProductModelDto>
-            {
-                Success = false,
-                ErrorMessage = "Failed to retrieve product model"
-            });
+            return StatusCode(500, ApiResponse<ProductModelDto>.ErrorResult("Failed to retrieve product model"));
         }
     }
 
     [HttpPost]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> CreateProductModel([FromBody] CreateProductModelDto createProductModelDto)
+    public async Task<ActionResult<ApiResponse<ProductModelDto>>> CreateProductModel([FromBody] CreateProductModelDto createProductModelDto)
     {
         try
         {
@@ -144,23 +116,14 @@ public class ProductModelController(AppDbContext context, ILogger<ProductModelCo
                     .SelectMany(x => x.Value?.Errors.Select(e => e.ErrorMessage) ?? new string[0])
                     .ToList();
 
-                return BadRequest(new ApiResponse<ProductModelDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Validation failed",
-                    Errors = errors
-                });
+                return BadRequest(ApiResponse<ProductModelDto>.ErrorResult("Validation failed", errors));
             }
 
             // Check if manufacturer exists
             var manufacturer = await context.Manufacturers.FindAsync(createProductModelDto.ManufacturerId);
             if (manufacturer == null)
             {
-                return BadRequest(new ApiResponse<ProductModelDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Manufacturer not found"
-                });
+                return BadRequest(ApiResponse<ProductModelDto>.ErrorResult("Manufacturer not found"));
             }
 
             var productModel = new ProductModel
@@ -187,26 +150,18 @@ public class ProductModelController(AppDbContext context, ILogger<ProductModelCo
 
             logger.LogInformation("Product model {ProductModelName} created with ID {ProductModelId}", productModel.Name, productModel.Id);
 
-            return CreatedAtAction(nameof(GetProductModel), new { id = productModel.Id }, new ApiResponse<ProductModelDto>
-            {
-                Success = true,
-                Data = productModelDto
-            });
+            return CreatedAtAction(nameof(GetProductModel), new { id = productModel.Id }, ApiResponse<ProductModelDto>.SuccessResult(productModelDto));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error creating product model");
-            return StatusCode(500, new ApiResponse<ProductModelDto>
-            {
-                Success = false,
-                ErrorMessage = "Failed to create product model"
-            });
+            return StatusCode(500, ApiResponse<ProductModelDto>.ErrorResult("Failed to create product model"));
         }
     }
 
     [HttpPut("{id}")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> UpdateProductModel(int id, [FromBody] UpdateProductModelDto updateProductModelDto)
+    public async Task<ActionResult<ApiResponse<ProductModelDto>>> UpdateProductModel(int id, [FromBody] UpdateProductModelDto updateProductModelDto)
     {
         try
         {
@@ -217,33 +172,20 @@ public class ProductModelController(AppDbContext context, ILogger<ProductModelCo
                     .SelectMany(x => x.Value?.Errors.Select(e => e.ErrorMessage) ?? new string[0])
                     .ToList();
 
-                return BadRequest(new ApiResponse<ProductModelDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Validation failed",
-                    Errors = errors
-                });
+                return BadRequest(ApiResponse<ProductModelDto>.ErrorResult("Validation failed", errors));
             }
 
             var productModel = await context.ProductModels.FindAsync(id);
             if (productModel == null)
             {
-                return NotFound(new ApiResponse<ProductModelDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Product model not found"
-                });
+                return NotFound(ApiResponse<ProductModelDto>.ErrorResult("Product model not found"));
             }
 
             // Check if manufacturer exists
             var manufacturer = await context.Manufacturers.FindAsync(updateProductModelDto.ManufacturerId);
             if (manufacturer == null)
             {
-                return BadRequest(new ApiResponse<ProductModelDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Manufacturer not found"
-                });
+                return BadRequest(ApiResponse<ProductModelDto>.ErrorResult("Manufacturer not found"));
             }
 
             productModel.Name = updateProductModelDto.Name;
@@ -266,48 +208,32 @@ public class ProductModelController(AppDbContext context, ILogger<ProductModelCo
 
             logger.LogInformation("Product model {ProductModelId} updated", id);
 
-            return Ok(new ApiResponse<ProductModelDto>
-            {
-                Success = true,
-                Data = productModelDto
-            });
+            return Ok(ApiResponse<ProductModelDto>.SuccessResult(productModelDto));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error updating product model {ProductModelId}", id);
-            return StatusCode(500, new ApiResponse<ProductModelDto>
-            {
-                Success = false,
-                ErrorMessage = "Failed to update product model"
-            });
+            return StatusCode(500, ApiResponse<ProductModelDto>.ErrorResult("Failed to update product model"));
         }
     }
 
     [HttpDelete("{id}")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> DeleteProductModel(int id)
+    public async Task<ActionResult<ApiResponse<bool>>> DeleteProductModel(int id)
     {
         try
         {
             var productModel = await context.ProductModels.FindAsync(id);
             if (productModel == null)
             {
-                return NotFound(new ApiResponse<bool>
-                {
-                    Success = false,
-                    ErrorMessage = "Product model not found"
-                });
+                return NotFound(ApiResponse<bool>.ErrorResult("Product model not found"));
             }
 
             // Check if product model is used by any products
             var hasProducts = await context.Products.AnyAsync(p => p.ProductModelId == id);
             if (hasProducts)
             {
-                return BadRequest(new ApiResponse<bool>
-                {
-                    Success = false,
-                    ErrorMessage = "Cannot delete product model that is used by products"
-                });
+                return BadRequest(ApiResponse<bool>.ErrorResult("Cannot delete product model that is used by products"));
             }
 
             context.ProductModels.Remove(productModel);
@@ -315,20 +241,12 @@ public class ProductModelController(AppDbContext context, ILogger<ProductModelCo
 
             logger.LogInformation("Product model {ProductModelId} deleted", id);
 
-            return Ok(new ApiResponse<bool>
-            {
-                Success = true,
-                Data = true
-            });
+            return Ok(ApiResponse<bool>.SuccessResult(true));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error deleting product model {ProductModelId}", id);
-            return StatusCode(500, new ApiResponse<bool>
-            {
-                Success = false,
-                ErrorMessage = "Failed to delete product model"
-            });
+            return StatusCode(500, ApiResponse<bool>.ErrorResult("Failed to delete product model"));
         }
     }
 }

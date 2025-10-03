@@ -51,17 +51,15 @@ public class DashboardControllerTests : IDisposable
         await SeedTestDataAsync();
 
         // Act
-        var result = await _controller.GetDashboardStats();
+        var actionResult = await _controller.GetDashboardStats();
 
         // Assert
-        result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
-        okResult!.StatusCode.Should().Be(200);
-        okResult.Value.Should().NotBeNull();
+        actionResult.Should().NotBeNull();
+        var okResult = actionResult.Result.Should().BeOfType<OkObjectResult>().Subject;
+        okResult.StatusCode.Should().Be(200);
         
-        var response = okResult.Value as ApiResponse<object>;
-        response.Should().NotBeNull();
-        response!.Success.Should().BeTrue();
+        var response = okResult.Value.Should().BeOfType<ApiResponse<DashboardStatsDto>>().Subject;
+        response.Success.Should().BeTrue();
         response.Data.Should().NotBeNull();
     }
 
@@ -69,16 +67,15 @@ public class DashboardControllerTests : IDisposable
     public async Task GetDashboardStats_WithEmptyDatabase_ShouldReturnZeroStats()
     {
         // Act
-        var result = await _controller.GetDashboardStats();
+        var actionResult = await _controller.GetDashboardStats();
 
         // Assert
-        result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
-        okResult!.StatusCode.Should().Be(200);
-        var response = okResult.Value as ApiResponse<object>;
+        actionResult.Should().NotBeNull();
+        var okResult = actionResult.Result.Should().BeOfType<OkObjectResult>().Subject;
+        okResult.StatusCode.Should().Be(200);
         
-        response.Should().NotBeNull();
-        response!.Success.Should().BeTrue();
+        var response = okResult.Value.Should().BeOfType<ApiResponse<DashboardStatsDto>>().Subject;
+        response.Success.Should().BeTrue();
         response.Data.Should().NotBeNull();
     }
 
@@ -90,16 +87,15 @@ public class DashboardControllerTests : IDisposable
         _context.Dispose();
 
         // Act
-        var result = await _controller.GetDashboardStats();
+        var actionResult = await _controller.GetDashboardStats();
 
         // Assert
-        result.Should().NotBeNull();
-        var objectResult = result as ObjectResult;
-        objectResult!.StatusCode.Should().Be(500);
+        actionResult.Should().NotBeNull();
+        var objectResult = actionResult.Result.Should().BeOfType<ObjectResult>().Subject;
+        objectResult.StatusCode.Should().Be(500);
         
-        var response = objectResult.Value as ApiResponse<object>;
-        response.Should().NotBeNull();
-        response!.Success.Should().BeFalse();
+        var response = objectResult.Value.Should().BeOfType<ApiResponse<DashboardStatsDto>>().Subject;
+        response.Success.Should().BeFalse();
     }
 
     [Fact]
@@ -109,17 +105,15 @@ public class DashboardControllerTests : IDisposable
         await SeedTestDataAsync();
 
         // Act
-        var result = await _controller.GetRecentActivity();
+        var actionResult = await _controller.GetRecentActivity();
 
         // Assert
-        result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
-        okResult!.StatusCode.Should().Be(200);
-        okResult.Value.Should().NotBeNull();
+        actionResult.Should().NotBeNull();
+        var okResult = actionResult.Result.Should().BeOfType<OkObjectResult>().Subject;
+        okResult.StatusCode.Should().Be(200);
         
-        var response = okResult.Value as ApiResponse<object>;
-        response.Should().NotBeNull();
-        response!.Success.Should().BeTrue();
+        var response = okResult.Value.Should().BeOfType<ApiResponse<RecentActivityDto>>().Subject;
+        response.Success.Should().BeTrue();
         response.Data.Should().NotBeNull();
     }
 
@@ -131,16 +125,15 @@ public class DashboardControllerTests : IDisposable
         _context.Dispose();
 
         // Act
-        var result = await _controller.GetRecentActivity();
+        var actionResult = await _controller.GetRecentActivity();
 
         // Assert
-        result.Should().NotBeNull();
-        var objectResult = result as ObjectResult;
-        objectResult!.StatusCode.Should().Be(500);
+        actionResult.Should().NotBeNull();
+        var objectResult = actionResult.Result.Should().BeOfType<ObjectResult>().Subject;
+        objectResult.StatusCode.Should().Be(500);
         
-        var response = objectResult.Value as ApiResponse<object>;
-        response.Should().NotBeNull();
-        response!.Success.Should().BeFalse();
+        var response = objectResult.Value.Should().BeOfType<ApiResponse<RecentActivityDto>>().Subject;
+        response.Success.Should().BeFalse();
     }
 
     [Fact]
@@ -150,16 +143,15 @@ public class DashboardControllerTests : IDisposable
         await SeedTestDataAsync();
 
         // Act
-        var result = await _controller.GetLowStockProducts();
+        var actionResult = await _controller.GetLowStockProducts();
 
         // Assert
-        result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
-        okResult!.StatusCode.Should().Be(200);
+        actionResult.Should().NotBeNull();
+        var okResult = actionResult.Result.Should().BeOfType<OkObjectResult>().Subject;
+        okResult.StatusCode.Should().Be(200);
         
-        var response = okResult.Value as ApiResponse<List<LowStockProductDto>>;
-        response.Should().NotBeNull();
-        response!.Success.Should().BeTrue();
+        var response = okResult.Value.Should().BeOfType<ApiResponse<List<LowStockProductDto>>>().Subject;
+        response.Success.Should().BeTrue();
         response.Data.Should().NotBeNull();
     }
 
@@ -209,16 +201,15 @@ public class DashboardControllerTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _controller.GetLowStockProducts();
+        var actionResult = await _controller.GetLowStockProducts();
 
         // Assert
-        result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
-        okResult!.StatusCode.Should().Be(200);
+        actionResult.Should().NotBeNull();
+        var okResult = actionResult.Result.Should().BeOfType<OkObjectResult>().Subject;
+        okResult.StatusCode.Should().Be(200);
         
-        var response = okResult.Value as ApiResponse<List<LowStockProductDto>>;
-        response.Should().NotBeNull();
-        response!.Success.Should().BeTrue();
+        var response = okResult.Value.Should().BeOfType<ApiResponse<List<LowStockProductDto>>>().Subject;
+        response.Success.Should().BeTrue();
         response.Data.Should().NotBeNull();
     }
 
@@ -230,16 +221,15 @@ public class DashboardControllerTests : IDisposable
         _context.Dispose();
 
         // Act
-        var result = await _controller.GetLowStockProducts();
+        var actionResult = await _controller.GetLowStockProducts();
 
         // Assert
-        result.Should().NotBeNull();
-        var objectResult = result as ObjectResult;
-        objectResult!.StatusCode.Should().Be(500);
+        actionResult.Should().NotBeNull();
+        var objectResult = actionResult.Result.Should().BeOfType<ObjectResult>().Subject;
+        objectResult.StatusCode.Should().Be(500);
         
-        var response = objectResult.Value as ApiResponse<List<LowStockProductDto>>;
-        response.Should().NotBeNull();
-        response!.Success.Should().BeFalse();
+        var response = objectResult.Value.Should().BeOfType<ApiResponse<List<LowStockProductDto>>>().Subject;
+        response.Success.Should().BeFalse();
     }
 
     private async Task SeedTestDataAsync()

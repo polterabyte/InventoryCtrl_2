@@ -11,7 +11,9 @@ public static class TestUsers
         Email = "admin@test.com",
         Role = "Admin",
         CreatedAt = DateTime.UtcNow,
-        UpdatedAt = DateTime.UtcNow
+        UpdatedAt = DateTime.UtcNow,
+        FirstName = "Test",
+        LastName = "Admin"
     };
 
     public static User RegularUser => new()
@@ -21,7 +23,9 @@ public static class TestUsers
         Email = "user@test.com",
         Role = "User",
         CreatedAt = DateTime.UtcNow,
-        UpdatedAt = DateTime.UtcNow
+        UpdatedAt = DateTime.UtcNow,
+        FirstName = "Regular",
+        LastName = "User"
     };
 
     public static User ManagerUser => new()
@@ -31,6 +35,8 @@ public static class TestUsers
         Email = "manager@test.com",
         Role = "Manager",
         CreatedAt = DateTime.UtcNow,
-        UpdatedAt = DateTime.UtcNow
+        UpdatedAt = DateTime.UtcNow,
+        FirstName = "Test",
+        LastName = "Manager"
     };
 }

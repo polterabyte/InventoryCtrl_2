@@ -17,7 +17,7 @@ namespace Inventory.API.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.11")
+                .HasAnnotation("ProductVersion", "8.0.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -786,6 +786,14 @@ namespace Inventory.API.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("boolean");
 
@@ -842,6 +850,55 @@ namespace Inventory.API.Migrations
                         .HasDatabaseName("UserNameIndex");
 
                     b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("Inventory.API.Models.UserWarehouse", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.Property<int>("WarehouseId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("AccessLevel")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Full");
+
+                    b.Property<DateTime>("AssignedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<bool>("IsDefault")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("UserId", "WarehouseId");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("IX_UserWarehouses_UserId");
+
+                    b.HasIndex("WarehouseId")
+                        .HasDatabaseName("IX_UserWarehouses_WarehouseId");
+
+                    b.HasIndex("UserId", "IsDefault")
+                        .HasDatabaseName("IX_UserWarehouses_UserId_IsDefault")
+                        .HasFilter("\"IsDefault\" = true");
+
+                    b.ToTable("UserWarehouses");
                 });
 
             modelBuilder.Entity("Inventory.API.Models.Warehouse", b =>
@@ -1600,6 +1657,25 @@ namespace Inventory.API.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Inventory.API.Models.UserWarehouse", b =>
+                {
+                    b.HasOne("Inventory.API.Models.User", "User")
+                        .WithMany("UserWarehouses")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Inventory.API.Models.Warehouse", "Warehouse")
+                        .WithMany("UserWarehouses")
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+
+                    b.Navigation("Warehouse");
+                });
+
             modelBuilder.Entity("Inventory.API.Models.Warehouse", b =>
                 {
                     b.HasOne("Inventory.API.Models.Location", "Location")
@@ -1763,11 +1839,15 @@ namespace Inventory.API.Migrations
                     b.Navigation("ProductHistories");
 
                     b.Navigation("Transactions");
+
+                    b.Navigation("UserWarehouses");
                 });
 
             modelBuilder.Entity("Inventory.API.Models.Warehouse", b =>
                 {
                     b.Navigation("Transactions");
+
+                    b.Navigation("UserWarehouses");
                 });
 #pragma warning restore 612, 618
         }

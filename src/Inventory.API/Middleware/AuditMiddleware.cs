@@ -18,7 +18,7 @@ public class AuditMiddleware
         _logger = logger;
     }
 
-    public async Task InvokeAsync(HttpContext context, AuditService auditService)
+    public async Task InvokeAsync(HttpContext context, IInternalAuditService auditService)
     {
         var stopwatch = Stopwatch.StartNew();
         var originalBodyStream = context.Response.Body;

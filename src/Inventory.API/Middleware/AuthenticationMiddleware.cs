@@ -78,6 +78,7 @@ public class AuthenticationMiddleware
         var publicPaths = new[]
         {
             "/api/auth/login",
+            "/api/auth/refresh",
             "/api/auth/register",
             "/api/health",
             "/health",

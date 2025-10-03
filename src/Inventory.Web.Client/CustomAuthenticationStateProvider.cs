@@ -27,35 +27,25 @@ namespace Inventory.Web.Client
         {
             try
             {
-                // Получаем токен через TokenManagementService
-                var token = await _tokenManagementService.GetStoredTokenAsync();
                 var identity = new ClaimsIdentity();
                 _httpClient.DefaultRequestHeaders.Authorization = null;
 
+                // Просто получаем токен, без логики обновления
+                var token = await _tokenManagementService.GetStoredTokenAsync();
+
                 if (!string.IsNullOrEmpty(token))
                 {
-                    // Проверяем, не истекает ли токен в ближайшее время
-                    if (await _tokenManagementService.IsTokenExpiringSoonAsync())
-                    {
-                        // Пытаемся обновить токен
-                        var refreshSuccess = await _tokenManagementService.TryRefreshTokenAsync();
-                        if (refreshSuccess)
-                        {
-                            // Получаем обновленный токен
-                            token = await _tokenManagementService.GetStoredTokenAsync();
-                        }
-                        else
-                        {
-                            // Если не удалось обновить, очищаем токены
-                            await _tokenManagementService.ClearTokensAsync();
-                            token = null;
-                        }
-                    }
-
-                    if (!string.IsNullOrEmpty(token))
+                    // Проверяем валидность токена (например, не истек ли он полностью)
+                    var expiration = GetTokenExpirationTime(token);
+                    if (expiration.HasValue && expiration.Value > DateTimeOffset.UtcNow)
                     {
                         identity = new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt");
                         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    }
+                    else
+                    {
+                        // Токен истек, очищаем его
+                        await _tokenManagementService.ClearTokensAsync();
                     }
                 }
 
@@ -64,25 +54,22 @@ namespace Inventory.Web.Client
             }
             catch (Exception ex)
             {
-                // В случае ошибки возвращаем неаутентифицированное состояние
                 Console.WriteLine($"Error in GetAuthenticationStateAsync: {ex.Message}");
                 return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
             }
         }
 
-        public async Task MarkUserAsAuthenticatedAsync(string token)
+        public async Task MarkUserAsAuthenticatedAsync(string accessToken, string refreshToken)
         {
-            // Сохраняем токен через TokenManagementService
-            await _tokenManagementService.SaveTokensAsync(token, "");
+            await _tokenManagementService.SaveTokensAsync(accessToken, refreshToken);
             
-            var authenticatedUser = new ClaimsPrincipal(new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt"));
+            var authenticatedUser = new ClaimsPrincipal(new ClaimsIdentity(ParseClaimsFromJwt(accessToken), "jwt"));
             var authState = Task.FromResult(new AuthenticationState(authenticatedUser));
             NotifyAuthenticationStateChanged(authState);
         }
-
+        
         public async Task MarkUserAsLoggedOutAsync()
         {
-            // Очищаем токены через TokenManagementService
             await _tokenManagementService.ClearTokensAsync();
             
             var anonymousUser = new ClaimsPrincipal(new ClaimsIdentity());
@@ -93,6 +80,8 @@ namespace Inventory.Web.Client
         private IEnumerable<Claim> ParseClaimsFromJwt(string jwt)
         {
             var claims = new List<Claim>();
+            if (string.IsNullOrEmpty(jwt)) return claims;
+
             var payload = jwt.Split('.')[1];
             var jsonBytes = ParseBase64WithoutPadding(payload);
             var keyValuePairs = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonBytes);
@@ -106,20 +95,15 @@ namespace Inventory.Web.Client
                     if (roles.ToString()?.Trim().StartsWith("[") == true)
                     {
                         var parsedRoles = JsonSerializer.Deserialize<string[]>(roles.ToString()!);
-
                         if (parsedRoles != null)
                         {
-                            foreach (var parsedRole in parsedRoles)
-                            {
-                                claims.Add(new Claim(ClaimTypes.Role, parsedRole));
-                            }
+                            claims.AddRange(parsedRoles.Select(parsedRole => new Claim(ClaimTypes.Role, parsedRole)));
                         }
                     }
                     else
                     {
                         claims.Add(new Claim(ClaimTypes.Role, roles.ToString() ?? string.Empty));
                     }
-
                     keyValuePairs.Remove(ClaimTypes.Role);
                 }
 
@@ -127,18 +111,38 @@ namespace Inventory.Web.Client
             }
             return claims;
         }
+
         private byte[] ParseBase64WithoutPadding(string base64)
         {
             switch (base64.Length % 4)
             {
-                case 2:
-                    base64 += "==";
-                    break;
-                case 3:
-                    base64 += "=";
-                    break;
+                case 2: base64 += "=="; break;
+                case 3: base64 += "="; break;
             }
             return Convert.FromBase64String(base64);
+        }
+
+        private DateTimeOffset? GetTokenExpirationTime(string token)
+        {
+            try
+            {
+                var parts = token.Split('.');
+                if (parts.Length != 3) return null;
+
+                var payload = parts[1];
+                var jsonBytes = ParseBase64WithoutPadding(payload);
+                var payloadJson = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonBytes);
+
+                if (payloadJson?.TryGetValue("exp", out var expValue) == true && long.TryParse(expValue.ToString(), out var expUnix))
+                {
+                    return DateTimeOffset.FromUnixTimeSeconds(expUnix);
+                }
+                return null;
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }

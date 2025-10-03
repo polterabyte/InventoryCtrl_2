@@ -12,7 +12,7 @@ namespace Inventory.API.Controllers;
 public class DashboardController(AppDbContext context, ILogger<DashboardController> logger) : ControllerBase
 {
     [HttpGet("stats")]
-    public async Task<IActionResult> GetDashboardStats()
+    public async Task<ActionResult<ApiResponse<DashboardStatsDto>>> GetDashboardStats()
     {
         try
         {
@@ -47,7 +47,7 @@ public class DashboardController(AppDbContext context, ILogger<DashboardControll
                 .Where(p => p.IsActive && p.CreatedAt >= DateTime.UtcNow.AddDays(-30))
                 .CountAsync();
 
-            var stats = new
+            var stats = new DashboardStatsDto
             {
                 TotalProducts = totalProducts,
                 TotalCategories = totalCategories,
@@ -62,34 +62,22 @@ public class DashboardController(AppDbContext context, ILogger<DashboardControll
             logger.LogInformation("Dashboard statistics retrieved successfully: {Stats}", 
                 new { totalProducts, lowStockProducts, outOfStockProducts });
 
-            return Ok(new ApiResponse<object>
-            {
-                Success = true,
-                Data = stats
-            });
+            return Ok(ApiResponse<DashboardStatsDto>.SuccessResult(stats));
         }
         catch (InvalidOperationException ex)
         {
             logger.LogError(ex, "Database operation error while retrieving dashboard statistics");
-            return StatusCode(500, new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = "Database operation failed. Please try again."
-            });
+            return StatusCode(500, ApiResponse<DashboardStatsDto>.ErrorResult("Database operation failed. Please try again."));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Unexpected error while retrieving dashboard statistics");
-            return StatusCode(500, new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = "Failed to retrieve dashboard statistics"
-            });
+            return StatusCode(500, ApiResponse<DashboardStatsDto>.ErrorResult("Failed to retrieve dashboard statistics"));
         }
     }
 
     [HttpGet("recent-activity")]
-    public async Task<IActionResult> GetRecentActivity()
+    public async Task<ActionResult<ApiResponse<RecentActivityDto>>> GetRecentActivity()
     {
         try
         {
@@ -103,7 +91,7 @@ public class DashboardController(AppDbContext context, ILogger<DashboardControll
                 .Where(t => t.Date >= DateTime.UtcNow.AddDays(-7))
                 .OrderByDescending(t => t.Date)
                 .Take(10)
-                .Select(t => new
+                .Select(t => new RecentTransactionDto
                 {
                     Id = t.Id,
                     ProductName = t.Product.Name,
@@ -111,7 +99,7 @@ public class DashboardController(AppDbContext context, ILogger<DashboardControll
                     Type = t.Type.ToString(),
                     Quantity = t.Quantity,
                     Date = t.Date,
-                    UserName = t.User.UserName,
+                    UserName = t.User.UserName ?? "N/A",
                     WarehouseName = t.Warehouse.Name,
                     Description = t.Description
                 })
@@ -124,7 +112,7 @@ public class DashboardController(AppDbContext context, ILogger<DashboardControll
                 .Where(p => p.IsActive && p.CreatedAt >= DateTime.UtcNow.AddDays(-30))
                 .OrderByDescending(p => p.CreatedAt)
                 .Take(5)
-                .Select(p => new
+                .Select(p => new RecentProductDto
                 {
                     Id = p.Id,
                     Name = p.Name,
@@ -136,7 +124,7 @@ public class DashboardController(AppDbContext context, ILogger<DashboardControll
                 })
                 .ToListAsync();
 
-            var activity = new
+            var activity = new RecentActivityDto
             {
                 RecentTransactions = recentTransactions,
                 RecentProducts = recentProducts
@@ -145,34 +133,22 @@ public class DashboardController(AppDbContext context, ILogger<DashboardControll
             logger.LogInformation("Recent activity retrieved successfully: {TransactionCount} transactions, {ProductCount} products", 
                 recentTransactions.Count, recentProducts.Count);
 
-            return Ok(new ApiResponse<object>
-            {
-                Success = true,
-                Data = activity
-            });
+            return Ok(ApiResponse<RecentActivityDto>.SuccessResult(activity));
         }
         catch (InvalidOperationException ex)
         {
             logger.LogError(ex, "Database operation error while retrieving recent activity");
-            return StatusCode(500, new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = "Database operation failed. Please try again."
-            });
+            return StatusCode(500, ApiResponse<RecentActivityDto>.ErrorResult("Database operation failed. Please try again."));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Unexpected error while retrieving recent activity");
-            return StatusCode(500, new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = "Failed to retrieve recent activity"
-            });
+            return StatusCode(500, ApiResponse<RecentActivityDto>.ErrorResult("Failed to retrieve recent activity"));
         }
     }
 
     [HttpGet("low-stock-products")]
-    public async Task<IActionResult> GetLowStockProducts()
+    public async Task<ActionResult<ApiResponse<List<LowStockProductDto>>>> GetLowStockProducts()
     {
         try
         {
@@ -199,29 +175,17 @@ public class DashboardController(AppDbContext context, ILogger<DashboardControll
 
             logger.LogInformation("Low stock products retrieved successfully: {Count} products", lowStockProducts.Count);
 
-            return Ok(new ApiResponse<List<LowStockProductDto>>
-            {
-                Success = true,
-                Data = lowStockProducts
-            });
+            return Ok(ApiResponse<List<LowStockProductDto>>.SuccessResult(lowStockProducts));
         }
         catch (InvalidOperationException ex)
         {
             logger.LogError(ex, "Database operation error while retrieving low stock products");
-            return StatusCode(500, new ApiResponse<List<LowStockProductDto>>
-            {
-                Success = false,
-                ErrorMessage = "Database operation failed. Please try again."
-            });
+            return StatusCode(500, ApiResponse<List<LowStockProductDto>>.ErrorResult("Database operation failed. Please try again."));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Unexpected error while retrieving low stock products");
-            return StatusCode(500, new ApiResponse<List<LowStockProductDto>>
-            {
-                Success = false,
-                ErrorMessage = "Failed to retrieve low stock products"
-            });
+            return StatusCode(500, ApiResponse<List<LowStockProductDto>>.ErrorResult("Failed to retrieve low stock products"));
         }
     }
 }

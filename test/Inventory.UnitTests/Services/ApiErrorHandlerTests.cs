@@ -119,7 +119,7 @@ namespace Inventory.UnitTests.Services
 
             _mockTokenManagement.Setup(x => x.HasValidRefreshTokenAsync())
                 .ReturnsAsync(true);
-            _mockTokenManagement.Setup(x => x.TryRefreshTokenAsync())
+            _mockTokenManagement.Setup(x => x.TryRefreshTokenAsync(It.IsAny<bool>()))
                 .ReturnsAsync(true);
 
             // Act
@@ -128,7 +128,7 @@ namespace Inventory.UnitTests.Services
             // Assert
             Assert.False(result.Success);
             Assert.Equal("TOKEN_REFRESHED", result.ErrorMessage);
-            _mockTokenManagement.Verify(x => x.TryRefreshTokenAsync(), Times.Once);
+            _mockTokenManagement.Verify(x => x.TryRefreshTokenAsync(It.IsAny<bool>()), Times.Once);
         }
 
         [Fact]
@@ -165,7 +165,7 @@ namespace Inventory.UnitTests.Services
 
             _mockTokenManagement.Setup(x => x.HasValidRefreshTokenAsync())
                 .ReturnsAsync(true);
-            _mockTokenManagement.Setup(x => x.TryRefreshTokenAsync())
+            _mockTokenManagement.Setup(x => x.TryRefreshTokenAsync(It.IsAny<bool>()))
                 .ReturnsAsync(false);
 
             // Act
@@ -263,10 +263,13 @@ namespace Inventory.UnitTests.Services
             var testData = new PagedApiResponse<string>
             {
                 Success = true,
-                Data = new List<string> { "Item1", "Item2" },
-                TotalCount = 2,
-                Page = 1,
-                PageSize = 10
+                Data = new PagedResponse<string>
+                {
+                    Items = new List<string> { "Item1", "Item2" },
+                    total = 2,
+                    page = 1,
+                    PageSize = 10
+                }
             };
             var jsonContent = System.Text.Json.JsonSerializer.Serialize(testData);
             var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
@@ -280,7 +283,7 @@ namespace Inventory.UnitTests.Services
             // Assert
             Assert.True(result.Success);
             Assert.NotNull(result.Data);
-            Assert.Equal(2, result.TotalCount);
+            Assert.Equal(2, result.Data.total);
         }
 
         public void Dispose()

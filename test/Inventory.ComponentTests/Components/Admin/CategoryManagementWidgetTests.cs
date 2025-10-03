@@ -1,203 +1,120 @@
-using Bunit;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.JSInterop;
+using Inventory.Shared.Interfaces;
 using Moq;
 using Inventory.UI.Components.Admin;
 using Inventory.Shared.DTOs;
-using Inventory.Shared.Interfaces;
-using Inventory.Shared.Services;
 using Xunit;
 using FluentAssertions;
+using Radzen;
+using Microsoft.JSInterop;
+using Microsoft.Extensions.DependencyInjection;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Bunit;
+using Microsoft.AspNetCore.Components;
 
-namespace Inventory.ComponentTests.Components.Admin;
-
-public class CategoryManagementWidgetTests : ComponentTestBase
+namespace Inventory.ComponentTests.Components.Admin
 {
-    [Fact]
-    public void CategoryManagementWidget_RendersCorrectly()
+    public class CategoryManagementWidgetTests : TestContext
     {
-        // Arrange
-        var mockCategoryService = new Mock<ICategoryService>();
-        var mockNotificationService = new Mock<INotificationService>();
-        var mockJSRuntime = new Mock<IJSRuntime>();
+        private readonly Mock<IClientCategoryService> _mockCategoryService;
+        private readonly Mock<NotificationService> _mockUiNotificationService;
+        private readonly Mock<IJSRuntime> _mockJsRuntime;
+        private readonly Mock<DialogService> _mockDialogService;
 
-        Services.AddSingleton(mockCategoryService.Object);
-        Services.AddSingleton(mockNotificationService.Object);
-        Services.AddSingleton(mockJSRuntime.Object);
-
-        // Act
-        var component = RenderComponent<CategoryManagementWidget>();
-
-        // Assert
-        component.Should().NotBeNull();
-        component.Markup.Should().Contain("Categories Management");
-        component.Markup.Should().Contain("Add New Category");
-    }
-
-    [Fact]
-    public void CategoryManagementWidget_ShowsCreateModal_WhenAddButtonClicked()
-    {
-        // Arrange
-        var mockCategoryService = new Mock<ICategoryService>();
-        var mockNotificationService = new Mock<INotificationService>();
-        var mockJSRuntime = new Mock<IJSRuntime>();
-
-        Services.AddSingleton(mockCategoryService.Object);
-        Services.AddSingleton(mockNotificationService.Object);
-        Services.AddSingleton(mockJSRuntime.Object);
-
-        var component = RenderComponent<CategoryManagementWidget>();
-
-        // Act
-        var addButton = component.Find("button:contains('Add New Category')");
-        addButton.Click();
-
-        // Assert
-        component.Markup.Should().Contain("Create Category");
-        component.Markup.Should().Contain("modal");
-    }
-
-    [Fact]
-    public void CategoryManagementWidget_ShowsEditModal_WhenEditButtonClicked()
-    {
-        // Arrange
-        var mockCategoryService = new Mock<ICategoryService>();
-        var mockNotificationService = new Mock<INotificationService>();
-        var mockJSRuntime = new Mock<IJSRuntime>();
-
-        var categories = new List<CategoryDto>
+        public CategoryManagementWidgetTests()
         {
-            new() { Id = 1, Name = "Test Category", Description = "Test Description", IsActive = true }
-        };
+            _mockCategoryService = new Mock<IClientCategoryService>();
+            _mockUiNotificationService = new Mock<NotificationService>();
+            _mockJsRuntime = new Mock<IJSRuntime>();
+            _mockDialogService = new Mock<DialogService>();
 
-        mockCategoryService.Setup(s => s.GetAllCategoriesAsync())
-                          .ReturnsAsync(categories);
+            Services.AddSingleton(_mockCategoryService.Object);
+            Services.AddSingleton(_mockUiNotificationService.Object);
+            Services.AddSingleton(_mockJsRuntime.Object);
+            Services.AddSingleton(_mockDialogService.Object);
+            Services.AddScoped(sp => new HttpClient());
 
-        Services.AddSingleton(mockCategoryService.Object);
-        Services.AddSingleton(mockNotificationService.Object);
-        Services.AddSingleton(mockJSRuntime.Object);
+            // Mock the NotificationService to prevent NullReferenceException
+            Services.AddSingleton<NotificationService>(new NotificationService());
+        }
 
-        var component = RenderComponent<CategoryManagementWidget>();
-
-        // Act
-        var editButton = component.Find("button[title='Edit']");
-        editButton.Click();
-
-        // Assert
-        component.Markup.Should().Contain("Edit Category");
-        component.Markup.Should().Contain("modal");
-    }
-
-    [Fact]
-    public void CategoryManagementWidget_ShowsDeleteConfirmation_WhenDeleteButtonClicked()
-    {
-        // Arrange
-        var mockCategoryService = new Mock<ICategoryService>();
-        var mockNotificationService = new Mock<INotificationService>();
-        var mockJSRuntime = new Mock<IJSRuntime>();
-
-        var categories = new List<CategoryDto>
+        [Fact]
+        public void RendersCorrectly_And_LoadsDataOnInitialization()
         {
-            new() { Id = 1, Name = "Test Category", Description = "Test Description", IsActive = true }
-        };
+            // Arrange
+            var categories = new List<CategoryDto>
+            {
+                new() { Id = 1, Name = "Root 1", IsActive = true, CreatedAt = System.DateTime.Now },
+                new() { Id = 2, Name = "Child 1", ParentCategoryId = 1, IsActive = true, CreatedAt = System.DateTime.Now }
+            };
+            _mockCategoryService.Setup(s => s.GetAllCategoriesAsync()).ReturnsAsync(categories);
+            _mockCategoryService.Setup(s => s.GetRootCategoriesAsync()).ReturnsAsync(new List<CategoryDto> { categories[0] });
 
-        mockCategoryService.Setup(s => s.GetAllCategoriesAsync())
-                          .ReturnsAsync(categories);
+            // Act
+            var cut = RenderComponent<CategoryManagementWidget>();
 
-        mockJSRuntime.Setup(js => js.InvokeAsync<bool>("confirm", It.IsAny<string>()))
-                    .ReturnsAsync(true);
+            // Assert
+            cut.WaitForAssertion(() => cut.FindAll("tbody tr").Count.Should().Be(2));
+            cut.Find("h5").TextContent.Should().Be("Categories Management");
+            cut.Markup.Should().Contain("Root 1");
+            cut.Markup.Should().Contain("Child 1");
+        }
 
-        Services.AddSingleton(mockCategoryService.Object);
-        Services.AddSingleton(mockNotificationService.Object);
-        Services.AddSingleton(mockJSRuntime.Object);
-
-        var component = RenderComponent<CategoryManagementWidget>();
-
-        // Act
-        var deleteButton = component.Find("button[title='Delete']");
-        deleteButton.Click();
-
-        // Assert
-        mockJSRuntime.Verify(js => js.InvokeAsync<bool>("confirm", "Are you sure you want to delete 'Test Category'?"), Times.Once);
-    }
-
-    [Fact]
-    public void CategoryManagementWidget_DisplaysCategories_WhenDataLoaded()
-    {
-        // Arrange
-        var mockCategoryService = new Mock<ICategoryService>();
-        var mockNotificationService = new Mock<INotificationService>();
-        var mockJSRuntime = new Mock<IJSRuntime>();
-
-        var categories = new List<CategoryDto>
+        [Fact]
+        public async Task AddButton_OpensCreateDialog()
         {
-            new() { Id = 1, Name = "Test Category 1", Description = "Test Description 1", IsActive = true },
-            new() { Id = 2, Name = "Test Category 2", Description = "Test Description 2", IsActive = false }
-        };
+            // Arrange
+            _mockCategoryService.Setup(s => s.GetRootCategoriesAsync()).ReturnsAsync(new List<CategoryDto>());
+            var cut = RenderComponent<CategoryManagementWidget>();
 
-        mockCategoryService.Setup(s => s.GetAllCategoriesAsync())
-                          .ReturnsAsync(categories);
+            // Act
+            cut.Find("button.rz-button.rz-button-primary").Click();
+            await Task.Delay(100); // Allow dialog to open
 
-        Services.AddSingleton(mockCategoryService.Object);
-        Services.AddSingleton(mockNotificationService.Object);
-        Services.AddSingleton(mockJSRuntime.Object);
+            // Assert
+            _mockDialogService.Verify(d => d.OpenAsync(
+                "Create Category",
+                It.IsAny<RenderFragment<DialogService>>(),
+                It.Is<DialogOptions>(o => o.Width == "500px")),
+                Times.Once);
+        }
 
-        // Act
-        var component = RenderComponent<CategoryManagementWidget>();
+        [Fact]
+        public async Task RefreshButton_ReloadsData()
+        {
+            // Arrange
+            var component = RenderComponent<CategoryManagementWidget>();
+            _mockCategoryService.Invocations.Clear(); // Clear initial load invocation
 
-        // Assert
-        component.Markup.Should().Contain("Test Category 1");
-        component.Markup.Should().Contain("Test Category 2");
-        component.Markup.Should().Contain("Active");
-        component.Markup.Should().Contain("Inactive");
-    }
+            // Act
+            var refreshButton = component.Find("button.btn-secondary");
+            await component.InvokeAsync(() => refreshButton.Click());
 
-    [Fact]
-    public void CategoryManagementWidget_ShowsLoadingState_WhenDataIsLoading()
-    {
-        // Arrange
-        var mockCategoryService = new Mock<ICategoryService>();
-        var mockNotificationService = new Mock<INotificationService>();
-        var mockJSRuntime = new Mock<IJSRuntime>();
+            // Assert
+            _mockCategoryService.Verify(s => s.GetAllCategoriesAsync(), Times.Exactly(2));
+        }
 
-        // Setup a task that will never complete to simulate loading
-        var tcs = new TaskCompletionSource<List<CategoryDto>>();
-        mockCategoryService.Setup(s => s.GetAllCategoriesAsync())
-                          .Returns(tcs.Task);
+        [Fact]
+        public async Task DeleteButton_ShowsConfirmation_AndDeletesItem()
+        {
+            // Arrange
+            var categoryToDelete = new CategoryDto { Id = 1, Name = "ToDelete", IsActive = true, CreatedAt = System.DateTime.Now };
+            _mockCategoryService.Setup(s => s.GetAllCategoriesAsync()).ReturnsAsync(new List<CategoryDto> { categoryToDelete });
+            _mockCategoryService.Setup(s => s.GetRootCategoriesAsync()).ReturnsAsync(new List<CategoryDto>());
+            _mockJsRuntime.Setup(js => js.InvokeAsync<bool>("confirm", It.IsAny<object[]>())).ReturnsAsync(true);
+            _mockCategoryService.Setup(s => s.DeleteCategoryAsync(categoryToDelete.Id)).ReturnsAsync(true);
 
-        Services.AddSingleton(mockCategoryService.Object);
-        Services.AddSingleton(mockNotificationService.Object);
-        Services.AddSingleton(mockJSRuntime.Object);
+            var cut = RenderComponent<CategoryManagementWidget>();
+            cut.WaitForState(() => cut.FindAll("tbody tr").Count > 0);
 
-        // Act
-        var component = RenderComponent<CategoryManagementWidget>();
+            // Act
+            cut.Find("button.rz-button-danger").Click();
+            await Task.Delay(100); // allow confirm dialog and service call
 
-        // Assert
-        component.Markup.Should().Contain("Loading...");
-        component.Markup.Should().Contain("spinner-border");
-    }
-
-    [Fact]
-    public void CategoryManagementWidget_ShowsNoDataMessage_WhenNoCategories()
-    {
-        // Arrange
-        var mockCategoryService = new Mock<ICategoryService>();
-        var mockNotificationService = new Mock<INotificationService>();
-        var mockJSRuntime = new Mock<IJSRuntime>();
-
-        var categories = new List<CategoryDto>();
-
-        mockCategoryService.Setup(s => s.GetAllCategoriesAsync())
-                          .ReturnsAsync(categories);
-
-        Services.AddSingleton(mockCategoryService.Object);
-        Services.AddSingleton(mockNotificationService.Object);
-        Services.AddSingleton(mockJSRuntime.Object);
-
-        // Act
-        var component = RenderComponent<CategoryManagementWidget>();
-
-        // Assert
-        component.Markup.Should().Contain("No categories found");
+            // Assert
+            _mockJsRuntime.Verify(js => js.InvokeAsync<bool>("confirm", It.Is<object[]>(o => o[0].ToString()!.Contains("ToDelete"))), Times.Once);
+            _mockCategoryService.Verify(s => s.DeleteCategoryAsync(categoryToDelete.Id), Times.Once);
+            _mockUiNotificationService.Verify(n => n.Notify(It.Is<NotificationMessage>(m => m.Severity == NotificationSeverity.Success)), Times.Once);
+        }
     }
 }

@@ -4,11 +4,12 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using FluentAssertions;
 using Inventory.API.Controllers;
+using Inventory.API.Interfaces;
 using Inventory.API.Models;
 using Inventory.Shared.DTOs;
-using Xunit;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
+using Xunit;
 
 namespace Inventory.UnitTests.Controllers;
 
@@ -16,6 +17,7 @@ public class CategoryControllerTests : IDisposable
 {
     private readonly AppDbContext _context;
     private readonly CategoryController _controller;
+    private readonly Mock<ICategoryService> _mockCategoryService;
 
     public CategoryControllerTests()
     {
@@ -28,7 +30,9 @@ public class CategoryControllerTests : IDisposable
 
         _context = new AppDbContext(options);
         _context.Database.EnsureCreated();
-        _controller = new CategoryController(_context, Mock.Of<ILogger<CategoryController>>());
+        
+        _mockCategoryService = new Mock<ICategoryService>();
+        _controller = new CategoryController(_mockCategoryService.Object);
         
         // Setup authentication context for tests
         SetupAuthenticationContext();
@@ -39,18 +43,26 @@ public class CategoryControllerTests : IDisposable
     {
         // Arrange
         await SeedTestDataAsync();
+        var pagedResponse = new PagedResponse<CategoryDto>
+        {
+            Items = new List<CategoryDto> { new(), new(), new() },
+            total = 3,
+            page = 1,
+            PageSize = 10
+        };
+        _mockCategoryService.Setup(s => s.GetCategoriesAsync(1, 10, null, null, null, true))
+            .ReturnsAsync(PagedApiResponse<CategoryDto>.CreateSuccess(pagedResponse));
 
         // Act
-        var result = await _controller.GetCategories();
+        var actionResult = await _controller.GetCategories();
 
         // Assert
-        result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
-        okResult!.Value.Should().NotBeNull();
+        actionResult.Should().NotBeNull();
+        var okResult = actionResult.Result.Should().BeOfType<OkObjectResult>().Subject;
+        okResult.Value.Should().NotBeNull();
         
-        var response = okResult.Value as PagedApiResponse<CategoryDto>;
-        response.Should().NotBeNull();
-        response!.Success.Should().BeTrue();
+        var response = okResult.Value.Should().BeOfType<PagedApiResponse<CategoryDto>>().Subject;
+        response.Success.Should().BeTrue();
         response.Data.Should().NotBeNull();
         response.Data!.Items.Should().HaveCount(3); // Admin sees all categories (active + inactive)
     }
@@ -58,15 +70,25 @@ public class CategoryControllerTests : IDisposable
     [Fact]
     public async Task GetCategories_WithEmptyDatabase_ShouldReturnEmptyList()
     {
+        // Arrange
+        var pagedResponse = new PagedResponse<CategoryDto>
+        {
+            Items = new List<CategoryDto>(),
+            total = 0,
+            page = 1,
+            PageSize = 10
+        };
+        _mockCategoryService.Setup(s => s.GetCategoriesAsync(1, 10, null, null, null, true))
+            .ReturnsAsync(PagedApiResponse<CategoryDto>.CreateSuccess(pagedResponse));
+        
         // Act
-        var result = await _controller.GetCategories();
+        var actionResult = await _controller.GetCategories();
 
         // Assert
-        result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
-        var response = okResult!.Value as PagedApiResponse<CategoryDto>;
-        response.Should().NotBeNull();
-        response!.Success.Should().BeTrue();
+        actionResult.Should().NotBeNull();
+        var okResult = actionResult.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<PagedApiResponse<CategoryDto>>().Subject;
+        response.Success.Should().BeTrue();
         response.Data.Should().NotBeNull();
         response.Data!.Items.Should().BeEmpty();
     }
@@ -77,16 +99,18 @@ public class CategoryControllerTests : IDisposable
         // Arrange
         await SeedTestDataAsync();
         var categoryId = 1;
+        var categoryDto = new CategoryDto { Id = categoryId, Name = "Electronics" };
+        _mockCategoryService.Setup(s => s.GetCategoryByIdAsync(categoryId))
+            .ReturnsAsync(ApiResponse<CategoryDto>.SuccessResult(categoryDto));
 
         // Act
-        var result = await _controller.GetCategory(categoryId);
+        var actionResult = await _controller.GetCategory(categoryId);
 
         // Assert
-        result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
-        var response = okResult!.Value as ApiResponse<CategoryDto>;
-        response.Should().NotBeNull();
-        response!.Success.Should().BeTrue();
+        actionResult.Should().NotBeNull();
+        var okResult = actionResult.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<ApiResponse<CategoryDto>>().Subject;
+        response.Success.Should().BeTrue();
         response.Data.Should().NotBeNull();
         response.Data!.Id.Should().Be(categoryId);
     }
@@ -96,16 +120,16 @@ public class CategoryControllerTests : IDisposable
     {
         // Arrange
         var categoryId = 999;
+        _mockCategoryService.Setup(s => s.GetCategoryByIdAsync(categoryId))
+            .ReturnsAsync(ApiResponse<CategoryDto>.ErrorResult("Category not found."));
 
         // Act
-        var result = await _controller.GetCategory(categoryId);
+        var actionResult = await _controller.GetCategory(categoryId);
 
         // Assert
-        result.Should().BeOfType<NotFoundObjectResult>();
-        var notFoundResult = result as NotFoundObjectResult;
-        var response = notFoundResult!.Value as ApiResponse<CategoryDto>;
-        response.Should().NotBeNull();
-        response!.Success.Should().BeFalse();
+        var notFoundResult = actionResult.Result.Should().BeOfType<NotFoundObjectResult>().Subject;
+        var response = notFoundResult.Value.Should().BeOfType<ApiResponse<CategoryDto>>().Subject;
+        response.Success.Should().BeFalse();
         response.ErrorMessage.Should().NotBeNullOrEmpty();
     }
 
@@ -114,16 +138,18 @@ public class CategoryControllerTests : IDisposable
     {
         // Arrange
         await SeedTestDataAsync();
+        var rootCategories = new List<CategoryDto> { new() { Name = "Electronics" } };
+        _mockCategoryService.Setup(s => s.GetRootCategoriesAsync())
+            .ReturnsAsync(ApiResponse<List<CategoryDto>>.SuccessResult(rootCategories));
 
         // Act
-        var result = await _controller.GetRootCategories();
+        var actionResult = await _controller.GetRootCategories();
 
         // Assert
-        result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
-        var response = okResult!.Value as ApiResponse<List<CategoryDto>>;
-        response.Should().NotBeNull();
-        response!.Success.Should().BeTrue();
+        actionResult.Should().NotBeNull();
+        var okResult = actionResult.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<ApiResponse<List<CategoryDto>>>().Subject;
+        response.Success.Should().BeTrue();
         response.Data.Should().NotBeNull();
         response.Data.Should().HaveCount(1); // Only root category
     }
@@ -134,16 +160,18 @@ public class CategoryControllerTests : IDisposable
         // Arrange
         await SeedTestDataAsync();
         var parentId = 1;
+        var subCategories = new List<CategoryDto> { new() { Name = "Smartphones" } };
+        _mockCategoryService.Setup(s => s.GetSubCategoriesAsync(parentId))
+            .ReturnsAsync(ApiResponse<List<CategoryDto>>.SuccessResult(subCategories));
 
         // Act
-        var result = await _controller.GetSubCategories(parentId);
+        var actionResult = await _controller.GetSubCategories(parentId);
 
         // Assert
-        result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
-        var response = okResult!.Value as ApiResponse<List<CategoryDto>>;
-        response.Should().NotBeNull();
-        response!.Success.Should().BeTrue();
+        actionResult.Should().NotBeNull();
+        var okResult = actionResult.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<ApiResponse<List<CategoryDto>>>().Subject;
+        response.Success.Should().BeTrue();
         response.Data.Should().NotBeNull();
         response.Data.Should().HaveCount(1); // One subcategory
     }
@@ -153,16 +181,17 @@ public class CategoryControllerTests : IDisposable
     {
         // Arrange
         var parentId = 999;
+        _mockCategoryService.Setup(s => s.GetSubCategoriesAsync(parentId))
+            .ReturnsAsync(ApiResponse<List<CategoryDto>>.SuccessResult(new List<CategoryDto>()));
 
         // Act
-        var result = await _controller.GetSubCategories(parentId);
+        var actionResult = await _controller.GetSubCategories(parentId);
 
         // Assert
-        result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
-        var response = okResult!.Value as ApiResponse<List<CategoryDto>>;
-        response.Should().NotBeNull();
-        response!.Success.Should().BeTrue();
+        actionResult.Should().NotBeNull();
+        var okResult = actionResult.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<ApiResponse<List<CategoryDto>>>().Subject;
+        response.Success.Should().BeTrue();
         response.Data.Should().NotBeNull();
         response.Data.Should().BeEmpty();
     }
@@ -177,16 +206,17 @@ public class CategoryControllerTests : IDisposable
             Description = "Test Description",
             ParentCategoryId = null
         };
+        var createdCategory = new CategoryDto { Id = 4, Name = "Test Category" };
+        _mockCategoryService.Setup(s => s.CreateCategoryAsync(createRequest))
+            .ReturnsAsync(ApiResponse<CategoryDto>.SuccessResult(createdCategory));
 
         // Act
-        var result = await _controller.CreateCategory(createRequest);
+        var actionResult = await _controller.CreateCategory(createRequest);
 
         // Assert
-        result.Should().BeOfType<CreatedAtActionResult>();
-        var createdResult = result as CreatedAtActionResult;
-        var response = createdResult!.Value as ApiResponse<CategoryDto>;
-        response.Should().NotBeNull();
-        response!.Success.Should().BeTrue();
+        var createdResult = actionResult.Result.Should().BeOfType<CreatedAtActionResult>().Subject;
+        var response = createdResult.Value.Should().BeOfType<ApiResponse<CategoryDto>>().Subject;
+        response.Success.Should().BeTrue();
         response.Data.Should().NotBeNull();
         response.Data!.Name.Should().Be(createRequest.Name);
     }
@@ -201,16 +231,16 @@ public class CategoryControllerTests : IDisposable
             Description = "Test Description",
             ParentCategoryId = 999 // Invalid: non-existent parent
         };
+        _mockCategoryService.Setup(s => s.CreateCategoryAsync(createRequest))
+            .ReturnsAsync(ApiResponse<CategoryDto>.ErrorResult("Parent category not found."));
 
         // Act
-        var result = await _controller.CreateCategory(createRequest);
+        var actionResult = await _controller.CreateCategory(createRequest);
 
         // Assert
-        result.Should().BeOfType<BadRequestObjectResult>();
-        var badRequestResult = result as BadRequestObjectResult;
-        var response = badRequestResult!.Value as ApiResponse<CategoryDto>;
-        response.Should().NotBeNull();
-        response!.Success.Should().BeFalse();
+        var badRequestResult = actionResult.Result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        var response = badRequestResult.Value.Should().BeOfType<ApiResponse<CategoryDto>>().Subject;
+        response.Success.Should().BeFalse();
         response.ErrorMessage.Should().NotBeNullOrEmpty();
     }
 
@@ -225,16 +255,18 @@ public class CategoryControllerTests : IDisposable
             Name = "Updated Category",
             Description = "Updated Description"
         };
+        var updatedCategory = new CategoryDto { Id = categoryId, Name = "Updated Category" };
+        _mockCategoryService.Setup(s => s.UpdateCategoryAsync(categoryId, updateRequest))
+            .ReturnsAsync(ApiResponse<CategoryDto>.SuccessResult(updatedCategory));
 
         // Act
-        var result = await _controller.UpdateCategory(categoryId, updateRequest);
+        var actionResult = await _controller.UpdateCategory(categoryId, updateRequest);
 
         // Assert
-        result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
-        var response = okResult!.Value as ApiResponse<CategoryDto>;
-        response.Should().NotBeNull();
-        response!.Success.Should().BeTrue();
+        actionResult.Should().NotBeNull();
+        var okResult = actionResult.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<ApiResponse<CategoryDto>>().Subject;
+        response.Success.Should().BeTrue();
         response.Data.Should().NotBeNull();
         response.Data!.Name.Should().Be(updateRequest.Name);
     }
@@ -249,16 +281,16 @@ public class CategoryControllerTests : IDisposable
             Name = "Updated Category",
             Description = "Updated Description"
         };
+        _mockCategoryService.Setup(s => s.UpdateCategoryAsync(categoryId, updateRequest))
+            .ReturnsAsync(ApiResponse<CategoryDto>.ErrorResult("Category not found."));
 
         // Act
-        var result = await _controller.UpdateCategory(categoryId, updateRequest);
+        var actionResult = await _controller.UpdateCategory(categoryId, updateRequest);
 
         // Assert
-        result.Should().BeOfType<NotFoundObjectResult>();
-        var notFoundResult = result as NotFoundObjectResult;
-        var response = notFoundResult!.Value as ApiResponse<CategoryDto>;
-        response.Should().NotBeNull();
-        response!.Success.Should().BeFalse();
+        var notFoundResult = actionResult.Result.Should().BeOfType<NotFoundObjectResult>().Subject;
+        var response = notFoundResult.Value.Should().BeOfType<ApiResponse<CategoryDto>>().Subject;
+        response.Success.Should().BeFalse();
         response.ErrorMessage.Should().NotBeNullOrEmpty();
     }
 
@@ -266,31 +298,18 @@ public class CategoryControllerTests : IDisposable
     public async Task DeleteCategory_WithValidId_ShouldDeleteCategory()
     {
         // Arrange
-        // Create a category without subcategories
-        var category = new Category
-        {
-            Id = 4,
-            Name = "Test Category",
-            Description = "Test Description",
-            IsActive = true,
-            ParentCategoryId = null,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-        _context.Categories.Add(category);
-        await _context.SaveChangesAsync();
-
         var categoryId = 4;
+        _mockCategoryService.Setup(s => s.DeleteCategoryAsync(categoryId))
+            .ReturnsAsync(ApiResponse<object>.SuccessResult(new { Message = "Category deleted successfully." }));
 
         // Act
-        var result = await _controller.DeleteCategory(categoryId);
+        var actionResult = await _controller.DeleteCategory(categoryId);
 
         // Assert
-        result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
-        var response = okResult!.Value as ApiResponse<object>;
-        response.Should().NotBeNull();
-        response!.Success.Should().BeTrue();
+        actionResult.Should().NotBeNull();
+        var okResult = actionResult.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<ApiResponse<object>>().Subject;
+        response.Success.Should().BeTrue();
         response.Data.Should().NotBeNull();
     }
 
@@ -299,16 +318,16 @@ public class CategoryControllerTests : IDisposable
     {
         // Arrange
         var categoryId = 999;
+        _mockCategoryService.Setup(s => s.DeleteCategoryAsync(categoryId))
+            .ReturnsAsync(ApiResponse<object>.ErrorResult("Category not found."));
 
         // Act
-        var result = await _controller.DeleteCategory(categoryId);
+        var actionResult = await _controller.DeleteCategory(categoryId);
 
         // Assert
-        result.Should().BeOfType<NotFoundObjectResult>();
-        var notFoundResult = result as NotFoundObjectResult;
-        var response = notFoundResult!.Value as ApiResponse<object>;
-        response.Should().NotBeNull();
-        response!.Success.Should().BeFalse();
+        var notFoundResult = actionResult.Result.Should().BeOfType<NotFoundObjectResult>().Subject;
+        var response = notFoundResult.Value.Should().BeOfType<ApiResponse<object>>().Subject;
+        response.Success.Should().BeFalse();
         response.ErrorMessage.Should().NotBeNullOrEmpty();
     }
 

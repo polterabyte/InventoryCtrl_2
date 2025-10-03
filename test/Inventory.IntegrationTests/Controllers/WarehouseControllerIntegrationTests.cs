@@ -111,8 +111,8 @@ public class WarehouseControllerIntegrationTests : IntegrationTestBase
         var result = await response.Content.ReadFromJsonAsync<PagedApiResponse<WarehouseDto>>();
         result!.Success.Should().BeTrue();
         result.Data.Items.Should().HaveCount(1);
-        result.Data.TotalCount.Should().Be(2);
-        result.Data.PageNumber.Should().Be(1);
+        result.Data.total.Should().Be(2);
+        result.Data.page.Should().Be(1);
         result.Data.PageSize.Should().Be(1);
     }
 

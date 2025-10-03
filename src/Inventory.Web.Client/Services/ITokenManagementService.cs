@@ -17,7 +17,7 @@ public interface ITokenManagementService
     /// Пытается обновить access токен используя refresh токен
     /// </summary>
     /// <returns>True, если обновление прошло успешно</returns>
-    Task<bool> TryRefreshTokenAsync();
+    Task<bool> TryRefreshTokenAsync(bool forceRefresh = false);
 
     /// <summary>
     /// Очищает все сохраненные токены

@@ -8,12 +8,14 @@ namespace Inventory.Web.Client.Services;
 /// <summary>
 /// API сервис для работы с категориями
 /// </summary>
-public class WebCategoryApiService : WebApiServiceBase<CategoryDto, CreateCategoryDto, UpdateCategoryDto>, ICategoryService
+public class WebCategoryApiService : WebApiServiceBase<CategoryDto, CreateCategoryDto, UpdateCategoryDto>, IClientCategoryService
 {
     public WebCategoryApiService(
         HttpClient httpClient, 
         IUrlBuilderService urlBuilderService, 
-        IResilientApiService resilientApiService, IApiErrorHandler errorHandler,        IRequestValidator requestValidator, 
+        IResilientApiService resilientApiService,
+        IApiErrorHandler errorHandler,
+        IRequestValidator requestValidator, 
         ILogger<WebCategoryApiService> logger) 
         : base(httpClient, urlBuilderService, resilientApiService, errorHandler, requestValidator, logger)
     {
@@ -39,10 +41,10 @@ public class WebCategoryApiService : WebApiServiceBase<CategoryDto, CreateCatego
         return response.Data;
     }
 
-    public async Task<CategoryDto> CreateCategoryAsync(CreateCategoryDto createCategoryDto)
+    public async Task<CategoryDto?> CreateCategoryAsync(CreateCategoryDto createCategoryDto)
     {
         var response = await PostAsync<CategoryDto>(ApiEndpoints.Categories, createCategoryDto);
-        return response.Data ?? new CategoryDto();
+        return response.Data;
     }
 
     public async Task<CategoryDto?> UpdateCategoryAsync(int id, UpdateCategoryDto updateCategoryDto)

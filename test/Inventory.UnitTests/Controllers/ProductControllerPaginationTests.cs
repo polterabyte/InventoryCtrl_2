@@ -35,7 +35,8 @@ public class ProductControllerPaginationTests : IDisposable
         _context.Database.EnsureCreated();
         
         _mockLogger = new Mock<ILogger<ProductController>>();
-        var mockAuditService = new Mock<AuditService>(_context, Mock.Of<IHttpContextAccessor>(), Mock.Of<ILogger<AuditService>>());
+        var safeSerializationService = new SafeSerializationService(Mock.Of<ILogger<SafeSerializationService>>());
+        var mockAuditService = new Mock<AuditService>(_context, Mock.Of<IHttpContextAccessor>(), Mock.Of<ILogger<AuditService>>(), safeSerializationService);
         _controller = new ProductController(_context, _mockLogger.Object, mockAuditService.Object);
         
         // Setup authentication context
@@ -151,15 +152,15 @@ public class ProductControllerPaginationTests : IDisposable
 
         // Assert
         result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
+        var okResult = result.Result as OkObjectResult;
         var response = okResult?.Value as PagedApiResponse<ProductDto>;
         
         response.Should().NotBeNull();
         response!.Success.Should().BeTrue();
         response.Data.Should().NotBeNull();
         response.Data!.Items.Should().HaveCount(2); // Page size is 2
-        response.Data.TotalCount.Should().Be(3); // 3 total products (Admin sees all)
-        response.Data.PageNumber.Should().Be(1);
+        response.Data.total.Should().Be(3); // 3 total products (Admin sees all)
+        response.Data.page.Should().Be(1);
         response.Data.PageSize.Should().Be(2);
         response.Data.TotalPages.Should().Be(2); // 3 products / 2 per page = 2 pages
     }
@@ -175,7 +176,7 @@ public class ProductControllerPaginationTests : IDisposable
 
         // Assert
         result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
+        var okResult = result.Result as OkObjectResult;
         var response = okResult?.Value as PagedApiResponse<ProductDto>;
         
         response.Should().NotBeNull();
@@ -195,7 +196,7 @@ public class ProductControllerPaginationTests : IDisposable
 
         // Assert
         result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
+        var okResult = result.Result as OkObjectResult;
         var response = okResult?.Value as PagedApiResponse<ProductDto>;
         
         response.Should().NotBeNull();
@@ -214,7 +215,7 @@ public class ProductControllerPaginationTests : IDisposable
 
         // Assert
         result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
+        var okResult = result.Result as OkObjectResult;
         var response = okResult?.Value as PagedApiResponse<ProductDto>;
         
         response.Should().NotBeNull();
@@ -243,7 +244,7 @@ public class ProductControllerPaginationTests : IDisposable
 
         // Assert
         result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
+        var okResult = result.Result as OkObjectResult;
         var response = okResult?.Value as PagedApiResponse<ProductDto>;
         
         response.Should().NotBeNull();
@@ -272,7 +273,7 @@ public class ProductControllerPaginationTests : IDisposable
 
         // Assert
         result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
+        var okResult = result.Result as OkObjectResult;
         var response = okResult?.Value as PagedApiResponse<ProductDto>;
         
         response.Should().NotBeNull();
@@ -292,7 +293,7 @@ public class ProductControllerPaginationTests : IDisposable
 
         // Assert
         result.Should().NotBeNull();
-        var okResult = result as OkObjectResult ?? result as ObjectResult;
+        var okResult = result.Result as OkObjectResult;
         var response = okResult?.Value as PagedApiResponse<ProductDto>;
         
         response.Should().NotBeNull();

@@ -87,10 +87,10 @@ public class WarehouseAccessControlTests : IClassFixture<WebApplicationFactory<P
         // Add test users
         var users = new List<User>
         {
-            new() { Id = "user1", UserName = "user1", Email = "user1@test.com", Role = "User", EmailConfirmed = true },
-            new() { Id = "user2", UserName = "user2", Email = "user2@test.com", Role = "User", EmailConfirmed = true },
-            new() { Id = "manager1", UserName = "manager1", Email = "manager1@test.com", Role = "Manager", EmailConfirmed = true },
-            new() { Id = "admin1", UserName = "admin1", Email = "admin1@test.com", Role = "Admin", EmailConfirmed = true }
+            new() { Id = "user1", UserName = "user1", Email = "user1@test.com", Role = "User", EmailConfirmed = true, FirstName = "Test", LastName = "User1" },
+            new() { Id = "user2", UserName = "user2", Email = "user2@test.com", Role = "User", EmailConfirmed = true, FirstName = "Test", LastName = "User2" },
+            new() { Id = "manager1", UserName = "manager1", Email = "manager1@test.com", Role = "Manager", EmailConfirmed = true, FirstName = "Test", LastName = "Manager" },
+            new() { Id = "admin1", UserName = "admin1", Email = "admin1@test.com", Role = "Admin", EmailConfirmed = true, FirstName = "Admin", LastName = "User" }
         };
 
         foreach (var user in users)
@@ -446,7 +446,7 @@ public class WarehouseAccessControlTests : IClassFixture<WebApplicationFactory<P
         var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         
-        var newUser = new User { Id = "user3", UserName = "user3", Email = "user3@test.com", Role = "User", EmailConfirmed = true };
+        var newUser = new User { Id = "user3", UserName = "user3", Email = "user3@test.com", Role = "User", EmailConfirmed = true, FirstName = "Test", LastName = "User3" };
         await userManager.CreateAsync(newUser, "TestPassword123!");
         await context.SaveChangesAsync();
 

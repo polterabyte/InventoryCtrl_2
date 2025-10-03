@@ -52,6 +52,7 @@ public static class ServiceCollectionExtensions
     
     public static IServiceCollection AddAuditServices(this IServiceCollection services)
     {
+        services.AddScoped<IInternalAuditService, AuditService>();
         services.AddScoped<AuditService>();
         services.AddHttpContextAccessor();
         return services;

@@ -23,7 +23,7 @@
     <RadzenCard Class="rz-p-3">
         <RadzenStack Gap="1rem">
             <RadzenRow Gap="1rem">
-                <RadzenColumn Size="12" SizeMD="6">
+                <RadzenColumn Size="12">
                     <RadzenLabel Text="Search Products" Component="productSearch" />
                     <RadzenTextBox @bind-Value="searchTerm" 
                                    Name="productSearch"
@@ -32,7 +32,7 @@
                                    @onkeypress="@HandleSearchKeyPress"
                                    @oninput="@HandleSearchInput" />
                 </RadzenColumn>
-                <RadzenColumn Size="12" SizeMD="3">
+                <RadzenColumn Size="12">
                     <RadzenLabel Text="Category" Component="categoryFilter" />
                     <RadzenDropDown @bind-Value="selectedCategoryId"
                                     Data="categories"
@@ -44,7 +44,7 @@
                                     Style="width: 100%"
                                     Change="@OnFilterChanged" />
                 </RadzenColumn>
-                <RadzenColumn Size="12" SizeMD="3">
+                <RadzenColumn Size="12">
                     <RadzenLabel Text="&nbsp;" />
                     <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
                         <RadzenButton Text="Search" 

@@ -19,7 +19,6 @@ public class ManufacturerControllerIntegrationTests : IntegrationTestBase
     {
         // Arrange
         await CleanupDatabaseAsync();
-        await InitializeEmptyAsync();
         await SetAuthHeaderAsync();
 
         // Act
@@ -37,8 +36,7 @@ public class ManufacturerControllerIntegrationTests : IntegrationTestBase
     {
         // Arrange
         await CleanupDatabaseAsync();
-        await InitializeEmptyAsync();
-        await SeedTestDataAsync();
+        await InitializeAsync();
         await SetAuthHeaderAsync();
 
         // Act
@@ -58,11 +56,10 @@ public class ManufacturerControllerIntegrationTests : IntegrationTestBase
     {
         // Arrange
         await CleanupDatabaseAsync();
-        await InitializeEmptyAsync();
-        await SeedTestDataAsync();
+        await InitializeAsync();
         await SetAuthHeaderAsync();
         
-        var manufacturer = Context.Manufacturers.First();
+        var manufacturer = await Context.Manufacturers.FirstAsync();
 
         // Act
         var response = await Client.GetAsync($"/api/manufacturer/{manufacturer.Id}");
@@ -101,7 +98,8 @@ public class ManufacturerControllerIntegrationTests : IntegrationTestBase
         await InitializeAsync();
         await SetAuthHeaderAsync();
         
-        var request = new CreateManufacturerDto { Name = "Microsoft" };
+        var location = await Context.Locations.FirstAsync();
+        var request = new CreateManufacturerDto { Name = "Microsoft", LocationId = location.Id };
 
         // Act
         var response = await Client.PostAsJsonAsync("/api/manufacturer", request);
@@ -123,11 +121,11 @@ public class ManufacturerControllerIntegrationTests : IntegrationTestBase
     {
         // Arrange
         await CleanupDatabaseAsync();
-        await InitializeEmptyAsync();
-        await SeedTestDataAsync();
+        await InitializeAsync();
         await SetAuthHeaderAsync();
         
-        var request = new CreateManufacturerDto { Name = "Apple" }; // Duplicate name
+        var location = await Context.Locations.FirstAsync();
+        var request = new CreateManufacturerDto { Name = "Apple", LocationId = location.Id }; // Duplicate name
 
         // Act
         var response = await Client.PostAsJsonAsync("/api/manufacturer", request);
@@ -144,12 +142,11 @@ public class ManufacturerControllerIntegrationTests : IntegrationTestBase
     {
         // Arrange
         await CleanupDatabaseAsync();
-        await InitializeEmptyAsync();
-        await SeedTestDataAsync();
+        await InitializeAsync();
         await SetAuthHeaderAsync();
         
-        var manufacturer = Context.Manufacturers.First();
-        var request = new UpdateManufacturerDto { Name = "Updated Apple" };
+        var manufacturer = await Context.Manufacturers.FirstAsync();
+        var request = new UpdateManufacturerDto { Name = "Updated Apple", LocationId = manufacturer.LocationId };
 
         // Act
         var response = await Client.PutAsJsonAsync($"/api/manufacturer/{manufacturer.Id}", request);
@@ -175,7 +172,8 @@ public class ManufacturerControllerIntegrationTests : IntegrationTestBase
         await InitializeAsync();
         await SetAuthHeaderAsync();
         
-        var request = new UpdateManufacturerDto { Name = "Updated Name" };
+        var location = await Context.Locations.FirstAsync();
+        var request = new UpdateManufacturerDto { Name = "Updated Name", LocationId = location.Id };
 
         // Act
         var response = await Client.PutAsJsonAsync("/api/manufacturer/999", request);
@@ -192,11 +190,11 @@ public class ManufacturerControllerIntegrationTests : IntegrationTestBase
     {
         // Arrange
         await CleanupDatabaseAsync();
-        await InitializeEmptyAsync();
-        await SeedTestDataAsync();
+        await InitializeAsync();
         await SetAuthHeaderAsync();
         
-        var manufacturer = Context.Manufacturers.First();
+        // Find a manufacturer that doesn't have products
+        var manufacturer = await Context.Manufacturers.FirstAsync(m => m.Name == "Samsung");
 
         // Act
         var response = await Client.DeleteAsync($"/api/manufacturer/{manufacturer.Id}");
@@ -235,68 +233,18 @@ public class ManufacturerControllerIntegrationTests : IntegrationTestBase
     {
         // Arrange
         await CleanupDatabaseAsync();
-        await InitializeEmptyAsync();
-        await SeedTestDataAsync();
+        await InitializeAsync();
         await SetAuthHeaderAsync();
         
-        var manufacturer = Context.Manufacturers.First();
+        var manufacturerWithProduct = await Context.Manufacturers.FirstAsync(m => m.Name == "Apple");
         
-        // Add a product for this manufacturer
-        var category = new Category { Name = "Test Category", IsActive = true, CreatedAt = DateTime.UtcNow };
-        Context.Categories.Add(category);
-        await Context.SaveChangesAsync();
-        
-        // Create test product group
-        var productGroup = new ProductGroup
-        {
-            Name = "Test Group"
-        };
-        Context.ProductGroups.Add(productGroup);
-        await Context.SaveChangesAsync();
-
-        // Create test product model
-        var productModel = new ProductModel
-        {
-            Name = "Test Model",
-            ManufacturerId = manufacturer.Id
-        };
-        Context.ProductModels.Add(productModel);
-        await Context.SaveChangesAsync();
-
-        var product = new Product
-        {
-            Name = "Test Product",
-            SKU = "TEST001",
-            CurrentQuantity = 10,
-            CategoryId = category.Id,
-            ManufacturerId = manufacturer.Id,
-            ProductGroupId = productGroup.Id,
-            ProductModelId = productModel.Id,
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow
-        };
-        Context.Products.Add(product);
-        await Context.SaveChangesAsync();
-
         // Act
-        var response = await Client.DeleteAsync($"/api/manufacturer/{manufacturer.Id}");
+        var response = await Client.DeleteAsync($"/api/manufacturer/{manufacturerWithProduct.Id}");
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
         var result = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
         result!.Success.Should().BeFalse();
-        result.ErrorMessage.Should().Be("Cannot delete manufacturer with products");
-    }
-
-    private new async Task SeedTestDataAsync()
-    {
-        var manufacturers = new List<Manufacturer>
-        {
-            new() { Name = "Apple", CreatedAt = DateTime.UtcNow },
-            new() { Name = "Samsung", CreatedAt = DateTime.UtcNow }
-        };
-
-        Context.Manufacturers.AddRange(manufacturers);
-        await Context.SaveChangesAsync();
+        result.ErrorMessage.Should().Be("Cannot delete. Manufacturer is associated with 1 products.");
     }
 }

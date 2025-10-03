@@ -11,7 +11,8 @@ public class WebUnitOfMeasureApiService : WebBaseApiService, IUnitOfMeasureApiSe
         HttpClient httpClient, 
         IUrlBuilderService urlBuilderService, 
         IResilientApiService resilientApiService, 
-        IApiErrorHandler errorHandler,        IRequestValidator requestValidator,
+        IApiErrorHandler errorHandler,
+        IRequestValidator requestValidator,
         ILogger<WebUnitOfMeasureApiService> logger)
         : base(httpClient, urlBuilderService, resilientApiService, errorHandler, requestValidator, logger)
     {

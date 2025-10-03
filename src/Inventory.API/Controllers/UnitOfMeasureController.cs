@@ -14,7 +14,7 @@ namespace Inventory.API.Controllers;
 public class UnitOfMeasureController(AppDbContext context, ILogger<UnitOfMeasureController> logger) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetUnitOfMeasures(
+    public async Task<ActionResult<PagedApiResponse<UnitOfMeasureDto>>> GetUnitOfMeasures(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
         [FromQuery] string? search = null,
@@ -69,30 +69,22 @@ public class UnitOfMeasureController(AppDbContext context, ILogger<UnitOfMeasure
             var pagedResponse = new PagedResponse<UnitOfMeasureDto>
             {
                 Items = unitOfMeasures,
-                TotalCount = totalCount,
-                PageNumber = page,
+                total = totalCount,
+                page = page,
                 PageSize = pageSize
             };
 
-            return Ok(new PagedApiResponse<UnitOfMeasureDto>
-            {
-                Success = true,
-                Data = pagedResponse
-            });
+            return Ok(PagedApiResponse<UnitOfMeasureDto>.CreateSuccess(pagedResponse));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving unit of measures");
-            return StatusCode(500, new PagedApiResponse<UnitOfMeasureDto>
-            {
-                Success = false,
-                ErrorMessage = "Failed to retrieve unit of measures"
-            });
+            return StatusCode(500, PagedApiResponse<UnitOfMeasureDto>.CreateFailure("Failed to retrieve unit of measures"));
         }
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetUnitOfMeasure(int id)
+    public async Task<ActionResult<ApiResponse<UnitOfMeasureDto>>> GetUnitOfMeasure(int id)
     {
         try
         {
@@ -101,11 +93,7 @@ public class UnitOfMeasureController(AppDbContext context, ILogger<UnitOfMeasure
 
             if (unitOfMeasure == null)
             {
-                return NotFound(new ApiResponse<UnitOfMeasureDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Unit of measure not found"
-                });
+                return NotFound(ApiResponse<UnitOfMeasureDto>.ErrorResult("Unit of measure not found"));
             }
 
             var unitOfMeasureDto = new UnitOfMeasureDto
@@ -119,25 +107,17 @@ public class UnitOfMeasureController(AppDbContext context, ILogger<UnitOfMeasure
                 UpdatedAt = unitOfMeasure.UpdatedAt
             };
 
-            return Ok(new ApiResponse<UnitOfMeasureDto>
-            {
-                Success = true,
-                Data = unitOfMeasureDto
-            });
+            return Ok(ApiResponse<UnitOfMeasureDto>.SuccessResult(unitOfMeasureDto));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving unit of measure {UnitOfMeasureId}", id);
-            return StatusCode(500, new ApiResponse<UnitOfMeasureDto>
-            {
-                Success = false,
-                ErrorMessage = "Failed to retrieve unit of measure"
-            });
+            return StatusCode(500, ApiResponse<UnitOfMeasureDto>.ErrorResult("Failed to retrieve unit of measure"));
         }
     }
 
     [HttpGet("all")]
-    public async Task<IActionResult> GetAllUnitOfMeasures()
+    public async Task<ActionResult<ApiResponse<List<UnitOfMeasureDto>>>> GetAllUnitOfMeasures()
     {
         try
         {
@@ -164,37 +144,25 @@ public class UnitOfMeasureController(AppDbContext context, ILogger<UnitOfMeasure
                 })
                 .ToListAsync();
 
-            return Ok(new ApiResponse<List<UnitOfMeasureDto>>
-            {
-                Success = true,
-                Data = unitOfMeasures
-            });
+            return Ok(ApiResponse<List<UnitOfMeasureDto>>.SuccessResult(unitOfMeasures));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving all unit of measures");
-            return StatusCode(500, new ApiResponse<List<UnitOfMeasureDto>>
-            {
-                Success = false,
-                ErrorMessage = "Failed to retrieve unit of measures"
-            });
+            return StatusCode(500, ApiResponse<List<UnitOfMeasureDto>>.ErrorResult("Failed to retrieve unit of measures"));
         }
     }
 
     [HttpPost]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> CreateUnitOfMeasure([FromBody] CreateUnitOfMeasureDto request)
+    public async Task<ActionResult<ApiResponse<UnitOfMeasureDto>>> CreateUnitOfMeasure([FromBody] CreateUnitOfMeasureDto request)
     {
         try
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new ApiResponse<UnitOfMeasureDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Invalid model state",
-                    Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList()
-                });
+                var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
+                return BadRequest(ApiResponse<UnitOfMeasureDto>.ErrorResult("Invalid model state", errors));
             }
 
             // Check if unit of measure with same symbol already exists
@@ -203,11 +171,7 @@ public class UnitOfMeasureController(AppDbContext context, ILogger<UnitOfMeasure
 
             if (existingUnit != null)
             {
-                return BadRequest(new ApiResponse<UnitOfMeasureDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Unit of measure with this symbol already exists"
-                });
+                return BadRequest(ApiResponse<UnitOfMeasureDto>.ErrorResult("Unit of measure with this symbol already exists"));
             }
 
             var unitOfMeasure = new UnitOfMeasure
@@ -235,47 +199,31 @@ public class UnitOfMeasureController(AppDbContext context, ILogger<UnitOfMeasure
                 UpdatedAt = unitOfMeasure.UpdatedAt
             };
 
-            return CreatedAtAction(nameof(GetUnitOfMeasure), new { id = unitOfMeasure.Id }, new ApiResponse<UnitOfMeasureDto>
-            {
-                Success = true,
-                Data = unitOfMeasureDto
-            });
+            return CreatedAtAction(nameof(GetUnitOfMeasure), new { id = unitOfMeasure.Id }, ApiResponse<UnitOfMeasureDto>.SuccessResult(unitOfMeasureDto));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error creating unit of measure");
-            return StatusCode(500, new ApiResponse<UnitOfMeasureDto>
-            {
-                Success = false,
-                ErrorMessage = "Failed to create unit of measure"
-            });
+            return StatusCode(500, ApiResponse<UnitOfMeasureDto>.ErrorResult("Failed to create unit of measure"));
         }
     }
 
     [HttpPut("{id}")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> UpdateUnitOfMeasure(int id, [FromBody] UpdateUnitOfMeasureDto request)
+    public async Task<ActionResult<ApiResponse<UnitOfMeasureDto>>> UpdateUnitOfMeasure(int id, [FromBody] UpdateUnitOfMeasureDto request)
     {
         try
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new ApiResponse<UnitOfMeasureDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Invalid model state",
-                    Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList()
-                });
+                var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
+                return BadRequest(ApiResponse<UnitOfMeasureDto>.ErrorResult("Invalid model state", errors));
             }
 
             var unitOfMeasure = await context.UnitOfMeasures.FindAsync(id);
             if (unitOfMeasure == null)
             {
-                return NotFound(new ApiResponse<UnitOfMeasureDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Unit of measure not found"
-                });
+                return NotFound(ApiResponse<UnitOfMeasureDto>.ErrorResult("Unit of measure not found"));
             }
 
             // Check if another unit of measure with the same symbol exists
@@ -284,11 +232,7 @@ public class UnitOfMeasureController(AppDbContext context, ILogger<UnitOfMeasure
 
             if (existingUnit != null)
             {
-                return BadRequest(new ApiResponse<UnitOfMeasureDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Unit of measure with this symbol already exists"
-                });
+                return BadRequest(ApiResponse<UnitOfMeasureDto>.ErrorResult("Unit of measure with this symbol already exists"));
             }
 
             unitOfMeasure.Name = request.Name;
@@ -312,37 +256,25 @@ public class UnitOfMeasureController(AppDbContext context, ILogger<UnitOfMeasure
                 UpdatedAt = unitOfMeasure.UpdatedAt
             };
 
-            return Ok(new ApiResponse<UnitOfMeasureDto>
-            {
-                Success = true,
-                Data = unitOfMeasureDto
-            });
+            return Ok(ApiResponse<UnitOfMeasureDto>.SuccessResult(unitOfMeasureDto));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error updating unit of measure {UnitOfMeasureId}", id);
-            return StatusCode(500, new ApiResponse<UnitOfMeasureDto>
-            {
-                Success = false,
-                ErrorMessage = "Failed to update unit of measure"
-            });
+            return StatusCode(500, ApiResponse<UnitOfMeasureDto>.ErrorResult("Failed to update unit of measure"));
         }
     }
 
     [HttpDelete("{id}")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> DeleteUnitOfMeasure(int id)
+    public async Task<ActionResult<ApiResponse<object>>> DeleteUnitOfMeasure(int id)
     {
         try
         {
             var unitOfMeasure = await context.UnitOfMeasures.FindAsync(id);
             if (unitOfMeasure == null)
             {
-                return NotFound(new ApiResponse<object>
-                {
-                    Success = false,
-                    ErrorMessage = "Unit of measure not found"
-                });
+                return NotFound(ApiResponse<object>.ErrorResult("Unit of measure not found"));
             }
 
             // Check if unit of measure has products
@@ -351,11 +283,7 @@ public class UnitOfMeasureController(AppDbContext context, ILogger<UnitOfMeasure
 
             if (hasProducts)
             {
-                return BadRequest(new ApiResponse<object>
-                {
-                    Success = false,
-                    ErrorMessage = "Cannot delete unit of measure with products"
-                });
+                return BadRequest(ApiResponse<object>.ErrorResult("Cannot delete unit of measure with products"));
             }
 
             // Soft delete - set IsActive to false
@@ -366,20 +294,12 @@ public class UnitOfMeasureController(AppDbContext context, ILogger<UnitOfMeasure
 
             logger.LogInformation("Unit of measure deleted (soft): {UnitName} with ID {UnitId}", unitOfMeasure.Name, unitOfMeasure.Id);
 
-            return Ok(new ApiResponse<object>
-            {
-                Success = true,
-                Data = new { message = "Unit of measure deleted successfully" }
-            });
+            return Ok(ApiResponse<object>.SuccessResult(new { message = "Unit of measure deleted successfully" }));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error deleting unit of measure {UnitOfMeasureId}", id);
-            return StatusCode(500, new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = "Failed to delete unit of measure"
-            });
+            return StatusCode(500, ApiResponse<object>.ErrorResult("Failed to delete unit of measure"));
         }
     }
 }

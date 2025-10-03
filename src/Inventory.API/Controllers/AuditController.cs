@@ -4,6 +4,7 @@ using Inventory.API.Services;
 using Inventory.API.Models;
 using Inventory.API.Enums;
 using Microsoft.AspNetCore.RateLimiting;
+using Inventory.Shared.DTOs;
 
 namespace Inventory.API.Controllers;
 
@@ -40,7 +41,7 @@ public class AuditController(AuditService auditService, ILogger<AuditController>
     /// <param name="pageSize">Page size (default: 50, max: 100)</param>
     /// <returns>Paginated audit logs</returns>
     [HttpGet]
-    public async Task<ActionResult<AuditLogResponse>> GetAuditLogs(
+        public async Task<ActionResult<PagedApiResponse<AuditLogDto>>> GetAuditLogs(
         [FromQuery] string? entityName = null,
         [FromQuery] string? action = null,
         [FromQuery] ActionType? actionType = null,
@@ -77,21 +78,20 @@ public class AuditController(AuditService auditService, ILogger<AuditController>
             var (logs, totalCount) = await _auditService.GetAuditLogsAsync(
                 entityName, action, actionType, entityType, userFilter, fromDate, toDate, severity, requestId, page, pageSize);
 
-            var response = new AuditLogResponse
+            var pagedResponse = new PagedResponse<AuditLogDto>
             {
-                Logs = logs.Select(MapToDto).ToList(),
-                TotalCount = totalCount,
-                Page = page,
-                PageSize = pageSize,
-                TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+                Items = logs.Select(MapToDto).ToList(),
+                total = totalCount,
+                page = page,
+                PageSize = pageSize
             };
 
-            return Ok(response);
+            return Ok(PagedApiResponse<AuditLogDto>.CreateSuccess(pagedResponse));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving audit logs");
-            return StatusCode(500, "An error occurred while retrieving audit logs");
+            return StatusCode(500, PagedApiResponse<AuditLogDto>.CreateFailure("An error occurred while retrieving audit logs"));
         }
     }
 
@@ -102,20 +102,20 @@ public class AuditController(AuditService auditService, ILogger<AuditController>
     /// <param name="entityId">Entity ID</param>
     /// <returns>Audit logs for the entity</returns>
     [HttpGet("entity/{entityName}/{entityId}")]
-    public async Task<ActionResult<List<AuditLogDto>>> GetEntityAuditLogs(
+    public async Task<ActionResult<ApiResponse<List<AuditLogDto>>>> GetEntityAuditLogs(
         string entityName, 
         string entityId)
     {
         try
         {
             var logs = await _auditService.GetEntityAuditLogsAsync(entityName, entityId);
-            return Ok(logs.Select(MapToDto).ToList());
+            return Ok(ApiResponse<List<AuditLogDto>>.SuccessResult(logs.Select(MapToDto).ToList()));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving audit logs for entity {EntityName} {EntityId}", 
                 entityName, entityId);
-            return StatusCode(500, "An error occurred while retrieving entity audit logs");
+            return StatusCode(500, ApiResponse<List<AuditLogDto>>.ErrorResult("An error occurred while retrieving entity audit logs"));
         }
     }
 
@@ -126,22 +126,22 @@ public class AuditController(AuditService auditService, ILogger<AuditController>
     /// <param name="days">Number of days to look back (default: 30)</param>
     /// <returns>Audit logs for the user</returns>
     [HttpGet("user/{userId}")]
-    public async Task<ActionResult<List<AuditLogDto>>> GetUserAuditLogs(
+        public async Task<ActionResult<ApiResponse<List<AuditLogDto>>>> GetUserAuditLogs(
         string userId, 
         [FromQuery] int days = 30)
     {
         try
         {
             if (days < 1 || days > 365)
-                return BadRequest("Days must be between 1 and 365");
+                return BadRequest(ApiResponse<List<AuditLogDto>>.ErrorResult("Days must be between 1 and 365"));
 
             var logs = await _auditService.GetUserAuditLogsAsync(userId, days);
-            return Ok(logs.Select(MapToDto).ToList());
+            return Ok(ApiResponse<List<AuditLogDto>>.SuccessResult(logs.Select(MapToDto).ToList()));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving audit logs for user {UserId}", userId);
-            return StatusCode(500, "An error occurred while retrieving user audit logs");
+            return StatusCode(500, ApiResponse<List<AuditLogDto>>.ErrorResult("An error occurred while retrieving user audit logs"));
         }
     }
 
@@ -151,12 +151,12 @@ public class AuditController(AuditService auditService, ILogger<AuditController>
     /// <param name="days">Number of days to analyze (default: 30)</param>
     /// <returns>Audit log statistics</returns>
     [HttpGet("statistics")]
-    public async Task<ActionResult<AuditStatisticsDto>> GetAuditStatistics([FromQuery] int days = 30)
+    public async Task<ActionResult<ApiResponse<AuditStatisticsDto>>> GetAuditStatistics([FromQuery] int days = 30)
     {
         try
         {
             if (days < 1 || days > 365)
-                return BadRequest("Days must be between 1 and 365");
+                return BadRequest(ApiResponse<AuditStatisticsDto>.ErrorResult("Days must be between 1 and 365"));
 
             var startDate = DateTime.UtcNow.AddDays(-days);
             var (logs, _) = await _auditService.GetAuditLogsAsync(
@@ -194,12 +194,12 @@ public class AuditController(AuditService auditService, ILogger<AuditController>
                     .ToDictionary(g => g.Key, g => g.Count())
             };
 
-            return Ok(statistics);
+            return Ok(ApiResponse<AuditStatisticsDto>.SuccessResult(statistics));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving audit statistics");
-            return StatusCode(500, "An error occurred while retrieving audit statistics");
+            return StatusCode(500, ApiResponse<AuditStatisticsDto>.ErrorResult("An error occurred while retrieving audit statistics"));
         }
     }
 
@@ -211,7 +211,7 @@ public class AuditController(AuditService auditService, ILogger<AuditController>
     /// <param name="pageSize">Page size (default: 50, max: 100)</param>
     /// <returns>Paginated audit logs by action type</returns>
     [HttpGet("by-action-type/{actionType}")]
-    public async Task<ActionResult<AuditLogResponse>> GetAuditLogsByActionType(
+        public async Task<ActionResult<PagedApiResponse<AuditLogDto>>> GetAuditLogsByActionType(
         ActionType actionType,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50)
@@ -227,21 +227,20 @@ public class AuditController(AuditService auditService, ILogger<AuditController>
             var (logs, totalCount) = await _auditService.GetAuditLogsAsync(
                 actionType: actionType, page: page, pageSize: pageSize);
 
-            var response = new AuditLogResponse
+            var pagedResponse = new PagedResponse<AuditLogDto>
             {
-                Logs = logs.Select(MapToDto).ToList(),
-                TotalCount = totalCount,
-                Page = page,
-                PageSize = pageSize,
-                TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+                Items = logs.Select(MapToDto).ToList(),
+                total = totalCount,
+                page = page,
+                PageSize = pageSize
             };
 
-            return Ok(response);
+            return Ok(PagedApiResponse<AuditLogDto>.CreateSuccess(pagedResponse));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving audit logs by action type {ActionType}", actionType);
-            return StatusCode(500, "An error occurred while retrieving audit logs by action type");
+            return StatusCode(500, PagedApiResponse<AuditLogDto>.CreateFailure("An error occurred while retrieving audit logs by action type"));
         }
     }
 
@@ -253,7 +252,7 @@ public class AuditController(AuditService auditService, ILogger<AuditController>
     /// <param name="pageSize">Page size (default: 50, max: 100)</param>
     /// <returns>Paginated audit logs by entity type</returns>
     [HttpGet("by-entity-type/{entityType}")]
-    public async Task<ActionResult<AuditLogResponse>> GetAuditLogsByEntityType(
+        public async Task<ActionResult<PagedApiResponse<AuditLogDto>>> GetAuditLogsByEntityType(
         string entityType,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50)
@@ -269,21 +268,20 @@ public class AuditController(AuditService auditService, ILogger<AuditController>
             var (logs, totalCount) = await _auditService.GetAuditLogsAsync(
                 entityType: entityType, page: page, pageSize: pageSize);
 
-            var response = new AuditLogResponse
+            var pagedResponse = new PagedResponse<AuditLogDto>
             {
-                Logs = logs.Select(MapToDto).ToList(),
-                TotalCount = totalCount,
-                Page = page,
-                PageSize = pageSize,
-                TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+                Items = logs.Select(MapToDto).ToList(),
+                total = totalCount,
+                page = page,
+                PageSize = pageSize
             };
 
-            return Ok(response);
+            return Ok(PagedApiResponse<AuditLogDto>.CreateSuccess(pagedResponse));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving audit logs by entity type {EntityType}", entityType);
-            return StatusCode(500, "An error occurred while retrieving audit logs by entity type");
+            return StatusCode(500, PagedApiResponse<AuditLogDto>.CreateFailure("An error occurred while retrieving audit logs by entity type"));
         }
     }
 
@@ -293,17 +291,17 @@ public class AuditController(AuditService auditService, ILogger<AuditController>
     /// <param name="requestId">Request ID to trace</param>
     /// <returns>Audit logs for the request</returns>
     [HttpGet("trace/{requestId}")]
-    public async Task<ActionResult<List<AuditLogDto>>> GetAuditLogsByRequestId(string requestId)
+        public async Task<ActionResult<ApiResponse<List<AuditLogDto>>>> GetAuditLogsByRequestId(string requestId)
     {
         try
         {
             var (logs, _) = await _auditService.GetAuditLogsAsync(requestId: requestId, pageSize: int.MaxValue);
-            return Ok(logs.Select(MapToDto).ToList());
+            return Ok(ApiResponse<List<AuditLogDto>>.SuccessResult(logs.Select(MapToDto).ToList()));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving audit logs for request {RequestId}", requestId);
-            return StatusCode(500, "An error occurred while retrieving audit logs for request");
+            return StatusCode(500, ApiResponse<List<AuditLogDto>>.ErrorResult("An error occurred while retrieving audit logs for request"));
         }
     }
 
@@ -326,7 +324,7 @@ public class AuditController(AuditService auditService, ILogger<AuditController>
     /// <param name="ipAddress">Filter by IP address</param>
     /// <returns>CSV content</returns>
     [HttpGet("export")]
-    public async Task<ActionResult<string>> ExportAuditLogs(
+    public async Task<IActionResult> ExportAuditLogs(
         [FromQuery] string? entityName = null,
         [FromQuery] string? action = null,
         [FromQuery] ActionType? actionType = null,
@@ -363,12 +361,13 @@ public class AuditController(AuditService auditService, ILogger<AuditController>
                 csv.AppendLine($"{log.Id},{log.Timestamp:yyyy-MM-dd HH:mm:ss},{EscapeCsv(log.Action)},{log.ActionType},{EscapeCsv(log.EntityType)},{EscapeCsv(log.EntityId)},{EscapeCsv(log.EntityName)},{EscapeCsv(log.Username)},{EscapeCsv(log.UserId)},{EscapeCsv(log.IpAddress)},{EscapeCsv(log.UserAgent)},{EscapeCsv(log.HttpMethod)},{EscapeCsv(log.Url)},{log.StatusCode},{log.Duration},{log.IsSuccess},{EscapeCsv(log.ErrorMessage)},{EscapeCsv(log.Severity)},{EscapeCsv(log.RequestId)},{EscapeCsv(log.Changes)},{EscapeCsv(log.OldValues)},{EscapeCsv(log.NewValues)},{EscapeCsv(log.Description)},{EscapeCsv(log.Metadata)}");
             }
 
-            return Ok(csv.ToString());
+            return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", $"audit-logs-{DateTime.UtcNow:yyyyMMddHHmmss}.csv");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error exporting audit logs");
-            return StatusCode(500, "An error occurred while exporting audit logs");
+            var response = ApiResponse<string>.ErrorResult("An error occurred while exporting audit logs");
+            return StatusCode(500, response);
         }
     }
 
@@ -379,12 +378,12 @@ public class AuditController(AuditService auditService, ILogger<AuditController>
     /// <returns>Number of logs deleted</returns>
     [HttpDelete("cleanup")]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult<CleanupResultDto>> CleanupOldLogs([FromQuery] int daysToKeep = 90)
+    public async Task<ActionResult<ApiResponse<CleanupResultDto>>> CleanupOldLogs([FromQuery] int daysToKeep = 90)
     {
         try
         {
             if (daysToKeep < 30)
-                return BadRequest("Days to keep must be at least 30");
+                return BadRequest(ApiResponse<CleanupResultDto>.ErrorResult("Days to keep must be at least 30"));
 
             var deletedCount = await _auditService.CleanupOldLogsAsync(daysToKeep);
             
@@ -395,12 +394,12 @@ public class AuditController(AuditService auditService, ILogger<AuditController>
                 CleanupDate = DateTime.UtcNow
             };
 
-            return Ok(result);
+            return Ok(ApiResponse<CleanupResultDto>.SuccessResult(result));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error cleaning up old audit logs");
-            return StatusCode(500, "An error occurred while cleaning up audit logs");
+            return StatusCode(500, ApiResponse<CleanupResultDto>.ErrorResult("An error occurred while cleaning up audit logs"));
         }
     }
 
