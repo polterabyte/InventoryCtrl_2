@@ -193,7 +193,8 @@ public abstract class WebBaseApiService(
     {
         try
         {
-            return await ExecuteHttpRequestAsync<PagedApiResponse<T>>(HttpMethod.Get, endpoint);
+            return await ExecuteHttpRequestAsync<PagedApiResponse<T>>(HttpMethod.Get, endpoint, null,
+                response => ErrorHandler.HandlePagedResponseAsync<T>(response));
         }
         catch (Exception ex)
         {
