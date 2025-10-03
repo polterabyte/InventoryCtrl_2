@@ -21,7 +21,7 @@ public class JwtHttpInterceptor : DelegatingHandler
         _logger = logger;
     }
 
-    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         _logger.LogDebug("JwtHttpInterceptor: Sending request to {Url}", request.RequestUri);
 
@@ -40,18 +40,10 @@ public class JwtHttpInterceptor : DelegatingHandler
             var refreshed = await _tokenManagementService.TryRefreshTokenAsync();
             if (refreshed)
             {
-                _logger.LogInformation("JwtHttpInterceptor: Token refreshed successfully. Retrying the original request.");
-                
-                var newToken = await _tokenManagementService.GetStoredTokenAsync();
-                if (!string.IsNullOrEmpty(newToken))
-                {
-                    // Clone the request to retry
-                    var newRequest = await CloneHttpRequestMessageAsync(request);
-                    newRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", newToken);
-                    
-                    response = await base.SendAsync(newRequest, cancellationToken);
-                    _logger.LogDebug("JwtHttpInterceptor: Retry request completed with status {StatusCode}", response.StatusCode);
-                }
+                _logger.LogInformation("JwtHttpInterceptor: Token refreshed successfully. The original request will be retried by the resilient handler.");
+                // Не повторяем запрос здесь. Просто позволяем оригинальному ответу 401 пройти.
+                // ResilientApiService поймает ошибку и повторит запрос, 
+                // который уже будет использовать новый токен.
             }
             else
             {
@@ -60,9 +52,7 @@ public class JwtHttpInterceptor : DelegatingHandler
         }
 
         return response;
-    }
-
-    private async Task<HttpRequestMessage> CloneHttpRequestMessageAsync(HttpRequestMessage req)
+    }    private async Task<HttpRequestMessage> CloneHttpRequestMessageAsync(HttpRequestMessage req)
     {
         var clone = new HttpRequestMessage(req.Method, req.RequestUri);
 

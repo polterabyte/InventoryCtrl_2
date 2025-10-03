@@ -2,9 +2,20 @@
 using Inventory.Shared.Constants;
 using Inventory.Shared.DTOs;
 using Microsoft.Extensions.Logging;
-using Microsoft.JSInterop;
-
-namespace Inventory.Web.Client.Services;
+using Microsoft.JSInter    private async Task<T> HandleStandardResponseAsync<T>(HttpResponseMessage response)
+    {
+        try
+        {
+            var apiResponse = await ErrorHandler.HandleResponseAsync<T>(response);
+            
+            if (!apiResponse.Success)
+            {
+                Logger.LogError("API request failed: {ErrorMessage}", apiResponse.ErrorMessage);
+                throw new HttpRequestException($"API request failed: {apiResponse.ErrorMessage}");
+            }
+            
+            return apiResponse.Data ?? throw new InvalidOperationException("Response data is null");
+        }ce Inventory.Web.Client.Services;
 
 public abstract class WebBaseApiService(
     HttpClient httpClient, 
