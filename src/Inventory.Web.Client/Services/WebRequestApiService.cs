@@ -216,17 +216,17 @@ public class WebRequestApiService : WebBaseApiService, IRequestApiService
 
     #region Request Item Management
 
-    public async Task<ApiResponse<TransactionRow>> AddRequestItemAsync(int requestId, AddRequestItemDto addItemRequest)
+    public async Task<ApiResponse<RequestDetailsDto>> AddRequestItemAsync(int requestId, AddRequestItemDto addItemRequest)
     {
         try
         {
             var endpoint = ApiEndpoints.RequestItems.Replace("{id}", requestId.ToString());
             Logger.LogDebug("Adding item to request: {RequestId}, ProductId: {ProductId}", requestId, addItemRequest.ProductId);
-            return await PostAsync<TransactionRow>(endpoint, addItemRequest);
+            return await PostAsync<RequestDetailsDto>(endpoint, addItemRequest);
         }
         catch (Exception ex)
         {
-            return await ErrorHandler.HandleExceptionAsync<TransactionRow>(ex, $"AddRequestItem - {requestId}");
+            return await ErrorHandler.HandleExceptionAsync<RequestDetailsDto>(ex, $"AddRequestItem - {requestId}");
         }
     }
 

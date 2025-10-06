@@ -5,12 +5,16 @@
 @using Inventory.Shared.Interfaces
 @using Inventory.Web.Client.Components.Shared
 @using System.ComponentModel.DataAnnotations
+@using System
+@using System.Linq
 @using Radzen
 @using Radzen.Blazor
 
 @inject IRequestApiService RequestService
 @inject NavigationManager Navigation
 @inject NotificationService NotificationService
+@inject IProductService ProductService
+@inject IWarehouseService WarehouseService
 
 @attribute [Authorize]
 
@@ -77,7 +81,7 @@
             @* Form *@
             <EditForm Model="@editRequest" OnValidSubmit="@HandleSubmit">
                 <DataAnnotationsValidator />
-                
+
                 <RadzenStack Gap="1.5rem">
                     @* Basic Information *@
                     <RadzenCard Class="rz-p-4">
@@ -85,7 +89,7 @@
                             <RadzenText TextStyle="TextStyle.H6" Class="rz-m-0">Request Information</RadzenText>
                             
                             <RadzenRow Gap="1rem">
-                                <RadzenColumn Size="12">
+                                <RadzenColumn Size="@ColumnFull">
                                     <RadzenStack Gap="0.5rem">
                                         <RadzenLabel Text="Title *" Component="titleInput" />
                                         <RadzenTextBox @bind-Value="editRequest.Title" 
@@ -99,7 +103,7 @@
                             </RadzenRow>
                             
                             <RadzenRow Gap="1rem">
-                                <RadzenColumn Size="12">
+                                <RadzenColumn Size="@ColumnFull">
                                     <RadzenStack Gap="0.5rem">
                                         <RadzenLabel Text="Description" Component="descriptionInput" />
                                         <RadzenTextArea @bind-Value="editRequest.Description" 
@@ -118,6 +122,137 @@
                         </RadzenStack>
                     </RadzenCard>
 
+                    @* Request Items *@
+                    <RadzenCard Class="rz-p-4">
+                        <RadzenStack Gap="1rem">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                                <RadzenText TextStyle="TextStyle.H6" Class="rz-m-0">Request Items</RadzenText>
+                                <RadzenButton Text="Add Item"
+                                              Icon="add"
+                                              ButtonStyle="ButtonStyle.Secondary"
+                                              Click="AddItem"
+                                              Disabled="submitting || isLoadingLookups" />
+                            </RadzenStack>
+
+                            @if (isLoadingLookups)
+                            {
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                    <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Small" />
+                                    <RadzenText TextStyle="TextStyle.Body2">Loading products and warehouses...</RadzenText>
+                                </RadzenStack>
+                            }
+
+                            @if (editRequest.Items.Count == 0)
+                            {
+                                <RadzenAlert AlertStyle="AlertStyle.Warning" Shade="Shade.Lighter" Variant="Variant.Flat">
+                                    <RadzenText TextStyle="TextStyle.Body2">Add at least one item before saving changes.</RadzenText>
+                                </RadzenAlert>
+                            }
+                            else
+                            {
+                                <RadzenStack Gap="1rem">
+                                    @for (var index = 0; index < editRequest.Items.Count; index++)
+                                    {
+                                        var item = editRequest.Items[index];
+                                        var i = index;
+                                        <RadzenCard Class="rz-p-3">
+                                            <RadzenStack Gap="1rem">
+                                                <RadzenRow Gap="1rem">
+                                                <RadzenColumn Size="@ColumnFull" SizeMd="@ColumnHalf">
+                                                    <RadzenStack Gap="0.5rem">
+                                                        <RadzenLabel Text="Product *" Component=@($"product-{i}") />
+                                                        <RadzenDropDown Data="products"
+                                                                        TextProperty="Name"
+                                                                        ValueProperty="Id"
+                                                                        AllowFiltering="true"
+                                                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                                        @bind-Value="item.ProductId"
+                                                                        Name=@($"product-{i}")
+                                                                        Placeholder="Select product"
+                                                                        Style="width: 100%"
+                                                                        Disabled="isLoadingLookups || submitting" />
+                                                            <ValidationMessage For="@(() => editRequest.Items[i].ProductId)" />
+                                                    </RadzenStack>
+                                                </RadzenColumn>
+                                                <RadzenColumn Size="@ColumnFull" SizeMd="@ColumnHalf">
+                                                    <RadzenStack Gap="0.5rem">
+                                                        <RadzenLabel Text="Warehouse *" Component=@($"warehouse-{i}") />
+                                                        <RadzenDropDown Data="warehouses"
+                                                                        TextProperty="Name"
+                                                                        ValueProperty="Id"
+                                                                        AllowFiltering="true"
+                                                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                                        @bind-Value="item.WarehouseId"
+                                                                        Name=@($"warehouse-{i}")
+                                                                        Placeholder="Select warehouse"
+                                                                        Style="width: 100%"
+                                                                        Disabled="isLoadingLookups || submitting" />
+                                                            <ValidationMessage For="@(() => editRequest.Items[i].WarehouseId)" />
+                                                    </RadzenStack>
+                                                </RadzenColumn>
+                                                </RadzenRow>
+
+                                                <RadzenRow Gap="1rem">
+                                                <RadzenColumn Size="@ColumnFull" SizeMd="@ColumnThird">
+                                                    <RadzenStack Gap="0.5rem">
+                                                        <RadzenLabel Text="Quantity *" Component=@($"quantity-{i}") />
+                                                        <RadzenNumeric TValue="int"
+                                                                       Style="width: 100%"
+                                                                       Name=@($"quantity-{i}")
+                                                                       @bind-Value="item.Quantity"
+                                                                       Min="1"
+                                                                       ShowUpDown="true"
+                                                                       Step="1"
+                                                                       Disabled="submitting" />
+                                                            <ValidationMessage For="@(() => editRequest.Items[i].Quantity)" />
+                                                    </RadzenStack>
+                                                </RadzenColumn>
+
+                                                <RadzenColumn Size="@ColumnFull" SizeMd="@ColumnThird">
+                                                    <RadzenStack Gap="0.5rem">
+                                                        <RadzenLabel Text="Unit Price" Component=@($"price-{i}") />
+                                                        <RadzenNumeric TValue="decimal?"
+                                                                       @bind-Value="item.UnitPrice"
+                                                                       Name=@($"price-{i}")
+                                                                       Style="width: 100%"
+                                                                       Min="0"
+                                                                       Step="0.01"
+                                                                       Disabled="submitting" />
+                                                    </RadzenStack>
+                                                </RadzenColumn>
+                                                </RadzenRow>
+
+                                                <RadzenRow Gap="1rem">
+                                                <RadzenColumn Size="@ColumnFull">
+                                                    <RadzenStack Gap="0.5rem">
+                                                        <RadzenLabel Text="Description" Component=@($"description-{i}") />
+                                                        <RadzenTextArea @bind-Value="item.Description"
+                                                                        Name=@($"description-{i}")
+                                                                        Placeholder="Additional notes for this item"
+                                                                        Style="width: 100%"
+                                                                        Rows="2"
+                                                                        MaxLength="500"
+                                                                        Disabled="submitting" />
+                                                    </RadzenStack>
+                                                </RadzenColumn>
+                                                </RadzenRow>
+
+                                                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End">
+                                                    <RadzenButton Text="Remove"
+                                                                  Icon="delete"
+                                                                  ButtonStyle="ButtonStyle.Danger"
+                                                                  Size="ButtonSize.Small"
+                                                                  Click="@(() => RemoveItem(item))"
+                                                                  Disabled="submitting" />
+                                                </RadzenStack>
+                                            </RadzenStack>
+                                        </RadzenCard>
+                                    }
+                                </RadzenStack>
+                            }
+                        </RadzenStack>
+                    </RadzenCard>
+
                     @* Change Summary *@
                     @if (HasChanges())
                     {
@@ -132,6 +267,10 @@
                                     @if (editRequest.Description != originalRequest.Description)
                                     {
                                         <RadzenText TextStyle="TextStyle.Body2" Class="rz-m-0">• Description has been modified</RadzenText>
+                                    }
+                                    @if (!ItemsMatchOriginal())
+                                    {
+                                        <RadzenText TextStyle="TextStyle.Body2" Class="rz-m-0">• Request items have been modified</RadzenText>
                                     }
                                 </RadzenStack>
                             </RadzenStack>
@@ -196,6 +335,10 @@
 </style>
 
 @code {
+    private const int ColumnFull = 12;
+    private const int ColumnHalf = 6;
+    private const int ColumnThird = 4;
+
     [Parameter] public int Id { get; set; }
 
     private RequestDetailsDto? originalRequest;
@@ -203,9 +346,15 @@
     private bool loading = true;
     private bool submitting = false;
     private string? errorMessage;
+    private bool isLoadingLookups = false;
+    private List<ProductDto> products = new();
+    private List<WarehouseDto> warehouses = new();
+    private List<RequestItemModel> originalItemsSnapshot = new();
+    private bool lookupsLoaded;
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadLookupsAsync();
         await LoadRequestDetails();
     }
 
@@ -213,6 +362,7 @@
     {
         if (originalRequest?.Id != Id)
         {
+            await LoadLookupsAsync();
             await LoadRequestDetails();
         }
     }
@@ -230,13 +380,29 @@
             if (response.Success && response.Data != null)
             {
                 originalRequest = response.Data;
-                
+
                 // Initialize edit model with current values
                 editRequest = new EditRequestModel
                 {
                     Title = originalRequest.Title,
-                    Description = originalRequest.Description
+                    Description = originalRequest.Description,
+                    Items = originalRequest.Items.Select(item => new RequestItemModel
+                    {
+                        ProductId = item.ProductId,
+                        WarehouseId = item.WarehouseId,
+                        Quantity = item.Quantity,
+                        UnitPrice = item.UnitPrice,
+                        Description = item.Description,
+                        LocationId = item.LocationId
+                    }).ToList()
                 };
+
+                if (editRequest.Items.Count == 0)
+                {
+                    editRequest.Items.Add(new RequestItemModel());
+                }
+
+                originalItemsSnapshot = editRequest.Items.Select(item => item.Clone()).ToList();
             }
             else
             {
@@ -265,10 +431,23 @@
 
         try
         {
+            if (editRequest.Items.Count == 0)
+            {
+                NotificationService.Notify(new Radzen.NotificationMessage
+                {
+                    Severity = NotificationSeverity.Warning,
+                    Summary = "Missing items",
+                    Detail = "Add at least one item to the request before saving.",
+                    Duration = 4000
+                });
+                return;
+            }
+
             var dto = new UpdateRequestDto
             {
                 Title = editRequest.Title?.Trim() ?? string.Empty,
-                Description = string.IsNullOrWhiteSpace(editRequest.Description) ? null : editRequest.Description.Trim()
+                Description = string.IsNullOrWhiteSpace(editRequest.Description) ? null : editRequest.Description.Trim(),
+                Items = editRequest.Items.Select(item => item.ToInputDto()).ToList()
             };
 
             var response = await RequestService.UpdateRequestAsync(originalRequest.Id, dto);
@@ -314,6 +493,49 @@
         }
     }
 
+    private async Task LoadLookupsAsync()
+    {
+        if (lookupsLoaded)
+        {
+            return;
+        }
+
+        try
+        {
+            isLoadingLookups = true;
+            products = await ProductService.GetAllProductsAsync();
+            warehouses = await WarehouseService.GetAllWarehousesAsync();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new Radzen.NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Lookup Load Failed",
+                Detail = $"Failed to load products or warehouses: {ex.Message}",
+                Duration = 5000
+            });
+        }
+        finally
+        {
+            isLoadingLookups = false;
+            lookupsLoaded = true;
+            StateHasChanged();
+        }
+    }
+
+    private void AddItem()
+    {
+        editRequest.Items.Add(new RequestItemModel());
+        StateHasChanged();
+    }
+
+    private void RemoveItem(RequestItemModel item)
+    {
+        editRequest.Items.Remove(item);
+        StateHasChanged();
+    }
+
     private bool CanEdit()
     {
         return originalRequest?.Status?.Equals("Draft", StringComparison.OrdinalIgnoreCase) == true;
@@ -322,9 +544,28 @@
     private bool HasChanges()
     {
         if (originalRequest == null) return false;
-        
+
         return editRequest.Title != originalRequest.Title ||
-               editRequest.Description != originalRequest.Description;
+               editRequest.Description != originalRequest.Description ||
+               !ItemsMatchOriginal();
+    }
+
+    private bool ItemsMatchOriginal()
+    {
+        if (originalItemsSnapshot.Count != editRequest.Items.Count)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < editRequest.Items.Count; i++)
+        {
+            if (!editRequest.Items[i].Equals(originalItemsSnapshot[i]))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public class EditRequestModel
@@ -336,5 +577,73 @@
 
         [StringLength(1000, ErrorMessage = "Description cannot exceed 1000 characters")]
         public string? Description { get; set; }
+
+        [MinLength(1, ErrorMessage = "At least one request item is required")]
+        public List<RequestItemModel> Items { get; set; } = new();
+    }
+
+    public class RequestItemModel
+    {
+        [Required(ErrorMessage = "Product is required")]
+        public int? ProductId { get; set; }
+
+        [Required(ErrorMessage = "Warehouse is required")]
+        public int? WarehouseId { get; set; }
+
+        [Range(1, int.MaxValue, ErrorMessage = "Quantity must be at least 1")]
+        public int Quantity { get; set; } = 1;
+
+        [Range(0, double.MaxValue, ErrorMessage = "Unit price cannot be negative")]
+        public decimal? UnitPrice { get; set; }
+
+        public string? Description { get; set; }
+
+        public int? LocationId { get; set; }
+
+        public RequestItemInputDto ToInputDto()
+        {
+            return new RequestItemInputDto
+            {
+                ProductId = ProductId ?? 0,
+                WarehouseId = WarehouseId ?? 0,
+                Quantity = Quantity,
+                UnitPrice = UnitPrice,
+                Description = string.IsNullOrWhiteSpace(Description) ? null : Description.Trim(),
+                LocationId = LocationId
+            };
+        }
+
+        public RequestItemModel Clone()
+        {
+            return new RequestItemModel
+            {
+                ProductId = ProductId,
+                WarehouseId = WarehouseId,
+                Quantity = Quantity,
+                UnitPrice = UnitPrice,
+                Description = Description,
+                LocationId = LocationId
+            };
+        }
+
+        public override bool Equals(object? obj)
+        {
+            if (obj is not RequestItemModel other)
+            {
+                return false;
+            }
+
+            return ProductId == other.ProductId &&
+                   WarehouseId == other.WarehouseId &&
+                   Quantity == other.Quantity &&
+                   Nullable.Equals(UnitPrice, other.UnitPrice) &&
+                   string.Equals(Description, other.Description, StringComparison.Ordinal) &&
+                   LocationId == other.LocationId;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(ProductId, WarehouseId, Quantity, UnitPrice, Description, LocationId);
+        }
     }
 }

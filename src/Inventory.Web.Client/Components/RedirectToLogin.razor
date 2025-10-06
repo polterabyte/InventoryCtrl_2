@@ -1,0 +1,14 @@
+@inject NavigationManager Navigation
+
+@code {
+    protected override void OnInitialized()
+    {
+        var currentPath = Navigation.ToBaseRelativePath(Navigation.Uri);
+
+        if (!string.Equals(currentPath, "login", System.StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(currentPath, "register", System.StringComparison.OrdinalIgnoreCase))
+        {
+            Navigation.NavigateTo("/login", false);
+        }
+    }
+}

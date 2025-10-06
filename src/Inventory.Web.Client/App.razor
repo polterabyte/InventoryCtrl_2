@@ -51,19 +51,6 @@
     private string currentTheme = "material";
     private AccessibilityHelpers? accessibilityHelpers;
 
-    public sealed class RedirectToLogin : ComponentBase
-    {
-        [Inject] NavigationManager Nav { get; set; } = default!;
-        protected override void OnInitialized()
-        {
-            var currentPath = Nav.ToBaseRelativePath(Nav.Uri);
-            if (currentPath != "login" && currentPath != "register")
-            {
-                Nav.NavigateTo("/login", false);
-            }
-        }
-    }
-    
     protected override async Task OnInitializedAsync()
     {
         try

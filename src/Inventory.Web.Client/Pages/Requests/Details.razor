@@ -82,7 +82,7 @@
                 <RadzenStack Gap="1rem">
                     <RadzenText TextStyle="TextStyle.H6" Class="rz-m-0">Request Information</RadzenText>
                     <RadzenRow Gap="2rem">
-                        <RadzenColumn Size="12">
+                        <RadzenColumn Size="@ColumnFull">
                             <RadzenStack Gap="0.75rem">
                                 <RadzenStack Gap="0.25rem">
                                     <RadzenText TextStyle="TextStyle.Caption" Class="rz-text-secondary rz-m-0">Created</RadzenText>
@@ -97,7 +97,7 @@
                                 }
                             </RadzenStack>
                         </RadzenColumn>
-                        <RadzenColumn Size="12">
+                        <RadzenColumn Size="@ColumnFull">
                             <RadzenStack Gap="0.75rem">
                                 <RadzenStack Gap="0.25rem">
                                     <RadzenText TextStyle="TextStyle.Caption" Class="rz-text-secondary rz-m-0">Created By</RadzenText>
@@ -157,43 +157,44 @@
             }
 
             @* Request Items *@
+            <RadzenCard Class="rz-p-4">
+                <RadzenStack Gap="1rem">
+                    <RadzenText TextStyle="TextStyle.H6" Class="rz-m-0">Request Items</RadzenText>
+
+                    @if (request.Items?.Count > 0)
+                    {
+                        <RadzenDataGrid Data="@request.Items" TItem="RequestItemDetailsDto" AllowPaging="true" PageSize="10">
+                            <Columns>
+                                <RadzenDataGridColumn TItem="RequestItemDetailsDto" Property="ProductName" Title="Product" />
+                                <RadzenDataGridColumn TItem="RequestItemDetailsDto" Property="ProductSku" Title="SKU" Width="120px" />
+                                <RadzenDataGridColumn TItem="RequestItemDetailsDto" Property="WarehouseName" Title="Warehouse" />
+                                <RadzenDataGridColumn TItem="RequestItemDetailsDto" Property="Quantity" Title="Quantity" Width="100px" />
+                                <RadzenDataGridColumn TItem="RequestItemDetailsDto" Property="UnitPrice" Title="Unit Price" FormatString="{0:C}" Width="120px" />
+                                <RadzenDataGridColumn TItem="RequestItemDetailsDto" Property="TotalPrice" Title="Total" FormatString="{0:C}" Width="120px" />
+                                <RadzenDataGridColumn TItem="RequestItemDetailsDto" Property="Description" Title="Description" />
+                            </Columns>
+                        </RadzenDataGrid>
+                    }
+                    else
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" Variant="Variant.Flat">
+                            <RadzenText TextStyle="TextStyle.Body2">No items have been added to this request yet.</RadzenText>
+                        </RadzenAlert>
+                    }
+                </RadzenStack>
+            </RadzenCard>
+
             @if (request.Transactions?.Count > 0)
             {
                 <RadzenCard Class="rz-p-4">
                     <RadzenStack Gap="1rem">
-                        <RadzenText TextStyle="TextStyle.H6" Class="rz-m-0">Request Items</RadzenText>
+                        <RadzenText TextStyle="TextStyle.H6" Class="rz-m-0">Transaction History</RadzenText>
                         <RadzenDataGrid Data="@request.Transactions" TItem="TransactionRow" AllowPaging="true" PageSize="10">
                             <Columns>
-                                <RadzenDataGridColumn TItem="TransactionRow" Property="Type" Title="Type" Width="100px" />
+                                <RadzenDataGridColumn TItem="TransactionRow" Property="Type" Title="Type" Width="120px" />
                                 <RadzenDataGridColumn TItem="TransactionRow" Property="Quantity" Title="Quantity" Width="100px" />
-                                <RadzenDataGridColumn TItem="TransactionRow" Property="Date" Title="Date" FormatString="{0:MMM dd, yyyy}" Width="120px" />
+                                <RadzenDataGridColumn TItem="TransactionRow" Property="Date" Title="Date" FormatString="{0:MMM dd, yyyy}" Width="140px" />
                                 <RadzenDataGridColumn TItem="TransactionRow" Property="Description" Title="Description" />
-                                <RadzenDataGridColumn TItem="TransactionRow" Title="Product" Width="100px">
-                                    <Template Context="transaction">
-                                        @if (transaction.ProductId.HasValue)
-                                        {
-                                            <RadzenButton Text="View" Icon="visibility" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
-                                                          Click="@(() => Navigation.NavigateTo($"/products/{transaction.ProductId}"))" />
-                                        }
-                                        else
-                                        {
-                                            <RadzenText TextStyle="TextStyle.Body2" Class="rz-text-secondary">N/A</RadzenText>
-                                        }
-                                    </Template>
-                                </RadzenDataGridColumn>
-                                <RadzenDataGridColumn TItem="TransactionRow" Title="Warehouse" Width="100px">
-                                    <Template Context="transaction">
-                                        @if (transaction.WarehouseId.HasValue)
-                                        {
-                                            <RadzenButton Text="View" Icon="visibility" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
-                                                          Click="@(() => Navigation.NavigateTo($"/warehouses/{transaction.WarehouseId}"))" />
-                                        }
-                                        else
-                                        {
-                                            <RadzenText TextStyle="TextStyle.Body2" Class="rz-text-secondary">N/A</RadzenText>
-                                        }
-                                    </Template>
-                                </RadzenDataGridColumn>
                             </Columns>
                         </RadzenDataGrid>
                     </RadzenStack>
@@ -226,6 +227,8 @@
 </style>
 
 @code {
+    private const int ColumnFull = 12;
+
     [Parameter] public int Id { get; set; }
 
     private RequestDetailsDto? request;
