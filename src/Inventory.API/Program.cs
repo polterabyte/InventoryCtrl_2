@@ -438,7 +438,10 @@ app.MapControllers();
 // Map SignalR hubs
 app.MapHub<NotificationHub>("/notificationHub", options =>
 {
-    options.Transports = Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets;
+    options.Transports =
+        Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets |
+        Microsoft.AspNetCore.Http.Connections.HttpTransportType.ServerSentEvents |
+        Microsoft.AspNetCore.Http.Connections.HttpTransportType.LongPolling;
     options.CloseOnAuthenticationExpiration = true;
     options.ApplicationMaxBufferSize = 1024 * 1024; // 1MB
     options.TransportMaxBufferSize = 1024 * 1024; // 1MB

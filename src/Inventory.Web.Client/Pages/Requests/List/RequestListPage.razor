@@ -161,6 +161,7 @@
     private int pageSize = 20;
     private int totalCount = 0;
     private int totalPages = 0;
+    private DotNetObjectReference<RequestListPage>? signalRRef;
 
     // Filter options
     private readonly List<StatusOption> statusOptions = new()
@@ -191,8 +192,8 @@
             var token = await TokenManagement.GetStoredTokenAsync();
             if (!string.IsNullOrEmpty(token))
             {
-                var dotNetRef = DotNetObjectReference.Create(this);
-                var connected = await SignalRService.InitializeConnectionAsync(token, dotNetRef);
+                signalRRef ??= DotNetObjectReference.Create(this);
+                var connected = await SignalRService.InitializeConnectionAsync(token, signalRRef);
                 if (connected)
                 {
                     await SignalRService.SubscribeToNotificationTypeAsync("REQUEST");
@@ -417,7 +418,8 @@
         try
         {
             await SignalRService.UnsubscribeFromNotificationTypeAsync("REQUEST");
-            await SignalRService.DisconnectAsync();
+            signalRRef?.Dispose();
+            signalRRef = null;
         }
         catch (Exception ex)
         {

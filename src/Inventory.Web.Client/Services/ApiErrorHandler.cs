@@ -441,8 +441,14 @@ public class ApiErrorHandler : IApiErrorHandler
                 JsonTokenType.True => bool.TrueString,
                 JsonTokenType.False => bool.FalseString,
                 JsonTokenType.Null => null,
-                _ => reader.GetRawText()
+                _ => ReadRawJson(ref reader)
             };
+        }
+
+        private static string ReadRawJson(ref Utf8JsonReader reader)
+        {
+            using var doc = JsonDocument.ParseValue(ref reader);
+            return doc.RootElement.GetRawText();
         }
 
         public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options)
