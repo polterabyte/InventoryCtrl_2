@@ -4,7 +4,9 @@ using System.Net;
 using Microsoft.AspNetCore.Components;
 using Inventory.Shared.Interfaces;
 using Radzen;
+using System.Globalization;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Inventory.Web.Client.Services;
 
@@ -40,10 +42,7 @@ public class ApiErrorHandler : IApiErrorHandler
             }
 
             var responseContent = await response.Content.ReadAsStringAsync();
-            var serializerOptions = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
+            var serializerOptions = CreateSerializerOptions();
 
             if (string.IsNullOrWhiteSpace(responseContent))
             {
@@ -113,10 +112,7 @@ public class ApiErrorHandler : IApiErrorHandler
 
             if (response.IsSuccessStatusCode)
             {
-                var serializerOptions = new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                };
+                var serializerOptions = CreateSerializerOptions();
 
                 try
                 {
@@ -364,6 +360,18 @@ public class ApiErrorHandler : IApiErrorHandler
         return ApiResponse<T>.ErrorResult("Authentication required. Please log in again.");
     }
 
+    private static JsonSerializerOptions CreateSerializerOptions()
+    {
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
+        options.Converters.Add(new FlexibleStringConverter());
+
+        return options;
+    }
+
     private static bool IsApiResponseWrapper(Type type)
     {
         return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(ApiResponse<>);
@@ -418,5 +426,28 @@ public class ApiErrorHandler : IApiErrorHandler
         dataProperty?.SetValue(instance, data);
 
         return instance;
+    }
+
+    private sealed class FlexibleStringConverter : JsonConverter<string>
+    {
+        public override string? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            return reader.TokenType switch
+            {
+                JsonTokenType.String => reader.GetString(),
+                JsonTokenType.Number => reader.TryGetInt64(out var longValue)
+                    ? longValue.ToString(CultureInfo.InvariantCulture)
+                    : reader.GetDouble().ToString(CultureInfo.InvariantCulture),
+                JsonTokenType.True => bool.TrueString,
+                JsonTokenType.False => bool.FalseString,
+                JsonTokenType.Null => null,
+                _ => reader.GetRawText()
+            };
+        }
+
+        public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options)
+        {
+            writer.WriteStringValue(value);
+        }
     }
 }
