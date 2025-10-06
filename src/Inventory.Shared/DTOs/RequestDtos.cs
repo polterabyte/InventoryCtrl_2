@@ -18,6 +18,7 @@ public class RequestDetailsDto
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public string CreatedByUserId { get; set; } = string.Empty;
+    public List<RequestItemDetailsDto> Items { get; set; } = new();
     public List<TransactionRow> Transactions { get; set; } = new();
     public List<HistoryRow> History { get; set; } = new();
 }
