@@ -13,6 +13,7 @@ public class AuditServiceTests : TestBase
 {
     private readonly Mock<IHttpContextAccessor> _httpContextAccessorMock;
     private readonly Mock<ILogger<AuditService>> _loggerMock;
+    private readonly Mock<SafeSerializationService> _mockSafeSerializationService;
     private readonly AuditService _auditService;
     private readonly HttpContext _httpContext;
 
@@ -33,7 +34,9 @@ public class AuditServiceTests : TestBase
         
         _httpContextAccessorMock.Setup(x => x.HttpContext).Returns(_httpContext);
         
-        _auditService = new AuditService(Context, _httpContextAccessorMock.Object, _loggerMock.Object);
+        var mockSafeSerializerLogger = new Mock<ILogger<SafeSerializationService>>();
+        _mockSafeSerializationService = new Mock<SafeSerializationService>(mockSafeSerializerLogger.Object);
+        _auditService = new AuditService(Context, _httpContextAccessorMock.Object, _loggerMock.Object, _mockSafeSerializationService.Object);
     }
 
     [Fact]

@@ -11,7 +11,8 @@ public class WebWarehouseApiService : WebBaseApiService, IWarehouseService
         HttpClient httpClient, 
         IUrlBuilderService urlBuilderService, 
         IResilientApiService resilientApiService, 
-        IApiErrorHandler errorHandler,        IRequestValidator requestValidator,
+        IApiErrorHandler errorHandler,
+        IRequestValidator requestValidator,
         ILogger<WebWarehouseApiService> logger)
         : base(httpClient, urlBuilderService, resilientApiService, errorHandler, requestValidator, logger)
     {

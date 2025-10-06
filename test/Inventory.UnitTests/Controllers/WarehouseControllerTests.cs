@@ -7,6 +7,7 @@ using System.Security.Claims;
 using Inventory.API.Controllers;
 using Inventory.API.Models;
 using Inventory.Shared.DTOs;
+using Inventory.API.Services;
 using Xunit;
 #pragma warning disable CS8602 // Dereference of a possibly null reference
 using FluentAssertions;
@@ -33,7 +34,8 @@ public class WarehouseControllerTests : IDisposable
         _context.Database.EnsureCreated();
         
         _mockLogger = new Mock<ILogger<WarehouseController>>();
-        _controller = new WarehouseController(_context, _mockLogger.Object);
+        var mockUserWarehouseService = new Mock<IUserWarehouseService>();
+        _controller = new WarehouseController(_context, mockUserWarehouseService.Object, _mockLogger.Object);
 
         // Setup authentication context for tests
         SetupAuthenticationContext();
@@ -157,8 +159,8 @@ public class WarehouseControllerTests : IDisposable
         var response = okResult.Value as PagedApiResponse<WarehouseDto>;
         response!.Success.Should().BeTrue();
         response.Data.Items.Should().HaveCount(1);
-        response.Data.TotalCount.Should().Be(2);
-        response.Data.PageNumber.Should().Be(1);
+        response.Data.total.Should().Be(2);
+        response.Data.page.Should().Be(1);
         response.Data.PageSize.Should().Be(1);
     }
 

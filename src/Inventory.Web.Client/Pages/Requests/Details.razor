@@ -82,7 +82,7 @@
                 <RadzenStack Gap="1rem">
                     <RadzenText TextStyle="TextStyle.H6" Class="rz-m-0">Request Information</RadzenText>
                     <RadzenRow Gap="2rem">
-                        <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenColumn Size="12">
                             <RadzenStack Gap="0.75rem">
                                 <RadzenStack Gap="0.25rem">
                                     <RadzenText TextStyle="TextStyle.Caption" Class="rz-text-secondary rz-m-0">Created</RadzenText>
@@ -97,7 +97,7 @@
                                 }
                             </RadzenStack>
                         </RadzenColumn>
-                        <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenColumn Size="12">
                             <RadzenStack Gap="0.75rem">
                                 <RadzenStack Gap="0.25rem">
                                     <RadzenText TextStyle="TextStyle.Caption" Class="rz-text-secondary rz-m-0">Created By</RadzenText>
@@ -231,6 +231,7 @@
     private RequestDetailsDto? request;
     private bool loading = true;
     private string? errorMessage;
+    private DotNetObjectReference<Details>? signalRRef;
 
     protected override async Task OnInitializedAsync()
     {
@@ -245,8 +246,8 @@
             var token = await TokenManagement.GetStoredTokenAsync();
             if (!string.IsNullOrEmpty(token))
             {
-                var dotNetRef = DotNetObjectReference.Create(this);
-                var connected = await SignalRService.InitializeConnectionAsync(token, dotNetRef);
+                signalRRef ??= DotNetObjectReference.Create(this);
+                var connected = await SignalRService.InitializeConnectionAsync(token, signalRRef);
                 if (connected)
                 {
                     await SignalRService.SubscribeToNotificationTypeAsync("REQUEST");
@@ -409,7 +410,8 @@
         try
         {
             await SignalRService.UnsubscribeFromNotificationTypeAsync("REQUEST");
-            await SignalRService.DisconnectAsync();
+            signalRRef?.Dispose();
+            signalRRef = null;
         }
         catch (Exception ex)
         {

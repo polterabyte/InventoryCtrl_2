@@ -11,7 +11,8 @@ public class WebProductModelApiService : WebBaseApiService, IProductModelService
         HttpClient httpClient, 
         IUrlBuilderService urlBuilderService, 
         IResilientApiService resilientApiService, 
-        IApiErrorHandler errorHandler,        IRequestValidator requestValidator,
+        IApiErrorHandler errorHandler,
+        IRequestValidator requestValidator,
         ILogger<WebProductModelApiService> logger)
         : base(httpClient, urlBuilderService, resilientApiService, errorHandler, requestValidator, logger)
     {

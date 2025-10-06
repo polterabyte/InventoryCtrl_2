@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace Inventory.Shared.Services;
 
 public class CategoryApiService(HttpClient httpClient, ILogger<CategoryApiService> logger) 
-    : BaseApiService(httpClient, "", logger), ICategoryService
+    : BaseApiService(httpClient, "", logger), IClientCategoryService
 {
 
     public async Task<List<CategoryDto>> GetAllCategoriesAsync()
@@ -39,10 +39,10 @@ public class CategoryApiService(HttpClient httpClient, ILogger<CategoryApiServic
         return response.Data ?? new List<CategoryDto>();
     }
 
-    public async Task<CategoryDto> CreateCategoryAsync(CreateCategoryDto createCategoryDto)
+    public async Task<CategoryDto?> CreateCategoryAsync(CreateCategoryDto createCategoryDto)
     {
         var response = await PostAsync<CategoryDto>(ApiEndpoints.Categories, createCategoryDto);
-        return response.Data ?? new CategoryDto();
+        return response.Data;
     }
 
     public async Task<CategoryDto?> UpdateCategoryAsync(int id, UpdateCategoryDto updateCategoryDto)

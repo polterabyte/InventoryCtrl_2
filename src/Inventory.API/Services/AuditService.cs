@@ -14,7 +14,7 @@ public class AuditService(
     AppDbContext context,
     IHttpContextAccessor httpContextAccessor,
     ILogger<AuditService> logger,
-    SafeSerializationService safeSerializer)
+    SafeSerializationService safeSerializer) : IInternalAuditService
 {
     private readonly AppDbContext _context = context;
     private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;

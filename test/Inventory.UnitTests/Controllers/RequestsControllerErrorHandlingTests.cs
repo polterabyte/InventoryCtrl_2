@@ -6,6 +6,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Inventory.API.Controllers;
 using Inventory.API.Services;
+using Microsoft.EntityFrameworkCore;
 using Inventory.API.Models;
 
 namespace Inventory.UnitTests.Controllers
@@ -19,7 +20,10 @@ namespace Inventory.UnitTests.Controllers
 
         public RequestsControllerErrorHandlingTests()
         {
-            _mockContext = new Mock<AppDbContext>();
+            var options = new DbContextOptionsBuilder<AppDbContext>()
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                .Options;
+            _mockContext = new Mock<AppDbContext>(options);
             _mockService = new Mock<IRequestService>();
             _mockLogger = new Mock<ILogger<RequestsController>>();
             

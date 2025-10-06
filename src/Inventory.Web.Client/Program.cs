@@ -1,4 +1,4 @@
-﻿﻿using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Inventory.Web.Client;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -68,19 +68,22 @@ builder.Services.AddScoped<ITokenRefreshService>(sp =>
 // Register token management service
 builder.Services.AddScoped<ITokenManagementService, TokenManagementService>();
 
-// Register HTTP interceptor
-builder.Services.AddScoped<IHttpInterceptor, JwtHttpInterceptor>();
+// Register HTTP interceptor as a delegating handler
+builder.Services.AddScoped<JwtHttpInterceptor>();
 
 // Configure API HTTP client with interceptor support
-builder.Services.AddScoped<HttpClient>(sp =>
+builder.Services.AddHttpClient("API", client =>
+    {
+        // No BaseAddress here, it will be set dynamically by ApiUrlService
+        client.DefaultRequestHeaders.Add("X-Requested-With", "XMLHttpRequest");
+    })
+    .AddHttpMessageHandler<JwtHttpInterceptor>();
+
+// Register HttpClient for API services - uses the "API" client with JWT interceptor
+builder.Services.AddScoped(sp =>
 {
-    var interceptor = sp.GetRequiredService<IHttpInterceptor>();
-    var logger = sp.GetRequiredService<ILogger<InterceptedHttpClient>>();
-    
-    var httpClient = new InterceptedHttpClient(interceptor, logger);
-    httpClient.DefaultRequestHeaders.Add("X-Requested-With", "XMLHttpRequest");
-    
-    return httpClient;
+    var factory = sp.GetRequiredService<IHttpClientFactory>();
+    return factory.CreateClient("API");
 });
 
 
@@ -100,7 +103,7 @@ builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Informatio
 builder.Services.AddScoped<IAuthService, WebAuthApiService>();
 builder.Services.AddScoped<IProductService, WebProductApiService>();
 builder.Services.AddScoped<IUnitOfMeasureApiService, WebUnitOfMeasureApiService>();
-builder.Services.AddScoped<ICategoryService, WebCategoryApiService>();
+builder.Services.AddScoped<IClientCategoryService, WebCategoryApiService>();
 builder.Services.AddScoped<IManufacturerService, WebManufacturerApiService>();
 builder.Services.AddScoped<IProductGroupService, WebProductGroupApiService>();
 builder.Services.AddScoped<IProductModelService, WebProductModelApiService>();
@@ -123,6 +126,7 @@ builder.Services.AddScoped<Inventory.UI.Services.IAuthenticationService, Invento
 
 // Register user management service
 builder.Services.AddScoped<IUserManagementService, UserManagementService>();
+builder.Services.AddScoped<IUserWarehouseService, WebUserWarehouseApiService>();
 
 // Register audit services
 builder.Services.AddScoped<IAuditService, WebAuditApiService>();

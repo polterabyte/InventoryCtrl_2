@@ -16,6 +16,7 @@ using Inventory.API.Validators;
 using Inventory.API.Hubs;
 using Microsoft.AspNetCore.Components.WebAssembly.Server;
 using Inventory.API.Configuration;
+using Inventory.API.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,13 +42,17 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title = "Inventory Control API",
         Version = "v1",
-        Description = "RESTful API for inventory management system",
+        Description = "RESTful API for inventory management system with comprehensive user-warehouse access control",
         Contact = new Microsoft.OpenApi.Models.OpenApiContact
         {
             Name = "Inventory Control Team",
             Email = "support@inventorycontrol.com"
         }
     });
+
+    // Add API operation grouping by tags
+    c.TagActionsBy(api => new[] { api.GroupName ?? api.ActionDescriptor.RouteValues["controller"] });
+    c.DocInclusionPredicate((name, api) => true);
 
     // Add JWT authentication to Swagger
     c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
@@ -81,6 +86,9 @@ builder.Services.AddSwaggerGen(c =>
     {
         c.IncludeXmlComments(xmlPath);
     }
+    
+    // Configure operation grouping for better organization
+    c.EnableAnnotations();
 });
 
 // Add CORS configuration
@@ -221,7 +229,9 @@ builder.Services.AddScoped<Inventory.Shared.Interfaces.INotificationService, Inv
 // Remove this line - using Radzen notifications directly now
 // builder.Services.AddScoped<Inventory.Shared.Services.IUINotificationService, Inventory.Shared.Services.NotificationService>();
 builder.Services.AddScoped<IErrorHandlingService, ErrorHandlingService>();
-builder.Services.AddScoped<RefreshTokenService>();
+builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
 
 // Add audit services
 builder.Services.AddScoped<SafeSerializationService>();
@@ -270,6 +280,7 @@ builder.Services.AddHttpClient<ILocationService, LocationApiService>(client =>
 
 // Add FluentValidation
 builder.Services.AddScoped<IRequestService, RequestService>();
+builder.Services.AddScoped<Inventory.API.Services.IUserWarehouseService, UserWarehouseService>();
 builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
 
 // Add Rate Limiting
@@ -427,7 +438,10 @@ app.MapControllers();
 // Map SignalR hubs
 app.MapHub<NotificationHub>("/notificationHub", options =>
 {
-    options.Transports = Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets;
+    options.Transports =
+        Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets |
+        Microsoft.AspNetCore.Http.Connections.HttpTransportType.ServerSentEvents |
+        Microsoft.AspNetCore.Http.Connections.HttpTransportType.LongPolling;
     options.CloseOnAuthenticationExpiration = true;
     options.ApplicationMaxBufferSize = 1024 * 1024; // 1MB
     options.TransportMaxBufferSize = 1024 * 1024; // 1MB

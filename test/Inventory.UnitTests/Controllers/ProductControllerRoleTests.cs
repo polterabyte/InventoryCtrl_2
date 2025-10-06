@@ -35,7 +35,8 @@ public class ProductControllerRoleTests : IDisposable
         _context.Database.EnsureCreated();
         
         _mockLogger = new Mock<ILogger<ProductController>>();
-        var mockAuditService = new Mock<AuditService>(_context, Mock.Of<IHttpContextAccessor>(), Mock.Of<ILogger<AuditService>>());
+        var safeSerializationService = new SafeSerializationService(Mock.Of<ILogger<SafeSerializationService>>());
+        var mockAuditService = new Mock<AuditService>(_context, Mock.Of<IHttpContextAccessor>(), Mock.Of<ILogger<AuditService>>(), safeSerializationService);
         _controller = new ProductController(_context, _mockLogger.Object, mockAuditService.Object);
 
         // Setup test data
@@ -99,8 +100,8 @@ public class ProductControllerRoleTests : IDisposable
         var result = await _controller.CreateProduct(request);
 
         // Assert
-        result.Should().BeOfType<CreatedAtActionResult>();
-        var createdResult = result as CreatedAtActionResult;
+        result.Result.Should().BeOfType<CreatedAtActionResult>();
+        var createdResult = result.Result as CreatedAtActionResult;
         var response = createdResult?.Value as ApiResponse<ProductDto>;
         
         response.Should().NotBeNull();
@@ -181,8 +182,8 @@ public class ProductControllerRoleTests : IDisposable
         var result = await _controller.CreateProduct(request);
 
         // Assert
-        result.Should().BeOfType<CreatedAtActionResult>();
-        var createdResult = result as CreatedAtActionResult;
+        result.Result.Should().BeOfType<CreatedAtActionResult>();
+        var createdResult = result.Result as CreatedAtActionResult;
         var response = createdResult?.Value as ApiResponse<ProductDto>;
         
         response.Should().NotBeNull();
@@ -245,8 +246,8 @@ public class ProductControllerRoleTests : IDisposable
         var result = await _controller.UpdateProduct(product.Id, request);
 
         // Assert
-        result.Should().BeOfType<OkObjectResult>();
-        var okResult = result as OkObjectResult;
+        result.Result.Should().BeOfType<OkObjectResult>();
+        var okResult = result.Result as OkObjectResult;
         var response = okResult?.Value as ApiResponse<ProductDto>;
         
         response.Should().NotBeNull();
@@ -399,8 +400,8 @@ public class ProductControllerRoleTests : IDisposable
         var result = await _controller.DeleteProduct(product.Id);
 
         // Assert
-        result.Should().BeOfType<OkObjectResult>();
-        var okResult = result as OkObjectResult;
+        result.Result.Should().BeOfType<OkObjectResult>();
+        var okResult = result.Result as OkObjectResult;
         var response = okResult?.Value as ApiResponse<object>;
         
         response.Should().NotBeNull();

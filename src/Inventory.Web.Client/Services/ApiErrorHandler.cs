@@ -1,10 +1,12 @@
 using Inventory.Shared.DTOs;
 using Microsoft.Extensions.Logging;
 using System.Net;
-using System.Net.Http.Json;
 using Microsoft.AspNetCore.Components;
 using Inventory.Shared.Interfaces;
 using Radzen;
+using System.Globalization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Inventory.Web.Client.Services;
 
@@ -34,44 +36,71 @@ public class ApiErrorHandler : IApiErrorHandler
     {
         try
         {
-            if (response.IsSuccessStatusCode)
+            if (!response.IsSuccessStatusCode)
             {
-                try
-                {
-                    var data = await response.Content.ReadFromJsonAsync<T>();
-                    _logger.LogDebug("API request successful. Status: {StatusCode}", response.StatusCode);
-                    return new ApiResponse<T> { Success = true, Data = data };
-                }
-                catch (System.Text.Json.JsonException jsonEx)
-                {
-                    _logger.LogWarning(jsonEx, "Failed to deserialize response as {Type}. Response content: {Content}", 
-                        typeof(T).Name, await response.Content.ReadAsStringAsync());
-                    
-                    // For DELETE operations, if we can't deserialize, assume success
-                    if (typeof(T) == typeof(bool))
-                    {
-                        _logger.LogInformation("Assuming success for boolean response that couldn't be deserialized");
-                        return new ApiResponse<T> { Success = true, Data = (T)(object)true };
-                    }
-                    
-                    return new ApiResponse<T> 
-                    { 
-                        Success = false, 
-                        ErrorMessage = "Failed to deserialize response data"
-                    };
-                }
+                return await HandleErrorResponseAsync<T>(response);
             }
 
-            return await HandleErrorResponseAsync<T>(response);
+            var responseContent = await response.Content.ReadAsStringAsync();
+            var serializerOptions = CreateSerializerOptions();
+
+            if (string.IsNullOrWhiteSpace(responseContent))
+            {
+                if (typeof(T) == typeof(bool))
+                {
+                    _logger.LogDebug("API request successful. Status: {StatusCode}", response.StatusCode);
+                    return ApiResponse<T>.SuccessResult((T)(object)true);
+                }
+
+                _logger.LogWarning("Received empty response when expecting type {Type}", typeof(T).Name);
+                return ApiResponse<T>.ErrorResult($"Failed to deserialize response for {typeof(T).Name}. Content was empty or null.");
+            }
+
+            if (IsApiResponseWrapper(typeof(T)))
+            {
+                if (TryDeserialize(responseContent, typeof(T), serializerOptions, out var wrappedResult) && wrappedResult is T typedWrapped)
+                {
+                    if (GetSuccessValue(typedWrapped) || GetDataValue(typedWrapped) != null)
+                    {
+                        _logger.LogDebug("API request successful (wrapped format). Status: {StatusCode}", response.StatusCode);
+                        return ApiResponse<T>.SuccessResult(typedWrapped);
+                    }
+
+                    _logger.LogDebug("Wrapped response contained no data; attempting legacy fallback for type {Type}", typeof(T).Name);
+                }
+                else
+                {
+                    _logger.LogDebug("Failed to deserialize wrapped response as {Type}. Attempting legacy fallback.", typeof(T).Name);
+                }
+
+                var innerType = typeof(T).GetGenericArguments()[0];
+                if (TryDeserialize(responseContent, innerType, serializerOptions, out var legacyResult) && legacyResult != null)
+                {
+                    var adaptedResponse = CreateSuccessWrapper(innerType, legacyResult);
+                    if (adaptedResponse is T typedAdapted)
+                    {
+                        _logger.LogDebug("API request successful (legacy format). Status: {StatusCode}", response.StatusCode);
+                        return ApiResponse<T>.SuccessResult(typedAdapted);
+                    }
+                }
+
+                _logger.LogWarning("Failed to deserialize response for {Type}. Content: {Content}", typeof(T).Name, responseContent);
+                return ApiResponse<T>.ErrorResult("Failed to deserialize response data");
+            }
+
+            if (TryDeserialize(responseContent, typeof(T), serializerOptions, out var result) && result is T typedResult)
+            {
+                _logger.LogDebug("API request successful. Status: {StatusCode}", response.StatusCode);
+                return ApiResponse<T>.SuccessResult(typedResult);
+            }
+
+            _logger.LogWarning("Failed to deserialize response as {Type}. Content: {Content}", typeof(T).Name, responseContent);
+            return ApiResponse<T>.ErrorResult("Failed to deserialize response data");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error handling API response");
-            return new ApiResponse<T> 
-            { 
-                Success = false, 
-                ErrorMessage = "Failed to process API response"
-            };
+            return ApiResponse<T>.ErrorResult("Failed to process API response");
         }
     }
 
@@ -79,11 +108,42 @@ public class ApiErrorHandler : IApiErrorHandler
     {
         try
         {
+            var responseContent = await response.Content.ReadAsStringAsync();
+
             if (response.IsSuccessStatusCode)
             {
-                var data = await response.Content.ReadFromJsonAsync<PagedApiResponse<T>>();
-                _logger.LogDebug("API paged request successful. Status: {StatusCode}", response.StatusCode);
-                return data ?? new PagedApiResponse<T> { Success = false, ErrorMessage = "Failed to deserialize paged response" };
+                var serializerOptions = CreateSerializerOptions();
+
+                try
+                {
+                    var wrappedResponse = JsonSerializer.Deserialize<PagedApiResponse<T>>(responseContent, serializerOptions);
+                    if (wrappedResponse != null && (wrappedResponse.Success || wrappedResponse.Data != null))
+                    {
+                        _logger.LogDebug("API paged request successful (wrapped format). Status: {StatusCode}", response.StatusCode);
+                        return wrappedResponse;
+                    }
+                }
+                catch (JsonException jsonEx)
+                {
+                    _logger.LogDebug(jsonEx, "Failed to deserialize wrapped paged response. Falling back to legacy format.");
+                }
+
+                try
+                {
+                    var legacyResponse = JsonSerializer.Deserialize<PagedResponse<T>>(responseContent, serializerOptions);
+                    if (legacyResponse != null)
+                    {
+                        _logger.LogDebug("API paged request successful (legacy format). Status: {StatusCode}", response.StatusCode);
+                        return PagedApiResponse<T>.CreateSuccess(legacyResponse);
+                    }
+                }
+                catch (JsonException legacyEx)
+                {
+                    _logger.LogWarning(legacyEx, "Failed to deserialize legacy paged response format.");
+                }
+
+                _logger.LogWarning("Paged response deserialization failed for type {Type}. Content: {Content}", typeof(T).Name, responseContent);
+                return PagedApiResponse<T>.CreateFailure("Failed to deserialize paged response");
             }
 
             return await HandlePagedErrorResponseAsync<T>(response);
@@ -91,11 +151,7 @@ public class ApiErrorHandler : IApiErrorHandler
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error handling API paged response");
-            return new PagedApiResponse<T> 
-            { 
-                Success = false, 
-                ErrorMessage = "Failed to process API paged response"
-            };
+            return PagedApiResponse<T>.CreateFailure("Failed to process API paged response");
         }
     }
 
@@ -105,11 +161,7 @@ public class ApiErrorHandler : IApiErrorHandler
         
         var errorMessage = GetUserFriendlyErrorMessage(exception);
         
-        return Task.FromResult(new ApiResponse<T> 
-        { 
-            Success = false, 
-            ErrorMessage = errorMessage
-        });
+        return Task.FromResult(ApiResponse<T>.ErrorResult(errorMessage));
     }
 
     public Task<PagedApiResponse<T>> HandlePagedExceptionAsync<T>(Exception exception, string operation)
@@ -118,11 +170,7 @@ public class ApiErrorHandler : IApiErrorHandler
         
         var errorMessage = GetUserFriendlyErrorMessage(exception);
         
-        return Task.FromResult(new PagedApiResponse<T> 
-        { 
-            Success = false, 
-            ErrorMessage = errorMessage
-        });
+        return Task.FromResult(PagedApiResponse<T>.CreateFailure(errorMessage));
     }
 
     private async Task<ApiResponse<T>> HandleErrorResponseAsync<T>(HttpResponseMessage response)
@@ -196,11 +244,7 @@ public class ApiErrorHandler : IApiErrorHandler
                 break;
         }
         
-        return new ApiResponse<T> 
-        { 
-            Success = false, 
-            ErrorMessage = errorMessage
-        };
+        return ApiResponse<T>.ErrorResult(errorMessage);
     }
 
     private async Task<PagedApiResponse<T>> HandlePagedErrorResponseAsync<T>(HttpResponseMessage response)
@@ -210,11 +254,7 @@ public class ApiErrorHandler : IApiErrorHandler
         
         _logger.LogWarning("API paged request failed. Status: {StatusCode}, Error: {Error}", statusCode, errorMessage);
         
-        return new PagedApiResponse<T> 
-        { 
-            Success = false, 
-            ErrorMessage = errorMessage
-        };
+        return PagedApiResponse<T>.CreateFailure(errorMessage);
     }
 
     private async Task<string> GetErrorMessageAsync(HttpResponseMessage response)
@@ -279,53 +319,16 @@ public class ApiErrorHandler : IApiErrorHandler
     }
 
     /// <summary>
-    /// Handles 401 Unauthorized errors with intelligent token refresh and redirect logic
+    /// Handles 401 Unauthorized errors - token refresh is handled by JwtHttpInterceptor
     /// </summary>
     private async Task<ApiResponse<T>> HandleUnauthorizedResponseAsync<T>(HttpResponseMessage response)
     {
-        _logger.LogInformation("Handling 401 Unauthorized response - attempting token refresh");
-        
-        try
-        {
-            // Check if we have valid tokens to refresh
-            var hasRefreshToken = await _tokenManagementService.HasValidRefreshTokenAsync();
-            if (!hasRefreshToken)
-            {
-                _logger.LogInformation("No valid refresh token available, redirecting to login");
-                await RedirectToLoginAsync("Session expired. Please log in again.");
-                return CreateAuthFailureResponse<T>();
-            }
+        _logger.LogInformation("Handling 401 Unauthorized response - token refresh should have been handled by interceptor");
 
-            // Attempt token refresh
-            var refreshSuccess = await _tokenManagementService.TryRefreshTokenAsync();
-            
-            if (refreshSuccess)
-            {
-                _logger.LogInformation("Token refresh successful, returning retry indication");
-                
-                // Return special response indicating that the request should be retried
-                return new ApiResponse<T>
-                {
-                    Success = false,
-                    ErrorMessage = "TOKEN_REFRESHED", // Special code for retry
-                    Data = default(T)
-                };
-            }
-            else
-            {
-                _logger.LogWarning("Token refresh failed, redirecting to login");
-                await RedirectToLoginAsync("Session expired. Please log in again.");
-                return CreateAuthFailureResponse<T>();
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error handling 401 response");
-            
-            // In case of error, also redirect to login
-            await RedirectToLoginAsync("Authentication error. Please log in again.");
-            return CreateAuthFailureResponse<T>();
-        }
+        // Since the interceptor handles token refresh and retry, if we get here it means refresh failed
+        // Just redirect to login
+        await RedirectToLoginAsync("Session expired. Please log in again.");
+        return CreateAuthFailureResponse<T>();
     }
 
     /// <summary>
@@ -354,10 +357,103 @@ public class ApiErrorHandler : IApiErrorHandler
     /// </summary>
     private ApiResponse<T> CreateAuthFailureResponse<T>()
     {
-        return new ApiResponse<T>
+        return ApiResponse<T>.ErrorResult("Authentication required. Please log in again.");
+    }
+
+    private static JsonSerializerOptions CreateSerializerOptions()
+    {
+        var options = new JsonSerializerOptions
         {
-            Success = false,
-            ErrorMessage = "Authentication required. Please log in again."
+            PropertyNameCaseInsensitive = true
         };
+
+        options.Converters.Add(new FlexibleStringConverter());
+
+        return options;
+    }
+
+    private static bool IsApiResponseWrapper(Type type)
+    {
+        return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(ApiResponse<>);
+    }
+
+    private static bool TryDeserialize(string content, Type type, JsonSerializerOptions options, out object? result)
+    {
+        try
+        {
+            result = JsonSerializer.Deserialize(content, type, options);
+
+            if (result == null)
+            {
+                return type.IsValueType;
+            }
+
+            return true;
+        }
+        catch (JsonException)
+        {
+            result = null;
+            return false;
+        }
+    }
+
+    private static bool GetSuccessValue(object apiResponse)
+    {
+        var successProperty = apiResponse.GetType().GetProperty(nameof(ApiResponse<object>.Success));
+        return successProperty?.GetValue(apiResponse) is bool success && success;
+    }
+
+    private static object? GetDataValue(object apiResponse)
+    {
+        var dataProperty = apiResponse.GetType().GetProperty(nameof(ApiResponse<object>.Data));
+        return dataProperty?.GetValue(apiResponse);
+    }
+
+    private static object? CreateSuccessWrapper(Type innerType, object data)
+    {
+        var wrapperType = typeof(ApiResponse<>).MakeGenericType(innerType);
+        var instance = Activator.CreateInstance(wrapperType);
+
+        if (instance == null)
+        {
+            return null;
+        }
+
+        var successProperty = wrapperType.GetProperty(nameof(ApiResponse<object>.Success));
+        var dataProperty = wrapperType.GetProperty(nameof(ApiResponse<object>.Data));
+
+        successProperty?.SetValue(instance, true);
+        dataProperty?.SetValue(instance, data);
+
+        return instance;
+    }
+
+    private sealed class FlexibleStringConverter : JsonConverter<string>
+    {
+        public override string? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            return reader.TokenType switch
+            {
+                JsonTokenType.String => reader.GetString(),
+                JsonTokenType.Number => reader.TryGetInt64(out var longValue)
+                    ? longValue.ToString(CultureInfo.InvariantCulture)
+                    : reader.GetDouble().ToString(CultureInfo.InvariantCulture),
+                JsonTokenType.True => bool.TrueString,
+                JsonTokenType.False => bool.FalseString,
+                JsonTokenType.Null => null,
+                _ => ReadRawJson(ref reader)
+            };
+        }
+
+        private static string ReadRawJson(ref Utf8JsonReader reader)
+        {
+            using var doc = JsonDocument.ParseValue(ref reader);
+            return doc.RootElement.GetRawText();
+        }
+
+        public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options)
+        {
+            writer.WriteStringValue(value);
+        }
     }
 }

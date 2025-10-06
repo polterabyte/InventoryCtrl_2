@@ -12,6 +12,8 @@ WORKDIR /src
 COPY ["src/Inventory.API/Inventory.API.csproj", "src/Inventory.API/"]
 COPY ["src/Inventory.Shared/Inventory.Shared.csproj", "src/Inventory.Shared/"]
 COPY ["src/Inventory.Web.Client/Inventory.Web.Client.csproj", "src/Inventory.Web.Client/"]
+COPY ["src/Inventory.UI/Inventory.UI.csproj", "src/Inventory.UI/"]
+COPY ["src/Inventory.Web.Assets/Inventory.Web.Assets.csproj", "src/Inventory.Web.Assets/"]
 
 # Restore dependencies
 RUN dotnet restore "src/Inventory.API/Inventory.API.csproj"

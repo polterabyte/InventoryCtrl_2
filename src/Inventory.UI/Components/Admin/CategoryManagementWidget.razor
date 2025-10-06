@@ -3,7 +3,7 @@
 @using Inventory.Shared.Services
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
-@inject ICategoryService CategoryService
+@inject IClientCategoryService CategoryService
 @inject NotificationService UiNotificationService
 @inject IJSRuntime JSRuntime
 @inject DialogService DialogService
@@ -151,7 +151,7 @@
 @code {
     private List<CategoryDto> data = new();
     private List<CategoryDto> rootCategories = new();
-    private bool isLoading = false;
+    public bool isLoading = false;
     private bool isEditing = false;
     private bool isSaving = false;
     private string searchTerm = "";
@@ -195,7 +195,7 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadRootCategories();
-        await LoadData();
+        await LoadData(); // This will be triggered by RadzenDataGrid's LoadData event
     }
 
     private async Task OnGridLoad(Radzen.LoadDataArgs args)

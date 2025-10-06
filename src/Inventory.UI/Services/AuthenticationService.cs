@@ -88,6 +88,13 @@ public class AuthenticationService : IAuthenticationService
     {
         try
         {
+            var token = await _localStorage.GetItemAsStringAsync("accessToken");
+            if (!string.IsNullOrEmpty(token))
+            {
+                return token;
+            }
+
+            // Fallback to legacy key for backward compatibility
             return await _localStorage.GetItemAsStringAsync("authToken");
         }
         catch
@@ -100,6 +107,8 @@ public class AuthenticationService : IAuthenticationService
     {
         try
         {
+            await _localStorage.RemoveItemAsync("accessToken");
+            await _localStorage.RemoveItemAsync("refreshToken");
             await _localStorage.RemoveItemAsync("authToken");
             
             if (_authStateProvider is ICustomAuthenticationStateProvider customProvider)

@@ -2,18 +2,33 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Inventory.API.Models;
+using Inventory.API.Services;
 using Inventory.Shared.DTOs;
 using Serilog;
+using System.Security.Claims;
 
 namespace Inventory.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class TransactionController(AppDbContext context, ILogger<TransactionController> logger) : ControllerBase
+public class TransactionController : ControllerBase
 {
+    private readonly AppDbContext _context;
+    private readonly IUserWarehouseService _userWarehouseService;
+    private readonly ILogger<TransactionController> _logger;
+
+    public TransactionController(
+        AppDbContext context,
+        IUserWarehouseService userWarehouseService,
+        ILogger<TransactionController> logger)
+    {
+        _context = context;
+        _userWarehouseService = userWarehouseService;
+        _logger = logger;
+    }
     [HttpGet]
-    public async Task<IActionResult> GetTransactions(
+    public async Task<ActionResult<PagedApiResponse<InventoryTransactionDto>>> GetTransactions(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
         [FromQuery] int? productId = null,
@@ -24,11 +39,24 @@ public class TransactionController(AppDbContext context, ILogger<TransactionCont
     {
         try
         {
-            var query = context.InventoryTransactions
+            // Get current user information
+            var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var currentUserRole = User.FindFirst(ClaimTypes.Role)?.Value;
+
+            if (string.IsNullOrEmpty(currentUserId))
+            {
+                return Unauthorized(PagedApiResponse<InventoryTransactionDto>.CreateFailure("User not authenticated"));
+            }
+
+            // Get accessible warehouse IDs for the current user
+            var accessibleWarehouseIds = await _userWarehouseService.GetAccessibleWarehouseIdsAsync(currentUserId, currentUserRole ?? "User");
+
+            var query = _context.InventoryTransactions
                 .Include(t => t.Product)
                 .Include(t => t.Warehouse)
                 .Include(t => t.User)
                 .Include(t => t.Location)
+                .Where(t => accessibleWarehouseIds.Contains(t.WarehouseId)) // Apply warehouse access control
                 .AsQueryable();
 
             // Apply filters
@@ -90,34 +118,35 @@ public class TransactionController(AppDbContext context, ILogger<TransactionCont
             var pagedResponse = new PagedResponse<InventoryTransactionDto>
             {
                 Items = transactions,
-                TotalCount = totalCount,
-                PageNumber = page,
+                total = totalCount,
+                page = page,
                 PageSize = pageSize
             };
 
-            return Ok(new PagedApiResponse<InventoryTransactionDto>
-            {
-                Success = true,
-                Data = pagedResponse
-            });
+            return Ok(PagedApiResponse<InventoryTransactionDto>.CreateSuccess(pagedResponse));
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error retrieving transactions");
-            return StatusCode(500, new PagedApiResponse<InventoryTransactionDto>
-            {
-                Success = false,
-                ErrorMessage = "Failed to retrieve transactions"
-            });
+            _logger.LogError(ex, "Error retrieving transactions");
+            return StatusCode(500, PagedApiResponse<InventoryTransactionDto>.CreateFailure("Failed to retrieve transactions"));
         }
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetTransaction(int id)
+    public async Task<ActionResult<ApiResponse<InventoryTransactionDto>>> GetTransaction(int id)
     {
         try
         {
-            var transaction = await context.InventoryTransactions
+            // Get current user information
+            var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var currentUserRole = User.FindFirst(ClaimTypes.Role)?.Value;
+
+            if (string.IsNullOrEmpty(currentUserId))
+            {
+                return Unauthorized(ApiResponse<InventoryTransactionDto>.ErrorResult("User not authenticated"));
+            }
+
+            var transaction = await _context.InventoryTransactions
                 .Include(t => t.Product)
                 .Include(t => t.Warehouse)
                 .Include(t => t.User)
@@ -126,11 +155,14 @@ public class TransactionController(AppDbContext context, ILogger<TransactionCont
 
             if (transaction == null)
             {
-                return NotFound(new ApiResponse<InventoryTransactionDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Transaction not found"
-                });
+                return NotFound(ApiResponse<InventoryTransactionDto>.ErrorResult("Transaction not found"));
+            }
+
+            // Check if user has access to this warehouse
+            var hasAccess = await _userWarehouseService.CheckWarehouseAccessAsync(currentUserId, transaction.WarehouseId);
+            if (!hasAccess.HasAccess)
+            {
+                return StatusCode(403, ApiResponse<InventoryTransactionDto>.ErrorResult("Access denied to this warehouse."));
             }
 
             var transactionDto = new InventoryTransactionDto
@@ -151,37 +183,41 @@ public class TransactionController(AppDbContext context, ILogger<TransactionCont
                 Description = transaction.Description
             };
 
-            return Ok(new ApiResponse<InventoryTransactionDto>
-            {
-                Success = true,
-                Data = transactionDto
-            });
+            return Ok(ApiResponse<InventoryTransactionDto>.SuccessResult(transactionDto));
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error retrieving transaction {TransactionId}", id);
-            return StatusCode(500, new ApiResponse<InventoryTransactionDto>
-            {
-                Success = false,
-                ErrorMessage = "Failed to retrieve transaction"
-            });
+            _logger.LogError(ex, "Error retrieving transaction {TransactionId}", id);
+            return StatusCode(500, ApiResponse<InventoryTransactionDto>.ErrorResult("Failed to retrieve transaction"));
         }
     }
 
     [HttpGet("product/{productId}")]
-    public async Task<IActionResult> GetTransactionsByProduct(
+    public async Task<ActionResult<PagedApiResponse<InventoryTransactionDto>>> GetTransactionsByProduct(
         int productId,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10)
     {
         try
         {
-            var query = context.InventoryTransactions
+            // Get current user information
+            var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var currentUserRole = User.FindFirst(ClaimTypes.Role)?.Value;
+
+            if (string.IsNullOrEmpty(currentUserId))
+            {
+                return Unauthorized(PagedApiResponse<InventoryTransactionDto>.CreateFailure("User not authenticated"));
+            }
+
+            // Get accessible warehouse IDs for the current user
+            var accessibleWarehouseIds = await _userWarehouseService.GetAccessibleWarehouseIdsAsync(currentUserId, currentUserRole ?? "User");
+
+            var query = _context.InventoryTransactions
                 .Include(t => t.Product)
                 .Include(t => t.Warehouse)
                 .Include(t => t.User)
                 .Include(t => t.Location)
-                .Where(t => t.ProductId == productId);
+                .Where(t => t.ProductId == productId && accessibleWarehouseIds.Contains(t.WarehouseId)); // Apply warehouse access control
 
             // Get total count
             var totalCount = await query.CountAsync();
@@ -213,94 +249,66 @@ public class TransactionController(AppDbContext context, ILogger<TransactionCont
             var pagedResponse = new PagedResponse<InventoryTransactionDto>
             {
                 Items = transactions,
-                TotalCount = totalCount,
-                PageNumber = page,
+                total = totalCount,
+                page = page,
                 PageSize = pageSize
             };
 
-            return Ok(new PagedApiResponse<InventoryTransactionDto>
-            {
-                Success = true,
-                Data = pagedResponse
-            });
+            return Ok(PagedApiResponse<InventoryTransactionDto>.CreateSuccess(pagedResponse));
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error retrieving transactions for product {ProductId}", productId);
-            return StatusCode(500, new PagedApiResponse<InventoryTransactionDto>
-            {
-                Success = false,
-                ErrorMessage = "Failed to retrieve transactions"
-            });
+            _logger.LogError(ex, "Error retrieving transactions for product {ProductId}", productId);
+            return StatusCode(500, PagedApiResponse<InventoryTransactionDto>.CreateFailure("Failed to retrieve transactions"));
         }
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateTransaction([FromBody] CreateInventoryTransactionDto request)
+    public async Task<ActionResult<ApiResponse<InventoryTransactionDto>>> CreateTransaction([FromBody] CreateInventoryTransactionDto request)
     {
         try
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new ApiResponse<InventoryTransactionDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Invalid model state",
-                    Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList()
-                });
+                var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
+                return BadRequest(ApiResponse<InventoryTransactionDto>.ErrorResult("Validation failed", errors));
             }
 
             // Verify product exists
-            var product = await context.Products.FindAsync(request.ProductId);
+            var product = await _context.Products.FindAsync(request.ProductId);
             if (product == null)
             {
-                return BadRequest(new ApiResponse<InventoryTransactionDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Product not found"
-                });
+                return BadRequest(ApiResponse<InventoryTransactionDto>.ErrorResult("Product not found"));
             }
 
             // Verify warehouse exists
-            var warehouse = await context.Warehouses.FindAsync(request.WarehouseId);
+            var warehouse = await _context.Warehouses.FindAsync(request.WarehouseId);
             if (warehouse == null)
             {
-                return BadRequest(new ApiResponse<InventoryTransactionDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Warehouse not found"
-                });
+                return BadRequest(ApiResponse<InventoryTransactionDto>.ErrorResult("Warehouse not found"));
             }
 
             // Verify location exists (if specified)
             if (request.LocationId.HasValue)
             {
-                var location = await context.Locations.FindAsync(request.LocationId.Value);
+                var location = await _context.Locations.FindAsync(request.LocationId.Value);
                 if (location == null)
                 {
-                    return BadRequest(new ApiResponse<InventoryTransactionDto>
-                    {
-                        Success = false,
-                        ErrorMessage = "Location not found"
-                    });
+                    return BadRequest(ApiResponse<InventoryTransactionDto>.ErrorResult("Location not found"));
                 }
             }
 
             // Validate stock availability for Outcome transactions using ProductOnHandView
             if (request.Type == "Outcome")
             {
-                var currentQuantity = await context.ProductOnHand
+                var currentQuantity = await _context.ProductOnHand
                     .Where(v => v.ProductId == request.ProductId)
                     .Select(v => v.OnHandQty)
                     .FirstOrDefaultAsync();
                     
                 if (currentQuantity < request.Quantity)
                 {
-                    return BadRequest(new ApiResponse<InventoryTransactionDto>
-                    {
-                        Success = false,
-                        ErrorMessage = $"Insufficient stock for this transaction. Available: {currentQuantity}, Requested: {request.Quantity}"
-                    });
+                    return BadRequest(ApiResponse<InventoryTransactionDto>.ErrorResult($"Insufficient stock for this transaction. Available: {currentQuantity}, Requested: {request.Quantity}"));
                 }
             }
 
@@ -319,14 +327,14 @@ public class TransactionController(AppDbContext context, ILogger<TransactionCont
                 Description = request.Description
             };
 
-            context.InventoryTransactions.Add(transaction);
-            await context.SaveChangesAsync();
+            _context.InventoryTransactions.Add(transaction);
+            await _context.SaveChangesAsync();
 
-            logger.LogInformation("Transaction created: {TransactionType} for product {ProductId}, quantity {Quantity}", 
+            _logger.LogInformation("Transaction created: {TransactionType} for product {ProductId}, quantity {Quantity}", 
                 request.Type, request.ProductId, request.Quantity);
 
             // Return the created transaction with related data
-            var createdTransaction = await context.InventoryTransactions
+            var createdTransaction = await _context.InventoryTransactions
                 .Include(t => t.Product)
                 .Include(t => t.Warehouse)
                 .Include(t => t.User)
@@ -351,20 +359,12 @@ public class TransactionController(AppDbContext context, ILogger<TransactionCont
                 Description = createdTransaction.Description
             };
 
-            return CreatedAtAction(nameof(GetTransaction), new { id = transaction.Id }, new ApiResponse<InventoryTransactionDto>
-            {
-                Success = true,
-                Data = transactionDto
-            });
+            return CreatedAtAction(nameof(GetTransaction), new { id = transaction.Id }, ApiResponse<InventoryTransactionDto>.SuccessResult(transactionDto));
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error creating transaction");
-            return StatusCode(500, new ApiResponse<InventoryTransactionDto>
-            {
-                Success = false,
-                ErrorMessage = "Failed to create transaction"
-            });
+            _logger.LogError(ex, "Error creating transaction");
+            return StatusCode(500, ApiResponse<InventoryTransactionDto>.ErrorResult("Failed to create transaction"));
         }
     }
 }

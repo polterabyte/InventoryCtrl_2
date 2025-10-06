@@ -11,7 +11,8 @@ public class WebLocationApiService : WebBaseApiService, ILocationService
         HttpClient httpClient,
         IUrlBuilderService urlBuilderService,
         IResilientApiService resilientApiService, 
-        IApiErrorHandler errorHandler,        IRequestValidator requestValidator,
+        IApiErrorHandler errorHandler,
+        IRequestValidator requestValidator,
         ILogger<WebLocationApiService> logger)
         : base(httpClient, urlBuilderService, resilientApiService, errorHandler, requestValidator, logger)
     {

@@ -5,6 +5,6 @@ namespace Inventory.Shared.Interfaces;
 public interface ICustomAuthenticationStateProvider
 {
     Task<AuthenticationState> GetAuthenticationStateAsync();
-    Task MarkUserAsAuthenticatedAsync(string token);
+    Task MarkUserAsAuthenticatedAsync(string accessToken, string refreshToken);
     Task MarkUserAsLoggedOutAsync();
 }

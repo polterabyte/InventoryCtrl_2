@@ -14,7 +14,7 @@ namespace Inventory.API.Controllers;
 public class LocationController(AppDbContext context, ILogger<LocationController> logger) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetLocations(
+    public async Task<ActionResult<PagedApiResponse<LocationDto>>> GetLocations(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
         [FromQuery] string? search = null,
@@ -81,30 +81,22 @@ public class LocationController(AppDbContext context, ILogger<LocationController
             var pagedResponse = new PagedResponse<LocationDto>
             {
                 Items = locations,
-                TotalCount = totalCount,
-                PageNumber = page,
+                total = totalCount,
+                page = page,
                 PageSize = pageSize
             };
 
-            return Ok(new PagedApiResponse<LocationDto>
-            {
-                Success = true,
-                Data = pagedResponse
-            });
+            return Ok(PagedApiResponse<LocationDto>.CreateSuccess(pagedResponse));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error getting locations");
-            return StatusCode(500, new PagedApiResponse<LocationDto>
-            {
-                Success = false,
-                ErrorMessage = "An error occurred while retrieving locations"
-            });
+            return StatusCode(500, PagedApiResponse<LocationDto>.CreateFailure("An error occurred while retrieving locations"));
         }
     }
 
     [HttpGet("all")]
-    public async Task<IActionResult> GetAllLocations()
+    public async Task<ActionResult<ApiResponse<IEnumerable<LocationDto>>>> GetAllLocations()
     {
         try
         {
@@ -125,25 +117,17 @@ public class LocationController(AppDbContext context, ILogger<LocationController
                 })
                 .ToListAsync();
 
-            return Ok(new ApiResponse<IEnumerable<LocationDto>>
-            {
-                Success = true,
-                Data = locations
-            });
+            return Ok(ApiResponse<IEnumerable<LocationDto>>.SuccessResult(locations));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error getting all locations");
-            return StatusCode(500, new ApiResponse<IEnumerable<LocationDto>>
-            {
-                Success = false,
-                ErrorMessage = "An error occurred while retrieving locations"
-            });
+            return StatusCode(500, ApiResponse<IEnumerable<LocationDto>>.ErrorResult("An error occurred while retrieving locations"));
         }
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetLocation(int id)
+    public async Task<ActionResult<ApiResponse<LocationDto>>> GetLocation(int id)
     {
         try
         {
@@ -153,11 +137,7 @@ public class LocationController(AppDbContext context, ILogger<LocationController
 
             if (location == null)
             {
-                return NotFound(new ApiResponse<LocationDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Location not found"
-                });
+                return NotFound(ApiResponse<LocationDto>.ErrorResult("Location not found"));
             }
 
             var locationDto = new LocationDto
@@ -172,25 +152,17 @@ public class LocationController(AppDbContext context, ILogger<LocationController
                 UpdatedAt = location.UpdatedAt
             };
 
-            return Ok(new ApiResponse<LocationDto>
-            {
-                Success = true,
-                Data = locationDto
-            });
+            return Ok(ApiResponse<LocationDto>.SuccessResult(locationDto));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error getting location {Id}", id);
-            return StatusCode(500, new ApiResponse<LocationDto>
-            {
-                Success = false,
-                ErrorMessage = "An error occurred while retrieving the location"
-            });
+            return StatusCode(500, ApiResponse<LocationDto>.ErrorResult("An error occurred while retrieving the location"));
         }
     }
 
     [HttpGet("parent/{parentId}")]
-    public async Task<IActionResult> GetLocationsByParentId(int parentId)
+    public async Task<ActionResult<ApiResponse<IEnumerable<LocationDto>>>> GetLocationsByParentId(int parentId)
     {
         try
         {
@@ -211,25 +183,17 @@ public class LocationController(AppDbContext context, ILogger<LocationController
                 })
                 .ToListAsync();
 
-            return Ok(new ApiResponse<IEnumerable<LocationDto>>
-            {
-                Success = true,
-                Data = locations
-            });
+            return Ok(ApiResponse<IEnumerable<LocationDto>>.SuccessResult(locations));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error getting locations by parent {ParentId}", parentId);
-            return StatusCode(500, new ApiResponse<IEnumerable<LocationDto>>
-            {
-                Success = false,
-                ErrorMessage = "An error occurred while retrieving locations"
-            });
+            return StatusCode(500, ApiResponse<IEnumerable<LocationDto>>.ErrorResult("An error occurred while retrieving locations"));
         }
     }
 
     [HttpGet("root")]
-    public async Task<IActionResult> GetRootLocations()
+    public async Task<ActionResult<ApiResponse<IEnumerable<LocationDto>>>> GetRootLocations()
     {
         try
         {
@@ -250,37 +214,25 @@ public class LocationController(AppDbContext context, ILogger<LocationController
                 })
                 .ToListAsync();
 
-            return Ok(new ApiResponse<IEnumerable<LocationDto>>
-            {
-                Success = true,
-                Data = locations
-            });
+            return Ok(ApiResponse<IEnumerable<LocationDto>>.SuccessResult(locations));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error getting root locations");
-            return StatusCode(500, new ApiResponse<IEnumerable<LocationDto>>
-            {
-                Success = false,
-                ErrorMessage = "An error occurred while retrieving root locations"
-            });
+            return StatusCode(500, ApiResponse<IEnumerable<LocationDto>>.ErrorResult("An error occurred while retrieving root locations"));
         }
     }
 
     [HttpPost]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> CreateLocation([FromBody] CreateLocationDto createLocationDto)
+    public async Task<ActionResult<ApiResponse<LocationDto>>> CreateLocation([FromBody] CreateLocationDto createLocationDto)
     {
         try
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new ApiResponse<LocationDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Invalid model state",
-                    Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList()
-                });
+                var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
+                return BadRequest(ApiResponse<LocationDto>.ErrorResult("Invalid model state", errors));
             }
 
             // Check if parent location exists (if specified)
@@ -291,11 +243,7 @@ public class LocationController(AppDbContext context, ILogger<LocationController
                 
                 if (!parentExists)
                 {
-                    return BadRequest(new ApiResponse<LocationDto>
-                    {
-                        Success = false,
-                        ErrorMessage = "Parent location not found or inactive"
-                    });
+                    return BadRequest(ApiResponse<LocationDto>.ErrorResult("Parent location not found or inactive"));
                 }
             }
 
@@ -306,11 +254,7 @@ public class LocationController(AppDbContext context, ILogger<LocationController
 
             if (duplicateExists)
             {
-                return BadRequest(new ApiResponse<LocationDto>
-                {
-                    Success = false,
-                    ErrorMessage = "A location with this name already exists in the same parent location"
-                });
+                return BadRequest(ApiResponse<LocationDto>.ErrorResult("A location with this name already exists in the same parent location"));
             }
 
             var location = new Location
@@ -342,47 +286,31 @@ public class LocationController(AppDbContext context, ILogger<LocationController
                 UpdatedAt = createdLocation.UpdatedAt
             };
 
-            return CreatedAtAction(nameof(GetLocation), new { id = location.Id }, new ApiResponse<LocationDto>
-            {
-                Success = true,
-                Data = locationDto
-            });
+            return CreatedAtAction(nameof(GetLocation), new { id = location.Id }, ApiResponse<LocationDto>.SuccessResult(locationDto));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error creating location");
-            return StatusCode(500, new ApiResponse<LocationDto>
-            {
-                Success = false,
-                ErrorMessage = "An error occurred while creating the location"
-            });
+            return StatusCode(500, ApiResponse<LocationDto>.ErrorResult("An error occurred while creating the location"));
         }
     }
 
     [HttpPut("{id}")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> UpdateLocation(int id, [FromBody] UpdateLocationDto updateLocationDto)
+    public async Task<ActionResult<ApiResponse<LocationDto>>> UpdateLocation(int id, [FromBody] UpdateLocationDto updateLocationDto)
     {
         try
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new ApiResponse<LocationDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Invalid model state",
-                    Errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList()
-                });
+                var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
+                return BadRequest(ApiResponse<LocationDto>.ErrorResult("Invalid model state", errors));
             }
 
             var location = await context.Locations.FindAsync(id);
             if (location == null)
             {
-                return NotFound(new ApiResponse<LocationDto>
-                {
-                    Success = false,
-                    ErrorMessage = "Location not found"
-                });
+                return NotFound(ApiResponse<LocationDto>.ErrorResult("Location not found"));
             }
 
             // Check if parent location exists (if specified)
@@ -393,21 +321,13 @@ public class LocationController(AppDbContext context, ILogger<LocationController
                 
                 if (!parentExists)
                 {
-                    return BadRequest(new ApiResponse<LocationDto>
-                    {
-                        Success = false,
-                        ErrorMessage = "Parent location not found or inactive"
-                    });
+                    return BadRequest(ApiResponse<LocationDto>.ErrorResult("Parent location not found or inactive"));
                 }
 
                 // Prevent circular reference
                 if (updateLocationDto.ParentLocationId.Value == id)
                 {
-                    return BadRequest(new ApiResponse<LocationDto>
-                    {
-                        Success = false,
-                        ErrorMessage = "A location cannot be its own parent"
-                    });
+                    return BadRequest(ApiResponse<LocationDto>.ErrorResult("A location cannot be its own parent"));
                 }
             }
 
@@ -419,11 +339,7 @@ public class LocationController(AppDbContext context, ILogger<LocationController
 
             if (duplicateExists)
             {
-                return BadRequest(new ApiResponse<LocationDto>
-                {
-                    Success = false,
-                    ErrorMessage = "A location with this name already exists in the same parent location"
-                });
+                return BadRequest(ApiResponse<LocationDto>.ErrorResult("A location with this name already exists in the same parent location"));
             }
 
             location.Name = updateLocationDto.Name;
@@ -451,37 +367,25 @@ public class LocationController(AppDbContext context, ILogger<LocationController
                 UpdatedAt = updatedLocation.UpdatedAt
             };
 
-            return Ok(new ApiResponse<LocationDto>
-            {
-                Success = true,
-                Data = locationDto
-            });
+            return Ok(ApiResponse<LocationDto>.SuccessResult(locationDto));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error updating location {Id}", id);
-            return StatusCode(500, new ApiResponse<LocationDto>
-            {
-                Success = false,
-                ErrorMessage = "An error occurred while updating the location"
-            });
+            return StatusCode(500, ApiResponse<LocationDto>.ErrorResult("An error occurred while updating the location"));
         }
     }
 
     [HttpDelete("{id}")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> DeleteLocation(int id)
+    public async Task<ActionResult<ApiResponse<object>>> DeleteLocation(int id)
     {
         try
         {
             var location = await context.Locations.FindAsync(id);
             if (location == null)
             {
-                return NotFound(new ApiResponse<object>
-                {
-                    Success = false,
-                    ErrorMessage = "Location not found"
-                });
+                return NotFound(ApiResponse<object>.ErrorResult("Location not found"));
             }
 
             // Check if location has sub-locations
@@ -490,11 +394,7 @@ public class LocationController(AppDbContext context, ILogger<LocationController
 
             if (hasSubLocations)
             {
-                return BadRequest(new ApiResponse<object>
-                {
-                    Success = false,
-                    ErrorMessage = "Cannot delete location that has sub-locations"
-                });
+                return BadRequest(ApiResponse<object>.ErrorResult("Cannot delete location that has sub-locations"));
             }
 
             // Check if location is used in inventory transactions
@@ -503,30 +403,18 @@ public class LocationController(AppDbContext context, ILogger<LocationController
 
             if (hasTransactions)
             {
-                return BadRequest(new ApiResponse<object>
-                {
-                    Success = false,
-                    ErrorMessage = "Cannot delete location that is used in inventory transactions"
-                });
+                return BadRequest(ApiResponse<object>.ErrorResult("Cannot delete location that is used in inventory transactions"));
             }
 
             context.Locations.Remove(location);
             await context.SaveChangesAsync();
 
-            return Ok(new ApiResponse<object>
-            {
-                Success = true,
-                Data = null
-            });
+            return Ok(ApiResponse<object>.SuccessResult(new object()));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error deleting location {Id}", id);
-            return StatusCode(500, new ApiResponse<object>
-            {
-                Success = false,
-                ErrorMessage = "An error occurred while deleting the location"
-            });
+            return StatusCode(500, ApiResponse<object>.ErrorResult("An error occurred while deleting the location"));
         }
     }
 }
