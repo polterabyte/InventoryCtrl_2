@@ -1,7 +1,6 @@
 using Inventory.Shared.DTOs;
 using Microsoft.Extensions.Logging;
 using System.Net;
-using System.Net.Http.Json;
 using Microsoft.AspNetCore.Components;
 using Inventory.Shared.Interfaces;
 using Radzen;
@@ -35,42 +34,69 @@ public class ApiErrorHandler : IApiErrorHandler
     {
         try
         {
-            if (response.IsSuccessStatusCode)
+            if (!response.IsSuccessStatusCode)
             {
-                try
-                {
-                    var data = await response.Content.ReadFromJsonAsync<T>();
-                    _logger.LogDebug("API request successful. Status: {StatusCode}", response.StatusCode);
-
-                    if (data == null)
-                    {
-                        // Если T - это bool, и мы не можем десериализовать, предположим, что это успешная операция DELETE
-                        if (typeof(T) == typeof(bool))
-                        {
-                            return ApiResponse<T>.SuccessResult((T)(object)true);
-                        }
-                        _logger.LogWarning("Deserialized data is null for type {Type}, but a value was expected.", typeof(T).Name);
-                        return ApiResponse<T>.ErrorResult($"Failed to deserialize response for {typeof(T).Name}. Content was empty or null.");
-                    }
-                    return ApiResponse<T>.SuccessResult(data);
-                }
-                catch (System.Text.Json.JsonException jsonEx)
-                {
-                    _logger.LogWarning(jsonEx, "Failed to deserialize response as {Type}. Response content: {Content}", 
-                        typeof(T).Name, await response.Content.ReadAsStringAsync());
-                    
-                    // For DELETE operations, if we can't deserialize, assume success
-                    if (typeof(T) == typeof(bool))
-                    {
-                        _logger.LogInformation("Assuming success for boolean response that couldn't be deserialized");
-                        return ApiResponse<T>.SuccessResult((T)(object)true);
-                    }
-                    
-                    return ApiResponse<T>.ErrorResult("Failed to deserialize response data");
-                }
+                return await HandleErrorResponseAsync<T>(response);
             }
 
-            return await HandleErrorResponseAsync<T>(response);
+            var responseContent = await response.Content.ReadAsStringAsync();
+            var serializerOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            if (string.IsNullOrWhiteSpace(responseContent))
+            {
+                if (typeof(T) == typeof(bool))
+                {
+                    _logger.LogDebug("API request successful. Status: {StatusCode}", response.StatusCode);
+                    return ApiResponse<T>.SuccessResult((T)(object)true);
+                }
+
+                _logger.LogWarning("Received empty response when expecting type {Type}", typeof(T).Name);
+                return ApiResponse<T>.ErrorResult($"Failed to deserialize response for {typeof(T).Name}. Content was empty or null.");
+            }
+
+            if (IsApiResponseWrapper(typeof(T)))
+            {
+                if (TryDeserialize(responseContent, typeof(T), serializerOptions, out var wrappedResult) && wrappedResult is T typedWrapped)
+                {
+                    if (GetSuccessValue(typedWrapped) || GetDataValue(typedWrapped) != null)
+                    {
+                        _logger.LogDebug("API request successful (wrapped format). Status: {StatusCode}", response.StatusCode);
+                        return ApiResponse<T>.SuccessResult(typedWrapped);
+                    }
+
+                    _logger.LogDebug("Wrapped response contained no data; attempting legacy fallback for type {Type}", typeof(T).Name);
+                }
+                else
+                {
+                    _logger.LogDebug("Failed to deserialize wrapped response as {Type}. Attempting legacy fallback.", typeof(T).Name);
+                }
+
+                var innerType = typeof(T).GetGenericArguments()[0];
+                if (TryDeserialize(responseContent, innerType, serializerOptions, out var legacyResult) && legacyResult != null)
+                {
+                    var adaptedResponse = CreateSuccessWrapper(innerType, legacyResult);
+                    if (adaptedResponse is T typedAdapted)
+                    {
+                        _logger.LogDebug("API request successful (legacy format). Status: {StatusCode}", response.StatusCode);
+                        return ApiResponse<T>.SuccessResult(typedAdapted);
+                    }
+                }
+
+                _logger.LogWarning("Failed to deserialize response for {Type}. Content: {Content}", typeof(T).Name, responseContent);
+                return ApiResponse<T>.ErrorResult("Failed to deserialize response data");
+            }
+
+            if (TryDeserialize(responseContent, typeof(T), serializerOptions, out var result) && result is T typedResult)
+            {
+                _logger.LogDebug("API request successful. Status: {StatusCode}", response.StatusCode);
+                return ApiResponse<T>.SuccessResult(typedResult);
+            }
+
+            _logger.LogWarning("Failed to deserialize response as {Type}. Content: {Content}", typeof(T).Name, responseContent);
+            return ApiResponse<T>.ErrorResult("Failed to deserialize response data");
         }
         catch (Exception ex)
         {
@@ -336,5 +362,61 @@ public class ApiErrorHandler : IApiErrorHandler
     private ApiResponse<T> CreateAuthFailureResponse<T>()
     {
         return ApiResponse<T>.ErrorResult("Authentication required. Please log in again.");
+    }
+
+    private static bool IsApiResponseWrapper(Type type)
+    {
+        return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(ApiResponse<>);
+    }
+
+    private static bool TryDeserialize(string content, Type type, JsonSerializerOptions options, out object? result)
+    {
+        try
+        {
+            result = JsonSerializer.Deserialize(content, type, options);
+
+            if (result == null)
+            {
+                return type.IsValueType;
+            }
+
+            return true;
+        }
+        catch (JsonException)
+        {
+            result = null;
+            return false;
+        }
+    }
+
+    private static bool GetSuccessValue(object apiResponse)
+    {
+        var successProperty = apiResponse.GetType().GetProperty(nameof(ApiResponse<object>.Success));
+        return successProperty?.GetValue(apiResponse) is bool success && success;
+    }
+
+    private static object? GetDataValue(object apiResponse)
+    {
+        var dataProperty = apiResponse.GetType().GetProperty(nameof(ApiResponse<object>.Data));
+        return dataProperty?.GetValue(apiResponse);
+    }
+
+    private static object? CreateSuccessWrapper(Type innerType, object data)
+    {
+        var wrapperType = typeof(ApiResponse<>).MakeGenericType(innerType);
+        var instance = Activator.CreateInstance(wrapperType);
+
+        if (instance == null)
+        {
+            return null;
+        }
+
+        var successProperty = wrapperType.GetProperty(nameof(ApiResponse<object>.Success));
+        var dataProperty = wrapperType.GetProperty(nameof(ApiResponse<object>.Data));
+
+        successProperty?.SetValue(instance, true);
+        dataProperty?.SetValue(instance, data);
+
+        return instance;
     }
 }

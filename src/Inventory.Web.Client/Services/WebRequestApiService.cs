@@ -1,5 +1,4 @@
 using System.Net.Http;
-using System.Text.Json;
 using Inventory.Shared.Constants;
 using Inventory.Shared.DTOs;
 using Inventory.Shared.Interfaces;
@@ -55,59 +54,7 @@ public class WebRequestApiService : WebBaseApiService, IRequestApiService
             var endpoint = ApiEndpoints.RequestById.Replace("{id}", requestId.ToString());
             Logger.LogDebug("Getting request by ID: {RequestId}", requestId);
 
-            return await ExecuteHttpRequestAsync<ApiResponse<RequestDetailsDto>>(
-                HttpMethod.Get,
-                endpoint,
-                null,
-                async response =>
-                {
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var responseContent = await response.Content.ReadAsStringAsync();
-
-                        if (string.IsNullOrWhiteSpace(responseContent))
-                        {
-                            Logger.LogWarning("Received empty response when loading request {RequestId}", requestId);
-                            return ApiResponse<RequestDetailsDto>.ErrorResult("Failed to deserialize response data");
-                        }
-
-                        var serializerOptions = new JsonSerializerOptions
-                        {
-                            PropertyNameCaseInsensitive = true
-                        };
-
-                        try
-                        {
-                            var wrappedResponse = JsonSerializer.Deserialize<ApiResponse<RequestDetailsDto>>(responseContent, serializerOptions);
-                            if (wrappedResponse != null && (wrappedResponse.Success || wrappedResponse.Data != null))
-                            {
-                                return wrappedResponse;
-                            }
-                        }
-                        catch (JsonException)
-                        {
-                            // Ignore and fallback to direct DTO parsing
-                        }
-
-                        try
-                        {
-                            var dto = JsonSerializer.Deserialize<RequestDetailsDto>(responseContent, serializerOptions);
-                            if (dto != null)
-                            {
-                                return ApiResponse<RequestDetailsDto>.SuccessResult(dto);
-                            }
-                        }
-                        catch (JsonException jsonEx)
-                        {
-                            Logger.LogWarning(jsonEx, "Failed to deserialize request {RequestId} details", requestId);
-                        }
-
-                        Logger.LogWarning("Unable to parse response for request {RequestId}. Content: {Content}", requestId, responseContent);
-                        return ApiResponse<RequestDetailsDto>.ErrorResult("Failed to deserialize response data");
-                    }
-
-                    return await ErrorHandler.HandleResponseAsync<RequestDetailsDto>(response);
-                });
+            return await GetAsync<RequestDetailsDto>(endpoint);
         }
         catch (Exception ex)
         {
