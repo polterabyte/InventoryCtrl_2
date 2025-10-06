@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reflection;
 using Inventory.Shared.DTOs;
+using Inventory.Shared.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace Inventory.Web.Client.Services;

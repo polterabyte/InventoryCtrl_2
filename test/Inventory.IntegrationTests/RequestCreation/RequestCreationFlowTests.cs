@@ -95,7 +95,7 @@ namespace Inventory.IntegrationTests.RequestCreation
             Assert.NotNull(request);
             Assert.Equal("Test Integration Request", request.Title);
             Assert.Equal("Testing circular reference fix", request.Description);
-            Assert.Equal(RequestStatus.Draft, request.Status);
+            Assert.Equal(RequestStatus.Draft.ToString(), request.Status);
         }
 
         [Fact]

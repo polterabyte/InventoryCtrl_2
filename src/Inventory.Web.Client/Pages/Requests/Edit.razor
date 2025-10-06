@@ -89,7 +89,7 @@
                             <RadzenText TextStyle="TextStyle.H6" Class="rz-m-0">Request Information</RadzenText>
                             
                             <RadzenRow Gap="1rem">
-                                <RadzenColumn Size="12">
+                                <RadzenColumn Size="@ColumnFull">
                                     <RadzenStack Gap="0.5rem">
                                         <RadzenLabel Text="Title *" Component="titleInput" />
                                         <RadzenTextBox @bind-Value="editRequest.Title" 
@@ -103,7 +103,7 @@
                             </RadzenRow>
                             
                             <RadzenRow Gap="1rem">
-                                <RadzenColumn Size="12">
+                                <RadzenColumn Size="@ColumnFull">
                                     <RadzenStack Gap="0.5rem">
                                         <RadzenLabel Text="Description" Component="descriptionInput" />
                                         <RadzenTextArea @bind-Value="editRequest.Description" 
@@ -154,84 +154,87 @@
                                     @for (var index = 0; index < editRequest.Items.Count; index++)
                                     {
                                         var item = editRequest.Items[index];
+                                        var i = index;
                                         <RadzenCard Class="rz-p-3">
                                             <RadzenStack Gap="1rem">
                                                 <RadzenRow Gap="1rem">
-                                                    <RadzenColumn Size="12" SizeMd="6">
-                                                        <RadzenStack Gap="0.5rem">
-                                                            <RadzenLabel Text="Product *" Component=$"product-{index}" />
-                                                            <RadzenDropDown Data="products"
-                                                                            TextProperty="Name"
-                                                                            ValueProperty="Id"
-                                                                            AllowFiltering="true"
-                                                                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                                                            @bind-Value="item.ProductId"
-                                                                            Name=$"product-{index}"
-                                                                            Placeholder="Select product"
-                                                                            Style="width: 100%"
-                                                                            Disabled="isLoadingLookups || submitting" />
-                                                            <ValidationMessage For="@(() => editRequest.Items[index].ProductId)" />
-                                                        </RadzenStack>
-                                                    </RadzenColumn>
-                                                    <RadzenColumn Size="12" SizeMd="6">
-                                                        <RadzenStack Gap="0.5rem">
-                                                            <RadzenLabel Text="Warehouse *" Component=$"warehouse-{index}" />
-                                                            <RadzenDropDown Data="warehouses"
-                                                                            TextProperty="Name"
-                                                                            ValueProperty="Id"
-                                                                            AllowFiltering="true"
-                                                                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                                                            @bind-Value="item.WarehouseId"
-                                                                            Name=$"warehouse-{index}"
-                                                                            Placeholder="Select warehouse"
-                                                                            Style="width: 100%"
-                                                                            Disabled="isLoadingLookups || submitting" />
-                                                            <ValidationMessage For="@(() => editRequest.Items[index].WarehouseId)" />
-                                                        </RadzenStack>
-                                                    </RadzenColumn>
+                                                <RadzenColumn Size="@ColumnFull" SizeMd="@ColumnHalf">
+                                                    <RadzenStack Gap="0.5rem">
+                                                        <RadzenLabel Text="Product *" Component=@($"product-{i}") />
+                                                        <RadzenDropDown Data="products"
+                                                                        TextProperty="Name"
+                                                                        ValueProperty="Id"
+                                                                        AllowFiltering="true"
+                                                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                                        @bind-Value="item.ProductId"
+                                                                        Name=@($"product-{i}")
+                                                                        Placeholder="Select product"
+                                                                        Style="width: 100%"
+                                                                        Disabled="isLoadingLookups || submitting" />
+                                                            <ValidationMessage For="@(() => editRequest.Items[i].ProductId)" />
+                                                    </RadzenStack>
+                                                </RadzenColumn>
+                                                <RadzenColumn Size="@ColumnFull" SizeMd="@ColumnHalf">
+                                                    <RadzenStack Gap="0.5rem">
+                                                        <RadzenLabel Text="Warehouse *" Component=@($"warehouse-{i}") />
+                                                        <RadzenDropDown Data="warehouses"
+                                                                        TextProperty="Name"
+                                                                        ValueProperty="Id"
+                                                                        AllowFiltering="true"
+                                                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                                        @bind-Value="item.WarehouseId"
+                                                                        Name=@($"warehouse-{i}")
+                                                                        Placeholder="Select warehouse"
+                                                                        Style="width: 100%"
+                                                                        Disabled="isLoadingLookups || submitting" />
+                                                            <ValidationMessage For="@(() => editRequest.Items[i].WarehouseId)" />
+                                                    </RadzenStack>
+                                                </RadzenColumn>
                                                 </RadzenRow>
 
                                                 <RadzenRow Gap="1rem">
-                                                    <RadzenColumn Size="12" SizeMd="4">
-                                                        <RadzenStack Gap="0.5rem">
-                                                            <RadzenLabel Text="Quantity *" Component=$"quantity-{index}" />
-                                                            <RadzenNumeric Style="width: 100%"
-                                                                           Name=$"quantity-{index}"
-                                                                           @bind-Value="item.Quantity"
-                                                                           Min="1"
-                                                                           ShowUpDown="true"
-                                                                           Step="1"
-                                                                           Disabled="submitting" />
-                                                            <ValidationMessage For="@(() => editRequest.Items[index].Quantity)" />
-                                                        </RadzenStack>
-                                                    </RadzenColumn>
+                                                <RadzenColumn Size="@ColumnFull" SizeMd="@ColumnThird">
+                                                    <RadzenStack Gap="0.5rem">
+                                                        <RadzenLabel Text="Quantity *" Component=@($"quantity-{i}") />
+                                                        <RadzenNumeric TValue="int"
+                                                                       Style="width: 100%"
+                                                                       Name=@($"quantity-{i}")
+                                                                       @bind-Value="item.Quantity"
+                                                                       Min="1"
+                                                                       ShowUpDown="true"
+                                                                       Step="1"
+                                                                       Disabled="submitting" />
+                                                            <ValidationMessage For="@(() => editRequest.Items[i].Quantity)" />
+                                                    </RadzenStack>
+                                                </RadzenColumn>
 
-                                                    <RadzenColumn Size="12" SizeMd="4">
-                                                        <RadzenStack Gap="0.5rem">
-                                                            <RadzenLabel Text="Unit Price" Component=$"price-{index}" />
-                                                            <RadzenNumeric @bind-Value="item.UnitPrice"
-                                                                           Name=$"price-{index}"
-                                                                           Style="width: 100%"
-                                                                           Min="0"
-                                                                           Step="0.01"
-                                                                           Disabled="submitting" />
-                                                        </RadzenStack>
-                                                    </RadzenColumn>
+                                                <RadzenColumn Size="@ColumnFull" SizeMd="@ColumnThird">
+                                                    <RadzenStack Gap="0.5rem">
+                                                        <RadzenLabel Text="Unit Price" Component=@($"price-{i}") />
+                                                        <RadzenNumeric TValue="decimal?"
+                                                                       @bind-Value="item.UnitPrice"
+                                                                       Name=@($"price-{i}")
+                                                                       Style="width: 100%"
+                                                                       Min="0"
+                                                                       Step="0.01"
+                                                                       Disabled="submitting" />
+                                                    </RadzenStack>
+                                                </RadzenColumn>
                                                 </RadzenRow>
 
                                                 <RadzenRow Gap="1rem">
-                                                    <RadzenColumn Size="12">
-                                                        <RadzenStack Gap="0.5rem">
-                                                            <RadzenLabel Text="Description" Component=$"description-{index}" />
-                                                            <RadzenTextArea @bind-Value="item.Description"
-                                                                            Name=$"description-{index}"
-                                                                            Placeholder="Additional notes for this item"
-                                                                            Style="width: 100%"
-                                                                            Rows="2"
-                                                                            MaxLength="500"
-                                                                            Disabled="submitting" />
-                                                        </RadzenStack>
-                                                    </RadzenColumn>
+                                                <RadzenColumn Size="@ColumnFull">
+                                                    <RadzenStack Gap="0.5rem">
+                                                        <RadzenLabel Text="Description" Component=@($"description-{i}") />
+                                                        <RadzenTextArea @bind-Value="item.Description"
+                                                                        Name=@($"description-{i}")
+                                                                        Placeholder="Additional notes for this item"
+                                                                        Style="width: 100%"
+                                                                        Rows="2"
+                                                                        MaxLength="500"
+                                                                        Disabled="submitting" />
+                                                    </RadzenStack>
+                                                </RadzenColumn>
                                                 </RadzenRow>
 
                                                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End">
@@ -332,6 +335,10 @@
 </style>
 
 @code {
+    private const int ColumnFull = 12;
+    private const int ColumnHalf = 6;
+    private const int ColumnThird = 4;
+
     [Parameter] public int Id { get; set; }
 
     private RequestDetailsDto? originalRequest;

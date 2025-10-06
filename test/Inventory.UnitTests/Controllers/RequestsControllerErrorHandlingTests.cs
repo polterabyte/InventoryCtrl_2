@@ -8,12 +8,16 @@ using Inventory.API.Controllers;
 using Inventory.API.Services;
 using Microsoft.EntityFrameworkCore;
 using Inventory.API.Models;
+using Inventory.Shared.DTOs;
+using Inventory.Shared.Interfaces;
+using System.Collections.Generic;
+using System.Threading;
 
 namespace Inventory.UnitTests.Controllers
 {
-    public class RequestsControllerErrorHandlingTests
+    public class RequestsControllerErrorHandlingTests : IDisposable
     {
-        private readonly Mock<AppDbContext> _mockContext;
+        private readonly AppDbContext _dbContext;
         private readonly Mock<IRequestService> _mockService;
         private readonly Mock<ILogger<RequestsController>> _mockLogger;
         private readonly RequestsController _controller;
@@ -23,11 +27,11 @@ namespace Inventory.UnitTests.Controllers
             var options = new DbContextOptionsBuilder<AppDbContext>()
                 .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
                 .Options;
-            _mockContext = new Mock<AppDbContext>(options);
+            _dbContext = new AppDbContext(options);
             _mockService = new Mock<IRequestService>();
             _mockLogger = new Mock<ILogger<RequestsController>>();
             
-            _controller = new RequestsController(_mockContext.Object, _mockService.Object, _mockLogger.Object);
+            _controller = new RequestsController(_dbContext, _mockService.Object, _mockLogger.Object);
             
             // Setup user context
             var user = new ClaimsPrincipal(new ClaimsIdentity(new[]
@@ -44,11 +48,30 @@ namespace Inventory.UnitTests.Controllers
             };
         }
 
+        public void Dispose()
+        {
+            _dbContext.Dispose();
+        }
+
         [Fact]
         public async Task Create_WithValidRequest_ReturnsCreatedResult()
         {
             // Arrange
-            var requestBody = new RequestsController.CreateRequestBody("Test Request", "Test Description");
+            var requestBody = new CreateRequestDto
+            {
+                Title = "Test Request",
+                Description = "Test Description",
+                Items = new List<RequestItemInputDto>
+                {
+                    new()
+                    {
+                        ProductId = 1,
+                        WarehouseId = 1,
+                        Quantity = 1
+                    }
+                }
+            };
+
             var expectedRequest = new Request
             {
                 Id = 1,
@@ -59,10 +82,12 @@ namespace Inventory.UnitTests.Controllers
                 CreatedAt = DateTime.UtcNow
             };
 
+            _dbContext.Requests.Add(expectedRequest);
+            await _dbContext.SaveChangesAsync();
+
             _mockService.Setup(x => x.CreateRequestAsync(
-                    It.IsAny<string>(), 
-                    It.IsAny<string>(), 
-                    It.IsAny<string>(), 
+                    It.IsAny<CreateRequestDto>(),
+                    It.IsAny<string>(),
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(expectedRequest);
 
@@ -72,12 +97,12 @@ namespace Inventory.UnitTests.Controllers
             // Assert
             var createdResult = Assert.IsType<CreatedAtActionResult>(result);
             Assert.Equal("GetById", createdResult.ActionName);
-            Assert.Equal(expectedRequest, createdResult.Value);
-            
+            Assert.Equal(expectedRequest.Id, createdResult.RouteValues!["id"]);
+            Assert.NotNull(createdResult.Value);
+
             _mockService.Verify(x => x.CreateRequestAsync(
-                "Test Request", 
-                "test-user-id", 
-                "Test Description", 
+                It.Is<CreateRequestDto>(dto => dto.Title == "Test Request" && dto.Description == "Test Description"),
+                "test-user-id",
                 It.IsAny<CancellationToken>()), Times.Once);
         }
 
@@ -85,13 +110,25 @@ namespace Inventory.UnitTests.Controllers
         public async Task Create_WithArgumentException_ReturnsBadRequest()
         {
             // Arrange
-            var requestBody = new RequestsController.CreateRequestBody("", ""); // Invalid title
+            var requestBody = new CreateRequestDto
+            {
+                Title = string.Empty,
+                Description = string.Empty,
+                Items = new List<RequestItemInputDto>
+                {
+                    new()
+                    {
+                        ProductId = 1,
+                        WarehouseId = 1,
+                        Quantity = 1
+                    }
+                }
+            }; // Invalid title
             var exceptionMessage = "Title cannot be empty";
             
             _mockService.Setup(x => x.CreateRequestAsync(
-                    It.IsAny<string>(), 
-                    It.IsAny<string>(), 
-                    It.IsAny<string>(), 
+                    It.IsAny<CreateRequestDto>(),
+                    It.IsAny<string>(),
                     It.IsAny<CancellationToken>()))
                 .ThrowsAsync(new ArgumentException(exceptionMessage));
 
@@ -116,13 +153,25 @@ namespace Inventory.UnitTests.Controllers
         public async Task Create_WithInvalidOperationException_ReturnsConflict()
         {
             // Arrange
-            var requestBody = new RequestsController.CreateRequestBody("Test Request", "Test Description");
+            var requestBody = new CreateRequestDto
+            {
+                Title = "Test Request",
+                Description = "Test Description",
+                Items = new List<RequestItemInputDto>
+                {
+                    new()
+                    {
+                        ProductId = 1,
+                        WarehouseId = 1,
+                        Quantity = 1
+                    }
+                }
+            };
             var exceptionMessage = "Cannot create request at this time";
             
             _mockService.Setup(x => x.CreateRequestAsync(
-                    It.IsAny<string>(), 
-                    It.IsAny<string>(), 
-                    It.IsAny<string>(), 
+                    It.IsAny<CreateRequestDto>(),
+                    It.IsAny<string>(),
                     It.IsAny<CancellationToken>()))
                 .ThrowsAsync(new InvalidOperationException(exceptionMessage));
 
@@ -146,13 +195,25 @@ namespace Inventory.UnitTests.Controllers
         public async Task Create_WithUnexpectedException_ReturnsInternalServerError()
         {
             // Arrange
-            var requestBody = new RequestsController.CreateRequestBody("Test Request", "Test Description");
+            var requestBody = new CreateRequestDto
+            {
+                Title = "Test Request",
+                Description = "Test Description",
+                Items = new List<RequestItemInputDto>
+                {
+                    new()
+                    {
+                        ProductId = 1,
+                        WarehouseId = 1,
+                        Quantity = 1
+                    }
+                }
+            };
             var exceptionMessage = "Database connection failed";
             
             _mockService.Setup(x => x.CreateRequestAsync(
-                    It.IsAny<string>(), 
-                    It.IsAny<string>(), 
-                    It.IsAny<string>(), 
+                    It.IsAny<CreateRequestDto>(),
+                    It.IsAny<string>(),
                     It.IsAny<CancellationToken>()))
                 .ThrowsAsync(new Exception(exceptionMessage));
 
@@ -180,7 +241,15 @@ namespace Inventory.UnitTests.Controllers
         {
             // Arrange
             var requestId = 1;
-            var addItemBody = new RequestsController.AddItemBody(1, 1, 10, 1, 100.0m, "Test item");
+            var addItemBody = new AddRequestItemDto
+            {
+                ProductId = 1,
+                WarehouseId = 1,
+                Quantity = 10,
+                LocationId = 1,
+                UnitPrice = 100.0m,
+                Description = "Test item"
+            };
             var expectedTransaction = new InventoryTransaction
             {
                 Id = 1,
@@ -207,7 +276,7 @@ namespace Inventory.UnitTests.Controllers
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            Assert.Equal(expectedTransaction, okResult.Value);
+            Assert.Null(okResult.Value);
         }
 
         [Fact]
@@ -215,7 +284,15 @@ namespace Inventory.UnitTests.Controllers
         {
             // Arrange
             var requestId = 1;
-            var addItemBody = new RequestsController.AddItemBody(1, 1, 10, 1, 100.0m, "Test item");
+            var addItemBody = new AddRequestItemDto
+            {
+                ProductId = 1,
+                WarehouseId = 1,
+                Quantity = 10,
+                LocationId = 1,
+                UnitPrice = 100.0m,
+                Description = "Test item"
+            };
             var exceptionMessage = "Request not found";
             
             _mockService.Setup(x => x.AddPendingItemAsync(

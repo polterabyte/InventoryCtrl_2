@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Inventory.API.Models;
 using Inventory.API.Services;
 using Inventory.Shared.DTOs;
+using Inventory.Shared.Interfaces;
 
 namespace Inventory.API.Controllers;
 
