@@ -1,12 +1,16 @@
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using System.Collections.Generic;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Linq;
 using Xunit;
 using Inventory.API.Models;
 using Inventory.API.Controllers;
+using Inventory.Shared.DTOs;
+using Inventory.Shared.Interfaces;
 
 namespace Inventory.IntegrationTests.RequestCreation
 {
@@ -54,8 +58,23 @@ namespace Inventory.IntegrationTests.RequestCreation
             var authToken = GenerateTestJwtToken(testUser.Id, testUser.UserName);
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
 
-            var requestBody = new RequestsController.CreateRequestBody("Test Integration Request", "Testing circular reference fix");
-            var json = JsonSerializer.Serialize(requestBody);
+            var (product, warehouse) = await EnsureTestProductAndWarehouse(context);
+
+            var requestBody = new CreateRequestDto
+            {
+                Title = "Test Integration Request",
+                Description = "Testing circular reference fix",
+                Items = new List<RequestItemInputDto>
+                {
+                    new()
+                    {
+                        ProductId = product.Id,
+                        WarehouseId = warehouse.Id,
+                        Quantity = 1
+                    }
+                }
+            };
+            var json = JsonSerializer.Serialize(requestBody, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             // Act
@@ -63,16 +82,16 @@ namespace Inventory.IntegrationTests.RequestCreation
 
             // Assert
             Assert.True(response.IsSuccessStatusCode, $"Request failed with status: {response.StatusCode}. Content: {await response.Content.ReadAsStringAsync()}");
-            
+
             var responseContent = await response.Content.ReadAsStringAsync();
             Assert.False(string.IsNullOrEmpty(responseContent));
-            
+
             // Verify the response can be deserialized (no circular reference issues)
-            var request = JsonSerializer.Deserialize<Request>(responseContent, new JsonSerializerOptions 
-            { 
-                PropertyNameCaseInsensitive = true 
+            var request = JsonSerializer.Deserialize<RequestDetailsDto>(responseContent, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
             });
-            
+
             Assert.NotNull(request);
             Assert.Equal("Test Integration Request", request.Title);
             Assert.Equal("Testing circular reference fix", request.Description);
@@ -92,8 +111,23 @@ namespace Inventory.IntegrationTests.RequestCreation
             var authToken = GenerateTestJwtToken(testUser.Id, testUser.UserName);
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
 
-            var requestBody = new RequestsController.CreateRequestBody("Audit Test Request", "Testing audit logging without circular references");
-            var json = JsonSerializer.Serialize(requestBody);
+            var (product, warehouse) = await EnsureTestProductAndWarehouse(context);
+
+            var requestBody = new CreateRequestDto
+            {
+                Title = "Audit Test Request",
+                Description = "Testing audit logging without circular references",
+                Items = new List<RequestItemInputDto>
+                {
+                    new()
+                    {
+                        ProductId = product.Id,
+                        WarehouseId = warehouse.Id,
+                        Quantity = 1
+                    }
+                }
+            };
+            var json = JsonSerializer.Serialize(requestBody, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             // Act
@@ -136,20 +170,40 @@ namespace Inventory.IntegrationTests.RequestCreation
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
 
             // Create request
-            var requestBody = new RequestsController.CreateRequestBody("Complex Graph Test", "Testing complex object relationships");
-            var requestJson = JsonSerializer.Serialize(requestBody);
+            var requestBody = new CreateRequestDto
+            {
+                Title = "Complex Graph Test",
+                Description = "Testing complex object relationships",
+                Items = new List<RequestItemInputDto>
+                {
+                    new()
+                    {
+                        ProductId = product.Id,
+                        WarehouseId = warehouse.Id,
+                        Quantity = 2
+                    }
+                }
+            };
+            var requestJson = JsonSerializer.Serialize(requestBody, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
             var requestContent = new StringContent(requestJson, Encoding.UTF8, "application/json");
 
             var createResponse = await _client.PostAsync("/api/requests", requestContent);
             Assert.True(createResponse.IsSuccessStatusCode);
 
-            var createdRequest = JsonSerializer.Deserialize<Request>(await createResponse.Content.ReadAsStringAsync(), 
+            var createdRequest = JsonSerializer.Deserialize<RequestDetailsDto>(await createResponse.Content.ReadAsStringAsync(),
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             Assert.NotNull(createdRequest);
 
             // Add item to request
-            var addItemBody = new RequestsController.AddItemBody(product.Id, warehouse.Id, 5, null, 10.50m, "Test item");
-            var itemJson = JsonSerializer.Serialize(addItemBody);
+            var addItemBody = new AddRequestItemDto
+            {
+                ProductId = product.Id,
+                WarehouseId = warehouse.Id,
+                Quantity = 5,
+                UnitPrice = 10.50m,
+                Description = "Test item"
+            };
+            var itemJson = JsonSerializer.Serialize(addItemBody, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
             var itemContent = new StringContent(itemJson, Encoding.UTF8, "application/json");
 
             // Act
@@ -157,15 +211,14 @@ namespace Inventory.IntegrationTests.RequestCreation
 
             // Assert
             Assert.True(addItemResponse.IsSuccessStatusCode, $"Add item failed with status: {addItemResponse.StatusCode}. Content: {await addItemResponse.Content.ReadAsStringAsync()}");
-            
-            // Verify the transaction was created without circular reference issues
-            var transaction = JsonSerializer.Deserialize<InventoryTransaction>(await addItemResponse.Content.ReadAsStringAsync(), 
+
+            // Verify the updated request is returned without circular reference issues
+            var updatedRequest = JsonSerializer.Deserialize<RequestDetailsDto>(await addItemResponse.Content.ReadAsStringAsync(),
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            
-            Assert.NotNull(transaction);
-            Assert.Equal(5, transaction.Quantity);
-            Assert.Equal(product.Id, transaction.ProductId);
-            Assert.Equal(warehouse.Id, transaction.WarehouseId);
+
+            Assert.NotNull(updatedRequest);
+            var addedItem = updatedRequest!.Items.FirstOrDefault(i => i.ProductId == product.Id && i.WarehouseId == warehouse.Id && i.Quantity == 5);
+            Assert.NotNull(addedItem);
         }
 
         private async Task<User> EnsureTestUserExists(AppDbContext context)

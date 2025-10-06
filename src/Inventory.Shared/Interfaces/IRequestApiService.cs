@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using Inventory.Shared.DTOs;
 
 namespace Inventory.Shared.Interfaces;
@@ -24,7 +26,7 @@ public interface IRequestApiService
     Task<ApiResponse<RequestDetailsDto>> RejectRequestAsync(int requestId, string? comment = null);
     
     // Request item management
-    Task<ApiResponse<TransactionRow>> AddRequestItemAsync(int requestId, AddRequestItemDto addItemRequest);
+    Task<ApiResponse<RequestDetailsDto>> AddRequestItemAsync(int requestId, AddRequestItemDto addItemRequest);
     Task<ApiResponse<bool>> RemoveRequestItemAsync(int requestId, int itemId);
 }
 
@@ -33,8 +35,15 @@ public interface IRequestApiService
 /// </summary>
 public class CreateRequestDto
 {
+    [Required]
+    [StringLength(200, MinimumLength = 3)]
     public string Title { get; set; } = string.Empty;
+
+    [StringLength(1000)]
     public string? Description { get; set; }
+
+    [MinLength(1, ErrorMessage = "At least one request item must be provided")]
+    public ICollection<RequestItemInputDto> Items { get; set; } = new List<RequestItemInputDto>();
 }
 
 /// <summary>
@@ -42,19 +51,43 @@ public class CreateRequestDto
 /// </summary>
 public class UpdateRequestDto
 {
+    [Required]
+    [StringLength(200, MinimumLength = 3)]
     public string Title { get; set; } = string.Empty;
+
+    [StringLength(1000)]
+    public string? Description { get; set; }
+
+    [MinLength(1, ErrorMessage = "At least one request item must be provided")]
+    public ICollection<RequestItemInputDto> Items { get; set; } = new List<RequestItemInputDto>();
+}
+
+/// <summary>
+/// DTO describing an item included in a request when creating or updating it
+/// </summary>
+public class RequestItemInputDto
+{
+    [Required]
+    public int ProductId { get; set; }
+
+    [Required]
+    public int WarehouseId { get; set; }
+
+    [Range(1, int.MaxValue, ErrorMessage = "Quantity must be greater than zero")]
+    public int Quantity { get; set; }
+
+    public int? LocationId { get; set; }
+
+    [Range(0, double.MaxValue, ErrorMessage = "Unit price must be zero or positive")]
+    public decimal? UnitPrice { get; set; }
+
+    [StringLength(500)]
     public string? Description { get; set; }
 }
 
 /// <summary>
 /// DTO for adding an item to a request
 /// </summary>
-public class AddRequestItemDto
+public class AddRequestItemDto : RequestItemInputDto
 {
-    public int ProductId { get; set; }
-    public int WarehouseId { get; set; }
-    public int Quantity { get; set; }
-    public int? LocationId { get; set; }
-    public decimal? UnitPrice { get; set; }
-    public string? Description { get; set; }
 }

@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations;
-using Microsoft.Extensions.Logging;
+using System.Linq;
 using System.Reflection;
+using Inventory.Shared.DTOs;
+using Microsoft.Extensions.Logging;
 
 namespace Inventory.Web.Client.Services;
 
@@ -160,5 +162,77 @@ public class RequestValidator : IRequestValidator
     {
         // Здесь можно зарегистрировать валидаторы по умолчанию для специфичных типов
         _logger.LogDebug("Registering default validators");
+
+        RegisterValidator<CreateRequestDto>((request, context) => ValidateRequestWithItems(request, context));
+        RegisterValidator<UpdateRequestDto>((request, context) => ValidateRequestWithItems(request, context));
+    }
+
+    private ValidationResult ValidateRequestWithItems(object request, ValidationContext? validationContext)
+    {
+        var baseResult = ValidateWithDataAnnotationsAsync(request, validationContext).GetAwaiter().GetResult();
+        var errors = baseResult.Errors.ToList();
+
+        ICollection<RequestItemInputDto>? items = request switch
+        {
+            CreateRequestDto createDto => createDto.Items,
+            UpdateRequestDto updateDto => updateDto.Items,
+            _ => null
+        };
+
+        if (items == null || items.Count == 0)
+        {
+            errors.Add(new ValidationError
+            {
+                PropertyName = nameof(CreateRequestDto.Items),
+                Message = "At least one item must be provided",
+                ErrorCode = "REQUEST_NO_ITEMS"
+            });
+        }
+        else
+        {
+            var index = 0;
+            foreach (var item in items)
+            {
+                index++;
+                if (item.ProductId <= 0)
+                {
+                    errors.Add(new ValidationError
+                    {
+                        PropertyName = $"Items[{index - 1}].ProductId",
+                        Message = "Product must be selected",
+                        AttemptedValue = item.ProductId,
+                        ErrorCode = "REQUEST_ITEM_PRODUCT_REQUIRED"
+                    });
+                }
+
+                if (item.WarehouseId <= 0)
+                {
+                    errors.Add(new ValidationError
+                    {
+                        PropertyName = $"Items[{index - 1}].WarehouseId",
+                        Message = "Warehouse must be selected",
+                        AttemptedValue = item.WarehouseId,
+                        ErrorCode = "REQUEST_ITEM_WAREHOUSE_REQUIRED"
+                    });
+                }
+
+                if (item.Quantity <= 0)
+                {
+                    errors.Add(new ValidationError
+                    {
+                        PropertyName = $"Items[{index - 1}].Quantity",
+                        Message = "Quantity must be greater than zero",
+                        AttemptedValue = item.Quantity,
+                        ErrorCode = "REQUEST_ITEM_QUANTITY_INVALID"
+                    });
+                }
+            }
+        }
+
+        return new ValidationResult
+        {
+            IsValid = errors.Count == 0,
+            Errors = errors
+        };
     }
 }

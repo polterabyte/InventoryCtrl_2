@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -88,13 +90,65 @@ public class RequestServiceTests
         return new AppDbContext(options);
     }
 
+    private static async Task SeedProductAndWarehouseAsync(AppDbContext db)
+    {
+        if (!await db.Products.AnyAsync())
+        {
+            db.Products.Add(new Product
+            {
+                Id = 1,
+                Name = "Test Product",
+                SKU = "TP-001",
+                CurrentQuantity = 0,
+                UnitOfMeasureId = 1,
+                CategoryId = 1,
+                ManufacturerId = 1,
+                ProductModelId = 1,
+                ProductGroupId = 1,
+                MinStock = 0,
+                MaxStock = 100,
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+
+        if (!await db.Warehouses.AnyAsync())
+        {
+            db.Warehouses.Add(new Warehouse
+            {
+                Id = 1,
+                Name = "Main Warehouse"
+            });
+        }
+
+        await db.SaveChangesAsync();
+    }
+
+    private static CreateRequestDto BuildCreateRequestDto(string title, string? description = null)
+    {
+        return new CreateRequestDto
+        {
+            Title = title,
+            Description = description,
+            Items = new List<RequestItemInputDto>
+            {
+                new()
+                {
+                    ProductId = 1,
+                    WarehouseId = 1,
+                    Quantity = 1
+                }
+            }
+        };
+    }
+
     [Fact]
     public async Task CreateRequest_StartsInDraft_And_WritesHistory()
     {
         using var db = CreateDb();
+        await SeedProductAndWarehouseAsync(db);
         var service = new RequestService(db, new FakeNotificationService(), NullLogger<RequestService>.Instance);
 
-        var req = await service.CreateRequestAsync("Test Request", "user-1", "desc");
+        var req = await service.CreateRequestAsync(BuildCreateRequestDto("Test Request", "desc"), "user-1");
 
         Assert.NotNull(req);
         Assert.Equal(RequestStatus.Draft, req.Status);
@@ -110,8 +164,9 @@ public class RequestServiceTests
     public async Task Submit_Then_Approve_ValidTransitions()
     {
         using var db = CreateDb();
+        await SeedProductAndWarehouseAsync(db);
         var service = new RequestService(db, new FakeNotificationService(), NullLogger<RequestService>.Instance);
-        var req = await service.CreateRequestAsync("R", "creator");
+        var req = await service.CreateRequestAsync(BuildCreateRequestDto("R"), "creator");
 
         req = await service.SubmitAsync(req.Id, "creator");
         Assert.Equal(RequestStatus.Submitted, req.Status);
@@ -125,12 +180,10 @@ public class RequestServiceTests
     {
         using var db = CreateDb();
         // seed product/warehouse to satisfy FK-less in-memory model usage
-        db.Products.Add(new Product { Id = 1, Name = "P1", SKU = "SKU1", CurrentQuantity = 0, UnitOfMeasureId = 1, CategoryId = 1, ManufacturerId = 1, ProductModelId = 1, ProductGroupId = 1, MinStock = 0, MaxStock = 100, CreatedAt = DateTime.UtcNow });
-        db.Warehouses.Add(new Warehouse { Id = 1, Name = "Main" });
-        await db.SaveChangesAsync();
+        await SeedProductAndWarehouseAsync(db);
 
         var service = new RequestService(db, new FakeNotificationService(), NullLogger<RequestService>.Instance);
-        var req = await service.CreateRequestAsync("R", "creator");
+        var req = await service.CreateRequestAsync(BuildCreateRequestDto("R"), "creator");
         await service.AddPendingItemAsync(req.Id, 1, 1, 5, "creator");
         req = await service.SubmitAsync(req.Id, "creator");
         req = await service.ApproveAsync(req.Id, "approver");
@@ -147,8 +200,9 @@ public class RequestServiceTests
     public async Task InvalidTransition_Throws()
     {
         using var db = CreateDb();
+        await SeedProductAndWarehouseAsync(db);
         var service = new RequestService(db, new FakeNotificationService(), NullLogger<RequestService>.Instance);
-        var req = await service.CreateRequestAsync("R", "creator");
+        var req = await service.CreateRequestAsync(BuildCreateRequestDto("R"), "creator");
 
         // Approve without submit should fail
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>

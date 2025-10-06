@@ -4,12 +4,15 @@
 @using Inventory.Shared.DTOs
 @using Inventory.Shared.Interfaces
 @using System.ComponentModel.DataAnnotations
+@using System.Linq
 @using Radzen
 @using Radzen.Blazor
 
 @inject IRequestApiService RequestService
 @inject NavigationManager Navigation
 @inject NotificationService NotificationService
+@inject IProductService ProductService
+@inject IWarehouseService WarehouseService
 
 @attribute [Authorize]
 
@@ -28,7 +31,7 @@
         @* Form *@
         <EditForm Model="@createRequest" OnValidSubmit="@HandleSubmit">
             <DataAnnotationsValidator />
-            
+
             <RadzenStack Gap="1.5rem">
                 @* Basic Information *@
                 <RadzenCard Class="rz-p-4">
@@ -69,9 +72,137 @@
                     </RadzenStack>
                 </RadzenCard>
 
+                @* Request Items *@
+                <RadzenCard Class="rz-p-4">
+                    <RadzenStack Gap="1rem">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                            <RadzenText TextStyle="TextStyle.H6" Class="rz-m-0">Request Items</RadzenText>
+                            <RadzenButton Text="Add Item"
+                                          Icon="add"
+                                          ButtonStyle="ButtonStyle.Secondary"
+                                          Click="AddItem"
+                                          Disabled="submitting || isLoadingLookups" />
+                        </RadzenStack>
+
+                        @if (isLoadingLookups)
+                        {
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Small" />
+                                <RadzenText TextStyle="TextStyle.Body2">Loading products and warehouses...</RadzenText>
+                            </RadzenStack>
+                        }
+
+                        @if (createRequest.Items.Count == 0)
+                        {
+                            <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" Variant="Variant.Flat">
+                                <RadzenText TextStyle="TextStyle.Body2">Add at least one item to this request.</RadzenText>
+                            </RadzenAlert>
+                        }
+                        else
+                        {
+                            <RadzenStack Gap="1rem">
+                                @for (var index = 0; index < createRequest.Items.Count; index++)
+                                {
+                                    var item = createRequest.Items[index];
+                                    <RadzenCard Class="rz-p-3">
+                                        <RadzenStack Gap="1rem">
+                                            <RadzenRow Gap="1rem">
+                                                <RadzenColumn Size="12" SizeMd="6">
+                                                    <RadzenStack Gap="0.5rem">
+                                                        <RadzenLabel Text="Product *" Component=$"product-{index}" />
+                                                        <RadzenDropDown Data="products"
+                                                                        TextProperty="Name"
+                                                                        ValueProperty="Id"
+                                                                        AllowFiltering="true"
+                                                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                                        @bind-Value="item.ProductId"
+                                                                        Name=$"product-{index}"
+                                                                        Placeholder="Select product"
+                                                                        Style="width: 100%"
+                                                                        Disabled="isLoadingLookups || submitting" />
+                                                        <ValidationMessage For="@(() => createRequest.Items[index].ProductId)" />
+                                                    </RadzenStack>
+                                                </RadzenColumn>
+                                                <RadzenColumn Size="12" SizeMd="6">
+                                                    <RadzenStack Gap="0.5rem">
+                                                        <RadzenLabel Text="Warehouse *" Component=$"warehouse-{index}" />
+                                                        <RadzenDropDown Data="warehouses"
+                                                                        TextProperty="Name"
+                                                                        ValueProperty="Id"
+                                                                        AllowFiltering="true"
+                                                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                                        @bind-Value="item.WarehouseId"
+                                                                        Name=$"warehouse-{index}"
+                                                                        Placeholder="Select warehouse"
+                                                                        Style="width: 100%"
+                                                                        Disabled="isLoadingLookups || submitting" />
+                                                        <ValidationMessage For="@(() => createRequest.Items[index].WarehouseId)" />
+                                                    </RadzenStack>
+                                                </RadzenColumn>
+                                            </RadzenRow>
+
+                                            <RadzenRow Gap="1rem">
+                                                <RadzenColumn Size="12" SizeMd="4">
+                                                    <RadzenStack Gap="0.5rem">
+                                                        <RadzenLabel Text="Quantity *" Component=$"quantity-{index}" />
+                                                        <RadzenNumeric Style="width: 100%"
+                                                                       Name=$"quantity-{index}"
+                                                                       @bind-Value="item.Quantity"
+                                                                       Min="1"
+                                                                       ShowUpDown="true"
+                                                                       Step="1"
+                                                                       Disabled="submitting" />
+                                                        <ValidationMessage For="@(() => createRequest.Items[index].Quantity)" />
+                                                    </RadzenStack>
+                                                </RadzenColumn>
+
+                                                <RadzenColumn Size="12" SizeMd="4">
+                                                    <RadzenStack Gap="0.5rem">
+                                                        <RadzenLabel Text="Unit Price" Component=$"price-{index}" />
+                                                        <RadzenNumeric @bind-Value="item.UnitPrice"
+                                                                       Name=$"price-{index}"
+                                                                       Style="width: 100%"
+                                                                       Min="0"
+                                                                       Step="0.01"
+                                                                       Disabled="submitting" />
+                                                    </RadzenStack>
+                                                </RadzenColumn>
+                                            </RadzenRow>
+
+                                            <RadzenRow Gap="1rem">
+                                                <RadzenColumn Size="12">
+                                                    <RadzenStack Gap="0.5rem">
+                                                        <RadzenLabel Text="Description" Component=$"description-{index}" />
+                                                        <RadzenTextArea @bind-Value="item.Description"
+                                                                        Name=$"description-{index}"
+                                                                        Placeholder="Additional notes for this item"
+                                                                        Style="width: 100%"
+                                                                        Rows="2"
+                                                                        MaxLength="500"
+                                                                        Disabled="submitting" />
+                                                    </RadzenStack>
+                                                </RadzenColumn>
+                                            </RadzenRow>
+
+                                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End">
+                                                <RadzenButton Text="Remove"
+                                                              Icon="delete"
+                                                              ButtonStyle="ButtonStyle.Danger"
+                                                              Size="ButtonSize.Small"
+                                                              Click="@(() => RemoveItem(item))"
+                                                              Disabled="submitting" />
+                                            </RadzenStack>
+                                        </RadzenStack>
+                                    </RadzenCard>
+                                }
+                            </RadzenStack>
+                        }
+                    </RadzenStack>
+                </RadzenCard>
+
                 @* Actions *@
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
-                    <RadzenButton Text="Create Request" 
+                    <RadzenButton Text="Create Request"
                                   Icon="add_circle" 
                                   ButtonStyle="ButtonStyle.Primary"
                                   ButtonType="ButtonType.Submit"
@@ -122,6 +253,18 @@
 @code {
     private CreateRequestModel createRequest = new();
     private bool submitting = false;
+    private bool isLoadingLookups = false;
+    private List<ProductDto> products = new();
+    private List<WarehouseDto> warehouses = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadLookupsAsync();
+        if (createRequest.Items.Count == 0)
+        {
+            createRequest.Items.Add(new RequestItemModel());
+        }
+    }
 
     private async Task HandleSubmit()
     {
@@ -132,10 +275,23 @@
 
         try
         {
+            if (createRequest.Items.Count == 0)
+            {
+                NotificationService.Notify(new Radzen.NotificationMessage
+                {
+                    Severity = NotificationSeverity.Warning,
+                    Summary = "Missing items",
+                    Detail = "Add at least one item to the request before submitting.",
+                    Duration = 4000
+                });
+                return;
+            }
+
             var dto = new CreateRequestDto
             {
                 Title = createRequest.Title?.Trim() ?? string.Empty,
-                Description = string.IsNullOrWhiteSpace(createRequest.Description) ? null : createRequest.Description.Trim()
+                Description = string.IsNullOrWhiteSpace(createRequest.Description) ? null : createRequest.Description.Trim(),
+                Items = createRequest.Items.Select(item => item.ToInputDto()).ToList()
             };
 
             var response = await RequestService.CreateRequestAsync(dto);
@@ -181,6 +337,43 @@
         }
     }
 
+    private async Task LoadLookupsAsync()
+    {
+        try
+        {
+            isLoadingLookups = true;
+            products = await ProductService.GetAllProductsAsync();
+            warehouses = await WarehouseService.GetAllWarehousesAsync();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new Radzen.NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Lookup Load Failed",
+                Detail = $"Failed to load products or warehouses: {ex.Message}",
+                Duration = 5000
+            });
+        }
+        finally
+        {
+            isLoadingLookups = false;
+            StateHasChanged();
+        }
+    }
+
+    private void AddItem()
+    {
+        createRequest.Items.Add(new RequestItemModel());
+        StateHasChanged();
+    }
+
+    private void RemoveItem(RequestItemModel item)
+    {
+        createRequest.Items.Remove(item);
+        StateHasChanged();
+    }
+
     public class CreateRequestModel
     {
         [Required(ErrorMessage = "Title is required")]
@@ -190,5 +383,40 @@
 
         [StringLength(1000, ErrorMessage = "Description cannot exceed 1000 characters")]
         public string? Description { get; set; }
+
+        [MinLength(1, ErrorMessage = "At least one request item is required")]
+        public List<RequestItemModel> Items { get; set; } = new();
+    }
+
+    public class RequestItemModel
+    {
+        [Required(ErrorMessage = "Product is required")]
+        public int? ProductId { get; set; }
+
+        [Required(ErrorMessage = "Warehouse is required")]
+        public int? WarehouseId { get; set; }
+
+        [Range(1, int.MaxValue, ErrorMessage = "Quantity must be at least 1")]
+        public int Quantity { get; set; } = 1;
+
+        [Range(0, double.MaxValue, ErrorMessage = "Unit price cannot be negative")]
+        public decimal? UnitPrice { get; set; }
+
+        public string? Description { get; set; }
+
+        public int? LocationId { get; set; }
+
+        public RequestItemInputDto ToInputDto()
+        {
+            return new RequestItemInputDto
+            {
+                ProductId = ProductId ?? 0,
+                WarehouseId = WarehouseId ?? 0,
+                Quantity = Quantity,
+                UnitPrice = UnitPrice,
+                Description = string.IsNullOrWhiteSpace(Description) ? null : Description.Trim(),
+                LocationId = LocationId
+            };
+        }
     }
 }

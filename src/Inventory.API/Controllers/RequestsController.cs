@@ -1,3 +1,4 @@
+using System;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -34,54 +35,25 @@ public class RequestsController(AppDbContext db, IRequestService service, ILogge
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
-        var dto = await db.Requests
-            .Where(r => r.Id == id)
-            .Select(r => new RequestDetailsDto
-            {
-                Id = r.Id,
-                Title = r.Title,
-                Description = r.Description,
-                Status = r.Status.ToString(),
-                CreatedAt = r.CreatedAt,
-                UpdatedAt = r.UpdatedAt,
-                CreatedByUserId = r.CreatedByUserId,
-                Transactions = r.Transactions
-                    .OrderByDescending(t => t.Date)
-                    .Select(t => new Inventory.Shared.DTOs.TransactionRow
-                    {
-                        Type = t.Type.ToString(),
-                        Quantity = t.Quantity,
-                        Date = t.Date,
-                        Description = t.Description,
-                        ProductId = t.ProductId,
-                        WarehouseId = t.WarehouseId
-                    }).ToList(),
-                History = r.History
-                    .OrderByDescending(h => h.ChangedAt)
-                    .Select(h => new Inventory.Shared.DTOs.HistoryRow
-                    {
-                        OldStatus = h.OldStatus.ToString(),
-                        NewStatus = h.NewStatus.ToString(),
-                        ChangedAt = h.ChangedAt,
-                        ChangedByUserId = h.ChangedByUserId,
-                        Comment = h.Comment
-                    }).ToList()
-            })
-            .FirstOrDefaultAsync();
+        var dto = await BuildRequestDetailsAsync(id);
         if (dto == null) return NotFound();
         return Ok(dto);
     }
 
-    public record CreateRequestBody(string Title, string? Description);
-
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateRequestBody body)
+    public async Task<IActionResult> Create([FromBody] CreateRequestDto body)
     {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
         try
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "system";
-            var req = await service.CreateRequestAsync(body.Title, userId, body.Description);
-            return CreatedAtAction(nameof(GetById), new { id = req.Id }, req);
+            var req = await service.CreateRequestAsync(body, userId);
+            var details = await BuildRequestDetailsAsync(req.Id);
+            return CreatedAtAction(nameof(GetById), new { id = req.Id }, details);
         }
         catch (ArgumentException ex)
         {
@@ -100,16 +72,57 @@ public class RequestsController(AppDbContext db, IRequestService service, ILogge
         }
     }
 
-    public record AddItemBody(int ProductId, int WarehouseId, int Quantity, int? LocationId, decimal? UnitPrice, string? Description);
-
-    [HttpPost("{id}/items")]
-    public async Task<IActionResult> AddItem(int id, [FromBody] AddItemBody body)
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateRequestDto body)
     {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
         try
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "system";
-            var trx = await service.AddPendingItemAsync(id, body.ProductId, body.WarehouseId, body.Quantity, userId, body.LocationId, body.UnitPrice, body.Description);
-            return Ok(trx);
+            await service.UpdateRequestAsync(id, body, userId);
+            var details = await BuildRequestDetailsAsync(id);
+            return Ok(details);
+        }
+        catch (ArgumentException ex)
+        {
+            logger.LogWarning(ex, "Validation error while updating request {RequestId}", id);
+            return BadRequest(new { success = false, errorMessage = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            logger.LogWarning(ex, "Invalid operation while updating request {RequestId}", id);
+            if (ex.Message.Contains("not found", StringComparison.OrdinalIgnoreCase))
+            {
+                return NotFound(new { success = false, errorMessage = ex.Message });
+            }
+
+            return Conflict(new { success = false, errorMessage = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Unexpected error while updating request {RequestId}", id);
+            return StatusCode(500, new { success = false, errorMessage = "An error occurred while updating the request. Please try again." });
+        }
+    }
+
+    [HttpPost("{id}/items")]
+    public async Task<IActionResult> AddItem(int id, [FromBody] AddRequestItemDto body)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        try
+        {
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "system";
+            await service.AddPendingItemAsync(id, body.ProductId, body.WarehouseId, body.Quantity, userId, body.LocationId, body.UnitPrice, body.Description);
+            var details = await BuildRequestDetailsAsync(id);
+            return Ok(details);
         }
         catch (InvalidOperationException ex)
         {
@@ -197,5 +210,61 @@ public class RequestsController(AppDbContext db, IRequestService service, ILogge
         var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "system";
         var req = await service.RejectAsync(id, userId, body?.Comment);
         return Ok(req);
+    }
+
+    private async Task<RequestDetailsDto?> BuildRequestDetailsAsync(int id)
+    {
+        return await db.Requests
+            .Where(r => r.Id == id)
+            .Select(r => new RequestDetailsDto
+            {
+                Id = r.Id,
+                Title = r.Title,
+                Description = r.Description,
+                Status = r.Status.ToString(),
+                CreatedAt = r.CreatedAt,
+                UpdatedAt = r.UpdatedAt,
+                CreatedByUserId = r.CreatedByUserId,
+                Items = r.Transactions
+                    .Where(t => t.Type == TransactionType.Pending)
+                    .OrderByDescending(t => t.Date)
+                    .Select(t => new RequestItemDetailsDto
+                    {
+                        Id = t.Id,
+                        ProductId = t.ProductId,
+                        ProductName = t.Product.Name,
+                        ProductSku = t.Product.SKU,
+                        WarehouseId = t.WarehouseId,
+                        WarehouseName = t.Warehouse.Name,
+                        Quantity = t.Quantity,
+                        LocationId = t.LocationId,
+                        LocationName = t.Location != null ? t.Location.Name : null,
+                        UnitPrice = t.UnitPrice,
+                        TotalPrice = t.TotalPrice,
+                        Description = t.Description
+                    }).ToList(),
+                Transactions = r.Transactions
+                    .OrderByDescending(t => t.Date)
+                    .Select(t => new Inventory.Shared.DTOs.TransactionRow
+                    {
+                        Type = t.Type.ToString(),
+                        Quantity = t.Quantity,
+                        Date = t.Date,
+                        Description = t.Description,
+                        ProductId = t.ProductId,
+                        WarehouseId = t.WarehouseId
+                    }).ToList(),
+                History = r.History
+                    .OrderByDescending(h => h.ChangedAt)
+                    .Select(h => new Inventory.Shared.DTOs.HistoryRow
+                    {
+                        OldStatus = h.OldStatus.ToString(),
+                        NewStatus = h.NewStatus.ToString(),
+                        ChangedAt = h.ChangedAt,
+                        ChangedByUserId = h.ChangedByUserId,
+                        Comment = h.Comment
+                    }).ToList()
+            })
+            .FirstOrDefaultAsync();
     }
 }
