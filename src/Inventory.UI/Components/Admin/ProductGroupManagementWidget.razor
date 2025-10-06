@@ -1,5 +1,8 @@
 @using Inventory.Shared.Services
+@using System
 @using System.Linq
+@using System.Collections.Generic
+@using System.Threading.Tasks
 @using Inventory.UI.Utilities
 @using Inventory.Shared.DTOs
 @using Inventory.Shared.Interfaces
@@ -14,104 +17,151 @@
     <Authorized Context="_">
         <RadzenCard Style="width:100%;">
             <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.GapLarge">
-                    <RadzenStack Orientation="Orientation.Horizontal"
-                                 JustifyContent="JustifyContent.SpaceBetween"
-                                 AlignItems="AlignItems.Center"
-                                 Wrap="FlexWrap.Wrap"
-                                 Gap="@RadzenUi.Gap">
-                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                            <RadzenIcon Icon="category" />
-                            <RadzenText TextStyle="TextStyle.H5">Product Groups Management</RadzenText>
-                        </RadzenStack>
-
-                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem">
-                            <RadzenButton Icon="add"
-                                          Text="Add"
-                                          ButtonStyle="ButtonStyle.Primary"
-                                          Click="ShowCreateModal" />
-                            <RadzenButton Icon="refresh"
-                                          Text="Refresh"
-                                          Variant="Variant.Outlined"
-                                          ButtonStyle="ButtonStyle.Secondary"
-                                          Click="RefreshData" />
-                        </RadzenStack>
+                <RadzenStack Orientation="Orientation.Horizontal"
+                             JustifyContent="JustifyContent.SpaceBetween"
+                             AlignItems="AlignItems.Center"
+                             Wrap="FlexWrap.Wrap"
+                             Gap="@RadzenUi.Gap">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenIcon Icon="category" />
+                        <RadzenText TextStyle="TextStyle.H5">Product Groups Management</RadzenText>
                     </RadzenStack>
 
-                    <RadzenStack Orientation="Orientation.Horizontal" Gap="@RadzenUi.Gap" Wrap="FlexWrap.Wrap">
-                        <RadzenTextBox @bind-Value="searchTerm"
-                                       Placeholder="Search product groups..."
-                                       Style="min-width:220px;"
-                                       @onkeyup="OnSearchKeyUp" />
-
-                        <RadzenDropDown Data="@statusFilterOptions"
-                                       TextProperty="Text"
-                                       ValueProperty="Value"
-                                       @bind-Value="isActiveFilter"
-                                       Placeholder="Filter by status"
-                                       Style="min-width:180px;"
-                                       Change="OnFilterChanged" />
-
-                        <RadzenDropDown Data="@pageSizeOptions"
-                                       @bind-Value="pageSize"
-                                       Style="min-width:160px;"
-                                       Change="OnPageSizeChanged" />
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem">
+                        <RadzenButton Icon="add"
+                                      Text="Add"
+                                      ButtonStyle="ButtonStyle.Primary"
+                                      Click="ShowCreateModal" />
+                        <RadzenButton Icon="refresh"
+                                      Text="Refresh"
+                                      Variant="Variant.Outlined"
+                                      ButtonStyle="ButtonStyle.Secondary"
+                                      Click="RefreshData" />
                     </RadzenStack>
-
-                    <RadzenBusyIndicator IsBusy="@isLoading">
-                        @if (data?.Any() == true)
-                        {
-                            <RadzenDataGrid TItem="ProductGroupDto"
-                                             Data="@data"
-                                             AllowPaging="true"
-                                             PageSize="@pageSize"
-                                             AllowSorting="true"
-                                             FilterMode="FilterMode.Advanced"
-                                             Responsive="true">
-                                <Columns>
-                                    <RadzenDataGridColumn TItem="ProductGroupDto" Title="Name" Property="Name">
-                                        <Template Context="item">
-                                            <RadzenText>@item.Name</RadzenText>
-                                        </Template>
-                                    </RadzenDataGridColumn>
-                                    <RadzenDataGridColumn TItem="ProductGroupDto" Title="Status">
-                                        <Template Context="item">
-                                            @if (item.IsActive)
-                                            {
-                                                <RadzenBadge Text="Active" Style="success" />
-                                            }
-                                            else
-                                            {
-                                                <RadzenBadge Text="Inactive" Style="secondary" />
-                                            }
-                                        </Template>
-                                    </RadzenDataGridColumn>
-                                    <RadzenDataGridColumn TItem="ProductGroupDto" Title="Created" Property="CreatedAt">
-                                        <Template Context="item">@item.CreatedAt.ToString("MMM dd, yyyy")</Template>
-                                    </RadzenDataGridColumn>
-                                    <RadzenDataGridColumn TItem="ProductGroupDto" Title="Actions">
-                                        <Template Context="item">
-                                            <RadzenButton Icon="edit" Size="ButtonSize.Small" Variant="Variant.Text" Click="@(() => EditItem(item))" />
-                                            <RadzenButton Icon="delete" Size="ButtonSize.Small" Variant="Variant.Text" ButtonStyle="ButtonStyle.Danger" Click="@(() => DeleteItem(item))" />
-                                        </Template>
-                                    </RadzenDataGridColumn>
-                                </Columns>
-                            </RadzenDataGrid>
-                        }
-                        else
-                        {
-                            <RadzenStack Orientation="Orientation.Vertical"
-                                         AlignItems="AlignItems.Center"
-                                         Gap="0.5rem"
-                                         Style="padding: 1.5rem;">
-                                <RadzenIcon Icon="category" Style="font-size:32px; color: var(--rz-text-secondary);" />
-                                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary);">No product groups found</RadzenText>
-                            </RadzenStack>
-                        }
-                    </RadzenBusyIndicator>
                 </RadzenStack>
-        </RadzenCard>
 
-        
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="@RadzenUi.Gap" Wrap="FlexWrap.Wrap">
+                    <RadzenTextBox @bind-Value="searchTerm"
+                                   Placeholder="Search product groups..."
+                                   Style="min-width:220px;"
+                                   @onkeyup="OnSearchKeyUp" />
+
+                    <RadzenDropDown Data="@statusFilterOptions"
+                                   TextProperty="Text"
+                                   ValueProperty="Value"
+                                   @bind-Value="isActiveFilter"
+                                   Placeholder="Filter by status"
+                                   Style="min-width:180px;"
+                                   Change="OnFilterChanged" />
+
+                    <RadzenDropDown Data="@pageSizeOptions"
+                                   @bind-Value="pageSize"
+                                   Style="min-width:160px;"
+                                   Change="OnPageSizeChanged" />
+                </RadzenStack>
+
+                <RadzenBusyIndicator IsBusy="@isLoading">
+                    <RadzenTabs>
+                        <RadzenTabsItem Text="Table View">
+                            @if (data?.Any() == true)
+                            {
+                                <RadzenDataGrid TItem="ProductGroupDto"
+                                                 Data="@data"
+                                                 AllowPaging="true"
+                                                 PageSize="@pageSize"
+                                                 AllowSorting="true"
+                                                 FilterMode="FilterMode.Advanced"
+                                                 Responsive="true">
+                                    <Columns>
+                                        <RadzenDataGridColumn TItem="ProductGroupDto" Title="Name" Property="Name">
+                                            <Template Context="item">
+                                                <RadzenText>@item.Name</RadzenText>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="ProductGroupDto" Title="Parent">
+                                            <Template Context="item">
+                                                @if (!string.IsNullOrWhiteSpace(item.ParentProductGroupName))
+                                                {
+                                                    <RadzenText>@item.ParentProductGroupName</RadzenText>
+                                                }
+                                                else
+                                                {
+                                                    <RadzenBadge Text="Root" Style="secondary" />
+                                                }
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="ProductGroupDto" Title="Status">
+                                            <Template Context="item">
+                                                @if (item.IsActive)
+                                                {
+                                                    <RadzenBadge Text="Active" Style="success" />
+                                                }
+                                                else
+                                                {
+                                                    <RadzenBadge Text="Inactive" Style="secondary" />
+                                                }
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="ProductGroupDto" Title="Created" Property="CreatedAt">
+                                            <Template Context="item">@item.CreatedAt.ToString("MMM dd, yyyy")</Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="ProductGroupDto" Title="Actions">
+                                            <Template Context="item">
+                                                <RadzenButton Icon="edit" Size="ButtonSize.Small" Variant="Variant.Text" Click="@(() => EditItem(item))" />
+                                                <RadzenButton Icon="delete" Size="ButtonSize.Small" Variant="Variant.Text" ButtonStyle="ButtonStyle.Danger" Click="@(() => DeleteItem(item))" />
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                    </Columns>
+                                </RadzenDataGrid>
+                            }
+                            else
+                            {
+                                <RadzenStack Orientation="Orientation.Vertical"
+                                             AlignItems="AlignItems.Center"
+                                             Gap="0.5rem"
+                                             Style="padding: 1.5rem;">
+                                    <RadzenIcon Icon="category" Style="font-size:32px; color: var(--rz-text-secondary);" />
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary);">No product groups found</RadzenText>
+                                </RadzenStack>
+                            }
+                        </RadzenTabsItem>
+                        <RadzenTabsItem Text="Hierarchy">
+                            @if (treeRoots?.Any() == true)
+                            {
+                                <RadzenTree Data="@treeRoots" Style="max-height:500px; overflow:auto;">
+                                    <RadzenTreeLevel TextProperty="Name" ChildrenProperty="Children">
+                                        <Template Context="treeItem">
+                                            @if (treeItem.Value is ProductGroupDto group)
+                                            {
+                                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                                    <RadzenText>@group.Name</RadzenText>
+                                                    @if (!group.IsActive)
+                                                    {
+                                                        <RadzenBadge Text="Inactive" Style="secondary" />
+                                                    }
+                                                    <RadzenButton Icon="edit" Size="ButtonSize.Small" Variant="Variant.Text" Click="@(() => EditItemById(group.Id))" />
+                                                    <RadzenButton Icon="delete" Size="ButtonSize.Small" Variant="Variant.Text" ButtonStyle="ButtonStyle.Danger" Click="@(() => DeleteById(group.Id))" />
+                                                </RadzenStack>
+                                            }
+                                        </Template>
+                                    </RadzenTreeLevel>
+                                </RadzenTree>
+                            }
+                            else
+                            {
+                                <RadzenStack Orientation="Orientation.Vertical"
+                                             AlignItems="AlignItems.Center"
+                                             Gap="0.5rem"
+                                             Style="padding: 1.5rem;">
+                                    <RadzenIcon Icon="account_tree" Style="font-size:32px; color: var(--rz-text-secondary);" />
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary);">Hierarchy will appear once groups are created</RadzenText>
+                                </RadzenStack>
+                            }
+                        </RadzenTabsItem>
+                    </RadzenTabs>
+                </RadzenBusyIndicator>
+            </RadzenStack>
+        </RadzenCard>
     </Authorized>
     <NotAuthorized>
         <RadzenAlert AlertStyle="AlertStyle.Danger" ShowIcon="true">
@@ -122,14 +172,15 @@
 
 @code {
     private List<ProductGroupDto> data = new();
+    private List<ProductGroupDto> allGroups = new();
+    private List<ProductGroupDto> treeRoots = new();
+    private List<ProductGroupOption> parentOptions = new();
     private bool isLoading = false;
     private bool isEditing = false;
     private bool isSaving = false;
     private string searchTerm = "";
     private string isActiveFilter = "";
-    private int currentPage = 1;
     private int pageSize = 10;
-    private int totalPages = 0;
     private int totalCount = 0;
 
     private CreateProductGroupDto currentItem = new();
@@ -146,6 +197,7 @@
     private readonly int[] pageSizeOptions = new[] { 10, 25, 50 };
 
     private record FilterOption(string Value, string Text);
+    private record ProductGroupOption(int? Id, string Label);
 
     protected override async Task OnInitializedAsync()
     {
@@ -157,29 +209,13 @@
         isLoading = true;
         try
         {
-            var response = await ProductGroupService.GetPagedAsync(
-                currentPage, 
-                pageSize, 
-                string.IsNullOrEmpty(searchTerm) ? null : searchTerm,
-                string.IsNullOrEmpty(isActiveFilter) ? null : bool.Parse(isActiveFilter)
-            );
-
-            if (response.Success && response.Data != null)
-            {
-                data = response.Data.Items;
-                totalCount = response.Data.total;
-                totalPages = response.Data.TotalPages;
-            }
-            else
-            {
-                                UiNotificationService.ShowError("Error", response.Error ?? "Failed to load data");
-                data = new();
-            }
+            allGroups = await ProductGroupService.GetAllProductGroupsAsync();
+            ApplyFilters();
         }
         catch (Exception ex)
         {
             UiNotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
-            data = new();
+            ResetGridAndTree();
         }
         finally
         {
@@ -187,44 +223,244 @@
         }
     }
 
+    private void ApplyFilters()
+    {
+        if (allGroups.Count == 0)
+        {
+            ResetGridAndTree();
+            return;
+        }
+
+        var query = allGroups.AsEnumerable();
+
+        if (!string.IsNullOrEmpty(isActiveFilter) && bool.TryParse(isActiveFilter, out var isActiveValue))
+        {
+            query = query.Where(pg => pg.IsActive == isActiveValue);
+        }
+
+        var filteredList = query.ToList();
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var term = searchTerm.Trim();
+            filteredList = filteredList
+                .Where(pg => pg.Name.Contains(term, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (filteredList.Count == 0)
+            {
+                ResetGridAndTree();
+                return;
+            }
+
+            var lookup = allGroups.ToDictionary(pg => pg.Id);
+            var includeIds = new HashSet<int>(filteredList.Select(pg => pg.Id));
+
+            foreach (var id in includeIds.ToList())
+            {
+                AddAncestors(id, includeIds, lookup);
+            }
+
+            var treeSource = allGroups.Where(pg => includeIds.Contains(pg.Id)).ToList();
+
+            UpdateGridData(filteredList);
+            treeRoots = BuildTree(treeSource);
+            return;
+        }
+
+        UpdateGridData(filteredList);
+        treeRoots = BuildTree(filteredList);
+    }
+
+    private void UpdateGridData(List<ProductGroupDto> source)
+    {
+        data = source
+            .OrderBy(pg => pg.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        totalCount = data.Count;
+    }
+
+    private void ResetGridAndTree()
+    {
+        data = new List<ProductGroupDto>();
+        treeRoots = new List<ProductGroupDto>();
+        totalCount = 0;
+    }
+
+    private void AddAncestors(int id, HashSet<int> includeIds, Dictionary<int, ProductGroupDto> lookup)
+    {
+        if (!lookup.TryGetValue(id, out var current))
+        {
+            return;
+        }
+
+        while (current.ParentProductGroupId.HasValue)
+        {
+            var parentId = current.ParentProductGroupId.Value;
+            if (!lookup.TryGetValue(parentId, out var parent))
+            {
+                break;
+            }
+
+            if (!includeIds.Add(parentId))
+            {
+                break;
+            }
+
+            current = parent;
+        }
+    }
+
+    private List<ProductGroupDto> BuildTree(List<ProductGroupDto> groups)
+    {
+        var nodes = groups
+            .Select(pg => new ProductGroupDto
+            {
+                Id = pg.Id,
+                Name = pg.Name,
+                IsActive = pg.IsActive,
+                ParentProductGroupId = pg.ParentProductGroupId,
+                ParentProductGroupName = pg.ParentProductGroupName,
+                CreatedAt = pg.CreatedAt,
+                UpdatedAt = pg.UpdatedAt,
+                Children = new List<ProductGroupDto>()
+            })
+            .ToDictionary(pg => pg.Id);
+
+        var roots = new List<ProductGroupDto>();
+
+        foreach (var original in groups)
+        {
+            if (!nodes.TryGetValue(original.Id, out var node))
+            {
+                continue;
+            }
+
+            if (original.ParentProductGroupId.HasValue && nodes.TryGetValue(original.ParentProductGroupId.Value, out var parent))
+            {
+                parent.Children.Add(node);
+            }
+            else
+            {
+                roots.Add(node);
+            }
+        }
+
+        SortBranch(roots);
+        return roots;
+    }
+
+    private void SortBranch(List<ProductGroupDto> branch)
+    {
+        branch.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
+        foreach (var child in branch)
+        {
+            if (child.Children.Count > 0)
+            {
+                SortBranch(child.Children);
+            }
+        }
+    }
+
+    private List<ProductGroupOption> BuildParentOptions(int? excludeId)
+    {
+        var excludedIds = new HashSet<int>();
+        if (excludeId.HasValue)
+        {
+            excludedIds.Add(excludeId.Value);
+            foreach (var descendantId in GetDescendantIds(excludeId.Value))
+            {
+                excludedIds.Add(descendantId);
+            }
+        }
+
+        var available = allGroups.Where(pg => !excludedIds.Contains(pg.Id)).ToList();
+        var tree = BuildTree(available);
+        var options = new List<ProductGroupOption>
+        {
+            new ProductGroupOption(null, "(No parent)")
+        };
+
+        void AppendOptions(IEnumerable<ProductGroupDto> nodes, int depth)
+        {
+            foreach (var node in nodes)
+            {
+                var prefix = depth > 0 ? $"{new string(' ', depth * 2)}- " : string.Empty;
+                options.Add(new ProductGroupOption(node.Id, prefix + node.Name));
+                if (node.Children.Any())
+                {
+                    AppendOptions(node.Children, depth + 1);
+                }
+            }
+        }
+
+        AppendOptions(tree, 0);
+        return options;
+    }
+
+    private IEnumerable<int> GetDescendantIds(int id)
+    {
+        var adjacency = allGroups
+            .Where(pg => pg.ParentProductGroupId.HasValue)
+            .GroupBy(pg => pg.ParentProductGroupId!.Value)
+            .ToDictionary(g => g.Key, g => g.Select(pg => pg.Id).ToList());
+
+        var visited = new HashSet<int>();
+        var stack = new Stack<int>();
+        stack.Push(id);
+
+        while (stack.Count > 0)
+        {
+            var current = stack.Pop();
+            if (!adjacency.TryGetValue(current, out var children))
+            {
+                continue;
+            }
+
+            foreach (var childId in children)
+            {
+                if (visited.Add(childId))
+                {
+                    stack.Push(childId);
+                }
+            }
+        }
+
+        return visited;
+    }
+
     private async Task RefreshData()
     {
-        currentPage = 1;
         await LoadData();
     }
 
-    private async Task OnSearchKeyUp(KeyboardEventArgs e)
+    private Task OnSearchKeyUp(KeyboardEventArgs e)
     {
         if (e.Key == "Enter")
         {
-            currentPage = 1;
-            await LoadData();
+            ApplyFilters();
         }
+
+        return Task.CompletedTask;
     }
 
-    private async Task ChangePage(int page)
+    private Task OnFilterChanged()
     {
-        if (page >= 1 && page <= totalPages && page != currentPage)
-        {
-            currentPage = page;
-            await LoadData();
-        }
+        ApplyFilters();
+
+        return Task.CompletedTask;
     }
 
-    private async Task OnFilterChanged()
-    {
-        currentPage = 1;
-        await LoadData();
-    }
-
-    private async Task OnPageSizeChanged(object? value)
+    private Task OnPageSizeChanged(object? value)
     {
         if (value is int size && size > 0)
         {
             pageSize = size;
-            currentPage = 1;
-            await LoadData();
+            ApplyFilters();
         }
+
+        return Task.CompletedTask;
     }
 
     private async Task ShowCreateModal()
@@ -232,7 +468,8 @@
         currentItem = new CreateProductGroupDto();
         isActive = true;
         isEditing = false;
-        
+        parentOptions = BuildParentOptions(null);
+
         await DialogService.OpenAsync("Create Product Group", ds => CreateProductGroupDialog(ds), new DialogOptions
         {
             Width = "500px",
@@ -244,14 +481,18 @@
 
     private async Task EditItem(ProductGroupDto item)
     {
-        selectedItem = item;
+        var source = allGroups.FirstOrDefault(pg => pg.Id == item.Id) ?? item;
+
+        selectedItem = source;
         currentItem = new CreateProductGroupDto
         {
-            Name = item.Name
+            Name = source.Name,
+            ParentProductGroupId = source.ParentProductGroupId
         };
-        isActive = item.IsActive;
+        isActive = source.IsActive;
         isEditing = true;
-        
+        parentOptions = BuildParentOptions(source.Id);
+
         await DialogService.OpenAsync("Edit Product Group", ds => CreateProductGroupDialog(ds), new DialogOptions
         {
             Width = "500px",
@@ -261,27 +502,44 @@
         });
     }
 
+    private async Task EditItemById(int id)
+    {
+        var item = allGroups.FirstOrDefault(pg => pg.Id == id);
+        if (item != null)
+        {
+            await EditItem(item);
+        }
+    }
+
     private void CloseModal(DialogService ds)
     {
         ds.Close();
         currentItem = new CreateProductGroupDto();
         selectedItem = null;
         isEditing = false;
+        parentOptions = new List<ProductGroupOption>();
     }
 
     private async Task OnSubmit(CreateProductGroupDto model, DialogService ds)
     {
+        if (isEditing && selectedItem != null && selectedItem.Id == model.ParentProductGroupId)
+        {
+            UiNotificationService.ShowError("Validation", "Group cannot be its own parent.");
+            return;
+        }
+
         isSaving = true;
         try
         {
             ProductGroupDto response;
-            
+
             if (isEditing && selectedItem != null)
             {
                 var updateDto = new UpdateProductGroupDto
                 {
                     Name = model.Name,
-                    IsActive = isActive
+                    IsActive = isActive,
+                    ParentProductGroupId = model.ParentProductGroupId
                 };
                 response = await ProductGroupService.UpdateProductGroupAsync(selectedItem.Id, updateDto) ?? throw new InvalidOperationException("Failed to update product group");
             }
@@ -290,19 +548,13 @@
                 response = await ProductGroupService.CreateProductGroupAsync(model);
             }
 
-            if (response != null)
-            {
-                UiNotificationService.ShowSuccess("Success", isEditing ? "Product group updated successfully" : "Product group created successfully");
-                ds.Close();
-                currentItem = new CreateProductGroupDto();
-                selectedItem = null;
-                isEditing = false;
-                await RefreshData();
-            }
-            else
-            {
-                UiNotificationService.ShowError("Error", "Failed to save product group");
-            }
+            UiNotificationService.ShowSuccess("Success", isEditing ? "Product group updated successfully" : "Product group created successfully");
+            ds.Close();
+            currentItem = new CreateProductGroupDto();
+            selectedItem = null;
+            isEditing = false;
+            parentOptions = new List<ProductGroupOption>();
+            await RefreshData();
         }
         catch (Exception ex)
         {
@@ -317,25 +569,36 @@
     private async Task DeleteItem(ProductGroupDto item)
     {
         var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete '{item.Name}'?");
-        if (confirmed)
+        if (!confirmed)
         {
-            try
+            return;
+        }
+
+        try
+        {
+            var success = await ProductGroupService.DeleteProductGroupAsync(item.Id);
+            if (success)
             {
-                var success = await ProductGroupService.DeleteProductGroupAsync(item.Id);
-                if (success)
-                {
-                    UiNotificationService.ShowSuccess("Success", "Product group deleted successfully");
-                    await RefreshData();
-                }
-                else
-                {
-                    UiNotificationService.ShowError("Error", "Failed to delete product group");
-                }
+                UiNotificationService.ShowSuccess("Success", "Product group deleted successfully");
+                await RefreshData();
             }
-            catch (Exception ex)
+            else
             {
-                UiNotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
+                UiNotificationService.ShowError("Error", "Failed to delete product group");
             }
+        }
+        catch (Exception ex)
+        {
+            UiNotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
+        }
+    }
+
+    private async Task DeleteById(int id)
+    {
+        var item = allGroups.FirstOrDefault(pg => pg.Id == id);
+        if (item != null)
+        {
+            await DeleteItem(item);
         }
     }
 
@@ -343,7 +606,7 @@
     {
         builder.OpenComponent<RadzenTemplateForm<CreateProductGroupDto>>(0);
         builder.AddAttribute(1, "Data", currentItem);
-        builder.AddAttribute(2, "Submit", EventCallback.Factory.Create<CreateProductGroupDto>(this, async (model) => await OnSubmit(model, ds)));
+        builder.AddAttribute(2, "Submit", EventCallback.Factory.Create<CreateProductGroupDto>(this, async model => await OnSubmit(model, ds)));
         builder.AddAttribute(3, "ChildContent", (RenderFragment<EditContext>)((editContext) => (builder2) =>
         {
             builder2.OpenComponent<DataAnnotationsValidator>(0);
@@ -369,7 +632,7 @@
                 {
                     builder4.OpenComponent<RadzenTextBox>(0);
                     builder4.AddAttribute(1, "Value", currentItem.Name);
-                    builder4.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<string>(this, (value) => currentItem.Name = value));
+                    builder4.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<string>(this, value => currentItem.Name = value));
                     builder4.AddAttribute(3, "Name", "productGroupName");
                     builder4.CloseComponent();
 
@@ -380,21 +643,36 @@
                 }));
                 builder3.CloseComponent();
 
-
                 builder3.OpenComponent<RadzenFormField>(2);
+                builder3.AddAttribute(3, "Text", "Parent Group");
+                builder3.AddAttribute(4, "ChildContent", (RenderFragment)((builder4) =>
+                {
+                    builder4.OpenComponent<RadzenDropDown<int?>>(0);
+                    builder4.AddAttribute(1, "Data", parentOptions);
+                    builder4.AddAttribute(2, "TextProperty", "Label");
+                    builder4.AddAttribute(3, "ValueProperty", "Id");
+                    builder4.AddAttribute(4, "Value", currentItem.ParentProductGroupId);
+                    builder4.AddAttribute(5, "ValueChanged", EventCallback.Factory.Create<int?>(this, value => currentItem.ParentProductGroupId = value));
+                    builder4.AddAttribute(6, "AllowClear", true);
+                    builder4.AddAttribute(7, "Placeholder", "Use as root");
+                    builder4.CloseComponent();
+                }));
+                builder3.CloseComponent();
+
+                builder3.OpenComponent<RadzenFormField>(3);
                 builder3.AddAttribute(4, "Text", "Status");
                 builder3.AddAttribute(5, "ChildContent", (RenderFragment)((builder4) =>
                 {
                     builder4.OpenComponent<RadzenCheckBox<bool>>(0);
                     builder4.AddAttribute(1, "Value", isActive);
-                    builder4.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<bool>(this, (value) => isActive = value));
+                    builder4.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<bool>(this, value => isActive = value));
                     builder4.AddAttribute(3, "Name", "isActive");
                     builder4.CloseComponent();
                     builder4.AddMarkupContent(4, "<span class=\"rz-form-text\">Active</span>");
                 }));
                 builder3.CloseComponent();
 
-                builder3.OpenComponent<RadzenStack>(3);
+                builder3.OpenComponent<RadzenStack>(4);
                 builder3.AddAttribute(6, "Orientation", Orientation.Horizontal);
                 builder3.AddAttribute(7, "JustifyContent", JustifyContent.End);
                 builder3.AddAttribute(8, "Gap", "0.75rem");
@@ -404,7 +682,7 @@
                     builder4.AddAttribute(1, "Text", "Cancel");
                     builder4.AddAttribute(2, "ButtonStyle", ButtonStyle.Light);
                     builder4.AddAttribute(3, "Variant", Variant.Outlined);
-                    builder4.AddAttribute(4, "Click", EventCallback.Factory.Create<MouseEventArgs>(this, (args) => CloseModal(ds)));
+                    builder4.AddAttribute(4, "Click", EventCallback.Factory.Create<MouseEventArgs>(this, args => CloseModal(ds)));
                     builder4.CloseComponent();
 
                     builder4.OpenComponent<RadzenButton>(1);

@@ -1,5 +1,7 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using Inventory.Shared.DTOs
+@using System.Collections.Generic
+@using System.Linq
 @using Inventory.Shared.Interfaces
 @using Radzen
 @using Radzen.Blazor
@@ -78,9 +80,9 @@
             <RadzenColumn Size="12">
                 <RadzenFormField Text="Группа товара:">
                     <RadzenDropDown @bind-Value="productModel.ProductGroupId"
-                                   Data="@productGroups"
+                                   Data="@productGroupOptions"
                                    ValueProperty="Id"
-                                   TextProperty="Name"
+                                   TextProperty="Label"
                                    Placeholder="Выберите группу"
                                    Name="productGroupId" />
                 </RadzenFormField>
@@ -158,11 +160,14 @@
     private List<ManufacturerDto> manufacturers = new();
     private List<ProductModelDto> productModels = new();
     private List<ProductGroupDto> productGroups = new();
+    private List<ProductGroupOption> productGroupOptions = new();
     private List<UnitOfMeasureDto> unitOfMeasures = new();
     private string? errorMessage;
     private bool isLoading = false;
 
     private string SubmitButtonText => InitialProduct == null ? "Создать товар" : "Обновить товар";
+
+    private record ProductGroupOption(int Id, string Label);
 
     protected override async Task OnInitializedAsync()
     {
@@ -182,6 +187,7 @@
             manufacturers = await ManufacturerService.GetAllManufacturersAsync();
             productModels = await ProductModelService.GetAllProductModelsAsync();
             productGroups = await ProductGroupService.GetAllProductGroupsAsync();
+            BuildProductGroupOptions();
             var unitOfMeasuresResponse = await UnitOfMeasureService.GetAllAsync();
             unitOfMeasures = unitOfMeasuresResponse.Data ?? new List<UnitOfMeasureDto>();
         }
@@ -189,6 +195,38 @@
         {
             errorMessage = $"Ошибка загрузки справочников: {ex.Message}";
         }
+    }
+
+    private void BuildProductGroupOptions()
+    {
+        var childrenLookup = productGroups
+            .Where(pg => pg.ParentProductGroupId.HasValue)
+            .GroupBy(pg => pg.ParentProductGroupId!.Value)
+            .ToDictionary(g => g.Key, g => g.OrderBy(pg => pg.Name, StringComparer.OrdinalIgnoreCase).ToList());
+
+        var roots = productGroups
+            .Where(pg => !pg.ParentProductGroupId.HasValue)
+            .OrderBy(pg => pg.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        productGroupOptions = new List<ProductGroupOption>();
+
+        void Visit(IEnumerable<ProductGroupDto> nodes, int depth)
+        {
+            foreach (var node in nodes)
+            {
+                var prefix = depth > 0 ? $"{new string(' ', depth * 2)}- " : string.Empty;
+                var label = node.IsActive ? prefix + node.Name : $"{prefix}{node.Name} (Inactive)";
+                productGroupOptions.Add(new ProductGroupOption(node.Id, label));
+
+                if (childrenLookup.TryGetValue(node.Id, out var children))
+                {
+                    Visit(children, depth + 1);
+                }
+            }
+        }
+
+        Visit(roots, 0);
     }
 
     private async Task OnManufacturerChanged()

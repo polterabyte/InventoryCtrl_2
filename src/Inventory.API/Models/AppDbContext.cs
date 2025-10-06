@@ -59,6 +59,15 @@ namespace Inventory.API.Models
             entity.HasIndex(e => e.Symbol).IsUnique();
         });
 
+        // Configure ProductGroup hierarchy
+        modelBuilder.Entity<ProductGroup>(entity =>
+        {
+            entity.HasOne(pg => pg.ParentProductGroup)
+                  .WithMany(pg => pg.SubGroups)
+                  .HasForeignKey(pg => pg.ParentProductGroupId)
+                  .OnDelete(DeleteBehavior.SetNull);
+        });
+
         // Configure Product-ProductTag many-to-many relationship
         modelBuilder.Entity<Product>()
             .HasMany(p => p.ProductTags)

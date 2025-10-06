@@ -47,6 +47,8 @@ public class ProductGroupController(AppDbContext context, ILogger<ProductGroupCo
                     Id = pg.Id,
                     Name = pg.Name,
                     IsActive = pg.IsActive,
+                    ParentProductGroupId = pg.ParentProductGroupId,
+                    ParentProductGroupName = pg.ParentProductGroup != null ? pg.ParentProductGroup.Name : null,
                     CreatedAt = pg.CreatedAt,
                     UpdatedAt = pg.UpdatedAt
                 })
@@ -81,6 +83,8 @@ public class ProductGroupController(AppDbContext context, ILogger<ProductGroupCo
                     Id = pg.Id,
                     Name = pg.Name,
                     IsActive = pg.IsActive,
+                    ParentProductGroupId = pg.ParentProductGroupId,
+                    ParentProductGroupName = pg.ParentProductGroup != null ? pg.ParentProductGroup.Name : null,
                     CreatedAt = pg.CreatedAt,
                     UpdatedAt = pg.UpdatedAt
                 })
@@ -100,23 +104,26 @@ public class ProductGroupController(AppDbContext context, ILogger<ProductGroupCo
     {
         try
         {
-            var productGroup = await context.ProductGroups.FindAsync(id);
+            var productGroup = await context.ProductGroups
+                .Where(pg => pg.Id == id)
+                .Select(pg => new ProductGroupDto
+                {
+                    Id = pg.Id,
+                    Name = pg.Name,
+                    IsActive = pg.IsActive,
+                    ParentProductGroupId = pg.ParentProductGroupId,
+                    ParentProductGroupName = pg.ParentProductGroup != null ? pg.ParentProductGroup.Name : null,
+                    CreatedAt = pg.CreatedAt,
+                    UpdatedAt = pg.UpdatedAt
+                })
+                .FirstOrDefaultAsync();
 
             if (productGroup == null)
             {
                 return NotFound(ApiResponse<ProductGroupDto>.ErrorResult("Product group not found"));
             }
 
-            var productGroupDto = new ProductGroupDto
-            {
-                Id = productGroup.Id,
-                Name = productGroup.Name,
-                IsActive = productGroup.IsActive,
-                CreatedAt = productGroup.CreatedAt,
-                UpdatedAt = productGroup.UpdatedAt
-            };
-
-            return Ok(ApiResponse<ProductGroupDto>.SuccessResult(productGroupDto));
+            return Ok(ApiResponse<ProductGroupDto>.SuccessResult(productGroup));
         }
         catch (Exception ex)
         {
@@ -136,24 +143,41 @@ public class ProductGroupController(AppDbContext context, ILogger<ProductGroupCo
                 return BadRequest(ApiResponse<ProductGroupDto>.ErrorResult("Invalid model data"));
             }
 
+            if (createProductGroupDto.ParentProductGroupId.HasValue)
+            {
+                var parentExists = await context.ProductGroups
+                    .AnyAsync(pg => pg.Id == createProductGroupDto.ParentProductGroupId.Value);
+
+                if (!parentExists)
+                {
+                    return BadRequest(ApiResponse<ProductGroupDto>.ErrorResult("Parent product group not found"));
+                }
+            }
+
             var productGroup = new ProductGroup
             {
                 Name = createProductGroupDto.Name,
                 IsActive = true,
+                ParentProductGroupId = createProductGroupDto.ParentProductGroupId,
                 CreatedAt = DateTime.UtcNow
             };
 
             context.ProductGroups.Add(productGroup);
             await context.SaveChangesAsync();
 
-            var productGroupDto = new ProductGroupDto
-            {
-                Id = productGroup.Id,
-                Name = productGroup.Name,
-                IsActive = productGroup.IsActive,
-                CreatedAt = productGroup.CreatedAt,
-                UpdatedAt = productGroup.UpdatedAt
-            };
+            var productGroupDto = await context.ProductGroups
+                .Where(pg => pg.Id == productGroup.Id)
+                .Select(pg => new ProductGroupDto
+                {
+                    Id = pg.Id,
+                    Name = pg.Name,
+                    IsActive = pg.IsActive,
+                    ParentProductGroupId = pg.ParentProductGroupId,
+                    ParentProductGroupName = pg.ParentProductGroup != null ? pg.ParentProductGroup.Name : null,
+                    CreatedAt = pg.CreatedAt,
+                    UpdatedAt = pg.UpdatedAt
+                })
+                .FirstAsync();
 
             logger.LogInformation("Product group {ProductGroupName} created with ID {ProductGroupId}", productGroup.Name, productGroup.Id);
 
@@ -183,20 +207,63 @@ public class ProductGroupController(AppDbContext context, ILogger<ProductGroupCo
                 return NotFound(ApiResponse<ProductGroupDto>.ErrorResult("Product group not found"));
             }
 
+            if (updateProductGroupDto.ParentProductGroupId.HasValue)
+            {
+                if (updateProductGroupDto.ParentProductGroupId.Value == id)
+                {
+                    return BadRequest(ApiResponse<ProductGroupDto>.ErrorResult("Product group cannot be its own parent"));
+                }
+
+                var parentExists = await context.ProductGroups
+                    .AnyAsync(pg => pg.Id == updateProductGroupDto.ParentProductGroupId.Value);
+
+                if (!parentExists)
+                {
+                    return BadRequest(ApiResponse<ProductGroupDto>.ErrorResult("Parent product group not found"));
+                }
+
+                var parentIdToCheck = updateProductGroupDto.ParentProductGroupId.Value;
+                while (true)
+                {
+                    if (parentIdToCheck == id)
+                    {
+                        return BadRequest(ApiResponse<ProductGroupDto>.ErrorResult("Parent group cannot be a descendant of the current group"));
+                    }
+
+                    var nextParentId = await context.ProductGroups
+                        .Where(pg => pg.Id == parentIdToCheck)
+                        .Select(pg => pg.ParentProductGroupId)
+                        .FirstOrDefaultAsync();
+
+                    if (!nextParentId.HasValue)
+                    {
+                        break;
+                    }
+
+                    parentIdToCheck = nextParentId.Value;
+                }
+            }
+
             productGroup.Name = updateProductGroupDto.Name;
             productGroup.IsActive = updateProductGroupDto.IsActive;
+            productGroup.ParentProductGroupId = updateProductGroupDto.ParentProductGroupId;
             productGroup.UpdatedAt = DateTime.UtcNow;
 
             await context.SaveChangesAsync();
 
-            var productGroupDto = new ProductGroupDto
-            {
-                Id = productGroup.Id,
-                Name = productGroup.Name,
-                IsActive = productGroup.IsActive,
-                CreatedAt = productGroup.CreatedAt,
-                UpdatedAt = productGroup.UpdatedAt
-            };
+            var productGroupDto = await context.ProductGroups
+                .Where(pg => pg.Id == productGroup.Id)
+                .Select(pg => new ProductGroupDto
+                {
+                    Id = pg.Id,
+                    Name = pg.Name,
+                    IsActive = pg.IsActive,
+                    ParentProductGroupId = pg.ParentProductGroupId,
+                    ParentProductGroupName = pg.ParentProductGroup != null ? pg.ParentProductGroup.Name : null,
+                    CreatedAt = pg.CreatedAt,
+                    UpdatedAt = pg.UpdatedAt
+                })
+                .FirstAsync();
 
             logger.LogInformation("Product group {ProductGroupId} updated", id);
 

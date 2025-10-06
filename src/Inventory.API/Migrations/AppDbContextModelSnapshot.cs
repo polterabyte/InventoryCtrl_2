@@ -388,10 +388,15 @@ namespace Inventory.API.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int?>("ParentProductGroupId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ParentProductGroupId");
 
                     b.ToTable("ProductGroups");
                 });
@@ -1551,6 +1556,16 @@ namespace Inventory.API.Migrations
                     b.Navigation("ParentLocation");
                 });
 
+            modelBuilder.Entity("Inventory.API.Models.ProductGroup", b =>
+                {
+                    b.HasOne("Inventory.API.Models.ProductGroup", "ParentProductGroup")
+                        .WithMany("SubGroups")
+                        .HasForeignKey("ParentProductGroupId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("ParentProductGroup");
+                });
+
             modelBuilder.Entity("Inventory.API.Models.Manufacturer", b =>
                 {
                     b.HasOne("Inventory.API.Models.Location", "Location")
@@ -1814,7 +1829,11 @@ namespace Inventory.API.Migrations
 
             modelBuilder.Entity("Inventory.API.Models.ProductGroup", b =>
                 {
+                    b.Navigation("ParentProductGroup");
+
                     b.Navigation("Products");
+
+                    b.Navigation("SubGroups");
                 });
 
             modelBuilder.Entity("Inventory.API.Models.ProductModel", b =>

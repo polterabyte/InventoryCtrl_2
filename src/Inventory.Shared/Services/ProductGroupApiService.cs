@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace Inventory.Shared.Services;
 
 public class ProductGroupApiService(HttpClient httpClient, ILogger<ProductGroupApiService> logger, IRetryService? retryService = null, INotificationService? notificationService = null) 
-    : BaseApiService(httpClient, ApiEndpoints.ProductGroups, logger), IProductGroupService
+    : BaseApiService(httpClient, string.Empty, logger), IProductGroupService
 {
     private readonly IRetryService? _retryService = retryService;
     private readonly INotificationService? _notificationService = notificationService;
