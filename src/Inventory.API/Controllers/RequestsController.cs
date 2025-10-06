@@ -121,7 +121,7 @@ public class RequestsController(AppDbContext db, IRequestService service, ILogge
         try
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "system";
-            await service.AddPendingItemAsync(id, body.ProductId, body.WarehouseId, body.Quantity, userId, body.LocationId, body.UnitPrice, body.Description);
+            await service.AddPendingItemAsync(id, body.ProductId, body.WarehouseId, body.Quantity, userId, body.LocationId, body.Description);
             var details = await BuildRequestDetailsAsync(id);
             return Ok(details);
         }
@@ -240,7 +240,6 @@ public class RequestsController(AppDbContext db, IRequestService service, ILogge
                         Quantity = t.Quantity,
                         LocationId = t.LocationId,
                         LocationName = t.Location != null ? t.Location.Name : null,
-                        UnitPrice = t.UnitPrice,
                         TotalPrice = t.TotalPrice,
                         Description = t.Description
                     }).ToList(),

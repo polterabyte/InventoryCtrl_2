@@ -12,7 +12,7 @@ public interface IRequestService
 {
     Task<Request> CreateRequestAsync(CreateRequestDto createRequest, string createdByUserId, CancellationToken ct = default);
     Task<Request> UpdateRequestAsync(int requestId, UpdateRequestDto updateRequest, string userId, CancellationToken ct = default);
-    Task<Inventory.API.Models.InventoryTransaction> AddPendingItemAsync(int requestId, int productId, int warehouseId, int quantity, string userId, int? locationId = null, decimal? unitPrice = null, string? description = null, CancellationToken ct = default);
+    Task<Inventory.API.Models.InventoryTransaction> AddPendingItemAsync(int requestId, int productId, int warehouseId, int quantity, string userId, int? locationId = null, string? description = null, CancellationToken ct = default);
 
     Task<Request> SubmitAsync(int requestId, string userId, string? comment = null, CancellationToken ct = default);
     Task<Request> ApproveAsync(int requestId, string approverUserId, string? comment = null, CancellationToken ct = default);
@@ -62,7 +62,6 @@ public class RequestService(AppDbContext db, INotificationService notificationSe
                 item.Quantity,
                 createdByUserId,
                 item.LocationId,
-                item.UnitPrice,
                 item.Description,
                 ct);
         }
@@ -121,7 +120,6 @@ public class RequestService(AppDbContext db, INotificationService notificationSe
                 item.Quantity,
                 userId,
                 item.LocationId,
-                item.UnitPrice,
                 item.Description,
                 ct);
         }
@@ -131,9 +129,9 @@ public class RequestService(AppDbContext db, INotificationService notificationSe
         return request;
     }
 
-    public async Task<Inventory.API.Models.InventoryTransaction> AddPendingItemAsync(int requestId, int productId, int warehouseId, int quantity, string userId, int? locationId = null, decimal? unitPrice = null, string? description = null, CancellationToken ct = default)
+    public async Task<Inventory.API.Models.InventoryTransaction> AddPendingItemAsync(int requestId, int productId, int warehouseId, int quantity, string userId, int? locationId = null, string? description = null, CancellationToken ct = default)
     {
-        return await AddPendingItemInternalAsync(requestId, productId, warehouseId, quantity, userId, locationId, unitPrice, description, ct);
+        return await AddPendingItemInternalAsync(requestId, productId, warehouseId, quantity, userId, locationId, description, ct);
     }
 
     private async Task<Inventory.API.Models.InventoryTransaction> AddPendingItemInternalAsync(
@@ -143,7 +141,6 @@ public class RequestService(AppDbContext db, INotificationService notificationSe
         int quantity,
         string userId,
         int? locationId,
-        decimal? unitPrice,
         string? description,
         CancellationToken ct)
     {
@@ -189,8 +186,7 @@ public class RequestService(AppDbContext db, INotificationService notificationSe
             Description = description,
             CreatedAt = DateTime.UtcNow,
             RequestId = requestId,
-            UnitPrice = unitPrice,
-            TotalPrice = unitPrice.HasValue ? unitPrice.Value * quantity : null
+            TotalPrice = null
         };
         db.InventoryTransactions.Add(trx);
         await db.SaveChangesAsync(ct);

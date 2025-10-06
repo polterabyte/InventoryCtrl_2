@@ -158,18 +158,6 @@
                                                     </RadzenStack>
                                                 </RadzenColumn>
 
-                                                <RadzenColumn Size="@ColumnFull" SizeMd="@ColumnThird">
-                                                    <RadzenStack Gap="0.5rem">
-                                                        <RadzenLabel Text="Unit Price" Component=@($"price-{i}") />
-                                                        <RadzenNumeric TValue="decimal?"
-                                                                       @bind-Value="item.UnitPrice"
-                                                                       Name=@($"price-{i}")
-                                                                       Style="width: 100%"
-                                                                       Min="0"
-                                                                       Step="0.01"
-                                                                       Disabled="submitting" />
-                                                    </RadzenStack>
-                                                </RadzenColumn>
                                             </RadzenRow>
 
                                             <RadzenRow Gap="1rem">
@@ -406,9 +394,6 @@
         [Range(1, int.MaxValue, ErrorMessage = "Quantity must be at least 1")]
         public int Quantity { get; set; } = 1;
 
-        [Range(0, double.MaxValue, ErrorMessage = "Unit price cannot be negative")]
-        public decimal? UnitPrice { get; set; }
-
         public string? Description { get; set; }
 
         public int? LocationId { get; set; }
@@ -420,7 +405,6 @@
                 ProductId = ProductId ?? 0,
                 WarehouseId = WarehouseId ?? 0,
                 Quantity = Quantity,
-                UnitPrice = UnitPrice,
                 Description = string.IsNullOrWhiteSpace(Description) ? null : Description.Trim(),
                 LocationId = LocationId
             };

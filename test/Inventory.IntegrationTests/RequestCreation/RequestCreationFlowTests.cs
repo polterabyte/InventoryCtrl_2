@@ -200,7 +200,6 @@ namespace Inventory.IntegrationTests.RequestCreation
                 ProductId = product.Id,
                 WarehouseId = warehouse.Id,
                 Quantity = 5,
-                UnitPrice = 10.50m,
                 Description = "Test item"
             };
             var itemJson = JsonSerializer.Serialize(addItemBody, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });

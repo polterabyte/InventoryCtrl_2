@@ -247,7 +247,6 @@ namespace Inventory.UnitTests.Controllers
                 WarehouseId = 1,
                 Quantity = 10,
                 LocationId = 1,
-                UnitPrice = 100.0m,
                 Description = "Test item"
             };
             var expectedTransaction = new InventoryTransaction
@@ -266,7 +265,6 @@ namespace Inventory.UnitTests.Controllers
                     It.IsAny<int>(),
                     It.IsAny<string>(),
                     It.IsAny<int?>(),
-                    It.IsAny<decimal?>(),
                     It.IsAny<string>(),
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(expectedTransaction);
@@ -290,7 +288,6 @@ namespace Inventory.UnitTests.Controllers
                 WarehouseId = 1,
                 Quantity = 10,
                 LocationId = 1,
-                UnitPrice = 100.0m,
                 Description = "Test item"
             };
             var exceptionMessage = "Request not found";
@@ -302,7 +299,6 @@ namespace Inventory.UnitTests.Controllers
                     It.IsAny<int>(),
                     It.IsAny<string>(),
                     It.IsAny<int?>(),
-                    It.IsAny<decimal?>(),
                     It.IsAny<string>(),
                     It.IsAny<CancellationToken>()))
                 .ThrowsAsync(new InvalidOperationException(exceptionMessage));

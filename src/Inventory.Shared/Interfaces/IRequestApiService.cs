@@ -78,9 +78,6 @@ public class RequestItemInputDto
 
     public int? LocationId { get; set; }
 
-    [Range(0, double.MaxValue, ErrorMessage = "Unit price must be zero or positive")]
-    public decimal? UnitPrice { get; set; }
-
     [StringLength(500)]
     public string? Description { get; set; }
 }

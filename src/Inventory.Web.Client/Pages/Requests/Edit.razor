@@ -208,18 +208,6 @@
                                                     </RadzenStack>
                                                 </RadzenColumn>
 
-                                                <RadzenColumn Size="@ColumnFull" SizeMd="@ColumnThird">
-                                                    <RadzenStack Gap="0.5rem">
-                                                        <RadzenLabel Text="Unit Price" Component=@($"price-{i}") />
-                                                        <RadzenNumeric TValue="decimal?"
-                                                                       @bind-Value="item.UnitPrice"
-                                                                       Name=@($"price-{i}")
-                                                                       Style="width: 100%"
-                                                                       Min="0"
-                                                                       Step="0.01"
-                                                                       Disabled="submitting" />
-                                                    </RadzenStack>
-                                                </RadzenColumn>
                                                 </RadzenRow>
 
                                                 <RadzenRow Gap="1rem">
@@ -391,7 +379,6 @@
                         ProductId = item.ProductId,
                         WarehouseId = item.WarehouseId,
                         Quantity = item.Quantity,
-                        UnitPrice = item.UnitPrice,
                         Description = item.Description,
                         LocationId = item.LocationId
                     }).ToList()
@@ -593,9 +580,6 @@
         [Range(1, int.MaxValue, ErrorMessage = "Quantity must be at least 1")]
         public int Quantity { get; set; } = 1;
 
-        [Range(0, double.MaxValue, ErrorMessage = "Unit price cannot be negative")]
-        public decimal? UnitPrice { get; set; }
-
         public string? Description { get; set; }
 
         public int? LocationId { get; set; }
@@ -607,7 +591,6 @@
                 ProductId = ProductId ?? 0,
                 WarehouseId = WarehouseId ?? 0,
                 Quantity = Quantity,
-                UnitPrice = UnitPrice,
                 Description = string.IsNullOrWhiteSpace(Description) ? null : Description.Trim(),
                 LocationId = LocationId
             };
@@ -620,7 +603,6 @@
                 ProductId = ProductId,
                 WarehouseId = WarehouseId,
                 Quantity = Quantity,
-                UnitPrice = UnitPrice,
                 Description = Description,
                 LocationId = LocationId
             };
@@ -636,14 +618,13 @@
             return ProductId == other.ProductId &&
                    WarehouseId == other.WarehouseId &&
                    Quantity == other.Quantity &&
-                   Nullable.Equals(UnitPrice, other.UnitPrice) &&
                    string.Equals(Description, other.Description, StringComparison.Ordinal) &&
                    LocationId == other.LocationId;
         }
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(ProductId, WarehouseId, Quantity, UnitPrice, Description, LocationId);
+            return HashCode.Combine(ProductId, WarehouseId, Quantity, Description, LocationId);
         }
     }
 }
