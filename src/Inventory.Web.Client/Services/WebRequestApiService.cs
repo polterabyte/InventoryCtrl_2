@@ -1,3 +1,4 @@
+using System.Net.Http;
 using Inventory.Shared.Constants;
 using Inventory.Shared.DTOs;
 using Inventory.Shared.Interfaces;
@@ -52,6 +53,7 @@ public class WebRequestApiService : WebBaseApiService, IRequestApiService
         {
             var endpoint = ApiEndpoints.RequestById.Replace("{id}", requestId.ToString());
             Logger.LogDebug("Getting request by ID: {RequestId}", requestId);
+
             return await GetAsync<RequestDetailsDto>(endpoint);
         }
         catch (Exception ex)
