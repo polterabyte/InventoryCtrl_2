@@ -17,7 +17,7 @@ public class KanbanCardsController(AppDbContext context, ILogger<KanbanCardsCont
         try
         {
             var query = context.KanbanCards
-                .Include(k => k.Product)
+                .Include(k => k.Product).ThenInclude(p => p.UnitOfMeasure)
                 .Include(k => k.Warehouse)
                 .AsQueryable();
 
@@ -39,10 +39,50 @@ public class KanbanCardsController(AppDbContext context, ILogger<KanbanCardsCont
                     WarehouseName = k.Warehouse.Name,
                     MinThreshold = k.MinThreshold,
                     MaxThreshold = k.MaxThreshold,
+                    CurrentQuantity = 0,
+                    UnitOfMeasureSymbol = k.Product.UnitOfMeasure.Symbol,
                     CreatedAt = k.CreatedAt,
                     UpdatedAt = k.UpdatedAt
                 })
                 .ToListAsync();
+
+            // Compute current on-hand quantity for listed (ProductId, WarehouseId) pairs
+            if (items.Count > 0)
+            {
+                var pairKeys = items
+                    .Select(i => new { i.ProductId, i.WarehouseId })
+                    .Distinct()
+                    .ToList();
+
+                var productIds = pairKeys.Select(p => p.ProductId).Distinct().ToList();
+                var warehouseIds = pairKeys.Select(p => p.WarehouseId).Distinct().ToList();
+
+                var onHandLookup = await context.InventoryTransactions
+                    .Where(t => productIds.Contains(t.ProductId) && warehouseIds.Contains(t.WarehouseId))
+                    .GroupBy(t => new { t.ProductId, t.WarehouseId })
+                    .Select(g => new
+                    {
+                        g.Key.ProductId,
+                        g.Key.WarehouseId,
+                        Quantity = g.Sum(t =>
+                            t.Type == TransactionType.Income ? t.Quantity :
+                            (t.Type == TransactionType.Outcome || t.Type == TransactionType.Install) ? -t.Quantity : 0)
+                    })
+                    .ToDictionaryAsync(x => new ValueTuple<int, int>(x.ProductId, x.WarehouseId), x => x.Quantity);
+
+                foreach (var item in items)
+                {
+                    var key = (item.ProductId, item.WarehouseId);
+                    if (onHandLookup.TryGetValue(key, out var qty))
+                    {
+                        item.CurrentQuantity = qty;
+                    }
+                    else
+                    {
+                        item.CurrentQuantity = 0;
+                    }
+                }
+            }
 
             return Ok(ApiResponse<List<KanbanCardDto>>.SuccessResult(items));
         }
@@ -57,7 +97,7 @@ public class KanbanCardsController(AppDbContext context, ILogger<KanbanCardsCont
     public async Task<ActionResult<ApiResponse<KanbanCardDto>>> GetById(int id)
     {
         var entity = await context.KanbanCards
-            .Include(k => k.Product)
+            .Include(k => k.Product).ThenInclude(p => p.UnitOfMeasure)
             .Include(k => k.Warehouse)
             .FirstOrDefaultAsync(k => k.Id == id);
 
@@ -74,9 +114,21 @@ public class KanbanCardsController(AppDbContext context, ILogger<KanbanCardsCont
             WarehouseName = entity.Warehouse.Name,
             MinThreshold = entity.MinThreshold,
             MaxThreshold = entity.MaxThreshold,
+            CurrentQuantity = 0,
+            UnitOfMeasureSymbol = entity.Product.UnitOfMeasure.Symbol,
             CreatedAt = entity.CreatedAt,
             UpdatedAt = entity.UpdatedAt
         };
+
+        // Compute on-hand for this card
+        var onHand = await context.InventoryTransactions
+            .Where(t => t.ProductId == dto.ProductId && t.WarehouseId == dto.WarehouseId)
+            .GroupBy(t => 1)
+            .Select(g => g.Sum(t =>
+                t.Type == TransactionType.Income ? t.Quantity :
+                (t.Type == TransactionType.Outcome || t.Type == TransactionType.Install) ? -t.Quantity : 0))
+            .FirstOrDefaultAsync();
+        dto.CurrentQuantity = onHand;
 
         return Ok(ApiResponse<KanbanCardDto>.SuccessResult(dto));
     }
@@ -120,6 +172,10 @@ public class KanbanCardsController(AppDbContext context, ILogger<KanbanCardsCont
 
             // Load for dto
             await context.Entry(entity).Reference(e => e.Product).LoadAsync();
+            if (entity.Product != null)
+            {
+                await context.Entry(entity.Product).Reference(p => p.UnitOfMeasure).LoadAsync();
+            }
             await context.Entry(entity).Reference(e => e.Warehouse).LoadAsync();
 
             var dto = new KanbanCardDto
@@ -132,6 +188,7 @@ public class KanbanCardsController(AppDbContext context, ILogger<KanbanCardsCont
                 WarehouseName = entity.Warehouse.Name,
                 MinThreshold = entity.MinThreshold,
                 MaxThreshold = entity.MaxThreshold,
+                UnitOfMeasureSymbol = entity.Product.UnitOfMeasure.Symbol,
                 CreatedAt = entity.CreatedAt,
                 UpdatedAt = entity.UpdatedAt
             };
@@ -156,7 +213,7 @@ public class KanbanCardsController(AppDbContext context, ILogger<KanbanCardsCont
         try
         {
             var entity = await context.KanbanCards
-                .Include(k => k.Product)
+                .Include(k => k.Product).ThenInclude(p => p.UnitOfMeasure)
                 .Include(k => k.Warehouse)
                 .FirstOrDefaultAsync(k => k.Id == id);
 
@@ -184,7 +241,8 @@ public class KanbanCardsController(AppDbContext context, ILogger<KanbanCardsCont
                 MinThreshold = entity.MinThreshold,
                 MaxThreshold = entity.MaxThreshold,
                 CreatedAt = entity.CreatedAt,
-                UpdatedAt = entity.UpdatedAt
+                UpdatedAt = entity.UpdatedAt,
+                UnitOfMeasureSymbol = entity.Product.UnitOfMeasure.Symbol
             };
             return Ok(ApiResponse<KanbanCardDto>.SuccessResult(dto));
         }

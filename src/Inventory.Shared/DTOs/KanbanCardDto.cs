@@ -10,6 +10,8 @@ public class KanbanCardDto
     public string WarehouseName { get; set; } = string.Empty;
     public int MinThreshold { get; set; }
     public int MaxThreshold { get; set; }
+    public int CurrentQuantity { get; set; }
+    public string UnitOfMeasureSymbol { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 }
