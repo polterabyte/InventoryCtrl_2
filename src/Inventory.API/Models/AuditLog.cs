@@ -246,9 +246,11 @@ public class AuditLog
             ChangedAt = DateTime.UtcNow
         };
         
-        return JsonSerializer.Serialize(changes, new JsonSerializerOptions
-        {
-            WriteIndented = false
-        });
+        return JsonSerializer.Serialize(changes, DefaultJsonOptions);
     }
+
+    private static readonly JsonSerializerOptions DefaultJsonOptions = new()
+    {
+        WriteIndented = false
+    };
 }

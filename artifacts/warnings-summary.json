@@ -1,0 +1,228 @@
+﻿{
+    "warnings":  {
+                     "rules":  [
+                                   {
+                                       "Name":  "CA1305",
+                                       "Count":  40
+                                   },
+                                   {
+                                       "Name":  "CA1822",
+                                       "Count":  22
+                                   },
+                                   {
+                                       "Name":  "CA1310",
+                                       "Count":  18
+                                   },
+                                   {
+                                       "Name":  "CA1866",
+                                       "Count":  12
+                                   },
+                                   {
+                                       "Name":  "CA1805",
+                                       "Count":  12
+                                   },
+                                   {
+                                       "Name":  "CA1051",
+                                       "Count":  12
+                                   },
+                                   {
+                                       "Name":  "CA2254",
+                                       "Count":  10
+                                   },
+                                   {
+                                       "Name":  "CS1998",
+                                       "Count":  8
+                                   },
+                                   {
+                                       "Name":  "CA1000",
+                                       "Count":  8
+                                   },
+                                   {
+                                       "Name":  "CA1860",
+                                       "Count":  6
+                                   },
+                                   {
+                                       "Name":  "CA1001",
+                                       "Count":  6
+                                   },
+                                   {
+                                       "Name":  "CA1861",
+                                       "Count":  6
+                                   },
+                                   {
+                                       "Name":  "CA1859",
+                                       "Count":  4
+                                   },
+                                   {
+                                       "Name":  "CA1816",
+                                       "Count":  4
+                                   },
+                                   {
+                                       "Name":  "CA1847",
+                                       "Count":  2
+                                   },
+                                   {
+                                       "Name":  "CA1716",
+                                       "Count":  2
+                                   },
+                                   {
+                                       "Name":  "CA1309",
+                                       "Count":  2
+                                   },
+                                   {
+                                       "Name":  "CA1824",
+                                       "Count":  2
+                                   },
+                                   {
+                                       "Name":  "CA2201",
+                                       "Count":  2
+                                   }
+                               ],
+                     "files":  [
+                                   {
+                                       "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Web.Client\\Services\\ApiUrlService.cs",
+                                       "count":  14
+                                   },
+                                   {
+                                       "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Web.Client\\Services\\WebBaseApiService.cs",
+                                       "count":  12
+                                   },
+                                   {
+                                       "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Shared\\Services\\LoggingService.cs",
+                                       "count":  10
+                                   },
+                                   {
+                                       "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Web.Client\\Services\\WebProductApiService.cs",
+                                       "count":  10
+                                   },
+                                   {
+                                       "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Shared\\Services\\LocationService.cs",
+                                       "count":  8
+                                   },
+                                   {
+                                       "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Shared\\Services\\DebugLogsService.cs",
+                                       "count":  8
+                                   },
+                                   {
+                                       "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Web.Client\\Services\\WebCategoryApiService.cs",
+                                       "count":  8
+                                   },
+                                   {
+                                       "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Web.Client\\CustomAuthenticationStateProvider.cs",
+                                       "count":  8
+                                   },
+                                   {
+                                       "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Shared\\DTOs\\UserWarehouseDto.cs",
+                                       "count":  8
+                                   },
+                                   {
+                                       "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Web.Client\\Services\\CultureService.cs",
+                                       "count":  6
+                                   },
+                                   {
+                                       "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Shared\\Models\\NotificationModels.cs",
+                                       "count":  6
+                                   },
+                                   {
+                                       "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Web.Client\\Services\\ApiErrorHandler.cs",
+                                       "count":  6
+                                   },
+                                   {
+                                       "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Web.Client\\Services\\WebKanbanCardApiService.cs",
+                                       "count":  6
+                                   },
+                                   {
+                                       "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Web.Client\\Services\\RequestValidator.cs",
+                                       "count":  4
+                                   },
+                                   {
+                                       "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Shared\\DTOs\\ApiResponse.cs",
+                                       "count":  4
+                                   },
+                                   {
+                                       "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Web.Client\\Services\\UserManagementService.cs",
+                                       "count":  4
+                                   },
+                                   {
+                                       "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Web.Client\\Services\\UrlBuilderService.cs",
+                                       "count":  4
+                                   },
+                                   {
+                                       "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Web.Client\\Services\\ApiHealthService.cs",
+                                       "count":  4
+                                   },
+                                   {
+                                       "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Shared\\DTOs\\PagedApiResponse.cs",
+                                       "count":  4
+                                   },
+                                   {
+                                       "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Shared\\Services\\BaseApiService.cs",
+                                       "count":  4
+                                   },
+                                   {
+                                       "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Shared\\Services\\AuditApiService.cs",
+                                       "count":  2
+                                   },
+                                   {
+                                       "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.UI\\Services\\AuthenticationService.cs",
+                                       "count":  2
+                                   },
+                                   {
+                                       "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Web.Client\\Services\\TokenManagementService.cs",
+                                       "count":  2
+                                   },
+                                   {
+                                       "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Web.Client\\Services\\WebAuditApiService.cs",
+                                       "count":  2
+                                   },
+                                   {
+                                       "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Web.Client\\Services\\JwtHttpInterceptor.cs",
+                                       "count":  2
+                                   },
+                                   {
+                                       "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Shared\\Components\\LocalizedComponentBase.cs",
+                                       "count":  2
+                                   },
+                                   {
+                                       "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Web.Client\\Services\\IHttpInterceptor.cs",
+                                       "count":  2
+                                   },
+                                   {
+                                       "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Shared\\Models\\NotificationState.cs",
+                                       "count":  2
+                                   },
+                                   {
+                                       "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Web.Client\\Services\\ResilientApiService.cs",
+                                       "count":  2
+                                   },
+                                   {
+                                       "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Web.Client\\Services\\SignalRService.cs",
+                                       "count":  2
+                                   },
+                                   {
+                                       "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Web.Client\\Services\\Validators\\ManufacturerValidators.cs",
+                                       "count":  2
+                                   },
+                                   {
+                                       "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.Web.Client\\Services\\ThemeService.cs",
+                                       "count":  2
+                                   }
+                               ]
+                 },
+    "errors":  {
+                   "rules":  [
+                                 {
+                                     "Name":  "CS1002",
+                                     "Count":  2
+                                 },
+                                 {
+                                     "Name":  "CS1056",
+                                     "Count":  2
+                                 }
+                             ],
+                   "files":  {
+                                 "path":  "C:\\rec\\prg\\repo\\InventoryCtrl_2\\src\\Inventory.API\\Controllers\\WarehouseController.cs",
+                                 "count":  4
+                             }
+               }
+}

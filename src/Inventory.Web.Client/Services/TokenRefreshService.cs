@@ -19,6 +19,14 @@ public class TokenRefreshService : ITokenRefreshService
     private readonly ILogger<TokenRefreshService> _logger;
     private readonly TokenConfiguration _config;
     private readonly IUrlBuilderService _urlBuilderService;
+    private static readonly JsonSerializerOptions SerializeOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+    private static readonly JsonSerializerOptions DeserializeOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
 
     public TokenRefreshService(
         HttpClient httpClient,
@@ -54,10 +62,7 @@ public class TokenRefreshService : ITokenRefreshService
                 RefreshToken = refreshToken
             };
 
-            var json = JsonSerializer.Serialize(request, new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            });
+            var json = JsonSerializer.Serialize(request, SerializeOptions);
             var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
             // Build absolute refresh URL to avoid wrong base/cors issues
@@ -67,10 +72,7 @@ public class TokenRefreshService : ITokenRefreshService
             if (response.IsSuccessStatusCode)
             {
                 var responseContent = await response.Content.ReadAsStringAsync();
-                var loginResult = JsonSerializer.Deserialize<LoginResult>(responseContent, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
+                var loginResult = JsonSerializer.Deserialize<LoginResult>(responseContent, DeserializeOptions);
 
                 if (loginResult != null && !string.IsNullOrEmpty(loginResult.Token))
                 {
@@ -104,4 +106,5 @@ public class TokenRefreshService : ITokenRefreshService
         }
     }
 }
+
 

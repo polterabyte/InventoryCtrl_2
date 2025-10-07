@@ -14,7 +14,7 @@ public class WarehouseApiService(HttpClient httpClient, ILogger<WarehouseApiServ
     public async Task<List<WarehouseDto>> GetAllWarehousesAsync()
     {
         // Request all warehouses by setting a large page size
-        var response = await GetPagedAsync<WarehouseDto>($"{BaseUrl}?page=1&pageSize=1000");
+        var response = await GetPagedAsync<WarehouseDto>($"{ApiEndpoints.Warehouses}?page=1&pageSize=1000");
         return response.Data?.Items ?? new List<WarehouseDto>();
     }
 
@@ -27,7 +27,7 @@ public class WarehouseApiService(HttpClient httpClient, ILogger<WarehouseApiServ
 
     public async Task<WarehouseDto> CreateWarehouseAsync(CreateWarehouseDto createWarehouseDto)
     {
-        var response = await PostAsync<WarehouseDto>(BaseUrl, createWarehouseDto);
+        var response = await PostAsync<WarehouseDto>(ApiEndpoints.Warehouses, createWarehouseDto);
         if (response.Success && response.Data != null)
         {
             return response.Data;

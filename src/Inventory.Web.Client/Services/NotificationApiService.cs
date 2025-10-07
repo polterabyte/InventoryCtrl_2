@@ -39,17 +39,17 @@ public class NotificationClientService : INotificationService
         {
             var response = await _httpClient.GetAsync($"/api/notifications?page={page}&pageSize={pageSize}");
             var content = await response.Content.ReadAsStringAsync();
-            
+
             if (string.IsNullOrEmpty(content))
             {
                 _logger.LogWarning("Empty response from notifications API");
-                return new ApiResponse<List<NotificationDto>> 
-                { 
-                    Success = false, 
-                    ErrorMessage = "Empty response from server" 
+                return new ApiResponse<List<NotificationDto>>
+                {
+                    Success = false,
+                    ErrorMessage = "Empty response from server"
                 };
             }
-            
+
             return JsonSerializer.Deserialize<ApiResponse<List<NotificationDto>>>(content, JsonOptions) ?? new ApiResponse<List<NotificationDto>> { Success = false };
         }
         catch (Exception ex)
@@ -140,17 +140,17 @@ public class NotificationClientService : INotificationService
         {
             var response = await _httpClient.GetAsync("/api/notifications/stats");
             var content = await response.Content.ReadAsStringAsync();
-            
+
             if (string.IsNullOrEmpty(content))
             {
                 _logger.LogWarning("Empty response from notification stats API");
-                return new ApiResponse<NotificationStatsDto> 
-                { 
-                    Success = false, 
-                    ErrorMessage = "Empty response from server" 
+                return new ApiResponse<NotificationStatsDto>
+                {
+                    Success = false,
+                    ErrorMessage = "Empty response from server"
                 };
             }
-            
+
             return JsonSerializer.Deserialize<ApiResponse<NotificationStatsDto>>(content, JsonOptions) ?? new ApiResponse<NotificationStatsDto> { Success = false };
         }
         catch (Exception ex)
@@ -336,7 +336,7 @@ public class NotificationClientService : INotificationService
             var bulkRequest = new { userIds, request };
             var response = await _httpClient.PostAsJsonAsync("/api/notifications/bulk", bulkRequest);
             var content = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<ApiResponse<bool>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ApiResponse<bool> { Success = false };
+            return JsonSerializer.Deserialize<ApiResponse<bool>>(content, JsonOptions) ?? new ApiResponse<bool> { Success = false };
         }
         catch (Exception ex)
         {
@@ -351,7 +351,7 @@ public class NotificationClientService : INotificationService
         {
             var response = await _httpClient.PostAsync("/api/notifications/cleanup", null);
             var content = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<ApiResponse<bool>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ApiResponse<bool> { Success = false };
+            return JsonSerializer.Deserialize<ApiResponse<bool>>(content, JsonOptions) ?? new ApiResponse<bool> { Success = false };
         }
         catch (Exception ex)
         {

@@ -8,6 +8,11 @@ public class GlobalExceptionMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<GlobalExceptionMiddleware> _logger;
+    private static readonly JsonSerializerOptions DefaultJsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = true
+    };
 
     public GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExceptionMiddleware> logger)
     {
@@ -83,11 +88,7 @@ public class GlobalExceptionMiddleware
 
         context.Response.StatusCode = (int)statusCode;
 
-        var jsonResponse = JsonSerializer.Serialize(response, new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = true
-        });
+        var jsonResponse = JsonSerializer.Serialize(response, DefaultJsonOptions);
 
         await context.Response.WriteAsync(jsonResponse);
     }

@@ -4,6 +4,7 @@ using Microsoft.JSInterop;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Linq;
+using System.Globalization;
 
 namespace Inventory.Web.Client.Services;
 

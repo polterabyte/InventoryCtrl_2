@@ -42,12 +42,12 @@ public abstract class LocalizedComponentBase : ComponentBase, IDisposable
         // Only react if culture actually changed
         if (_lastCulture?.Name == newCulture.Name)
             return;
-            
+
         _lastCulture = newCulture;
-        
+
         // Clear cache when culture changes
         _stringCache.Clear();
-        
+
         // Debounce re-renders to improve performance during rapid culture changes
         lock (_reRenderLock)
         {
@@ -79,9 +79,9 @@ public abstract class LocalizedComponentBase : ComponentBase, IDisposable
     {
         if (string.IsNullOrWhiteSpace(key))
             return string.Empty;
-            
+
         var cacheKey = $"{CultureService.CurrentCulture.Name}:{key}";
-        
+
         return _stringCache.GetOrAdd(cacheKey, _ =>
         {
             var localizedString = Localizer[key];
@@ -100,10 +100,10 @@ public abstract class LocalizedComponentBase : ComponentBase, IDisposable
     {
         if (string.IsNullOrWhiteSpace(key))
             return string.Empty;
-            
+
         if (arguments?.Length == 0)
             return GetString(key);
-            
+
         var localizedString = Localizer[key, arguments ?? Array.Empty<object>()];
         return localizedString.ResourceNotFound ? key : localizedString.Value;
     }
@@ -118,9 +118,9 @@ public abstract class LocalizedComponentBase : ComponentBase, IDisposable
     {
         var culture = CultureService.CurrentCulture;
         var cacheKey = $"{culture.Name}:date:{date.Ticks}:{format ?? "default"}";
-        
+
         return _stringCache.GetOrAdd(cacheKey, _ =>
-            format == null 
+            format == null
                 ? date.ToString(culture)
                 : date.ToString(format, culture));
     }
@@ -135,9 +135,9 @@ public abstract class LocalizedComponentBase : ComponentBase, IDisposable
     {
         var culture = CultureService.CurrentCulture;
         var cacheKey = $"{culture.Name}:number:{number}:{format ?? "default"}";
-        
+
         return _stringCache.GetOrAdd(cacheKey, _ =>
-            format == null 
+            format == null
                 ? number.ToString(culture)
                 : number.ToString(format, culture));
     }
@@ -151,7 +151,7 @@ public abstract class LocalizedComponentBase : ComponentBase, IDisposable
     {
         var culture = CultureService.CurrentCulture;
         var cacheKey = $"{culture.Name}:currency:{amount}";
-        
+
         return _stringCache.GetOrAdd(cacheKey, _ =>
             amount.ToString("C", culture));
     }
@@ -159,19 +159,19 @@ public abstract class LocalizedComponentBase : ComponentBase, IDisposable
     /// <summary>
     /// Gets the current culture's text direction (LTR/RTL)
     /// </summary>
-    protected string TextDirection => 
+    protected string TextDirection =>
         CultureService.CurrentCulture.TextInfo.IsRightToLeft ? "rtl" : "ltr";
 
     /// <summary>
     /// Gets the current culture's language code
     /// </summary>
     protected string LanguageCode => CultureService.CurrentCulture.TwoLetterISOLanguageName;
-    
+
     /// <summary>
     /// Gets whether the current culture uses right-to-left text direction
     /// </summary>
     protected bool IsRightToLeft => CultureService.CurrentCulture.TextInfo.IsRightToLeft;
-    
+
     /// <summary>
     /// Clears the localization cache - useful when you need fresh translations
     /// </summary>
@@ -179,14 +179,14 @@ public abstract class LocalizedComponentBase : ComponentBase, IDisposable
     {
         _stringCache.Clear();
     }
-    
+
     /// <summary>
     /// Gets cache statistics for debugging purposes
     /// </summary>
     protected (int Count, long MemoryEstimate) GetCacheStats()
     {
         var count = _stringCache.Count;
-        var memoryEstimate = _stringCache.Sum(kvp => 
+        var memoryEstimate = _stringCache.Sum(kvp =>
             (kvp.Key?.Length ?? 0) * 2 + (kvp.Value?.Length ?? 0) * 2); // Rough estimate in bytes
         return (count, memoryEstimate);
     }

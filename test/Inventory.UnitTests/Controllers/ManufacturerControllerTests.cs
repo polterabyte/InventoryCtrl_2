@@ -38,14 +38,10 @@ public class ManufacturerControllerTests : IDisposable
     public async Task GetManufacturers_ReturnsOkResult()
     {
         // Arrange
-        var location = new Location { Id = 1, Name = "Test Location" };
-        _context.Locations.Add(location);
-        await _context.SaveChangesAsync();
-
         var manufacturers = new List<Manufacturer>
         {
-            new() { Id = 1, Name = "Test Manufacturer 1", CreatedAt = DateTime.UtcNow, LocationId = 1 },
-            new() { Id = 2, Name = "Test Manufacturer 2", CreatedAt = DateTime.UtcNow, LocationId = 1 }
+            new() { Id = 1, Name = "Test Manufacturer 1", CreatedAt = DateTime.UtcNow },
+            new() { Id = 2, Name = "Test Manufacturer 2", CreatedAt = DateTime.UtcNow }
         };
 
         _context.Manufacturers.AddRange(manufacturers);
@@ -66,13 +62,9 @@ public class ManufacturerControllerTests : IDisposable
     [Fact]
     public async Task GetManufacturer_WithValidId_ReturnsOkResult()
     {
-        // Arrange
-        var location = new Location { Id = 1, Name = "Test Location" };
-        _context.Locations.Add(location);
-        await _context.SaveChangesAsync();
-        
+        // Arrange        
         var id = 1;
-        var manufacturer = new Manufacturer { Id = id, Name = "Test Manufacturer", CreatedAt = DateTime.UtcNow, LocationId = 1 };
+        var manufacturer = new Manufacturer { Id = id, Name = "Test Manufacturer", CreatedAt = DateTime.UtcNow };
 
         _context.Manufacturers.Add(manufacturer);
         await _context.SaveChangesAsync();
@@ -111,15 +103,10 @@ public class ManufacturerControllerTests : IDisposable
     public async Task CreateManufacturer_WithValidData_ReturnsCreatedResult()
     {
         // Arrange
-        var location = new Location { Id = 1, Name = "Test Location", IsActive = true };
-        _context.Locations.Add(location);
-        await _context.SaveChangesAsync();
-
         var createRequest = new CreateManufacturerDto
         {
             Name = "New Manufacturer",
-            Description = "Test Description",
-            LocationId = 1
+            Description = "Test Description"
         };
 
         // Act

@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ "**" ]
+
+jobs:
+  build-test-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Tool restore
+        run: dotnet tool restore
+
+      - name: CI Check (build, lint, tests, coverage)
+        shell: pwsh
+        run: ./scripts/ci-check.ps1 -Configuration Release -Solution InventoryCtrl.sln
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-artifacts
+          path: |
+            artifacts/
+
+      # Optional: Upload SARIF to code scanning if enabled on repo
+      - name: Upload SARIF
+        if: ${{ always() && hashFiles('artifacts/analyzers.sarif') != '' }}
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: artifacts/analyzers.sarif
+

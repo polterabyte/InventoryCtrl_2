@@ -26,7 +26,7 @@ public class WebLocationApiService : WebBaseApiService, ILocationService
 
     public async Task<LocationDto?> GetLocationByIdAsync(int id)
     {
-        var endpoint = ApiEndpoints.LocationById.Replace("{id}", id.ToString());
+        var endpoint = ApiEndpoints.LocationById.Replace("{id}", id.ToString(System.Globalization.CultureInfo.InvariantCulture));
         var response = await GetAsync<LocationDto>(endpoint);
         return response.Success ? response.Data : null;
     }
@@ -39,14 +39,14 @@ public class WebLocationApiService : WebBaseApiService, ILocationService
 
     public async Task<LocationDto?> UpdateLocationAsync(int id, UpdateLocationDto updateLocationDto)
     {
-        var endpoint = ApiEndpoints.LocationById.Replace("{id}", id.ToString());
+        var endpoint = ApiEndpoints.LocationById.Replace("{id}", id.ToString(System.Globalization.CultureInfo.InvariantCulture));
         var response = await PutAsync<LocationDto>(endpoint, updateLocationDto);
         return response.Success ? response.Data : null;
     }
 
     public async Task<bool> DeleteLocationAsync(int id)
     {
-        var endpoint = ApiEndpoints.LocationById.Replace("{id}", id.ToString());
+        var endpoint = ApiEndpoints.LocationById.Replace("{id}", id.ToString(System.Globalization.CultureInfo.InvariantCulture));
         var response = await DeleteAsync(endpoint);
         return response.Success;
     }
@@ -54,7 +54,7 @@ public class WebLocationApiService : WebBaseApiService, ILocationService
     public async Task<IEnumerable<LocationDto>> GetLocationsByParentIdAsync(int? parentId)
     {
         var endpoint = parentId.HasValue 
-            ? ApiEndpoints.LocationByParentId.Replace("{parentId}", parentId.Value.ToString())
+            ? ApiEndpoints.LocationByParentId.Replace("{parentId}", parentId.Value.ToString(System.Globalization.CultureInfo.InvariantCulture))
             : ApiEndpoints.RootLocations;
         
         var response = await GetAsync<IEnumerable<LocationDto>>(endpoint);

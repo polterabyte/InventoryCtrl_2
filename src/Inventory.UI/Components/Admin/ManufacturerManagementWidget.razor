@@ -6,7 +6,6 @@
 @using Inventory.UI.Utilities
 @using System.Linq
 @inject IManufacturerService ManufacturerService
-@inject ILocationService LocationService
 @inject NotificationService UiNotificationService
 @inject IJSRuntime JSRuntime
 @inject DialogService DialogService
@@ -15,78 +14,73 @@
     <Authorized Context="_">
         <RadzenCard Style="width:100%;">
             <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.GapLarge">
-                    <RadzenStack Orientation="Orientation.Horizontal"
-                                 JustifyContent="JustifyContent.SpaceBetween"
-                                 AlignItems="AlignItems.Center"
-                                 Wrap="FlexWrap.Wrap"
-                                 Gap="@RadzenUi.Gap">
-                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                            <RadzenIcon Icon="factory" />
-                            <RadzenText TextStyle="TextStyle.H5">Manufacturers Management</RadzenText>
-                        </RadzenStack>
-
-                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem">
-                            <RadzenButton Icon="add"
-                                          Text="Add"
-                                          ButtonStyle="ButtonStyle.Primary"
-                                          Click="ShowCreateModal" />
-                            <RadzenButton Icon="refresh"
-                                          Text="Refresh"
-                                          Variant="Variant.Outlined"
-                                          ButtonStyle="ButtonStyle.Secondary"
-                                          Click="RefreshData" />
-                        </RadzenStack>
+                <RadzenStack Orientation="Orientation.Horizontal"
+                             JustifyContent="JustifyContent.SpaceBetween"
+                             AlignItems="AlignItems.Center"
+                             Wrap="FlexWrap.Wrap"
+                             Gap="@RadzenUi.Gap">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenIcon Icon="factory" />
+                        <RadzenText TextStyle="TextStyle.H5">Manufacturers Management</RadzenText>
                     </RadzenStack>
 
-                    <RadzenBusyIndicator IsBusy="@isLoading">
-                        @if (data?.Any() == true)
-                        {
-                            <RadzenDataGrid TItem="ManufacturerDto"
-                                             Data="@data"
-                                             AllowPaging="true"
-                                             PageSize="10"
-                                             AllowSorting="true"
-                                             FilterMode="FilterMode.Advanced">
-                                <Columns>
-                                    <RadzenDataGridColumn TItem="ManufacturerDto" Title="Name" Property="Name">
-                                        <Template Context="item">
-                                            <RadzenText>@item.Name</RadzenText>
-                                        </Template>
-                                    </RadzenDataGridColumn>
-                                    <RadzenDataGridColumn TItem="ManufacturerDto" Title="Location" Property="LocationName">
-                                        <Template Context="item">
-                                            <div title="@item.LocationFullPath">@item.LocationName</div>
-                                        </Template>
-                                    </RadzenDataGridColumn>
-                                    <RadzenDataGridColumn TItem="ManufacturerDto" Title="Created" Property="CreatedAt">
-                                        <Template Context="item">@item.CreatedAt.ToString("MMM dd, yyyy")</Template>
-                                    </RadzenDataGridColumn>
-                                    <RadzenDataGridColumn TItem="ManufacturerDto" Title="Updated" Property="UpdatedAt">
-                                        <Template Context="item">@(item.UpdatedAt?.ToString("MMM dd, yyyy") ?? "-")</Template>
-                                    </RadzenDataGridColumn>
-                                    <RadzenDataGridColumn TItem="ManufacturerDto" Title="Actions">
-                                        <Template Context="item">
-                                            <RadzenButton Icon="edit" Size="ButtonSize.Small" Variant="Variant.Text" Click="@(() => EditItem(item))" />
-                                            <RadzenButton Icon="delete" Size="ButtonSize.Small" Variant="Variant.Text" ButtonStyle="ButtonStyle.Danger" Click="@(() => DeleteItem(item))" />
-                                        </Template>
-                                    </RadzenDataGridColumn>
-                                </Columns>
-                            </RadzenDataGrid>
-                        }
-                        else
-                        {
-                            <RadzenStack Orientation="Orientation.Vertical"
-                                         AlignItems="AlignItems.Center"
-                                         Gap="0.5rem"
-                                         Style="padding: 1.5rem;">
-                                <RadzenIcon Icon="store_mall_directory" Style="font-size:32px; color: var(--rz-text-secondary);" />
-                                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary);">No manufacturers found</RadzenText>
-                            </RadzenStack>
-                        }
-                    </RadzenBusyIndicator>
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem">
+                        <RadzenButton Icon="add"
+                                      Text="Add"
+                                      ButtonStyle="ButtonStyle.Primary"
+                                      Click="ShowCreateModal" />
+                        <RadzenButton Icon="refresh"
+                                      Text="Refresh"
+                                      Variant="Variant.Outlined"
+                                      ButtonStyle="ButtonStyle.Secondary"
+                                      Click="RefreshData" />
+                    </RadzenStack>
                 </RadzenStack>
-        </RadzenCard>
 
+                <RadzenBusyIndicator IsBusy="@isLoading">
+                    @if (data?.Any() == true)
+                    {
+                        <RadzenDataGrid TItem="ManufacturerDto"
+                                         Data="@data"
+                                         AllowPaging="true"
+                                         PageSize="10"
+                                         AllowSorting="true"
+                                         FilterMode="FilterMode.Advanced">
+                            <Columns>
+                                <RadzenDataGridColumn TItem="ManufacturerDto" Title="Name" Property="Name">
+                                    <Template Context="item">
+                                        <RadzenText>@item.Name</RadzenText>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="ManufacturerDto" Title="Created" Property="CreatedAt">
+                                    <Template Context="item">@item.CreatedAt.ToString("MMM dd, yyyy")</Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="ManufacturerDto" Title="Updated" Property="UpdatedAt">
+                                    <Template Context="item">@(item.UpdatedAt?.ToString("MMM dd, yyyy") ?? "-")</Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="ManufacturerDto" Title="Actions">
+                                    <Template Context="item">
+                                        <RadzenButton Icon="edit" Size="ButtonSize.Small" Variant="Variant.Text" Click="@(() => EditItem(item))" />
+                                        <RadzenButton Icon="delete" Size="ButtonSize.Small" Variant="Variant.Text" ButtonStyle="ButtonStyle.Danger" Click="@(() => DeleteItem(item))" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+                            </Columns>
+                        </RadzenDataGrid>
+                    }
+                    else
+                    {
+                        <RadzenStack Orientation="Orientation.Vertical"
+                                     AlignItems="AlignItems.Center"
+                                     Gap="0.5rem"
+                                     Style="padding: 1.5rem;">
+                            <RadzenIcon Icon="factory" Style="font-size: 2rem;" />
+                            <RadzenText>No manufacturers found</RadzenText>
+                            <RadzenButton Icon="add" Text="Add Manufacturer" ButtonStyle="ButtonStyle.Primary" Click="ShowCreateModal" />
+                        </RadzenStack>
+                    }
+                </RadzenBusyIndicator>
+            </RadzenStack>
+        </RadzenCard>
     </Authorized>
     <NotAuthorized>
         <RadzenAlert AlertStyle="AlertStyle.Danger" ShowIcon="true">
@@ -97,7 +91,6 @@
 
 @code {
     private List<ManufacturerDto> data = new();
-    private List<LocationDto> locations = new();
     private bool isLoading = false;
     private bool isEditing = false;
     private bool isSaving = false;
@@ -116,13 +109,11 @@
         try
         {
             data = await ManufacturerService.GetAllManufacturersAsync();
-            locations = (await LocationService.GetAllLocationsAsync()).ToList();
         }
         catch (Exception ex)
         {
             UiNotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
             data = new();
-            locations = new();
         }
         finally
         {
@@ -137,12 +128,9 @@
 
     private async Task ShowCreateModal()
     {
-        currentItem = new CreateManufacturerDto
-        {
-            LocationId = locations.FirstOrDefault()?.Id ?? 1 // Инициализируем с первым доступным location
-        };
+        currentItem = new CreateManufacturerDto();
         isEditing = false;
-        
+
         await DialogService.OpenAsync("Create Manufacturer", ds => CreateManufacturerDialog(ds), new DialogOptions
         {
             Width = "500px",
@@ -160,11 +148,10 @@
             Name = item.Name,
             Description = item.Description,
             ContactInfo = item.ContactInfo,
-            Website = item.Website,
-            LocationId = item.LocationId
+            Website = item.Website
         };
         isEditing = true;
-        
+
         await DialogService.OpenAsync("Edit Manufacturer", ds => CreateManufacturerDialog(ds), new DialogOptions
         {
             Width = "500px",
@@ -195,8 +182,7 @@
                     Description = model.Description,
                     ContactInfo = model.ContactInfo,
                     Website = model.Website,
-                    IsActive = true,
-                    LocationId = model.LocationId
+                    IsActive = true
                 };
                 var result = await ManufacturerService.UpdateManufacturerAsync(selectedItem.Id, updateDto);
                 if (result != null)
@@ -345,32 +331,11 @@
                 }));
                 builder3.CloseComponent();
 
-                builder3.OpenComponent<RadzenFormField>(5);
-                builder3.AddAttribute(10, "Text", "Location *");
-                builder3.AddAttribute(11, "ChildContent", (RenderFragment)((builder4) =>
-                {
-                    builder4.OpenComponent<RadzenDropDown<int>>(0);
-                    builder4.AddAttribute(1, "Data", locations);
-                    builder4.AddAttribute(2, "Value", currentItem.LocationId);
-                    builder4.AddAttribute(3, "ValueChanged", EventCallback.Factory.Create<int>(this, (value) => currentItem.LocationId = value));
-                    builder4.AddAttribute(4, "ValueProperty", "Id");
-                    builder4.AddAttribute(5, "TextProperty", "Name");
-                    builder4.AddAttribute(6, "Name", "manufacturerLocation");
-                    builder4.AddAttribute(7, "Placeholder", "Select location...");
-                    builder4.CloseComponent();
-
-                    builder4.OpenComponent<RadzenRequiredValidator>(1);
-                    builder4.AddAttribute(2, "Component", "manufacturerLocation");
-                    builder4.AddAttribute(3, "Text", "Location is required");
-                    builder4.CloseComponent();
-                }));
-                builder3.CloseComponent();
-
-                builder3.OpenComponent<RadzenStack>(6);
-                builder3.AddAttribute(12, "Orientation", Orientation.Horizontal);
-                builder3.AddAttribute(13, "JustifyContent", JustifyContent.End);
-                builder3.AddAttribute(14, "Gap", "0.75rem");
-                builder3.AddAttribute(15, "ChildContent", (RenderFragment)((builder4) =>
+                builder3.OpenComponent<RadzenStack>(5);
+                builder3.AddAttribute(10, "Orientation", Orientation.Horizontal);
+                builder3.AddAttribute(11, "JustifyContent", JustifyContent.End);
+                builder3.AddAttribute(12, "Gap", "0.75rem");
+                builder3.AddAttribute(13, "ChildContent", (RenderFragment)((builder4) =>
                 {
                     builder4.OpenComponent<RadzenButton>(0);
                     builder4.AddAttribute(1, "Text", "Cancel");
@@ -393,3 +358,4 @@
         builder.CloseComponent();
     };
 }
+
