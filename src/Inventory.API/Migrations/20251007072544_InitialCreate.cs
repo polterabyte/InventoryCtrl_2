@@ -31,6 +31,8 @@ namespace Inventory.API.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "text", nullable: false),
+                    FirstName = table.Column<string>(type: "text", nullable: false),
+                    LastName = table.Column<string>(type: "text", nullable: false),
                     Role = table.Column<string>(type: "text", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -101,6 +103,21 @@ namespace Inventory.API.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_InventoryTransaction", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "KanbanSettings",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    DefaultMinThreshold = table.Column<int>(type: "integer", nullable: false),
+                    DefaultMaxThreshold = table.Column<int>(type: "integer", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_KanbanSettings", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -180,7 +197,7 @@ namespace Inventory.API.Migrations
                     Name = table.Column<string>(type: "text", nullable: false),
                     SKU = table.Column<string>(type: "text", nullable: false),
                     Description = table.Column<string>(type: "text", nullable: true),
-                    Quantity = table.Column<int>(type: "integer", nullable: false),
+                    CurrentQuantity = table.Column<int>(type: "integer", nullable: false),
                     Unit = table.Column<string>(type: "text", nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
                     CategoryId = table.Column<int>(type: "integer", nullable: false),
@@ -191,8 +208,6 @@ namespace Inventory.API.Migrations
                     ProductModelName = table.Column<string>(type: "text", nullable: false),
                     ProductGroupId = table.Column<int>(type: "integer", nullable: false),
                     ProductGroupName = table.Column<string>(type: "text", nullable: false),
-                    MinStock = table.Column<int>(type: "integer", nullable: false),
-                    MaxStock = table.Column<int>(type: "integer", nullable: false),
                     Note = table.Column<string>(type: "text", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
@@ -210,12 +225,19 @@ namespace Inventory.API.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Name = table.Column<string>(type: "text", nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    ParentProductGroupId = table.Column<int>(type: "integer", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ProductGroups", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ProductGroups_ProductGroups_ParentProductGroupId",
+                        column: x => x.ParentProductGroupId,
+                        principalTable: "ProductGroups",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(
@@ -635,6 +657,35 @@ namespace Inventory.API.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "UserWarehouses",
+                columns: table => new
+                {
+                    UserId = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: false),
+                    WarehouseId = table.Column<int>(type: "integer", nullable: false),
+                    IsDefault = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    AccessLevel = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false, defaultValue: "Full"),
+                    AssignedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserWarehouses", x => new { x.UserId, x.WarehouseId });
+                    table.ForeignKey(
+                        name: "FK_UserWarehouses_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UserWarehouses_Warehouses_WarehouseId",
+                        column: x => x.WarehouseId,
+                        principalTable: "Warehouses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Products",
                 columns: table => new
                 {
@@ -643,15 +694,12 @@ namespace Inventory.API.Migrations
                     Name = table.Column<string>(type: "text", nullable: false),
                     SKU = table.Column<string>(type: "text", nullable: false),
                     Description = table.Column<string>(type: "text", nullable: true),
-                    Quantity = table.Column<int>(type: "integer", nullable: false),
                     UnitOfMeasureId = table.Column<int>(type: "integer", nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
                     CategoryId = table.Column<int>(type: "integer", nullable: false),
                     ManufacturerId = table.Column<int>(type: "integer", nullable: false),
                     ProductModelId = table.Column<int>(type: "integer", nullable: false),
                     ProductGroupId = table.Column<int>(type: "integer", nullable: false),
-                    MinStock = table.Column<int>(type: "integer", nullable: false),
-                    MaxStock = table.Column<int>(type: "integer", nullable: false),
                     Note = table.Column<string>(type: "text", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
@@ -705,7 +753,6 @@ namespace Inventory.API.Migrations
                     UserId = table.Column<string>(type: "text", nullable: false),
                     LocationId = table.Column<int>(type: "integer", nullable: true),
                     RequestId = table.Column<int>(type: "integer", nullable: true),
-                    UnitPrice = table.Column<decimal>(type: "numeric", nullable: true),
                     TotalPrice = table.Column<decimal>(type: "numeric", nullable: true),
                     Description = table.Column<string>(type: "text", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -738,6 +785,36 @@ namespace Inventory.API.Migrations
                         principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_InventoryTransactions_Warehouses_WarehouseId",
+                        column: x => x.WarehouseId,
+                        principalTable: "Warehouses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "KanbanCards",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    ProductId = table.Column<int>(type: "integer", nullable: false),
+                    WarehouseId = table.Column<int>(type: "integer", nullable: false),
+                    MinThreshold = table.Column<int>(type: "integer", nullable: false),
+                    MaxThreshold = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_KanbanCards", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_KanbanCards_Products_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Products",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_KanbanCards_Warehouses_WarehouseId",
                         column: x => x.WarehouseId,
                         principalTable: "Warehouses",
                         principalColumn: "Id",
@@ -871,6 +948,17 @@ namespace Inventory.API.Migrations
                 column: "WarehouseId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_KanbanCards_WarehouseId",
+                table: "KanbanCards",
+                column: "WarehouseId");
+
+            migrationBuilder.CreateIndex(
+                name: "UX_Kanban_Product_Warehouse",
+                table: "KanbanCards",
+                columns: new[] { "ProductId", "WarehouseId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Locations_ParentLocationId",
                 table: "Locations",
                 column: "ParentLocationId");
@@ -900,6 +988,11 @@ namespace Inventory.API.Migrations
                 name: "IX_Notifications_UserId",
                 table: "Notifications",
                 column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProductGroups_ParentProductGroupId",
+                table: "ProductGroups",
+                column: "ParentProductGroupId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ProductHistories_ProductId",
@@ -963,6 +1056,22 @@ namespace Inventory.API.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_UserWarehouses_UserId",
+                table: "UserWarehouses",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserWarehouses_UserId_IsDefault",
+                table: "UserWarehouses",
+                columns: new[] { "UserId", "IsDefault" },
+                filter: "\"IsDefault\" = true");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserWarehouses_WarehouseId",
+                table: "UserWarehouses",
+                column: "WarehouseId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Warehouses_LocationId",
                 table: "Warehouses",
                 column: "LocationId");
@@ -993,6 +1102,12 @@ namespace Inventory.API.Migrations
                 name: "InventoryTransactions");
 
             migrationBuilder.DropTable(
+                name: "KanbanCards");
+
+            migrationBuilder.DropTable(
+                name: "KanbanSettings");
+
+            migrationBuilder.DropTable(
                 name: "NotificationPreferences");
 
             migrationBuilder.DropTable(
@@ -1017,10 +1132,10 @@ namespace Inventory.API.Migrations
                 name: "SignalRConnections");
 
             migrationBuilder.DropTable(
-                name: "AspNetRoles");
+                name: "UserWarehouses");
 
             migrationBuilder.DropTable(
-                name: "Warehouses");
+                name: "AspNetRoles");
 
             migrationBuilder.DropTable(
                 name: "InventoryTransaction");
@@ -1042,6 +1157,9 @@ namespace Inventory.API.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "Warehouses");
 
             migrationBuilder.DropTable(
                 name: "Categories");

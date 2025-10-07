@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Inventory.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251006190556_AddKanbanCardAndViews")]
-    partial class AddKanbanCardAndViews
+    [Migration("20251007072544_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -268,6 +268,30 @@ namespace Inventory.API.Migrations
                     b.ToTable("KanbanCards");
                 });
 
+            modelBuilder.Entity("Inventory.API.Models.KanbanSettings", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DefaultMaxThreshold")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DefaultMinThreshold")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("KanbanSettings");
+                });
+
             modelBuilder.Entity("Inventory.API.Models.Location", b =>
                 {
                     b.Property<int>("Id")
@@ -363,12 +387,6 @@ namespace Inventory.API.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<int>("ManufacturerId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("MaxStock")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("MinStock")
                         .HasColumnType("integer");
 
                     b.Property<string>("Name")
@@ -1339,12 +1357,6 @@ namespace Inventory.API.Migrations
                     b.Property<string>("ManufacturerName")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<int>("MaxStock")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("MinStock")
-                        .HasColumnType("integer");
 
                     b.Property<string>("Name")
                         .IsRequired()

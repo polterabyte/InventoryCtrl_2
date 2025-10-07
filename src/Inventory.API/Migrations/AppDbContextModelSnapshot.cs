@@ -265,6 +265,30 @@ namespace Inventory.API.Migrations
                     b.ToTable("KanbanCards");
                 });
 
+            modelBuilder.Entity("Inventory.API.Models.KanbanSettings", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DefaultMaxThreshold")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DefaultMinThreshold")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("KanbanSettings");
+                });
+
             modelBuilder.Entity("Inventory.API.Models.Location", b =>
                 {
                     b.Property<int>("Id")
