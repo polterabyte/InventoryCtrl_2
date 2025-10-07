@@ -1,4 +1,4 @@
-﻿@using Inventory.Shared.DTOs
+@using Inventory.Shared.DTOs
 @using Inventory.UI.Utilities
 @inject IDashboardService DashboardService
 
@@ -6,35 +6,35 @@
     <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.Gap">
         <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
             <RadzenIcon Icon="warning" Style="color:#f59f00;" />
-            <RadzenText TextStyle="TextStyle.H6" Style="color:#f59f00;">Товары с низким остатком</RadzenText>
+            <RadzenText TextStyle="TextStyle.H6" Style="color:#f59f00;">@TitleText</RadzenText>
         </RadzenStack>
 
-        <RadzenBusyIndicator IsBusy="@isLoading" LoadingText="Загружаем информацию об остатках...">
-            @if (lowStockProducts?.Any() == true)
+        <RadzenBusyIndicator IsBusy="@isLoading" LoadingText="@LoadingTextValue">
+            @if (lowStockItems?.Any() == true)
             {
                 <RadzenStack Orientation="Orientation.Vertical" Gap="@RadzenUi.Gap">
-                    @foreach (var product in lowStockProducts.Take(5))
+                    @foreach (var item in lowStockItems.Take(5))
                     {
                         <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" Style="padding:0.75rem; border:1px solid var(--rz-border); border-radius:var(--rz-border-radius);">
                             <RadzenStack Orientation="Orientation.Horizontal" Gap="@RadzenUi.Gap" AlignItems="AlignItems.Center">
                                 <RadzenIcon Icon="inventory_2" Style="color:#f59f00; font-size:1.5rem;" />
                                 <RadzenStack Orientation="Orientation.Vertical" Style="flex:1;">
-                                    <RadzenText TextStyle="TextStyle.Body1">@product.Name</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body1">@item.ProductName (@item.WarehouseName)</RadzenText>
                                     <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary);">
-                                        @product.SKU - @product.CategoryName
+                                        @item.SKU
                                     </RadzenText>
                                 </RadzenStack>
                                 <RadzenStack Orientation="Orientation.Vertical" Style="text-align:right;">
                                     <RadzenText TextStyle="TextStyle.Body1" Style="color:#f59f00; font-weight:600;">
-                                        @product.CurrentQuantity @product.UnitOfMeasureSymbol
+                                        @item.CurrentQuantity @item.UnitOfMeasureSymbol
                                     </RadzenText>
                                     <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary);">
-                                        мин: @product.MinStock
+                                        @($"{MinLabel} {item.MinThreshold}")
                                     </RadzenText>
                                 </RadzenStack>
                             </RadzenStack>
 
-                            <RadzenProgressBar Value="@GetStockPercentage(product.CurrentQuantity, product.MinStock)"
+                            <RadzenProgressBar Value="@GetStockPercentage(item.CurrentQuantity, item.MinThreshold)"
                                                Style="height:6px;"
                                                ShowValue="false"
                                                Mode="ProgressBarMode.Determinate"
@@ -42,9 +42,9 @@
                         </RadzenStack>
                     }
 
-                    @if (lowStockProducts.Count > 5)
+                    @if (lowStockItems.Count > 5)
                     {
-                        <RadzenButton Text="@($"Показать все ({lowStockProducts.Count})")"
+                        <RadzenButton Text="@($"{ShowAllLabel} ({lowStockItems.Count})")"
                                       ButtonStyle="ButtonStyle.Secondary"
                                       Variant="Variant.Outlined"
                                       Icon="list"
@@ -56,7 +56,7 @@
             {
                 <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.5rem" Style="padding:1rem; color: var(--rz-success);">
                     <RadzenIcon Icon="check_circle" Style="font-size:2rem;" />
-                    <RadzenText TextStyle="TextStyle.Body1">Все товары в норме</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1">@NoAlertsText</RadzenText>
                 </RadzenStack>
             }
         </RadzenBusyIndicator>
@@ -64,24 +64,30 @@
 </RadzenCard>
 
 @code {
-    private List<LowStockProductDto>? lowStockProducts;
+    private const string TitleText = "\u041d\u0438\u0437\u043a\u0438\u0439 \u043e\u0441\u0442\u0430\u0442\u043e\u043a (\u043a\u0430\u043d\u0431\u0430\u043d)";
+    private const string LoadingTextValue = "\u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0430 \u0434\u0430\u043d\u043d\u044b\u0445...";
+    private const string MinLabel = "\u041c\u0438\u043d:";
+    private const string ShowAllLabel = "\u041f\u043e\u043a\u0430\u0437\u0430\u0442\u044c \u0432\u0441\u0435";
+    private const string NoAlertsText = "\u041d\u0435\u0442 \u043f\u0440\u0435\u0434\u0443\u043f\u0440\u0435\u0436\u0434\u0435\u043d\u0438\u0439";
+
+    private List<LowStockKanbanDto>? lowStockItems;
     private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadLowStockProducts();
+        await LoadLowStockItems();
     }
 
-    private async Task LoadLowStockProducts()
+    private async Task LoadLowStockItems()
     {
         try
         {
             isLoading = true;
-            lowStockProducts = await DashboardService.GetLowStockProductsAsync();
+            lowStockItems = await DashboardService.GetLowStockKanbanAsync();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading low stock products: {ex.Message}");
+            Console.WriteLine($"Error loading low stock kanban: {ex.Message}");
         }
         finally
         {

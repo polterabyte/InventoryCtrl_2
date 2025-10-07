@@ -40,6 +40,28 @@ LEFT JOIN ""InventoryTransactions"" t ON t.""ProductId"" = p.""Id""
 GROUP BY p.""Id"", p.""Name"", p.""SKU"";
 ", cancellationToken);
 
+        // vw_product_on_hand_by_wh
+        await db.Database.ExecuteSqlRawAsync(@"
+CREATE OR REPLACE VIEW vw_product_on_hand_by_wh AS
+SELECT
+  p.""Id"" AS product_id,
+  p.""Name"" AS product_name,
+  p.""SKU"" AS sku,
+  w.""Id"" AS warehouse_id,
+  w.""Name"" AS warehouse_name,
+  COALESCE(SUM(
+    CASE
+      WHEN t.""Type"" = 0 THEN t.""Quantity""
+      WHEN t.""Type"" IN (1,2) THEN -t.""Quantity""
+      ELSE 0
+    END
+  ), 0) AS on_hand_qty
+FROM ""Products"" p
+JOIN ""InventoryTransactions"" t ON t.""ProductId"" = p.""Id""
+JOIN ""Warehouses"" w ON w.""Id"" = t.""WarehouseId""
+GROUP BY p.""Id"", p.""Name"", p.""SKU"", w.""Id"", w.""Name"";
+", cancellationToken);
+
         // vw_product_installed
         await db.Database.ExecuteSqlRawAsync(@"
 CREATE OR REPLACE VIEW vw_product_installed AS

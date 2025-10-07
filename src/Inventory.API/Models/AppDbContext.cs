@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Inventory.Shared.Models;
 
 namespace Inventory.API.Models
@@ -73,6 +73,41 @@ namespace Inventory.API.Models
             .HasMany(p => p.ProductTags)
             .WithMany(pt => pt.Products)
             .UsingEntity(j => j.ToTable("ProductProductTags"));
+
+        // Configure KanbanCard
+        modelBuilder.Entity<KanbanCard>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.MinThreshold).IsRequired();
+            entity.Property(e => e.MaxThreshold).IsRequired();
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.HasOne(e => e.Product)
+                  .WithMany(p => p.KanbanCards)
+                  .HasForeignKey(e => e.ProductId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Warehouse)
+                  .WithMany(w => w.KanbanCards)
+                  .HasForeignKey(e => e.WarehouseId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => new { e.ProductId, e.WarehouseId })
+                  .IsUnique()
+                  .HasDatabaseName("UX_Kanban_Product_Warehouse");
+
+            // Ensure Max >= Min at database level if supported
+            // For PostgreSQL, could add a CHECK constraint via migration if needed
+        });
+
+        // Configure KanbanSettings
+        modelBuilder.Entity<KanbanSettings>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.DefaultMinThreshold).IsRequired();
+            entity.Property(e => e.DefaultMaxThreshold).IsRequired();
+            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
 
         // Configure Notification
         modelBuilder.Entity<DbNotification>(entity =>
@@ -218,6 +253,18 @@ namespace Inventory.API.Models
             entity.Property(e => e.LastInstallDate).HasColumnName("last_install_date");
         });
 
+        modelBuilder.Entity<ProductOnHandByWarehouseView>(entity =>
+        {
+            entity.HasNoKey();
+            entity.ToView("vw_product_on_hand_by_wh");
+            entity.Property(e => e.ProductId).HasColumnName("product_id");
+            entity.Property(e => e.ProductName).HasColumnName("product_name");
+            entity.Property(e => e.SKU).HasColumnName("sku");
+            entity.Property(e => e.WarehouseId).HasColumnName("warehouse_id");
+            entity.Property(e => e.WarehouseName).HasColumnName("warehouse_name");
+            entity.Property(e => e.OnHandQty).HasColumnName("on_hand_qty");
+        });
+
         // PushSubscription removed with VAPID/Web Push
     }
            public DbSet<Request> Requests { get; set; } = null!;
@@ -232,6 +279,8 @@ namespace Inventory.API.Models
            public DbSet<ProductModel> ProductModels { get; set; } = null!;
            public DbSet<ProductGroup> ProductGroups { get; set; } = null!;
            public DbSet<ProductTag> ProductTags { get; set; } = null!;
+           public DbSet<KanbanCard> KanbanCards { get; set; } = null!;
+           public DbSet<KanbanSettings> KanbanSettings { get; set; } = null!;
            public DbSet<UnitOfMeasure> UnitOfMeasures { get; set; } = null!;
            public DbSet<UserWarehouse> UserWarehouses { get; set; } = null!;
            public DbSet<AuditLog> AuditLogs { get; set; } = null!;
@@ -242,8 +291,10 @@ namespace Inventory.API.Models
            // Views
            public DbSet<ProductPendingView> ProductPending { get; set; } = null!;
            public DbSet<ProductOnHandView> ProductOnHand { get; set; } = null!;
+           public DbSet<ProductOnHandByWarehouseView> ProductOnHandByWarehouse { get; set; } = null!;
            public DbSet<ProductInstalledView> ProductInstalled { get; set; } = null!;
            public DbSet<SignalRConnection> SignalRConnections { get; set; } = null!;
            // public DbSet<PushSubscription> PushSubscriptions { get; set; } = null!;
     }
 }
+

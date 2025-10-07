@@ -22,8 +22,6 @@ public class ProductDto
     public string ProductModelName { get; set; } = string.Empty;
     public int ProductGroupId { get; set; }
     public string ProductGroupName { get; set; } = string.Empty;
-    public int MinStock { get; set; }
-    public int MaxStock { get; set; }
     public string? Note { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
@@ -64,12 +62,6 @@ public class CreateProductDto
     [Range(1, int.MaxValue, ErrorMessage = "Product group ID must be greater than 0")]
     public int ProductGroupId { get; set; }
     
-    [Range(0, int.MaxValue, ErrorMessage = "Minimum stock must be 0 or greater")]
-    public int MinStock { get; set; }
-    
-    [Range(1, int.MaxValue, ErrorMessage = "Maximum stock must be greater than 0")]
-    public int MaxStock { get; set; }
-    
     [StringLength(500, ErrorMessage = "Note must not exceed 500 characters")]
     public string? Note { get; set; }
 }
@@ -108,12 +100,6 @@ public class UpdateProductDto
     [Required(ErrorMessage = "Product group is required")]
     [Range(1, int.MaxValue, ErrorMessage = "Product group ID must be greater than 0")]
     public int ProductGroupId { get; set; }
-    
-    [Range(0, int.MaxValue, ErrorMessage = "Minimum stock must be 0 or greater")]
-    public int MinStock { get; set; }
-    
-    [Range(1, int.MaxValue, ErrorMessage = "Maximum stock must be greater than 0")]
-    public int MaxStock { get; set; }
     
     [StringLength(500, ErrorMessage = "Note must not exceed 500 characters")]
     public string? Note { get; set; }

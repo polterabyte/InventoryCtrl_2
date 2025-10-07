@@ -9,17 +9,13 @@ public class ProductTests
     [Fact]
     public void Product_ShouldHaveCorrectDefaultValues()
     {
-        // Arrange & Act
         var product = new Product();
 
-        // Assert
         product.Name.Should().BeEmpty();
         product.SKU.Should().BeEmpty();
         product.UnitOfMeasureId.Should().Be(0);
         product.IsActive.Should().BeTrue();
         product.CurrentQuantity.Should().Be(0);
-        product.MinStock.Should().Be(0);
-        product.MaxStock.Should().Be(0);
         product.Transactions.Should().NotBeNull();
         product.Transactions.Should().BeEmpty();
     }
@@ -27,44 +23,35 @@ public class ProductTests
     [Fact]
     public void Product_ShouldSetPropertiesCorrectly()
     {
-        // Arrange
         var product = new Product
         {
             Name = "Test Product",
             SKU = "TEST-001",
             Description = "Test Description",
             CurrentQuantity = 100,
-                UnitOfMeasureId = 1,
+            UnitOfMeasureId = 1,
             IsActive = true,
-            MinStock = 10,
-            MaxStock = 1000,
             Note = "Test Note"
         };
 
-        // Act & Assert
         product.Name.Should().Be("Test Product");
         product.SKU.Should().Be("TEST-001");
         product.Description.Should().Be("Test Description");
         product.CurrentQuantity.Should().Be(100);
         product.UnitOfMeasureId.Should().Be(1);
         product.IsActive.Should().BeTrue();
-        product.MinStock.Should().Be(10);
-        product.MaxStock.Should().Be(1000);
         product.Note.Should().Be("Test Note");
     }
 
     [Fact]
     public void Product_ShouldHaveTimestampFields()
     {
-        // Arrange
         var product = new Product();
         var now = DateTime.UtcNow;
 
-        // Act
         product.CreatedAt = now;
         product.UpdatedAt = now;
 
-        // Assert
         product.CreatedAt.Should().Be(now);
         product.UpdatedAt.Should().Be(now);
     }

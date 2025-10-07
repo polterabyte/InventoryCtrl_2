@@ -21,8 +21,6 @@ public class Product
     public ProductModel ProductModel { get; set; } = null!;
     public int ProductGroupId { get; set; }
     public ProductGroup ProductGroup { get; set; } = null!;
-    public int MinStock { get; set; }
-    public int MaxStock { get; set; }
     public string? Note { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
@@ -33,4 +31,5 @@ public class Product
     public int CurrentQuantity { get; set; }
     public ICollection<InventoryTransaction> Transactions { get; set; } = new List<InventoryTransaction>();
     public ICollection<ProductTag> ProductTags { get; set; } = new List<ProductTag>();
+    public ICollection<KanbanCard> KanbanCards { get; set; } = new List<KanbanCard>();
 }

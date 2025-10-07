@@ -94,8 +94,6 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                     ProductModelName = p.ProductModel.Name,
                     ProductGroupId = p.ProductGroupId,
                     ProductGroupName = p.ProductGroup.Name,
-                    MinStock = p.MinStock,
-                    MaxStock = p.MaxStock,
                     Note = p.Note,
                     CreatedAt = p.CreatedAt,
                     UpdatedAt = p.UpdatedAt
@@ -167,8 +165,6 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 ProductModelName = product.ProductModel.Name,
                 ProductGroupId = product.ProductGroupId,
                 ProductGroupName = product.ProductGroup.Name,
-                MinStock = product.MinStock,
-                MaxStock = product.MaxStock,
                 Note = product.Note,
                 CreatedAt = product.CreatedAt,
                 UpdatedAt = product.UpdatedAt
@@ -226,8 +222,6 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 ProductModelName = product.ProductModel.Name,
                 ProductGroupId = product.ProductGroupId,
                 ProductGroupName = product.ProductGroup.Name,
-                MinStock = product.MinStock,
-                MaxStock = product.MaxStock,
                 Note = product.Note,
                 CreatedAt = product.CreatedAt,
                 UpdatedAt = product.UpdatedAt
@@ -286,8 +280,6 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 ManufacturerId = request.ManufacturerId,
                 ProductModelId = request.ProductModelId,
                 ProductGroupId = request.ProductGroupId,
-                MinStock = request.MinStock,
-                MaxStock = request.MaxStock,
                 Note = request.Note,
                 CreatedAt = DateTime.UtcNow
             };
@@ -313,9 +305,7 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                     ProductModelId = product.ProductModelId,
                     ProductGroupId = product.ProductGroupId,
                     UnitOfMeasureId = product.UnitOfMeasureId,
-                    MinStock = product.MinStock,
-                    MaxStock = product.MaxStock,
-                    Note = product.Note,
+                            Note = product.Note,
                     IsActive = product.IsActive,
                     CreatedAt = product.CreatedAt
                 },
@@ -351,8 +341,6 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 ProductModelName = createdProduct.ProductModel.Name,
                 ProductGroupId = createdProduct.ProductGroupId,
                 ProductGroupName = createdProduct.ProductGroup.Name,
-                MinStock = createdProduct.MinStock,
-                MaxStock = createdProduct.MaxStock,
                 Note = createdProduct.Note,
                 CreatedAt = createdProduct.CreatedAt,
                 UpdatedAt = createdProduct.UpdatedAt
@@ -410,8 +398,6 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 ManufacturerId = product.ManufacturerId,
                 ProductModelId = product.ProductModelId,
                 ProductGroupId = product.ProductGroupId,
-                MinStock = product.MinStock,
-                MaxStock = product.MaxStock,
                 Note = product.Note,
                 IsActive = product.IsActive,
                 UpdatedAt = product.UpdatedAt
@@ -424,8 +410,6 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
             product.ManufacturerId = request.ManufacturerId;
             product.ProductModelId = request.ProductModelId;
             product.ProductGroupId = request.ProductGroupId;
-            product.MinStock = request.MinStock;
-            product.MaxStock = request.MaxStock;
             product.Note = request.Note;
             
             // Only Admin can modify IsActive
@@ -449,8 +433,6 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 ManufacturerId = product.ManufacturerId,
                 ProductModelId = product.ProductModelId,
                 ProductGroupId = product.ProductGroupId,
-                MinStock = product.MinStock,
-                MaxStock = product.MaxStock,
                 Note = product.Note,
                 IsActive = product.IsActive,
                 UpdatedAt = product.UpdatedAt
@@ -485,8 +467,6 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 ManufacturerId = product.ManufacturerId,
                 ProductModelId = product.ProductModelId,
                 ProductGroupId = product.ProductGroupId,
-                MinStock = product.MinStock,
-                MaxStock = product.MaxStock,
                 Note = product.Note,
                 CreatedAt = product.CreatedAt,
                 UpdatedAt = product.UpdatedAt

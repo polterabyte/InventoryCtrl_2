@@ -105,8 +105,6 @@ public class RequestServiceTests
                 ManufacturerId = 1,
                 ProductModelId = 1,
                 ProductGroupId = 1,
-                MinStock = 0,
-                MaxStock = 100,
                 CreatedAt = DateTime.UtcNow
             });
         }

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Inventory.API.Models;
 using Inventory.Shared.DTOs;
 
@@ -23,12 +24,12 @@ public class DashboardController(AppDbContext context, ILogger<DashboardControll
             var totalManufacturers = await context.Manufacturers.CountAsync();
             var totalWarehouses = await context.Warehouses.CountAsync(w => w.IsActive);
             
-            // Low stock products (quantity <= MinStock) - using direct ProductOnHandView query
-            var lowStockProducts = await (from oh in context.ProductOnHand
-                                        join p in context.Products on oh.ProductId equals p.Id
-                                        where p.IsActive && oh.OnHandQty <= p.MinStock
-                                        select oh.ProductId)
-                                        .CountAsync();
+            // Low stock products based on Kanban cards (counting distinct products)
+            var lowStockKanbanCards = await BuildLowStockKanbanAsync();
+            var lowStockProducts = lowStockKanbanCards
+                .Select(card => card.ProductId)
+                .Distinct()
+                .Count();
             
             // Out of stock products - using direct ProductOnHandView query
             var outOfStockProducts = await (from oh in context.ProductOnHand
@@ -154,28 +155,30 @@ public class DashboardController(AppDbContext context, ILogger<DashboardControll
         {
             logger.LogInformation("Getting low stock products");
 
-            // Get products with their quantities from ProductOnHandView - optimized query
-            var lowStockProducts = await (from oh in context.ProductOnHand
-                                        join p in context.Products on oh.ProductId equals p.Id
-                                        where p.IsActive && oh.OnHandQty <= p.MinStock
-                                        orderby oh.OnHandQty
-                                        select new LowStockProductDto
-                                        {
-                                            Id = p.Id,
-                                            Name = p.Name,
-                                            SKU = p.SKU,
-                                            CurrentQuantity = oh.OnHandQty,
-                                            MinStock = p.MinStock,
-                                            MaxStock = p.MaxStock,
-                                            CategoryName = p.Category.Name,
-                                            ManufacturerName = p.Manufacturer.Name,
-                                            UnitOfMeasureSymbol = p.UnitOfMeasure.Symbol
-                                        })
-                                        .ToListAsync();
+            var lowStockKanbanCards = await BuildLowStockKanbanAsync();
 
-            logger.LogInformation("Low stock products retrieved successfully: {Count} products", lowStockProducts.Count);
+            var groupedProducts = lowStockKanbanCards
+                .GroupBy(card => card.ProductId)
+                .Select(group =>
+                {
+                    var first = group.First();
+                    return new LowStockProductDto
+                    {
+                        ProductId = first.ProductId,
+                        ProductName = first.ProductName,
+                        SKU = first.SKU,
+                        CategoryName = first.CategoryName,
+                        ManufacturerName = first.ManufacturerName,
+                        UnitOfMeasureSymbol = first.UnitOfMeasureSymbol,
+                        KanbanCards = group.ToList()
+                    };
+                })
+                .OrderBy(p => p.ProductName)
+                .ToList();
 
-            return Ok(ApiResponse<List<LowStockProductDto>>.SuccessResult(lowStockProducts));
+            logger.LogInformation("Low stock products retrieved successfully: {Count} products", groupedProducts.Count);
+
+            return Ok(ApiResponse<List<LowStockProductDto>>.SuccessResult(groupedProducts));
         }
         catch (InvalidOperationException ex)
         {
@@ -188,4 +191,97 @@ public class DashboardController(AppDbContext context, ILogger<DashboardControll
             return StatusCode(500, ApiResponse<List<LowStockProductDto>>.ErrorResult("Failed to retrieve low stock products"));
         }
     }
+
+[HttpGet("low-stock-kanban")]
+    public async Task<ActionResult<ApiResponse<List<LowStockKanbanDto>>>> GetLowStockKanban()
+    {
+        try
+        {
+            logger.LogInformation("Getting low stock kanban cards");
+
+            var result = await BuildLowStockKanbanAsync();
+
+            logger.LogInformation("Low stock kanban retrieved: {Count} items", result.Count);
+            return Ok(ApiResponse<List<LowStockKanbanDto>>.SuccessResult(result));
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Unexpected error while retrieving low stock kanban");
+            return StatusCode(500, ApiResponse<List<LowStockKanbanDto>>.ErrorResult("Failed to retrieve low stock kanban"));
+        }
+    }
+
+
+
+    private async Task<List<LowStockKanbanDto>> BuildLowStockKanbanAsync()
+    {
+        var kanbanCards = await context.KanbanCards
+            .Where(k => k.Product.IsActive && k.Warehouse.IsActive)
+            .Select(k => new
+            {
+                k.Id,
+                k.ProductId,
+                ProductName = k.Product.Name,
+                k.Product.SKU,
+                CategoryName = k.Product.Category.Name,
+                ManufacturerName = k.Product.Manufacturer.Name,
+                k.WarehouseId,
+                WarehouseName = k.Warehouse.Name,
+                k.MinThreshold,
+                k.MaxThreshold,
+                UnitSymbol = k.Product.UnitOfMeasure.Symbol
+            })
+            .ToListAsync();
+
+        if (kanbanCards.Count == 0)
+        {
+            return new List<LowStockKanbanDto>();
+        }
+
+        var productIds = kanbanCards.Select(k => k.ProductId).Distinct().ToList();
+        var warehouseIds = kanbanCards.Select(k => k.WarehouseId).Distinct().ToList();
+
+        var onHandLookup = await context.InventoryTransactions
+            .Where(t => productIds.Contains(t.ProductId) && warehouseIds.Contains(t.WarehouseId))
+            .GroupBy(t => new { t.ProductId, t.WarehouseId })
+            .Select(g => new
+            {
+                g.Key.ProductId,
+                g.Key.WarehouseId,
+                Quantity = g.Sum(t =>
+                    t.Type == TransactionType.Income ? t.Quantity :
+                    (t.Type == TransactionType.Outcome || t.Type == TransactionType.Install) ? -t.Quantity : 0)
+            })
+            .ToDictionaryAsync(x => new ValueTuple<int, int>(x.ProductId, x.WarehouseId), x => x.Quantity);
+
+        return kanbanCards
+            .Select(card =>
+            {
+                var key = (card.ProductId, card.WarehouseId);
+                var quantity = onHandLookup.TryGetValue(key, out var value) ? value : 0;
+                return new LowStockKanbanDto
+                {
+                    KanbanCardId = card.Id,
+                    ProductId = card.ProductId,
+                    ProductName = card.ProductName,
+                    SKU = card.SKU,
+                    CategoryName = card.CategoryName,
+                    ManufacturerName = card.ManufacturerName,
+                    WarehouseId = card.WarehouseId,
+                    WarehouseName = card.WarehouseName,
+                    CurrentQuantity = quantity,
+                    MinThreshold = card.MinThreshold,
+                    MaxThreshold = card.MaxThreshold,
+                    UnitOfMeasureSymbol = card.UnitSymbol
+                };
+            })
+            .Where(dto => dto.CurrentQuantity <= dto.MinThreshold)
+            .OrderBy(dto => dto.ProductName)
+            .ThenBy(dto => dto.WarehouseName)
+            .ToList();
+    }
+
 }
+
+
+

@@ -6,6 +6,7 @@ using FluentAssertions;
 using Inventory.API.Controllers;
 using Inventory.API.Models;
 using Inventory.Shared.DTOs;
+using System.Linq;
 using System.Security.Claims;
 using Xunit;
 using Microsoft.Extensions.Logging;
@@ -153,12 +154,17 @@ public class DashboardControllerTests : IDisposable
         var response = okResult.Value.Should().BeOfType<ApiResponse<List<LowStockProductDto>>>().Subject;
         response.Success.Should().BeTrue();
         response.Data.Should().NotBeNull();
+        response.Data.Should().HaveCount(2);
+
+        var productWithTwoCards = response.Data.First(p => p.ProductId == 1);
+        productWithTwoCards.KanbanCards.Should().HaveCount(2);
+        var secondProduct = response.Data.First(p => p.ProductId == 2);
+        secondProduct.KanbanCards.Should().HaveCount(1);
     }
 
     [Fact]
     public async Task GetLowStockProducts_WithNoLowStockProducts_ShouldReturnEmptyList()
     {
-        // Arrange
         var category = new Category { Id = 1, Name = "Test Category", IsActive = true };
         var manufacturer = new Manufacturer { Id = 1, Name = "Test Manufacturer" };
         var warehouse = new Warehouse { Id = 1, Name = "Test Warehouse", IsActive = true };
@@ -180,9 +186,6 @@ public class DashboardControllerTests : IDisposable
             Id = 1,
             Name = "Test Product",
             SKU = "TEST001",
-            // CurrentQuantity = 100, // High quantity
-            MinStock = 10,
-            MaxStock = 200,
             CategoryId = 1,
             ManufacturerId = 1,
             ProductGroupId = 1,
@@ -193,17 +196,32 @@ public class DashboardControllerTests : IDisposable
         };
 
         _context.Products.Add(product);
-        
-        // Add ProductOnHandView data
-        // Note: Since this is a view, we can't directly add to it in tests
-        // In a real scenario, this would come from the database view
-        
+
+        _context.KanbanCards.Add(new KanbanCard
+        {
+            Id = 10,
+            ProductId = 1,
+            WarehouseId = 1,
+            MinThreshold = 5,
+            MaxThreshold = 40,
+            CreatedAt = DateTime.UtcNow
+        });
+
+        _context.InventoryTransactions.Add(new InventoryTransaction
+        {
+            Id = 10,
+            ProductId = 1,
+            WarehouseId = 1,
+            UserId = "1",
+            Type = TransactionType.Income,
+            Quantity = 20,
+            Date = DateTime.UtcNow
+        });
+
         await _context.SaveChangesAsync();
 
-        // Act
         var actionResult = await _controller.GetLowStockProducts();
 
-        // Assert
         actionResult.Should().NotBeNull();
         var okResult = actionResult.Result.Should().BeOfType<OkObjectResult>().Subject;
         okResult.StatusCode.Should().Be(200);
@@ -211,6 +229,7 @@ public class DashboardControllerTests : IDisposable
         var response = okResult.Value.Should().BeOfType<ApiResponse<List<LowStockProductDto>>>().Subject;
         response.Success.Should().BeTrue();
         response.Data.Should().NotBeNull();
+        response.Data.Should().BeEmpty();
     }
 
     [Fact]
@@ -275,8 +294,6 @@ public class DashboardControllerTests : IDisposable
             Name = "Product 1",
             SKU = "SKU001",
             // CurrentQuantity = 5, // Low stock
-            MinStock = 10,
-            MaxStock = 100,
             CategoryId = 1,
             ManufacturerId = 1,
             ProductModelId = 1,
@@ -292,8 +309,6 @@ public class DashboardControllerTests : IDisposable
             Name = "Product 2",
             SKU = "SKU002",
             // CurrentQuantity = 0, // Out of stock
-            MinStock = 5,
-            MaxStock = 50,
             CategoryId = 2,
             ManufacturerId = 2,
             ProductModelId = 2,
@@ -309,8 +324,6 @@ public class DashboardControllerTests : IDisposable
             Name = "Product 3",
             SKU = "SKU003",
             // CurrentQuantity = 50, // Normal stock
-            MinStock = 10,
-            MaxStock = 100,
             CategoryId = 1,
             ManufacturerId = 1,
             ProductModelId = 1,
@@ -321,6 +334,13 @@ public class DashboardControllerTests : IDisposable
         };
 
         _context.Products.AddRange(product1, product2, product3);
+
+        // Add Kanban cards
+        _context.KanbanCards.AddRange(
+            new KanbanCard { Id = 1, ProductId = 1, WarehouseId = 1, MinThreshold = 10, MaxThreshold = 80, CreatedAt = DateTime.UtcNow.AddDays(-2) },
+            new KanbanCard { Id = 2, ProductId = 2, WarehouseId = 2, MinThreshold = 5, MaxThreshold = 40, CreatedAt = DateTime.UtcNow.AddDays(-3) },
+            new KanbanCard { Id = 3, ProductId = 1, WarehouseId = 2, MinThreshold = 8, MaxThreshold = 60, CreatedAt = DateTime.UtcNow.AddDays(-1) }
+        );
 
         // Add transactions
         var transaction1 = new InventoryTransaction

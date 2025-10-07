@@ -45,18 +45,6 @@ public class UpdateProductDtoValidator : AbstractValidator<UpdateProductDto>
             .GreaterThan(0)
             .WithMessage("Unit of measure ID must be greater than 0");
 
-        RuleFor(x => x.MinStock)
-            .GreaterThanOrEqualTo(0)
-            .WithMessage("Minimum stock must be 0 or greater");
-
-        RuleFor(x => x.MaxStock)
-            .GreaterThanOrEqualTo(0)
-            .WithMessage("Maximum stock must be 0 or greater");
-
-        RuleFor(x => x)
-            .Must(x => x.MaxStock >= x.MinStock)
-            .WithMessage("Maximum stock must be greater than or equal to minimum stock");
-
         RuleFor(x => x.Note)
             .MaximumLength(500)
             .WithMessage("Note must not exceed 500 characters");

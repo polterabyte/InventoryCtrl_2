@@ -472,8 +472,6 @@ public abstract class IntegrationTestBase : IClassFixture<WebApplicationFactory<
                 ManufacturerId = (await Context.Manufacturers.FirstAsync(m => m.Name == "Apple")).Id,
                 ProductModelId = (await Context.ProductModels.FirstAsync(m => m.Name == "iPhone 15")).Id,
                 ProductGroupId = (await Context.ProductGroups.FirstAsync(g => g.Name == "Phones")).Id,
-                MinStock = 10,
-                MaxStock = 100,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
@@ -490,8 +488,6 @@ public abstract class IntegrationTestBase : IClassFixture<WebApplicationFactory<
                 ManufacturerId = (await Context.Manufacturers.FirstAsync(m => m.Name == "Samsung")).Id,
                 ProductModelId = (await Context.ProductModels.FirstAsync(m => m.Name == "Galaxy S24")).Id,
                 ProductGroupId = (await Context.ProductGroups.FirstAsync(g => g.Name == "Phones")).Id,
-                MinStock = 5,
-                MaxStock = 80,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };

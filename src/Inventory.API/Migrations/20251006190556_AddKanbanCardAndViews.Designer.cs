@@ -3,6 +3,7 @@ using System;
 using Inventory.API.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Inventory.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251006190556_AddKanbanCardAndViews")]
+    partial class AddKanbanCardAndViews
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -360,6 +363,12 @@ namespace Inventory.API.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<int>("ManufacturerId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MaxStock")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MinStock")
                         .HasColumnType("integer");
 
                     b.Property<string>("Name")
@@ -1330,6 +1339,12 @@ namespace Inventory.API.Migrations
                     b.Property<string>("ManufacturerName")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("MaxStock")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MinStock")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Name")
                         .IsRequired()

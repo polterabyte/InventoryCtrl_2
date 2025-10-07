@@ -60,6 +60,12 @@ public static class ApiEndpoints
     // Warehouse endpoints
     public const string Warehouses = "/Warehouse";
     public const string WarehouseById = $"{Warehouses}/{{id}}";
+
+    // KanbanCard endpoints
+    public const string KanbanCards = "/kanban-cards";
+    public const string KanbanCardById = $"{KanbanCards}/{{id}}";
+    public const string KanbanCardsByProduct = $"{KanbanCards}/product/{{productId}}";
+    public const string KanbanCardsByWarehouse = $"{KanbanCards}/warehouse/{{warehouseId}}";
     
     // Location endpoints
     public const string Locations = "/Location";
@@ -78,6 +84,7 @@ public static class ApiEndpoints
     public const string DashboardStats = $"{Dashboard}/stats";
     public const string DashboardRecentActivity = $"{Dashboard}/recent-activity";
     public const string DashboardLowStockProducts = $"{Dashboard}/low-stock-products";
+    public const string DashboardLowStockKanban = $"{Dashboard}/low-stock-kanban";
     
     // Request endpoints
     public const string Requests = "/requests";

@@ -109,19 +109,10 @@
             </RadzenColumn>
         </RadzenRow>
 
-        <!-- Min and Max stock row -->
-        <RadzenRow Gap="1rem">
-            <RadzenColumn Size="12">
-                <RadzenFormField Text="Минимальный остаток:">
-                    <RadzenNumeric @bind-Value="productModel.MinStock" Name="minStock" />
-                </RadzenFormField>
-            </RadzenColumn>
-            <RadzenColumn Size="12">
-                <RadzenFormField Text="Максимальный остаток:">
-                    <RadzenNumeric @bind-Value="productModel.MaxStock" Name="maxStock" />
-                </RadzenFormField>
-            </RadzenColumn>
-        </RadzenRow>
+
+        <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="true">
+            Configure minimum and maximum stock per warehouse via Kanban cards after creating the product.
+        </RadzenAlert>
 
         <!-- Note -->
         <RadzenFormField Text="Примечание:">

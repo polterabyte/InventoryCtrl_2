@@ -52,7 +52,6 @@ WHERE indexname IN (
     'IX_AuditLog_UserId_Timestamp',
     'IX_Products_IsActive_CategoryId',
     'IX_Products_IsActive_ManufacturerId',
-    'IX_Products_MinStock_MaxStock'
 )
 ORDER BY indexname;
 
@@ -69,14 +68,19 @@ WHERE p."IsActive" = true
 ORDER BY p."Name"
 LIMIT 100;
 
--- Test 2: Low stock products query (should use indexes and views)
+-- Test 2: Low stock products based on Kanban thresholds
 EXPLAIN (ANALYZE, BUFFERS)
-SELECT p."Id", p."Name", p."SKU", oh.on_hand_qty, p."MinStock"
-FROM "Products" p
-LEFT JOIN vw_product_on_hand oh ON p."Id" = oh.product_id
-WHERE p."IsActive" = true 
-  AND (oh.on_hand_qty IS NULL OR oh.on_hand_qty <= p."MinStock")
-ORDER BY oh.on_hand_qty NULLS FIRST
+SELECT k."ProductId", p."Name", p."SKU", w."Name" AS warehouse_name,
+       COALESCE(SUM(CASE WHEN t."Type" = 0 THEN t."Quantity" WHEN t."Type" IN (1,2) THEN -t."Quantity" ELSE 0 END), 0) AS on_hand_qty,
+       k."MinThreshold"
+FROM "KanbanCards" k
+JOIN "Products" p ON k."ProductId" = p."Id"
+JOIN "Warehouses" w ON k."WarehouseId" = w."Id"
+LEFT JOIN "InventoryTransactions" t ON t."ProductId" = k."ProductId" AND t."WarehouseId" = k."WarehouseId"
+WHERE p."IsActive" = true AND w."IsActive" = true
+GROUP BY k."ProductId", p."Name", p."SKU", w."Name", k."MinThreshold"
+HAVING COALESCE(SUM(CASE WHEN t."Type" = 0 THEN t."Quantity" WHEN t."Type" IN (1,2) THEN -t."Quantity" ELSE 0 END), 0) <= k."MinThreshold"
+ORDER BY on_hand_qty NULLS FIRST
 LIMIT 50;
 
 -- Test 3: Transaction history query (should use ProductId_Date index)

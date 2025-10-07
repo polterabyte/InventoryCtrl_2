@@ -148,7 +148,7 @@
                         <RadzenDataGridColumn TItem="ProductDto" Property="Quantity" Title="Stock" Width="80px">
                             <Template Context="product">
                                 <RadzenBadge Text="@product.Quantity.ToString()" 
-                                             BadgeStyle="@(product.Quantity > product.MinStock ? BadgeStyle.Success : BadgeStyle.Warning)" />
+                                             BadgeStyle="@(product.Quantity > 0 ? BadgeStyle.Success : BadgeStyle.Warning)" />
                             </Template>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="ProductDto" Title="Action" Width="100px" Sortable="false">

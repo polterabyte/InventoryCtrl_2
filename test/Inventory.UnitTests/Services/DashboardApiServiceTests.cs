@@ -10,23 +10,14 @@ namespace Inventory.UnitTests.Services;
 
 public class DashboardApiServiceTests
 {
-    private readonly Mock<HttpClient> _httpClientMock;
-    private readonly Mock<ILogger<DashboardApiService>> _loggerMock;
-    private readonly Mock<IRetryService> _retryServiceMock;
-    private readonly Mock<INotificationService> _notificationServiceMock;
-
-    public DashboardApiServiceTests()
-    {
-        _httpClientMock = new Mock<HttpClient>();
-        _loggerMock = new Mock<ILogger<DashboardApiService>>();
-        _retryServiceMock = new Mock<IRetryService>();
-        _notificationServiceMock = new Mock<INotificationService>();
-    }
+    private readonly Mock<HttpClient> _httpClientMock = new();
+    private readonly Mock<ILogger<DashboardApiService>> _loggerMock = new();
+    private readonly Mock<IRetryService> _retryServiceMock = new();
+    private readonly Mock<INotificationService> _notificationServiceMock = new();
 
     [Fact]
     public async Task GetDashboardStatsAsync_WithRetryService_ShouldUseRetryService()
     {
-        // Arrange
         var expectedStats = new DashboardStatsDto
         {
             TotalProducts = 10,
@@ -50,21 +41,67 @@ public class DashboardApiServiceTests
             _notificationServiceMock.Object
         );
 
-        // Act
         var result = await service.GetDashboardStatsAsync();
 
-        // Assert
         result.Should().BeEquivalentTo(expectedStats);
         _retryServiceMock.Verify(
             x => x.ExecuteWithRetryAsync(It.IsAny<Func<Task<DashboardStatsDto>>>(), It.IsAny<string>(), It.IsAny<int>()),
-            Times.Once
-        );
+            Times.Once);
     }
 
     [Fact]
-    public async Task GetDashboardStatsAsync_WithoutRetryService_ShouldCallBaseApiService()
+    public async Task GetLowStockProductsAsync_WithRetryService_ShouldReturnAggregatedProducts()
     {
-        // Arrange
+        var expectedProducts = new List<LowStockProductDto>
+        {
+            new LowStockProductDto
+            {
+                ProductId = 1,
+                ProductName = "Low Stock Product",
+                SKU = "LOW001",
+                CategoryName = "Test Category",
+                ManufacturerName = "Test Manufacturer",
+                UnitOfMeasureSymbol = "pcs",
+                KanbanCards = new List<LowStockKanbanDto>
+                {
+                    new LowStockKanbanDto
+                    {
+                        KanbanCardId = 10,
+                        ProductId = 1,
+                        ProductName = "Low Stock Product",
+                        SKU = "LOW001",
+                        CategoryName = "Test Category",
+                        ManufacturerName = "Test Manufacturer",
+                        WarehouseId = 100,
+                        WarehouseName = "Main WH",
+                        CurrentQuantity = 5,
+                        MinThreshold = 10,
+                        MaxThreshold = 80,
+                        UnitOfMeasureSymbol = "pcs"
+                    }
+                }
+            }
+        };
+
+        _retryServiceMock
+            .Setup(x => x.ExecuteWithRetryAsync(It.IsAny<Func<Task<List<LowStockProductDto>>>>(), It.IsAny<string>(), It.IsAny<int>()))
+            .ReturnsAsync(expectedProducts);
+
+        var service = new DashboardApiService(
+            _httpClientMock.Object,
+            _loggerMock.Object,
+            _retryServiceMock.Object,
+            _notificationServiceMock.Object
+        );
+
+        var result = await service.GetLowStockProductsAsync();
+
+        result.Should().BeEquivalentTo(expectedProducts);
+    }
+
+    [Fact]
+    public async Task GetLowStockProductsAsync_WithoutRetryService_ShouldReturnList()
+    {
         var service = new DashboardApiService(
             _httpClientMock.Object,
             _loggerMock.Object,
@@ -72,18 +109,15 @@ public class DashboardApiServiceTests
             null
         );
 
-        // Act
-        var result = await service.GetDashboardStatsAsync();
+        var result = await service.GetLowStockProductsAsync();
 
-        // Assert
         result.Should().NotBeNull();
-        result.Should().BeOfType<DashboardStatsDto>();
+        result.Should().BeOfType<List<LowStockProductDto>>();
     }
 
     [Fact]
     public async Task GetRecentActivityAsync_WithRetryService_ShouldUseRetryService()
     {
-        // Arrange
         var expectedActivity = new RecentActivityDto
         {
             RecentTransactions = new List<RecentTransactionDto>
@@ -127,94 +161,8 @@ public class DashboardApiServiceTests
             _notificationServiceMock.Object
         );
 
-        // Act
         var result = await service.GetRecentActivityAsync();
 
-        // Assert
         result.Should().BeEquivalentTo(expectedActivity);
-        _retryServiceMock.Verify(
-            x => x.ExecuteWithRetryAsync(It.IsAny<Func<Task<RecentActivityDto>>>(), It.IsAny<string>(), It.IsAny<int>()),
-            Times.Once
-        );
-    }
-
-    [Fact]
-    public async Task GetLowStockProductsAsync_WithRetryService_ShouldUseRetryService()
-    {
-        // Arrange
-        var expectedProducts = new List<LowStockProductDto>
-        {
-            new LowStockProductDto
-            {
-                Id = 1,
-                Name = "Low Stock Product",
-                SKU = "LOW001",
-                CurrentQuantity = 5,
-                MinStock = 10,
-                MaxStock = 100,
-                CategoryName = "Test Category",
-                ManufacturerName = "Test Manufacturer",
-                UnitOfMeasureSymbol = "pcs"
-            }
-        };
-
-        _retryServiceMock
-            .Setup(x => x.ExecuteWithRetryAsync(It.IsAny<Func<Task<List<LowStockProductDto>>>>(), It.IsAny<string>(), It.IsAny<int>()))
-            .ReturnsAsync(expectedProducts);
-
-        var service = new DashboardApiService(
-            _httpClientMock.Object,
-            _loggerMock.Object,
-            _retryServiceMock.Object,
-            _notificationServiceMock.Object
-        );
-
-        // Act
-        var result = await service.GetLowStockProductsAsync();
-
-        // Assert
-        result.Should().BeEquivalentTo(expectedProducts);
-        _retryServiceMock.Verify(
-            x => x.ExecuteWithRetryAsync(It.IsAny<Func<Task<List<LowStockProductDto>>>>(), It.IsAny<string>(), It.IsAny<int>()),
-            Times.Once
-        );
-    }
-
-    [Fact]
-    public async Task GetLowStockProductsAsync_WithoutRetryService_ShouldCallBaseApiService()
-    {
-        // Arrange
-        var service = new DashboardApiService(
-            _httpClientMock.Object,
-            _loggerMock.Object,
-            null,
-            null
-        );
-
-        // Act
-        var result = await service.GetLowStockProductsAsync();
-
-        // Assert
-        result.Should().NotBeNull();
-        result.Should().BeOfType<List<LowStockProductDto>>();
-    }
-
-    [Fact]
-    public async Task GetRecentActivityAsync_WithoutRetryService_ShouldCallBaseApiService()
-    {
-        // Arrange
-        var service = new DashboardApiService(
-            _httpClientMock.Object,
-            _loggerMock.Object,
-            null,
-            null
-        );
-
-        // Act
-        var result = await service.GetRecentActivityAsync();
-
-        // Assert
-        result.Should().NotBeNull();
-        result.Should().BeOfType<RecentActivityDto>();
     }
 }

@@ -216,7 +216,7 @@ public class NotificationServiceTests : IDisposable
             Name = "Test Product",
             SKU = "TEST-001",
             CurrentQuantity = 5,
-            MinStock = 10,
+
             IsActive = true
         };
 
@@ -227,8 +227,8 @@ public class NotificationServiceTests : IDisposable
             EventType = "STOCK_LOW",
             NotificationType = "WARNING",
             Category = "STOCK",
-            Condition = """{"Product.Quantity": {"operator": "<=", "value": "{{Product.MinStock}}"}, "Product.IsActive": true}""",
-            Template = "Product '{{Product.Name}}' is running low on stock",
+            Condition = """{"Product.Quantity": {"operator": "<=", "value": 5}, "Product.IsActive": true}""",
+            Template = "Product '{{Product.Name}}' (SKU: {{Product.SKU}}) is running low based on configured Kanban thresholds. Current quantity: {{Product.Quantity}}. Please review kanban cards for this product.",
             IsActive = true,
             Priority = 5
         };

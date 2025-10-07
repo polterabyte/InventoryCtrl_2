@@ -92,8 +92,6 @@ public class ProductControllerRoleTests : IDisposable
             ManufacturerId = _context.Manufacturers.First().Id,
             ProductModelId = _context.ProductModels.First().Id,
             ProductGroupId = _context.ProductGroups.First().Id,
-            MinStock = 5,
-            MaxStock = 50
         };
 
         // Act
@@ -135,8 +133,6 @@ public class ProductControllerRoleTests : IDisposable
             ManufacturerId = _context.Manufacturers.First().Id,
             ProductModelId = _context.ProductModels.First().Id,
             ProductGroupId = _context.ProductGroups.First().Id,
-            MinStock = 5,
-            MaxStock = 50
         };
 
         // Act
@@ -174,8 +170,6 @@ public class ProductControllerRoleTests : IDisposable
             ManufacturerId = _context.Manufacturers.First().Id,
             ProductModelId = _context.ProductModels.First().Id,
             ProductGroupId = _context.ProductGroups.First().Id,
-            MinStock = 5,
-            MaxStock = 50
         };
 
         // Act
@@ -219,8 +213,6 @@ public class ProductControllerRoleTests : IDisposable
             ManufacturerId = _context.Manufacturers.First().Id,
             ProductModelId = _context.ProductModels.First().Id,
             ProductGroupId = _context.ProductGroups.First().Id,
-            MinStock = 5,
-            MaxStock = 50,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -238,8 +230,6 @@ public class ProductControllerRoleTests : IDisposable
             ManufacturerId = _context.Manufacturers.First().Id,
             ProductModelId = _context.ProductModels.First().Id,
             ProductGroupId = _context.ProductGroups.First().Id,
-            MinStock = 10,
-            MaxStock = 100
         };
 
         // Act
@@ -283,8 +273,6 @@ public class ProductControllerRoleTests : IDisposable
             ManufacturerId = _context.Manufacturers.First().Id,
             ProductModelId = _context.ProductModels.First().Id,
             ProductGroupId = _context.ProductGroups.First().Id,
-            MinStock = 5,
-            MaxStock = 50,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -302,8 +290,6 @@ public class ProductControllerRoleTests : IDisposable
             ManufacturerId = _context.Manufacturers.First().Id,
             ProductModelId = _context.ProductModels.First().Id,
             ProductGroupId = _context.ProductGroups.First().Id,
-            MinStock = 10,
-            MaxStock = 100
         };
 
         // Act
@@ -343,8 +329,6 @@ public class ProductControllerRoleTests : IDisposable
             ManufacturerId = _context.Manufacturers.First().Id,
             ProductModelId = _context.ProductModels.First().Id,
             ProductGroupId = _context.ProductGroups.First().Id,
-            MinStock = 5,
-            MaxStock = 50,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -388,8 +372,6 @@ public class ProductControllerRoleTests : IDisposable
             ManufacturerId = _context.Manufacturers.First().Id,
             ProductModelId = _context.ProductModels.First().Id,
             ProductGroupId = _context.ProductGroups.First().Id,
-            MinStock = 5,
-            MaxStock = 50,
             CreatedAt = DateTime.UtcNow
         };
 
