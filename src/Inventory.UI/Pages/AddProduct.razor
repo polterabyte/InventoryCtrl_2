@@ -1,4 +1,4 @@
-@page "/products/add"
+﻿@page "/products/add"
 @attribute [Authorize]
 @using Inventory.Shared.DTOs
 @using Inventory.Shared.Interfaces
@@ -10,7 +10,7 @@
 @inject IErrorHandlingService ErrorHandlingService
 @inject NavigationManager Navigation
 
-<PageTitle>Добавить товар</PageTitle>
+<PageTitle>New Product</PageTitle>
 
 <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="container-fluid">
     <!-- Header with title and back button -->
@@ -19,9 +19,9 @@
                  JustifyContent="JustifyContent.SpaceBetween">
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
             <RadzenIcon Icon="add_circle" Style="font-size: 1.5rem; color: var(--rz-primary);" />
-            <RadzenText TextStyle="TextStyle.H4">Добавить новый товар</RadzenText>
+            <RadzenText TextStyle="TextStyle.H4">New Product</RadzenText>
         </RadzenStack>
-        <RadzenButton Text="Назад к списку"
+        <RadzenButton Text="Back to products"
                       Icon="arrow_back"
                       ButtonStyle="ButtonStyle.Light"
                       Variant="Variant.Outlined"
@@ -30,9 +30,9 @@
 
     <!-- Product form -->
     <RadzenRow JustifyContent="JustifyContent.Center">
-        <RadzenColumn Size="12" SizeLg="8" SizeXl="6">
+        <RadzenColumn Size="@ColumnFullSize" SizeLg="@ColumnLargeSize" SizeXl="@ColumnExtraLargeSize">
             <RadzenCard>
-                <ProductForm Title="Новый товар"
+                <ProductForm Title="New Product"
                             OnSave="HandleProductSaved"
                             OnCancel="GoBack" />
             </RadzenCard>
@@ -41,6 +41,10 @@
 </RadzenStack>
 
 @code {
+    private const int ColumnFullSize = 12;
+    private const int ColumnLargeSize = 8;
+    private const int ColumnExtraLargeSize = 6;
+
     private async Task HandleProductSaved(ProductDto product)
     {
         try
@@ -48,8 +52,8 @@
             NotificationService.Notify(new Radzen.NotificationMessage
             {
                 Severity = NotificationSeverity.Success,
-                Summary = "Успех",
-                Detail = $"Товар '{product.Name}' успешно добавлен",
+                Summary = "Success",
+                Detail = $"Product '{product.Name}' created successfully",
                 Duration = 4000
             });
             Navigation.NavigateTo("/products");

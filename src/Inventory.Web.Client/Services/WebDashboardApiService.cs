@@ -36,4 +36,10 @@ public class WebDashboardApiService : WebBaseApiService, IDashboardService
         var response = await GetAsync<List<LowStockProductDto>>(ApiEndpoints.DashboardLowStockProducts);
         return response.Data ?? new List<LowStockProductDto>();
     }
+
+    public async Task<List<LowStockKanbanDto>> GetLowStockKanbanAsync()
+    {
+        var response = await GetAsync<List<LowStockKanbanDto>>(ApiEndpoints.DashboardLowStockKanban);
+        return response.Data ?? new List<LowStockKanbanDto>();
+    }
 }

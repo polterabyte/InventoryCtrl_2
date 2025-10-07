@@ -5,7 +5,7 @@ namespace Inventory.Shared.Models;
 public class NotificationState : INotifyPropertyChanged
 {
     private List<Notification> _notifications = new();
-    private bool _isVisible = false;
+    private bool _isVisible;
 
     public List<Notification> Notifications
     {

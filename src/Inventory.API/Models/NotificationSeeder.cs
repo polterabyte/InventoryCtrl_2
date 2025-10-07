@@ -5,13 +5,13 @@ namespace Inventory.API.Models;
 
 public static class NotificationSeeder
 {
-    public static async Task SeedAsync(AppDbContext context)
+    public static async Task SeedAsync(AppDbContext context, KanbanSettings settings)
     {
         // Seed notification templates
         await SeedNotificationTemplatesAsync(context);
         
         // Seed notification rules
-        await SeedNotificationRulesAsync(context);
+        await SeedNotificationRulesAsync(context, settings);
         
         await context.SaveChangesAsync();
     }
@@ -28,7 +28,7 @@ public static class NotificationSeeder
                 Name = "Stock Low Template",
                 EventType = "STOCK_LOW",
                 SubjectTemplate = "Low Stock Alert: {{Product.Name}}",
-                BodyTemplate = "Product '{{Product.Name}}' (SKU: {{Product.SKU}}) is running low on stock. Current quantity: {{Product.Quantity}}, Minimum required: {{Product.MinStock}}",
+                BodyTemplate = "Product '{{Product.Name}}' (SKU: {{Product.SKU}}) is running low based on configured Kanban thresholds. Current quantity: {{Product.Quantity}}. Please review kanban cards for this product.",
                 NotificationType = "WARNING",
                 Category = "STOCK",
                 IsActive = true
@@ -68,7 +68,7 @@ public static class NotificationSeeder
         context.NotificationTemplates.AddRange(templates);
     }
 
-    private static async Task SeedNotificationRulesAsync(AppDbContext context)
+    private static async Task SeedNotificationRulesAsync(AppDbContext context, KanbanSettings settings)
     {
         if (await context.NotificationRules.AnyAsync())
             return;
@@ -82,8 +82,8 @@ public static class NotificationSeeder
                 EventType = "STOCK_LOW",
                 NotificationType = "WARNING",
                 Category = "STOCK",
-                Condition = """{"Product.Quantity": {"operator": "<=", "value": "{{Product.MinStock}}"}, "Product.IsActive": true}""",
-                Template = "Product '{{Product.Name}}' (SKU: {{Product.SKU}}) is running low on stock. Current quantity: {{Product.Quantity}}, Minimum required: {{Product.MinStock}}",
+                Condition = "{\"Product.Quantity\": {\"operator\": \"<=\", \"value\": " + settings.DefaultMinThreshold + " }, \"Product.IsActive\": true}",
+                Template = "Product '{{Product.Name}}' (SKU: {{Product.SKU}}) is running low based on configured Kanban thresholds. Current quantity: {{Product.Quantity}}. Please review kanban cards for this product.",
                 IsActive = true,
                 Priority = 5,
                 CreatedAt = DateTime.UtcNow
@@ -95,7 +95,7 @@ public static class NotificationSeeder
                 EventType = "STOCK_OUT",
                 NotificationType = "ERROR",
                 Category = "STOCK",
-                Condition = """{"Product.Quantity": {"operator": "==", "value": 0}, "Product.IsActive": true}""",
+                Condition = "{\"Product.Quantity\": {\"operator\": \"==\", \"value\": 0}, \"Product.IsActive\": true}",
                 Template = "Product '{{Product.Name}}' (SKU: {{Product.SKU}}) is now out of stock. Please reorder immediately.",
                 IsActive = true,
                 Priority = 8,
@@ -108,7 +108,7 @@ public static class NotificationSeeder
                 EventType = "TRANSACTION_CREATED",
                 NotificationType = "INFO",
                 Category = "TRANSACTION",
-                Condition = """{"Transaction.Quantity": {"operator": ">=", "value": 100}}""",
+                Condition = "{\"Transaction.Quantity\": {\"operator\": \">=\", \"value\": 100}}",
                 Template = "High-value transaction created: {{Transaction.ProductName}} with quantity {{Transaction.Quantity}}",
                 IsActive = true,
                 Priority = 3,
@@ -121,7 +121,7 @@ public static class NotificationSeeder
                 EventType = "SYSTEM_ERROR",
                 NotificationType = "ERROR",
                 Category = "SYSTEM",
-                Condition = """{"Error.Severity": {"operator": "==", "value": "High"}}""",
+                Condition = "{\"Error.Severity\": {\"operator\": \"==\", \"value\": \"High\"}}",
                 Template = "System error occurred: {{Error.Message}}",
                 IsActive = true,
                 Priority = 9,

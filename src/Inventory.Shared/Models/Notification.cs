@@ -5,15 +5,15 @@ namespace Inventory.Shared.Models;
 public class DbNotification
 {
     public int Id { get; set; }
-    
+
     [Required]
     [StringLength(200)]
     public string Title { get; set; } = string.Empty;
-    
+
     [Required]
     [StringLength(1000)]
     public string Message { get; set; } = string.Empty;
-    
+
     [Required]
     [StringLength(50)]
     public string Type { get; set; } = string.Empty; // INFO, WARNING, ERROR, SUCCESS
@@ -28,9 +28,9 @@ public class DbNotification
     [StringLength(50)]
     public string? ActionText { get; set; }
     
-    public bool IsRead { get; set; } = false;
+    public bool IsRead { get; set; }
     
-    public bool IsArchived { get; set; } = false;
+    public bool IsArchived { get; set; }
     
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
@@ -84,7 +84,7 @@ public class NotificationRule
     
     public bool IsActive { get; set; } = true;
     
-    public int Priority { get; set; } = 0; // Higher number = higher priority
+    public int Priority { get; set; } // Higher number = higher priority
     
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
@@ -108,7 +108,7 @@ public class NotificationPreference
     
     public bool InAppEnabled { get; set; } = true;
     
-    public bool PushEnabled { get; set; } = false;
+    public bool PushEnabled { get; set; }
     
     public int? MinPriority { get; set; } // Only notify for priority >= this value
     

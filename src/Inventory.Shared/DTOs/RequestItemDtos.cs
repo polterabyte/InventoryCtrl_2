@@ -11,7 +11,6 @@ public class RequestItemDetailsDto
     public int Quantity { get; set; }
     public int? LocationId { get; set; }
     public string? LocationName { get; set; }
-    public decimal? UnitPrice { get; set; }
     public decimal? TotalPrice { get; set; }
     public string? Description { get; set; }
 }

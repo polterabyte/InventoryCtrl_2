@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Serilog;
 
 namespace Inventory.API.Models;
@@ -20,6 +21,8 @@ public static class DbInitializer
         // Обновление/создание SQL VIEW'ов (идемпотентно)
         await SqlViewInitializer.EnsureViewsAsync(db);
 
+        var kanbanSettings = await EnsureKanbanSettingsAsync(db, configuration);
+
         // Создание ролей
         await CreateRolesAsync(roleManager);
 
@@ -27,7 +30,7 @@ public static class DbInitializer
         await CreateAdminUserAsync(userManager, configuration);
         
         // Seed notification data
-        await NotificationSeeder.SeedAsync(db);
+        await NotificationSeeder.SeedAsync(db, kanbanSettings);
     }
 
     private static async Task CreateRolesAsync(RoleManager<IdentityRole> roleManager)
@@ -140,5 +143,51 @@ public static class DbInitializer
             Log.Information("Admin user already exists: {Email} with username: {Username}", 
                 adminEmail, adminUser.UserName);
         }
+    }
+
+    private static async Task<KanbanSettings> EnsureKanbanSettingsAsync(AppDbContext db, IConfiguration configuration)
+    {
+        var existing = await db.KanbanSettings.FirstOrDefaultAsync();
+        var configuredMin = configuration.GetValue<int?>("KanbanSettings:DefaultMinThreshold");
+        var configuredMax = configuration.GetValue<int?>("KanbanSettings:DefaultMaxThreshold");
+
+        if (existing != null)
+        {
+            var minThreshold = configuredMin ?? existing.DefaultMinThreshold;
+            var maxThreshold = configuredMax ?? existing.DefaultMaxThreshold;
+
+            if (maxThreshold < minThreshold)
+            {
+                maxThreshold = minThreshold;
+            }
+
+            if (existing.DefaultMinThreshold != minThreshold || existing.DefaultMaxThreshold != maxThreshold)
+            {
+                existing.DefaultMinThreshold = minThreshold;
+                existing.DefaultMaxThreshold = maxThreshold;
+                existing.UpdatedAt = DateTime.UtcNow;
+                await db.SaveChangesAsync();
+            }
+
+            return existing;
+        }
+
+        var resolvedMin = configuredMin ?? 5;
+        var resolvedMax = configuredMax ?? Math.Max(resolvedMin, 20);
+        if (resolvedMax < resolvedMin)
+        {
+            resolvedMax = resolvedMin;
+        }
+
+        var settings = new KanbanSettings
+        {
+            DefaultMinThreshold = resolvedMin,
+            DefaultMaxThreshold = resolvedMax,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        db.KanbanSettings.Add(settings);
+        await db.SaveChangesAsync();
+        return settings;
     }
 }

@@ -38,15 +38,13 @@ public class RecentProductDto
 
 public class LowStockProductDto
 {
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
+    public int ProductId { get; set; }
+    public string ProductName { get; set; } = string.Empty;
     public string SKU { get; set; } = string.Empty;
-    public int CurrentQuantity { get; set; }
-    public int MinStock { get; set; }
-    public int MaxStock { get; set; }
     public string CategoryName { get; set; } = string.Empty;
     public string ManufacturerName { get; set; } = string.Empty;
     public string UnitOfMeasureSymbol { get; set; } = string.Empty;
+    public List<LowStockKanbanDto> KanbanCards { get; set; } = new();
 }
 
 public class RecentActivityDto

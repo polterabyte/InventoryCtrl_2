@@ -12,15 +12,15 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Inventory.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250928113056_AddCriticalPerformanceIndexes")]
-    partial class AddCriticalPerformanceIndexes
+    [Migration("20251007072544_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.11")
+                .HasAnnotation("ProductVersion", "8.0.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -204,9 +204,6 @@ namespace Inventory.API.Migrations
                     b.Property<int>("Type")
                         .HasColumnType("integer");
 
-                    b.Property<decimal?>("UnitPrice")
-                        .HasColumnType("numeric");
-
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -230,6 +227,69 @@ namespace Inventory.API.Migrations
                     b.HasIndex("WarehouseId");
 
                     b.ToTable("InventoryTransactions");
+                });
+
+            modelBuilder.Entity("Inventory.API.Models.KanbanCard", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<int>("MaxThreshold")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MinThreshold")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("WarehouseId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WarehouseId");
+
+                    b.HasIndex("ProductId", "WarehouseId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Kanban_Product_Warehouse");
+
+                    b.ToTable("KanbanCards");
+                });
+
+            modelBuilder.Entity("Inventory.API.Models.KanbanSettings", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DefaultMaxThreshold")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DefaultMinThreshold")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("KanbanSettings");
                 });
 
             modelBuilder.Entity("Inventory.API.Models.Location", b =>
@@ -329,12 +389,6 @@ namespace Inventory.API.Migrations
                     b.Property<int>("ManufacturerId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("MaxStock")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("MinStock")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -391,10 +445,15 @@ namespace Inventory.API.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int?>("ParentProductGroupId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ParentProductGroupId");
 
                     b.ToTable("ProductGroups");
                 });
@@ -505,6 +564,40 @@ namespace Inventory.API.Migrations
                     b.HasIndex("ManufacturerId");
 
                     b.ToTable("ProductModels");
+                });
+
+            modelBuilder.Entity("Inventory.API.Models.ProductOnHandByWarehouseView", b =>
+                {
+                    b.Property<int>("OnHandQty")
+                        .HasColumnType("integer")
+                        .HasColumnName("on_hand_qty");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer")
+                        .HasColumnName("product_id");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("product_name");
+
+                    b.Property<string>("SKU")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("sku");
+
+                    b.Property<int>("WarehouseId")
+                        .HasColumnType("integer")
+                        .HasColumnName("warehouse_id");
+
+                    b.Property<string>("WarehouseName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("warehouse_name");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("vw_product_on_hand_by_wh", (string)null);
                 });
 
             modelBuilder.Entity("Inventory.API.Models.ProductOnHandView", b =>
@@ -789,6 +882,14 @@ namespace Inventory.API.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("boolean");
 
@@ -845,6 +946,55 @@ namespace Inventory.API.Migrations
                         .HasDatabaseName("UserNameIndex");
 
                     b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("Inventory.API.Models.UserWarehouse", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.Property<int>("WarehouseId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("AccessLevel")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Full");
+
+                    b.Property<DateTime>("AssignedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<bool>("IsDefault")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("UserId", "WarehouseId");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("IX_UserWarehouses_UserId");
+
+                    b.HasIndex("WarehouseId")
+                        .HasDatabaseName("IX_UserWarehouses_WarehouseId");
+
+                    b.HasIndex("UserId", "IsDefault")
+                        .HasDatabaseName("IX_UserWarehouses_UserId_IsDefault")
+                        .HasFilter("\"IsDefault\" = true");
+
+                    b.ToTable("UserWarehouses");
                 });
 
             modelBuilder.Entity("Inventory.API.Models.Warehouse", b =>
@@ -1208,12 +1358,6 @@ namespace Inventory.API.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("MaxStock")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("MinStock")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -1488,6 +1632,25 @@ namespace Inventory.API.Migrations
                     b.Navigation("Warehouse");
                 });
 
+            modelBuilder.Entity("Inventory.API.Models.KanbanCard", b =>
+                {
+                    b.HasOne("Inventory.API.Models.Product", "Product")
+                        .WithMany("KanbanCards")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Inventory.API.Models.Warehouse", "Warehouse")
+                        .WithMany("KanbanCards")
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("Warehouse");
+                });
+
             modelBuilder.Entity("Inventory.API.Models.Location", b =>
                 {
                     b.HasOne("Inventory.API.Models.Location", "ParentLocation")
@@ -1551,6 +1714,16 @@ namespace Inventory.API.Migrations
                     b.Navigation("UnitOfMeasure");
                 });
 
+            modelBuilder.Entity("Inventory.API.Models.ProductGroup", b =>
+                {
+                    b.HasOne("Inventory.API.Models.ProductGroup", "ParentProductGroup")
+                        .WithMany("SubGroups")
+                        .HasForeignKey("ParentProductGroupId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("ParentProductGroup");
+                });
+
             modelBuilder.Entity("Inventory.API.Models.ProductHistory", b =>
                 {
                     b.HasOne("Inventory.API.Models.Product", "Product")
@@ -1601,6 +1774,25 @@ namespace Inventory.API.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Inventory.API.Models.UserWarehouse", b =>
+                {
+                    b.HasOne("Inventory.API.Models.User", "User")
+                        .WithMany("UserWarehouses")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Inventory.API.Models.Warehouse", "Warehouse")
+                        .WithMany("UserWarehouses")
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+
+                    b.Navigation("Warehouse");
                 });
 
             modelBuilder.Entity("Inventory.API.Models.Warehouse", b =>
@@ -1736,12 +1928,16 @@ namespace Inventory.API.Migrations
 
             modelBuilder.Entity("Inventory.API.Models.Product", b =>
                 {
+                    b.Navigation("KanbanCards");
+
                     b.Navigation("Transactions");
                 });
 
             modelBuilder.Entity("Inventory.API.Models.ProductGroup", b =>
                 {
                     b.Navigation("Products");
+
+                    b.Navigation("SubGroups");
                 });
 
             modelBuilder.Entity("Inventory.API.Models.ProductModel", b =>
@@ -1766,11 +1962,17 @@ namespace Inventory.API.Migrations
                     b.Navigation("ProductHistories");
 
                     b.Navigation("Transactions");
+
+                    b.Navigation("UserWarehouses");
                 });
 
             modelBuilder.Entity("Inventory.API.Models.Warehouse", b =>
                 {
+                    b.Navigation("KanbanCards");
+
                     b.Navigation("Transactions");
+
+                    b.Navigation("UserWarehouses");
                 });
 #pragma warning restore 612, 618
         }

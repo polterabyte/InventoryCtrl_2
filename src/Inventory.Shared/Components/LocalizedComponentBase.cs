@@ -19,8 +19,8 @@ public abstract class LocalizedComponentBase : ComponentBase, IDisposable
     private readonly ConcurrentDictionary<string, string> _stringCache = new();
     private readonly object _reRenderLock = new();
     private Timer? _debounceTimer;
-    private bool _disposed = false;
-    private bool _pendingStateChange = false;
+    private bool _disposed;
+    private bool _pendingStateChange;
     private CultureInfo? _lastCulture;
 
     protected override void OnInitialized()
@@ -104,7 +104,7 @@ public abstract class LocalizedComponentBase : ComponentBase, IDisposable
         if (arguments?.Length == 0)
             return GetString(key);
             
-        var localizedString = Localizer[key, arguments];
+        var localizedString = Localizer[key, arguments ?? Array.Empty<object>()];
         return localizedString.ResourceNotFound ? key : localizedString.Value;
     }
 

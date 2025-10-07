@@ -73,7 +73,7 @@ public class UpdateNotificationPreferenceRequest
     
     public bool EmailEnabled { get; set; } = true;
     public bool InAppEnabled { get; set; } = true;
-    public bool PushEnabled { get; set; } = false;
+    public bool PushEnabled { get; set; }
     public int? MinPriority { get; set; }
 }
 
@@ -122,7 +122,7 @@ public class CreateNotificationRuleRequest
     public string Template { get; set; } = string.Empty;
     
     public bool IsActive { get; set; } = true;
-    public int Priority { get; set; } = 0;
+    public int Priority { get; set; }
 }
 
 public class NotificationStatsDto

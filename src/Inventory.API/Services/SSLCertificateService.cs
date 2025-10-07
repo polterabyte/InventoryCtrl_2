@@ -15,6 +15,7 @@ namespace Inventory.API.Services
         private readonly IConfiguration _configuration;
         private readonly string _sslPath;
         private readonly string _certificatesDbPath;
+        private static readonly JsonSerializerOptions IndentedJson = new() { WriteIndented = true };
 
         public SSLCertificateService(
             ILogger<SSLCertificateService> logger,
@@ -685,7 +686,7 @@ namespace Inventory.API.Services
         {
             try
             {
-                var json = JsonSerializer.Serialize(certificates, new JsonSerializerOptions { WriteIndented = true });
+                var json = JsonSerializer.Serialize(certificates, IndentedJson);
                 await File.WriteAllTextAsync(_certificatesDbPath, json);
             }
             catch (Exception ex)

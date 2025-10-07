@@ -64,4 +64,22 @@ public class DashboardApiService(HttpClient httpClient, ILogger<DashboardApiServ
         var response = await GetAsync<List<LowStockProductDto>>(ApiEndpoints.DashboardLowStockProducts);
         return response.Data ?? new List<LowStockProductDto>();
     }
+
+    public async Task<List<LowStockKanbanDto>> GetLowStockKanbanAsync()
+    {
+        if (_retryService != null)
+        {
+            return await _retryService.ExecuteWithRetryAsync(
+                async () =>
+                {
+                    var response = await GetAsync<List<LowStockKanbanDto>>(ApiEndpoints.DashboardLowStockKanban);
+                    return response.Data ?? new List<LowStockKanbanDto>();
+                },
+                "GetLowStockKanban"
+            );
+        }
+
+        var resp = await GetAsync<List<LowStockKanbanDto>>(ApiEndpoints.DashboardLowStockKanban);
+        return resp.Data ?? new List<LowStockKanbanDto>();
+    }
 }

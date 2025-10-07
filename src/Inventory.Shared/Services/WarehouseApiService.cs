@@ -4,6 +4,7 @@ using Inventory.Shared.Interfaces;
 using Microsoft.Extensions.Logging;
 using System.Text;
 using System.Text.Json;
+using System.Globalization;
 
 namespace Inventory.Shared.Services;
 
@@ -19,7 +20,7 @@ public class WarehouseApiService(HttpClient httpClient, ILogger<WarehouseApiServ
 
     public async Task<WarehouseDto?> GetWarehouseByIdAsync(int id)
     {
-        var endpoint = ApiEndpoints.WarehouseById.Replace("{id}", id.ToString());
+        var endpoint = ApiEndpoints.WarehouseById.Replace("{id}", id.ToString(CultureInfo.InvariantCulture));
         var response = await GetAsync<WarehouseDto>(endpoint);
         return response.Success ? response.Data : null;
     }
@@ -36,14 +37,14 @@ public class WarehouseApiService(HttpClient httpClient, ILogger<WarehouseApiServ
 
     public async Task<WarehouseDto?> UpdateWarehouseAsync(int id, UpdateWarehouseDto updateWarehouseDto)
     {
-        var endpoint = ApiEndpoints.WarehouseById.Replace("{id}", id.ToString());
+        var endpoint = ApiEndpoints.WarehouseById.Replace("{id}", id.ToString(CultureInfo.InvariantCulture));
         var response = await PutAsync<WarehouseDto>(endpoint, updateWarehouseDto);
         return response.Success ? response.Data : null;
     }
 
     public async Task<bool> DeleteWarehouseAsync(int id)
     {
-        var endpoint = ApiEndpoints.WarehouseById.Replace("{id}", id.ToString());
+        var endpoint = ApiEndpoints.WarehouseById.Replace("{id}", id.ToString(CultureInfo.InvariantCulture));
         var response = await DeleteAsync(endpoint);
         return response.Success;
     }

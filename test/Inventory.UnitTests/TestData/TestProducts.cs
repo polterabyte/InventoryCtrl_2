@@ -14,8 +14,6 @@ public static class TestProducts
         CurrentQuantity = 100,
                 UnitOfMeasureId = 1,
         IsActive = true,
-        MinStock = 10,
-        MaxStock = 1000,
         Note = "Test Note",
         CreatedAt = DateTime.UtcNow,
         UpdatedAt = DateTime.UtcNow
@@ -31,8 +29,6 @@ public static class TestProducts
         CurrentQuantity = 0,
                 UnitOfMeasureId = 1,
         IsActive = false,
-        MinStock = 0,
-        MaxStock = 100,
         Note = "Inactive Note",
         CreatedAt = DateTime.UtcNow,
         UpdatedAt = DateTime.UtcNow
@@ -48,8 +44,6 @@ public static class TestProducts
         CurrentQuantity = 5,
                 UnitOfMeasureId = 1,
         IsActive = true,
-        MinStock = 10,
-        MaxStock = 100,
         Note = "Low Stock Note",
         CreatedAt = DateTime.UtcNow,
         UpdatedAt = DateTime.UtcNow

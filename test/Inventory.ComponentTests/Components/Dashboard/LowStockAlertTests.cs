@@ -5,256 +5,107 @@ using Inventory.Shared.DTOs;
 using Inventory.Shared.Interfaces;
 using Moq;
 using Xunit;
-#pragma warning disable CS8620 // Argument of type cannot be used for parameter due to differences in the nullability of reference types
+#pragma warning disable CS8620
 
 namespace Inventory.ComponentTests.Components.Dashboard;
 
 public class LowStockAlertTests : ComponentTestBase
 {
     [Fact]
-    public void LowStockAlert_WithValidData_ShouldRenderCorrectly()
+    public void LowStockAlert_WithValidData_ShouldRenderKanbanItems()
     {
-        // Arrange
-        var lowStockProducts = new List<LowStockProductDto>
+        var items = new List<LowStockKanbanDto>
         {
-            new LowStockProductDto
+            new LowStockKanbanDto
             {
-                Id = 1,
-                Name = "Low Stock Product 1",
+                KanbanCardId = 1,
+                ProductId = 10,
+                ProductName = "Low Stock Product 1",
                 SKU = "LOW001",
-                CurrentQuantity = 5,
-                MinStock = 10,
-                MaxStock = 100,
                 CategoryName = "Electronics",
                 ManufacturerName = "Test Manufacturer",
+                WarehouseId = 100,
+                WarehouseName = "Main WH",
+                CurrentQuantity = 5,
+                MinThreshold = 10,
+                MaxThreshold = 80,
                 UnitOfMeasureSymbol = "pcs"
             },
-            new LowStockProductDto
+            new LowStockKanbanDto
             {
-                Id = 2,
-                Name = "Low Stock Product 2",
+                KanbanCardId = 2,
+                ProductId = 11,
+                ProductName = "Low Stock Product 2",
                 SKU = "LOW002",
-                CurrentQuantity = 2,
-                MinStock = 5,
-                MaxStock = 50,
                 CategoryName = "Accessories",
                 ManufacturerName = "Test Manufacturer 2",
+                WarehouseId = 200,
+                WarehouseName = "Reserve WH",
+                CurrentQuantity = 2,
+                MinThreshold = 5,
+                MaxThreshold = 40,
                 UnitOfMeasureSymbol = "units"
             }
         };
 
         var mockDashboardService = new Mock<IDashboardService>();
-        mockDashboardService.Setup(x => x.GetLowStockProductsAsync())
-            .ReturnsAsync(lowStockProducts!);
+        mockDashboardService.Setup(x => x.GetLowStockKanbanAsync())
+            .ReturnsAsync(items);
 
         AddSingletonService<IDashboardService>(mockDashboardService.Object);
 
-        // Act
         var component = RenderComponent<LowStockAlert>();
 
-        // Assert
-        component.Should().NotBeNull();
-        component.Find(".card").Should().NotBeNull();
-        
-        // Check if products are displayed
-        component.Markup.Should().Contain("Low Stock Product 1");
+        component.Markup.Should().Contain("Low Stock Product 1 (Main WH)");
         component.Markup.Should().Contain("LOW001");
-        component.Markup.Should().Contain("5");
-        component.Markup.Should().Contain("10");
-        
-        component.Markup.Should().Contain("Low Stock Product 2");
+        component.Markup.Should().Contain("5 pcs");
+        component.Markup.Should().Contain("\u041c\u0438\u043d: 10");
+
+        component.Markup.Should().Contain("Low Stock Product 2 (Reserve WH)");
         component.Markup.Should().Contain("LOW002");
-        component.Markup.Should().Contain("2");
-        component.Markup.Should().Contain("5");
+        component.Markup.Should().Contain("2 units");
+        component.Markup.Should().Contain("\u041c\u0438\u043d: 5");
     }
 
     [Fact]
     public void LowStockAlert_WithEmptyList_ShouldDisplayEmptyState()
     {
-        // Arrange
         var mockDashboardService = new Mock<IDashboardService>();
-        mockDashboardService.Setup(x => x.GetLowStockProductsAsync())
-            .ReturnsAsync(new List<LowStockProductDto>());
+        mockDashboardService.Setup(x => x.GetLowStockKanbanAsync())
+            .ReturnsAsync(new List<LowStockKanbanDto>());
 
         AddSingletonService<IDashboardService>(mockDashboardService.Object);
 
-        // Act
         var component = RenderComponent<LowStockAlert>();
 
-        // Assert
-        component.Should().NotBeNull();
-        component.Find(".card").Should().NotBeNull();
-        component.Markup.Should().Contain("Все товары в норме");
+        component.Markup.Should().Contain("\u041d\u0435\u0442 \u043f\u0440\u0435\u0434\u0443\u043f\u0440\u0435\u0436\u0434\u0435\u043d\u0438\u0439");
     }
 
     [Fact]
     public void LowStockAlert_WithNullData_ShouldHandleGracefully()
     {
-        // Arrange
         var mockDashboardService = new Mock<IDashboardService>();
-        mockDashboardService.Setup(x => x.GetLowStockProductsAsync())
-            .ReturnsAsync((List<LowStockProductDto>?)null);
+        mockDashboardService.Setup(x => x.GetLowStockKanbanAsync())
+            .ReturnsAsync((List<LowStockKanbanDto>?)null);
 
         AddSingletonService<IDashboardService>(mockDashboardService.Object);
 
-        // Act
         var component = RenderComponent<LowStockAlert>();
 
-        // Assert
-        component.Should().NotBeNull();
         component.Find(".card").Should().NotBeNull();
     }
 
     [Fact]
-    public void LowStockAlert_ShouldHaveCorrectCssClasses()
+    public void LowStockAlert_ShouldShowInfoAlertWhenNoKanbanConfigured()
     {
-        // Arrange
-        var lowStockProducts = new List<LowStockProductDto>
-        {
-            new LowStockProductDto
-            {
-                Id = 1,
-                Name = "Test Product",
-                SKU = "TEST001",
-                CurrentQuantity = 3,
-                MinStock = 10,
-                MaxStock = 100,
-                CategoryName = "Electronics",
-                ManufacturerName = "Test Manufacturer",
-                UnitOfMeasureSymbol = "pcs"
-            }
-        };
-
         var mockDashboardService = new Mock<IDashboardService>();
-        mockDashboardService.Setup(x => x.GetLowStockProductsAsync())
-            .ReturnsAsync(lowStockProducts!);
+        mockDashboardService.Setup(x => x.GetLowStockKanbanAsync())
+            .ReturnsAsync(new List<LowStockKanbanDto>());
 
         AddSingletonService<IDashboardService>(mockDashboardService.Object);
 
-        // Act
         var component = RenderComponent<LowStockAlert>();
 
-        // Assert
-        component.Find(".card").Should().NotBeNull();
-        component.Find(".card-header").Should().NotBeNull();
-        component.Find(".card-body").Should().NotBeNull();
-        component.Markup.Should().Contain("border-warning");
-    }
-
-    [Fact]
-    public void LowStockAlert_ShouldShowCorrectQuantityInfo()
-    {
-        // Arrange
-        var lowStockProducts = new List<LowStockProductDto>
-        {
-            new LowStockProductDto
-            {
-                Id = 1,
-                Name = "Test Product",
-                SKU = "TEST001",
-                CurrentQuantity = 3,
-                MinStock = 10,
-                MaxStock = 100,
-                CategoryName = "Electronics",
-                ManufacturerName = "Test Manufacturer",
-                UnitOfMeasureSymbol = "pcs"
-            }
-        };
-
-        var mockDashboardService = new Mock<IDashboardService>();
-        mockDashboardService.Setup(x => x.GetLowStockProductsAsync())
-            .ReturnsAsync(lowStockProducts!);
-
-        AddSingletonService<IDashboardService>(mockDashboardService.Object);
-
-        // Act
-        var component = RenderComponent<LowStockAlert>();
-
-        // Assert
-        component.Markup.Should().Contain("3"); // Current quantity
-        component.Markup.Should().Contain("10"); // Min stock
-        component.Markup.Should().Contain("pcs"); // Unit
-    }
-
-    [Fact]
-    public void LowStockAlert_ShouldShowWarningForCriticalStock()
-    {
-        // Arrange
-        var lowStockProducts = new List<LowStockProductDto>
-        {
-            new LowStockProductDto
-            {
-                Id = 1,
-                Name = "Critical Product",
-                SKU = "CRIT001",
-                CurrentQuantity = 1,
-                MinStock = 10,
-                MaxStock = 100,
-                CategoryName = "Electronics",
-                ManufacturerName = "Test Manufacturer",
-                UnitOfMeasureSymbol = "pcs"
-            }
-        };
-
-        var mockDashboardService = new Mock<IDashboardService>();
-        mockDashboardService.Setup(x => x.GetLowStockProductsAsync())
-            .ReturnsAsync(lowStockProducts!);
-
-        AddSingletonService<IDashboardService>(mockDashboardService.Object);
-
-        // Act
-        var component = RenderComponent<LowStockAlert>();
-
-        // Assert
-        component.Should().NotBeNull();
-        component.Markup.Should().Contain("Critical Product");
-        component.Markup.Should().Contain("1");
-    }
-
-    [Fact]
-    public void LowStockAlert_ShouldSortByQuantity()
-    {
-        // Arrange
-        var lowStockProducts = new List<LowStockProductDto>
-        {
-            new LowStockProductDto
-            {
-                Id = 1,
-                Name = "Product 1",
-                SKU = "TEST001",
-                CurrentQuantity = 5,
-                MinStock = 10,
-                MaxStock = 100,
-                CategoryName = "Electronics",
-                ManufacturerName = "Test Manufacturer",
-                UnitOfMeasureSymbol = "pcs"
-            },
-            new LowStockProductDto
-            {
-                Id = 2,
-                Name = "Product 2",
-                SKU = "TEST002",
-                CurrentQuantity = 2,
-                MinStock = 10,
-                MaxStock = 100,
-                CategoryName = "Electronics",
-                ManufacturerName = "Test Manufacturer",
-                UnitOfMeasureSymbol = "pcs"
-            }
-        };
-
-        var mockDashboardService = new Mock<IDashboardService>();
-        mockDashboardService.Setup(x => x.GetLowStockProductsAsync())
-            .ReturnsAsync(lowStockProducts!);
-
-        AddSingletonService<IDashboardService>(mockDashboardService.Object);
-
-        // Act
-        var component = RenderComponent<LowStockAlert>();
-
-        // Assert
-        component.Should().NotBeNull();
-        component.Markup.Should().Contain("Product 1");
-        component.Markup.Should().Contain("Product 2");
+        component.Markup.Should().Contain("Configure minimum and maximum stock per warehouse via Kanban cards");
     }
 }

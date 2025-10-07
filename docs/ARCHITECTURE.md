@@ -65,7 +65,7 @@ InventoryCtrl_2/
 #### Product — Товары
 - Id (PK)
 - Name, SKU, Description
-- Quantity, Unit, MinStock, MaxStock
+- Quantity (computed from transactions), Unit, Kanban thresholds (per warehouse via KanbanCard)
 - IsActive (только для Admin)
 - CategoryId (FK), ManufacturerId (FK)
 - ProductModelId (FK), ProductGroupId (FK)

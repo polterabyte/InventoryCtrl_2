@@ -37,13 +37,6 @@
                         BadgeStyle="@GetStockBadgeStyle()"
                         Style="font-size: 0.875rem;" />
 
-            @if (Product.MinStock > 0 || Product.MaxStock > 0)
-            {
-                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary);">
-                    @GetString("Product.MinMax", Product.MinStock, Product.MaxStock)
-                </RadzenText>
-            }
-
             <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
                 <RadzenButton Icon="edit"
                              ButtonStyle="ButtonStyle.Primary"
@@ -107,10 +100,8 @@
 
     private BadgeStyle GetStockBadgeStyle()
     {
-        if (Product.Quantity <= Product.MinStock)
+        if (Product.Quantity <= 0)
             return BadgeStyle.Danger;
-        if (Product.Quantity >= Product.MaxStock)
-            return BadgeStyle.Warning;
         return BadgeStyle.Success;
     }
     

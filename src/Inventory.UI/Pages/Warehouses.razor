@@ -1,22 +1,185 @@
 @page "/warehouses"
 @attribute [Authorize]
 @using Inventory.Shared.Components
+@using Inventory.Shared.DTOs
+@using Inventory.Shared.Interfaces
 @using Inventory.Shared.Resources
+@using Inventory.UI.Components.Warehouses
 @using Microsoft.Extensions.Localization
 @inherits LocalizedComponentBase
 
 @inject NavigationManager Navigation
+@inject IWarehouseService WarehouseService
+@inject IKanbanCardService KanbanCardService
+@inject Inventory.Shared.Services.IErrorHandlingService ErrorHandlingService
+@inject Radzen.NotificationService NotificationService
+@inject Radzen.DialogService DialogService
 
 <PageTitle>@GetString("Navigation.Warehouses")</PageTitle>
 
-<RadzenCard class="page-placeholder">
-    <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="2rem">
-        <RadzenIcon Icon="construction" Style="font-size: 4rem; color: var(--rz-warning);" />
-        <RadzenText TextStyle="TextStyle.H4" Class="text-center">
-            @GetString("Page.WarehousesInProgress")
-        </RadzenText>
-        <RadzenText TextStyle="TextStyle.Body1" Class="text-center" Style="color: var(--rz-text-secondary);">
-            This page is currently under development. Please check back later.
-        </RadzenText>
+<RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+    <!-- Toolbar -->
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem">
+            <RadzenText TextStyle="TextStyle.H5">@GetString("Navigation.Warehouses")</RadzenText>
+            <RadzenTextBox @bind-Value="filter" Placeholder="Поиск склада" Style="width: 220px;" />
+        </RadzenStack>
+        <AuthorizeView Roles="Admin,Manager">
+            <RadzenButton Text="Создать карту" Icon="add" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@(() => OpenCreateCardDialog())" />
+        </AuthorizeView>
     </RadzenStack>
-</RadzenCard>
+
+    @if (isLoading)
+    {
+        <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.5rem" Style="padding:1.5rem;">
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary);">Загрузка складов и карт…</RadzenText>
+        </RadzenStack>
+    }
+    else if (!warehouses.Any())
+    {
+        <RadzenAlert Severity="AlertSeverity.Info">Склады не найдены</RadzenAlert>
+    }
+    else
+    {
+        <!-- Horizontal kanban by warehouse -->
+        <div style="overflow-x:auto; white-space:nowrap; padding-bottom:0.5rem;">
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
+                @foreach (var wh in GetFilteredWarehouses())
+                {
+                    <div class="kanban-column">
+                        <RadzenCard Style="min-width: 280px; width: 320px; display:inline-block; vertical-align:top;">
+                            <ChildContent>
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Style="position:sticky; top:0; background:var(--rz-base-background-color); z-index:1; padding-bottom:0.25rem;">
+                                    <RadzenText TextStyle="TextStyle.H6">@wh.Name</RadzenText>
+                                    <RadzenBadge Style="margin-left:0.5rem;" Text="@GetCardsCount(wh.Id).ToString()" />
+                                </RadzenStack>
+                                @if (cardsByWarehouse.TryGetValue(wh.Id, out var cards) && cards.Any())
+                                {
+                                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                                        @foreach (var card in cards)
+                                        {
+                                            <RadzenCard Style="@GetCardStyle(card.Id)">
+                                                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                                                    <RadzenText TextStyle="TextStyle.Subtitle2">@card.ProductName (@card.SKU)</RadzenText>
+                                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary);">Порог: @card.MinThreshold–@card.MaxThreshold @card.UnitOfMeasureSymbol</RadzenText>
+                                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary);">Остаток: @card.CurrentQuantity @card.UnitOfMeasureSymbol</RadzenText>
+                                                    @if (IsLowStock(card.Id))
+                                                    {
+                                                        <RadzenBadge Text="Ниже минимума" Style="background: var(--rz-danger); color: white;" />
+                                                    }
+                                                </RadzenStack>
+                                            </RadzenCard>
+                                        }
+
+                                        <AuthorizeView Roles="Admin,Manager">
+                                            <RadzenButton Text="Добавить карту" Icon="add" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Light" Click="@(() => OpenCreateCardDialog(wh))" />
+                                        </AuthorizeView>
+                                    </RadzenStack>
+                                }
+                                else
+                                {
+                                    <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.5rem" Style="padding:0.5rem;">
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary);">Карт нет</RadzenText>
+                                        <AuthorizeView Roles="Admin,Manager">
+                                            <RadzenButton Text="Добавить карту" Icon="add" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Light" Click="@(() => OpenCreateCardDialog(wh))" />
+                                        </AuthorizeView>
+                                    </RadzenStack>
+                                }
+                            </ChildContent>
+                        </RadzenCard>
+                    </div>
+                }
+            </RadzenStack>
+        </div>
+    }
+</RadzenStack>
+
+@code {
+    private List<WarehouseDto> warehouses = new();
+    private Dictionary<int, List<KanbanCardDto>> cardsByWarehouse = new();
+    private HashSet<int> lowStockCardIds = new();
+    private bool isLoading = true;
+    private string? filter;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        isLoading = true;
+        try
+        {
+            warehouses = await WarehouseService.GetAllWarehousesAsync();
+            warehouses = warehouses.Where(w => w.IsActive).OrderBy(w => w.Name).ToList();
+
+            // Load all Kanban cards grouped by warehouse
+            cardsByWarehouse.Clear();
+            foreach (var wh in warehouses)
+            {
+                var cards = await KanbanCardService.GetAllAsync(warehouseId: wh.Id);
+                cardsByWarehouse[wh.Id] = cards;
+            }
+
+            // Compute low-stock locally based on current quantities
+            lowStockCardIds = cardsByWarehouse
+                .SelectMany(kvp => kvp.Value)
+                .Where(c => c.CurrentQuantity <= c.MinThreshold)
+                .Select(c => c.Id)
+                .ToHashSet();
+        }
+        catch (Exception ex)
+        {
+            await ErrorHandlingService.HandleErrorAsync(ex, "Loading warehouses/kanban");
+            warehouses = new();
+            cardsByWarehouse.Clear();
+            lowStockCardIds.Clear();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private int GetCardsCount(int warehouseId) => cardsByWarehouse.TryGetValue(warehouseId, out var list) ? list.Count : 0;
+    private bool IsLowStock(int kanbanCardId) => lowStockCardIds.Contains(kanbanCardId);
+    private IEnumerable<WarehouseDto> GetFilteredWarehouses() => string.IsNullOrWhiteSpace(filter)
+        ? warehouses
+        : warehouses.Where(w => (w.Name ?? string.Empty).Contains(filter, StringComparison.OrdinalIgnoreCase));
+
+    private string GetCardStyle(int kanbanCardId)
+        => $"border-left:4px solid {(IsLowStock(kanbanCardId) ? "var(--rz-danger)" : "var(--rz-info)")}; padding:0.5rem;";
+
+    private async Task OpenCreateCardDialog(WarehouseDto? preselectedWarehouse = null)
+    {
+        var result = await DialogService.OpenAsync<CreateKanbanCardDialog>(
+            title: "Новая канбан-карта",
+            parameters: new Dictionary<string, object?>
+            {
+                [nameof(CreateKanbanCardDialog.PreselectedWarehouse)] = preselectedWarehouse
+            },
+            options: new Radzen.DialogOptions { Width = "600px", Height = "auto" }
+        );
+
+        if (result is bool created && created)
+        {
+            NotificationService.Notify(new Radzen.NotificationMessage
+            {
+                Severity = Radzen.NotificationSeverity.Success,
+                Summary = "Карта создана",
+                Duration = 3000
+            });
+            await LoadDataAsync();
+            StateHasChanged();
+        }
+    }
+}
+
+<style>
+    .kanban-column .rz-card {
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+</style>

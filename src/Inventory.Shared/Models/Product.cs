@@ -19,8 +19,6 @@ public class Product
     public string ProductModelName { get; set; } = string.Empty;
     public int ProductGroupId { get; set; }
     public string ProductGroupName { get; set; } = string.Empty;
-    public int MinStock { get; set; }
-    public int MaxStock { get; set; }
     public string? Note { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }

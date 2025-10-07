@@ -110,6 +110,7 @@ builder.Services.AddScoped<IProductModelService, WebProductModelApiService>();
 builder.Services.AddScoped<IWarehouseService, WebWarehouseApiService>();
 builder.Services.AddScoped<ILocationService, WebLocationApiService>();
 builder.Services.AddScoped<IDashboardService, WebDashboardApiService>();
+builder.Services.AddScoped<IKanbanCardService, WebKanbanCardApiService>();
 
 // Register logging and error handling services
 builder.Services.AddScoped<ILoggingService, LoggingService>();

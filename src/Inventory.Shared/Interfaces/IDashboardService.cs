@@ -7,4 +7,5 @@ public interface IDashboardService
     Task<DashboardStatsDto> GetDashboardStatsAsync();
     Task<RecentActivityDto> GetRecentActivityAsync();
     Task<List<LowStockProductDto>> GetLowStockProductsAsync();
+    Task<List<LowStockKanbanDto>> GetLowStockKanbanAsync();
 }

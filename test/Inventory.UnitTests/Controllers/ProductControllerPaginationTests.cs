@@ -98,8 +98,6 @@ public class ProductControllerPaginationTests : IDisposable
                 ManufacturerId = manufacturer1.Id,
                 ProductModelId = model1.Id,
                 ProductGroupId = group1.Id,
-                MinStock = 5,
-                MaxStock = 50,
                 CreatedAt = DateTime.UtcNow
             },
             new Product
@@ -114,8 +112,6 @@ public class ProductControllerPaginationTests : IDisposable
                 ManufacturerId = manufacturer2.Id,
                 ProductModelId = model2.Id,
                 ProductGroupId = group1.Id,
-                MinStock = 3,
-                MaxStock = 30,
                 CreatedAt = DateTime.UtcNow
             },
             new Product
@@ -130,8 +126,6 @@ public class ProductControllerPaginationTests : IDisposable
                 ManufacturerId = manufacturer2.Id,
                 ProductModelId = model2.Id,
                 ProductGroupId = group2.Id,
-                MinStock = 2,
-                MaxStock = 20,
                 CreatedAt = DateTime.UtcNow
             }
         };

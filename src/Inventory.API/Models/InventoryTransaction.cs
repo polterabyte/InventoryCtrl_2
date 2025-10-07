@@ -31,7 +31,6 @@ public class InventoryTransaction
     /// </summary>
     [JsonIgnore]
     public Request? Request { get; set; }
-    public decimal? UnitPrice { get; set; }
     public decimal? TotalPrice { get; set; }
     public string? Description { get; set; }
     public DateTime CreatedAt { get; set; }

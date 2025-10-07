@@ -3,6 +3,7 @@ using Inventory.Shared.Constants;
 using Inventory.Shared.DTOs;
 using Inventory.Shared.Interfaces;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
 
 namespace Inventory.Web.Client.Services;
 
@@ -51,7 +52,7 @@ public class WebRequestApiService : WebBaseApiService, IRequestApiService
     {
         try
         {
-            var endpoint = ApiEndpoints.RequestById.Replace("{id}", requestId.ToString());
+            var endpoint = ApiEndpoints.RequestById.Replace("{id}", requestId.ToString(CultureInfo.InvariantCulture));
             Logger.LogDebug("Getting request by ID: {RequestId}", requestId);
 
             return await GetAsync<RequestDetailsDto>(endpoint);
@@ -79,7 +80,7 @@ public class WebRequestApiService : WebBaseApiService, IRequestApiService
     {
         try
         {
-            var endpoint = ApiEndpoints.RequestById.Replace("{id}", requestId.ToString());
+            var endpoint = ApiEndpoints.RequestById.Replace("{id}", requestId.ToString(CultureInfo.InvariantCulture));
             Logger.LogDebug("Updating request: {RequestId}", requestId);
             return await PutAsync<RequestDetailsDto>(endpoint, updateRequest);
         }
@@ -93,7 +94,7 @@ public class WebRequestApiService : WebBaseApiService, IRequestApiService
     {
         try
         {
-            var endpoint = ApiEndpoints.RequestById.Replace("{id}", requestId.ToString());
+            var endpoint = ApiEndpoints.RequestById.Replace("{id}", requestId.ToString(CultureInfo.InvariantCulture));
             Logger.LogDebug("Deleting request: {RequestId}", requestId);
             return await DeleteAsync(endpoint);
         }
@@ -111,7 +112,7 @@ public class WebRequestApiService : WebBaseApiService, IRequestApiService
     {
         try
         {
-            var endpoint = ApiEndpoints.RequestSubmit.Replace("{id}", requestId.ToString());
+            var endpoint = ApiEndpoints.RequestSubmit.Replace("{id}", requestId.ToString(CultureInfo.InvariantCulture));
             var body = new { Comment = comment };
             Logger.LogDebug("Submitting request: {RequestId}", requestId);
             return await PostAsync<RequestDetailsDto>(endpoint, body);
@@ -126,7 +127,7 @@ public class WebRequestApiService : WebBaseApiService, IRequestApiService
     {
         try
         {
-            var endpoint = ApiEndpoints.RequestApprove.Replace("{id}", requestId.ToString());
+            var endpoint = ApiEndpoints.RequestApprove.Replace("{id}", requestId.ToString(CultureInfo.InvariantCulture));
             var body = new { Comment = comment };
             Logger.LogDebug("Approving request: {RequestId}", requestId);
             return await PostAsync<RequestDetailsDto>(endpoint, body);
@@ -141,7 +142,7 @@ public class WebRequestApiService : WebBaseApiService, IRequestApiService
     {
         try
         {
-            var endpoint = ApiEndpoints.RequestReceived.Replace("{id}", requestId.ToString());
+            var endpoint = ApiEndpoints.RequestReceived.Replace("{id}", requestId.ToString(CultureInfo.InvariantCulture));
             var body = new { Comment = comment };
             Logger.LogDebug("Marking items received for request: {RequestId}", requestId);
             return await PostAsync<RequestDetailsDto>(endpoint, body);
@@ -156,7 +157,7 @@ public class WebRequestApiService : WebBaseApiService, IRequestApiService
     {
         try
         {
-            var endpoint = ApiEndpoints.RequestInstalled.Replace("{id}", requestId.ToString());
+            var endpoint = ApiEndpoints.RequestInstalled.Replace("{id}", requestId.ToString(CultureInfo.InvariantCulture));
             var body = new { Comment = comment };
             Logger.LogDebug("Marking items installed for request: {RequestId}", requestId);
             return await PostAsync<RequestDetailsDto>(endpoint, body);
@@ -171,7 +172,7 @@ public class WebRequestApiService : WebBaseApiService, IRequestApiService
     {
         try
         {
-            var endpoint = ApiEndpoints.RequestComplete.Replace("{id}", requestId.ToString());
+            var endpoint = ApiEndpoints.RequestComplete.Replace("{id}", requestId.ToString(CultureInfo.InvariantCulture));
             var body = new { Comment = comment };
             Logger.LogDebug("Completing request: {RequestId}", requestId);
             return await PostAsync<RequestDetailsDto>(endpoint, body);
@@ -186,7 +187,7 @@ public class WebRequestApiService : WebBaseApiService, IRequestApiService
     {
         try
         {
-            var endpoint = ApiEndpoints.RequestCancel.Replace("{id}", requestId.ToString());
+            var endpoint = ApiEndpoints.RequestCancel.Replace("{id}", requestId.ToString(CultureInfo.InvariantCulture));
             var body = new { Comment = comment };
             Logger.LogDebug("Cancelling request: {RequestId}", requestId);
             return await PostAsync<RequestDetailsDto>(endpoint, body);
@@ -201,7 +202,7 @@ public class WebRequestApiService : WebBaseApiService, IRequestApiService
     {
         try
         {
-            var endpoint = ApiEndpoints.RequestReject.Replace("{id}", requestId.ToString());
+            var endpoint = ApiEndpoints.RequestReject.Replace("{id}", requestId.ToString(CultureInfo.InvariantCulture));
             var body = new { Comment = comment };
             Logger.LogDebug("Rejecting request: {RequestId}", requestId);
             return await PostAsync<RequestDetailsDto>(endpoint, body);
@@ -220,7 +221,7 @@ public class WebRequestApiService : WebBaseApiService, IRequestApiService
     {
         try
         {
-            var endpoint = ApiEndpoints.RequestItems.Replace("{id}", requestId.ToString());
+            var endpoint = ApiEndpoints.RequestItems.Replace("{id}", requestId.ToString(CultureInfo.InvariantCulture));
             Logger.LogDebug("Adding item to request: {RequestId}, ProductId: {ProductId}", requestId, addItemRequest.ProductId);
             return await PostAsync<RequestDetailsDto>(endpoint, addItemRequest);
         }
@@ -234,7 +235,7 @@ public class WebRequestApiService : WebBaseApiService, IRequestApiService
     {
         try
         {
-            var endpoint = $"{ApiEndpoints.RequestItems.Replace("{id}", requestId.ToString())}/{itemId}";
+            var endpoint = $"{ApiEndpoints.RequestItems.Replace("{id}", requestId.ToString(CultureInfo.InvariantCulture))}/{itemId}";
             Logger.LogDebug("Removing item from request: {RequestId}, ItemId: {ItemId}", requestId, itemId);
             return await DeleteAsync(endpoint);
         }

@@ -1,3 +1,14 @@
 <Project>
-  <!-- Port configuration removed - using JavaScript for dynamic API URL determination -->
+  <!-- Common build/analyzer settings for all projects -->
+  <PropertyGroup>
+    <!-- Enable Roslyn analyzers and use latest recommended rules for .NET 8 -->
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+
+    <!-- Do not fail builds on analyzer warnings; we want visibility first -->
+    <CodeAnalysisTreatWarningsAsErrors>false</CodeAnalysisTreatWarningsAsErrors>
+
+    <!-- Avoid XML doc warnings flood unless explicitly enabled per project -->
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
 </Project>
