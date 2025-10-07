@@ -8,13 +8,10 @@ public class Manufacturer
     public string? ContactInfo { get; set; }
     public string? Website { get; set; }
     public bool IsActive { get; set; } = true;
-    
-    // Связь с Location (обязательная)
-    public int LocationId { get; set; }
-    public Location Location { get; set; } = null!;
-    
+
     public ICollection<ProductModel> Models { get; set; } = new List<ProductModel>();
     public ICollection<Product> Products { get; set; } = new List<Product>();
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 }
+

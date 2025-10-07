@@ -19,6 +19,7 @@ public class ApiErrorHandler : IApiErrorHandler
     private readonly ITokenManagementService _tokenManagementService;
     private readonly NavigationManager _navigationManager;
     private readonly NotificationService _notificationService;
+    private static readonly JsonSerializerOptions DefaultSerializerOptions = CreateSerializerOptions();
 
     public ApiErrorHandler(
         ILogger<ApiErrorHandler> logger,
@@ -42,7 +43,7 @@ public class ApiErrorHandler : IApiErrorHandler
             }
 
             var responseContent = await response.Content.ReadAsStringAsync();
-            var serializerOptions = CreateSerializerOptions();
+            var serializerOptions = DefaultSerializerOptions;
 
             if (string.IsNullOrWhiteSpace(responseContent))
             {
@@ -112,7 +113,7 @@ public class ApiErrorHandler : IApiErrorHandler
 
             if (response.IsSuccessStatusCode)
             {
-                var serializerOptions = CreateSerializerOptions();
+                var serializerOptions = DefaultSerializerOptions;
 
                 try
                 {

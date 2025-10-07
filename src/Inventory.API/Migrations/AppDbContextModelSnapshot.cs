@@ -343,9 +343,6 @@ namespace Inventory.API.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<int>("LocationId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -357,8 +354,6 @@ namespace Inventory.API.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("LocationId");
 
                     b.ToTable("Manufacturers");
                 });
@@ -1655,17 +1650,6 @@ namespace Inventory.API.Migrations
                         .HasForeignKey("ParentLocationId");
 
                     b.Navigation("ParentLocation");
-                });
-
-            modelBuilder.Entity("Inventory.API.Models.Manufacturer", b =>
-                {
-                    b.HasOne("Inventory.API.Models.Location", "Location")
-                        .WithMany()
-                        .HasForeignKey("LocationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Location");
                 });
 
             modelBuilder.Entity("Inventory.API.Models.Product", b =>

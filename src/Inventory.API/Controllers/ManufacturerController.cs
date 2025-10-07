@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Inventory.API.Models;
 using Inventory.Shared.DTOs;
-using Serilog;
 
 namespace Inventory.API.Controllers;
 
@@ -12,35 +11,12 @@ namespace Inventory.API.Controllers;
 [Authorize]
 public class ManufacturerController(AppDbContext context, ILogger<ManufacturerController> logger) : ControllerBase
 {
-    /// <summary>
-    /// Получает полный путь локации (например: "Склад А > Секция 1 > Полка 3")
-    /// </summary>
-    private async Task<string> GetLocationFullPathAsync(int locationId)
-    {
-        var location = await context.Locations
-            .Include(l => l.ParentLocation)
-            .FirstOrDefaultAsync(l => l.Id == locationId);
-        
-        if (location == null) return string.Empty;
-        
-        var pathParts = new List<string>();
-        var current = location;
-        
-        while (current != null)
-        {
-            pathParts.Insert(0, current.Name);
-            current = current.ParentLocation;
-        }
-        
-        return string.Join(" > ", pathParts);
-    }
     [HttpGet]
     public async Task<ActionResult<ApiResponse<List<ManufacturerDto>>>> GetManufacturers()
     {
         try
         {
             var manufacturers = await context.Manufacturers
-                .Include(m => m.Location)
                 .Select(m => new ManufacturerDto
                 {
                     Id = m.Id,
@@ -49,19 +25,10 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
                     ContactInfo = m.ContactInfo,
                     Website = m.Website,
                     IsActive = m.IsActive,
-                    LocationId = m.LocationId,
-                    LocationName = m.Location.Name,
-                    LocationFullPath = "", // Будет заполнено ниже
                     CreatedAt = m.CreatedAt,
                     UpdatedAt = m.UpdatedAt
                 })
                 .ToListAsync();
-
-            // Заполняем полные пути локаций
-            foreach (var manufacturer in manufacturers)
-            {
-                manufacturer.LocationFullPath = await GetLocationFullPathAsync(manufacturer.LocationId);
-            }
 
             return Ok(ApiResponse<List<ManufacturerDto>>.SuccessResult(manufacturers));
         }
@@ -78,9 +45,8 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
         try
         {
             var manufacturer = await context.Manufacturers
-                .Include(m => m.Location)
                 .FirstOrDefaultAsync(m => m.Id == id);
-                
+
             if (manufacturer == null)
             {
                 return NotFound(ApiResponse<ManufacturerDto>.ErrorResult("Manufacturer not found"));
@@ -94,9 +60,6 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
                 ContactInfo = manufacturer.ContactInfo,
                 Website = manufacturer.Website,
                 IsActive = manufacturer.IsActive,
-                LocationId = manufacturer.LocationId,
-                LocationName = manufacturer.Location.Name,
-                LocationFullPath = await GetLocationFullPathAsync(manufacturer.LocationId),
                 CreatedAt = manufacturer.CreatedAt,
                 UpdatedAt = manufacturer.UpdatedAt
             };
@@ -122,7 +85,6 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
                 return BadRequest(ApiResponse<ManufacturerDto>.ErrorResult("Invalid model state", errors));
             }
 
-            // Check if manufacturer already exists
             var existingManufacturer = await context.Manufacturers
                 .FirstOrDefaultAsync(m => m.Name == request.Name);
 
@@ -131,30 +93,21 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
                 return BadRequest(ApiResponse<ManufacturerDto>.ErrorResult("Manufacturer with this name already exists"));
             }
 
-            // Check if location exists
-            var location = await context.Locations
-                .FirstOrDefaultAsync(l => l.Id == request.LocationId && l.IsActive);
-
-            if (location == null)
-            {
-                return BadRequest(ApiResponse<ManufacturerDto>.ErrorResult("Location not found or inactive"));
-            }
-
             var manufacturer = new Manufacturer
             {
                 Name = request.Name,
                 Description = request.Description,
                 ContactInfo = request.ContactInfo,
                 Website = request.Website,
-                LocationId = request.LocationId,
-                CreatedAt = DateTime.UtcNow
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = null
             };
 
             context.Manufacturers.Add(manufacturer);
             await context.SaveChangesAsync();
 
-            logger.LogInformation("Manufacturer created: {ManufacturerName} with ID {ManufacturerId} at Location {LocationId}", 
-                manufacturer.Name, manufacturer.Id, manufacturer.LocationId);
+            logger.LogInformation("Manufacturer created: {ManufacturerName} with ID {ManufacturerId}", manufacturer.Name, manufacturer.Id);
 
             var manufacturerDto = new ManufacturerDto
             {
@@ -164,9 +117,6 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
                 ContactInfo = manufacturer.ContactInfo,
                 Website = manufacturer.Website,
                 IsActive = manufacturer.IsActive,
-                LocationId = manufacturer.LocationId,
-                LocationName = location.Name,
-                LocationFullPath = await GetLocationFullPathAsync(manufacturer.LocationId),
                 CreatedAt = manufacturer.CreatedAt,
                 UpdatedAt = manufacturer.UpdatedAt
             };
@@ -193,15 +143,13 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
             }
 
             var manufacturer = await context.Manufacturers
-                .Include(m => m.Location)
                 .FirstOrDefaultAsync(m => m.Id == id);
-                
+
             if (manufacturer == null)
             {
                 return NotFound(ApiResponse<ManufacturerDto>.ErrorResult("Manufacturer not found"));
             }
 
-            // Check if another manufacturer with the same name exists
             var existingManufacturer = await context.Manufacturers
                 .FirstOrDefaultAsync(m => m.Name == request.Name && m.Id != id);
 
@@ -210,27 +158,16 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
                 return BadRequest(ApiResponse<ManufacturerDto>.ErrorResult("Manufacturer with this name already exists"));
             }
 
-            // Check if location exists
-            var location = await context.Locations
-                .FirstOrDefaultAsync(l => l.Id == request.LocationId && l.IsActive);
-
-            if (location == null)
-            {
-                return BadRequest(ApiResponse<ManufacturerDto>.ErrorResult("Location not found or inactive"));
-            }
-
             manufacturer.Name = request.Name;
             manufacturer.Description = request.Description;
             manufacturer.ContactInfo = request.ContactInfo;
             manufacturer.Website = request.Website;
             manufacturer.IsActive = request.IsActive;
-            manufacturer.LocationId = request.LocationId;
             manufacturer.UpdatedAt = DateTime.UtcNow;
 
             await context.SaveChangesAsync();
 
-            logger.LogInformation("Manufacturer updated: {ManufacturerName} with ID {ManufacturerId} at Location {LocationId}", 
-                manufacturer.Name, manufacturer.Id, manufacturer.LocationId);
+            logger.LogInformation("Manufacturer updated: {ManufacturerName} with ID {ManufacturerId}", manufacturer.Name, manufacturer.Id);
 
             var manufacturerDto = new ManufacturerDto
             {
@@ -240,9 +177,6 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
                 ContactInfo = manufacturer.ContactInfo,
                 Website = manufacturer.Website,
                 IsActive = manufacturer.IsActive,
-                LocationId = manufacturer.LocationId,
-                LocationName = location.Name,
-                LocationFullPath = await GetLocationFullPathAsync(manufacturer.LocationId),
                 CreatedAt = manufacturer.CreatedAt,
                 UpdatedAt = manufacturer.UpdatedAt
             };
@@ -268,7 +202,6 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
                 return NotFound(ApiResponse<object>.ErrorResult("Manufacturer not found"));
             }
 
-            // Check if manufacturer has products
             var hasProducts = await context.Products
                 .AnyAsync(p => p.ManufacturerId == id && p.IsActive);
 
@@ -291,3 +224,4 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
         }
     }
 }
+

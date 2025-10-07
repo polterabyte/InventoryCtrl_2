@@ -9,6 +9,7 @@ namespace Inventory.Web.Client.Services;
 
 public class UserManagementService : IUserManagementService
 {
+    private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
     private readonly HttpClient _httpClient;
     private readonly IAuthenticationService _authService;
     private readonly IJSRuntime _jsRuntime;
@@ -70,10 +71,7 @@ public class UserManagementService : IUserManagementService
                 
                 try
                 {
-                    return JsonSerializer.Deserialize<PagedApiResponse<UserDto>>(content, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    });
+                    return JsonSerializer.Deserialize<PagedApiResponse<UserDto>>(content, JsonOptions);
                 }
                 catch (JsonException ex)
                 {
@@ -104,10 +102,7 @@ public class UserManagementService : IUserManagementService
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
-                return JsonSerializer.Deserialize<ApiResponse<UserDto>>(content, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
+                return JsonSerializer.Deserialize<ApiResponse<UserDto>>(content, JsonOptions);
             }
 
             _logger.LogError("Error getting user: {StatusCode}", response.StatusCode);
@@ -134,10 +129,7 @@ public class UserManagementService : IUserManagementService
             var response = await client.PostAsync(fullUrl, content);
 
             var responseContent = await response.Content.ReadAsStringAsync();
-            var result = JsonSerializer.Deserialize<ApiResponse<UserDto>>(responseContent, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            var result = JsonSerializer.Deserialize<ApiResponse<UserDto>>(responseContent, JsonOptions);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -169,10 +161,7 @@ public class UserManagementService : IUserManagementService
             var response = await client.PutAsync(fullUrl, content);
 
             var responseContent = await response.Content.ReadAsStringAsync();
-            var result = JsonSerializer.Deserialize<ApiResponse<UserDto>>(responseContent, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            var result = JsonSerializer.Deserialize<ApiResponse<UserDto>>(responseContent, JsonOptions);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -201,10 +190,7 @@ public class UserManagementService : IUserManagementService
             var response = await client.DeleteAsync(fullUrl);
 
             var responseContent = await response.Content.ReadAsStringAsync();
-            var result = JsonSerializer.Deserialize<ApiResponse<object>>(responseContent, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            var result = JsonSerializer.Deserialize<ApiResponse<object>>(responseContent, JsonOptions);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -236,10 +222,7 @@ public class UserManagementService : IUserManagementService
             var response = await client.PostAsync(fullUrl, content);
 
             var responseContent = await response.Content.ReadAsStringAsync();
-            var result = JsonSerializer.Deserialize<ApiResponse<object>>(responseContent, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            var result = JsonSerializer.Deserialize<ApiResponse<object>>(responseContent, JsonOptions);
 
             if (!response.IsSuccessStatusCode)
             {

@@ -2,6 +2,7 @@ using Inventory.Shared.Constants;
 using Inventory.Shared.DTOs;
 using Inventory.Shared.Interfaces;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
 using System.Net.Http.Json;
 
 namespace Inventory.Shared.Services;
@@ -20,7 +21,7 @@ public class NotificationApiService : BaseApiService, INotificationApiService
 
     public async Task<ApiResponse<NotificationDto>> GetNotificationAsync(int notificationId)
     {
-        return await GetAsync<NotificationDto>(ApiEndpoints.NotificationById.Replace("{id}", notificationId.ToString()));
+        return await GetAsync<NotificationDto>(ApiEndpoints.NotificationById.Replace("{id}", notificationId.ToString(CultureInfo.InvariantCulture)));
     }
 
     public async Task<ApiResponse<NotificationDto>> CreateNotificationAsync(CreateNotificationRequest request)
@@ -30,7 +31,7 @@ public class NotificationApiService : BaseApiService, INotificationApiService
 
     public async Task<ApiResponse<bool>> MarkAsReadAsync(int notificationId)
     {
-        return await PutAsync<bool>($"{ApiEndpoints.NotificationById.Replace("{id}", notificationId.ToString())}/read", new { });
+        return await PutAsync<bool>($"{ApiEndpoints.NotificationById.Replace("{id}", notificationId.ToString(CultureInfo.InvariantCulture))}/read", new { });
     }
 
     public async Task<ApiResponse<bool>> MarkAllAsReadAsync()
@@ -40,12 +41,12 @@ public class NotificationApiService : BaseApiService, INotificationApiService
 
     public async Task<ApiResponse<bool>> ArchiveNotificationAsync(int notificationId)
     {
-        return await PutAsync<bool>($"{ApiEndpoints.NotificationById.Replace("{id}", notificationId.ToString())}/archive", new { });
+        return await PutAsync<bool>($"{ApiEndpoints.NotificationById.Replace("{id}", notificationId.ToString(CultureInfo.InvariantCulture))}/archive", new { });
     }
 
     public async Task<ApiResponse<bool>> DeleteNotificationAsync(int notificationId)
     {
-        return await DeleteAsync(ApiEndpoints.NotificationById.Replace("{id}", notificationId.ToString()));
+        return await DeleteAsync(ApiEndpoints.NotificationById.Replace("{id}", notificationId.ToString(CultureInfo.InvariantCulture)));
     }
 
     public async Task<ApiResponse<NotificationStatsDto>> GetNotificationStatsAsync()
@@ -80,17 +81,17 @@ public class NotificationApiService : BaseApiService, INotificationApiService
 
     public async Task<ApiResponse<NotificationRuleDto>> UpdateNotificationRuleAsync(int ruleId, CreateNotificationRuleRequest request)
     {
-        return await PutAsync<NotificationRuleDto>($"{ApiEndpoints.NotificationRuleById.Replace("{id}", ruleId.ToString())}", request);
+        return await PutAsync<NotificationRuleDto>($"{ApiEndpoints.NotificationRuleById.Replace("{id}", ruleId.ToString(CultureInfo.InvariantCulture))}", request);
     }
 
     public async Task<ApiResponse<bool>> DeleteNotificationRuleAsync(int ruleId)
     {
-        return await DeleteAsync(ApiEndpoints.NotificationRuleById.Replace("{id}", ruleId.ToString()));
+        return await DeleteAsync(ApiEndpoints.NotificationRuleById.Replace("{id}", ruleId.ToString(CultureInfo.InvariantCulture)));
     }
 
     public async Task<ApiResponse<bool>> ToggleNotificationRuleAsync(int ruleId)
     {
-        return await PutAsync<bool>($"{ApiEndpoints.NotificationRuleById.Replace("{id}", ruleId.ToString())}/toggle", new { });
+        return await PutAsync<bool>($"{ApiEndpoints.NotificationRuleById.Replace("{id}", ruleId.ToString(CultureInfo.InvariantCulture))}/toggle", new { });
     }
 }
 

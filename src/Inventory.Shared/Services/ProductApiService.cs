@@ -2,6 +2,7 @@ using Inventory.Shared.Constants;
 using Inventory.Shared.DTOs;
 using Inventory.Shared.Interfaces;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
 
 namespace Inventory.Shared.Services;
 
@@ -31,7 +32,7 @@ public class ProductApiService(HttpClient httpClient, ILogger<ProductApiService>
 
     public async Task<ProductDto?> GetProductByIdAsync(int id)
     {
-        var endpoint = ApiEndpoints.ProductById.Replace("{id}", id.ToString());
+        var endpoint = ApiEndpoints.ProductById.Replace("{id}", id.ToString(CultureInfo.InvariantCulture));
         var response = await GetAsync<ProductDto>(endpoint);
         return response.Data;
     }
@@ -51,28 +52,28 @@ public class ProductApiService(HttpClient httpClient, ILogger<ProductApiService>
 
     public async Task<ProductDto?> UpdateProductAsync(int id, UpdateProductDto updateProductDto)
     {
-        var endpoint = ApiEndpoints.ProductById.Replace("{id}", id.ToString());
+        var endpoint = ApiEndpoints.ProductById.Replace("{id}", id.ToString(CultureInfo.InvariantCulture));
         var response = await PutAsync<ProductDto>(endpoint, updateProductDto);
         return response.Data;
     }
 
     public async Task<bool> DeleteProductAsync(int id)
     {
-        var endpoint = ApiEndpoints.ProductById.Replace("{id}", id.ToString());
+        var endpoint = ApiEndpoints.ProductById.Replace("{id}", id.ToString(CultureInfo.InvariantCulture));
         var response = await DeleteAsync(endpoint);
         return response.Success;
     }
 
     public async Task<bool> AdjustStockAsync(ProductStockAdjustmentDto adjustmentDto)
     {
-        var endpoint = ApiEndpoints.ProductStockAdjust.Replace("{id}", adjustmentDto.ProductId.ToString());
+        var endpoint = ApiEndpoints.ProductStockAdjust.Replace("{id}", adjustmentDto.ProductId.ToString(CultureInfo.InvariantCulture));
         var response = await PostAsync<bool>(endpoint, adjustmentDto);
         return response.Data;
     }
 
     public async Task<List<ProductDto>> GetProductsByCategoryAsync(int categoryId)
     {
-        var endpoint = ApiEndpoints.ProductsByCategory.Replace("{categoryId}", categoryId.ToString());
+        var endpoint = ApiEndpoints.ProductsByCategory.Replace("{categoryId}", categoryId.ToString(CultureInfo.InvariantCulture));
         var response = await GetPagedAsync<ProductDto>(endpoint);
         return response.Data?.Items ?? new List<ProductDto>();
     }
