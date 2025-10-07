@@ -372,14 +372,12 @@ public abstract class IntegrationTestBase : IClassFixture<WebApplicationFactory<
         {
             var appleManufacturer = new Manufacturer
             {
-                Name = "Apple",
-                LocationId = locationA.Id
+                Name = "Apple"
             };
 
             var samsungManufacturer = new Manufacturer
             {
-                Name = "Samsung",
-                LocationId = locationB.Id
+                Name = "Samsung"
             };
 
             Context.Manufacturers.AddRange(appleManufacturer, samsungManufacturer);

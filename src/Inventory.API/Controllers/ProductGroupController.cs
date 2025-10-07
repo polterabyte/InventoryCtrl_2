@@ -37,8 +37,9 @@ public class ProductGroupController(AppDbContext context, ILogger<ProductGroupCo
             // Get total count
             var totalCount = await query.CountAsync();
 
-            // Apply pagination
+            // Apply pagination with explicit Include for navigation properties
             var productGroups = await query
+                .Include(pg => pg.ParentProductGroup)
                 .OrderBy(pg => pg.Name)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -77,6 +78,7 @@ public class ProductGroupController(AppDbContext context, ILogger<ProductGroupCo
         try
         {
             var productGroups = await context.ProductGroups
+                .Include(pg => pg.ParentProductGroup)
                 .OrderBy(pg => pg.Name)
                 .Select(pg => new ProductGroupDto
                 {
@@ -89,6 +91,8 @@ public class ProductGroupController(AppDbContext context, ILogger<ProductGroupCo
                     UpdatedAt = pg.UpdatedAt
                 })
                 .ToListAsync();
+
+            logger.LogInformation("Retrieved {Count} product groups from database", productGroups.Count);
 
             return Ok(ApiResponse<List<ProductGroupDto>>.SuccessResult(productGroups));
         }
@@ -105,6 +109,7 @@ public class ProductGroupController(AppDbContext context, ILogger<ProductGroupCo
         try
         {
             var productGroup = await context.ProductGroups
+                .Include(pg => pg.ParentProductGroup)
                 .Where(pg => pg.Id == id)
                 .Select(pg => new ProductGroupDto
                 {
@@ -166,6 +171,7 @@ public class ProductGroupController(AppDbContext context, ILogger<ProductGroupCo
             await context.SaveChangesAsync();
 
             var productGroupDto = await context.ProductGroups
+                .Include(pg => pg.ParentProductGroup)
                 .Where(pg => pg.Id == productGroup.Id)
                 .Select(pg => new ProductGroupDto
                 {
@@ -252,6 +258,7 @@ public class ProductGroupController(AppDbContext context, ILogger<ProductGroupCo
             await context.SaveChangesAsync();
 
             var productGroupDto = await context.ProductGroups
+                .Include(pg => pg.ParentProductGroup)
                 .Where(pg => pg.Id == productGroup.Id)
                 .Select(pg => new ProductGroupDto
                 {

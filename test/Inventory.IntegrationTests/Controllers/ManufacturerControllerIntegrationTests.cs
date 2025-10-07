@@ -98,8 +98,7 @@ public class ManufacturerControllerIntegrationTests : IntegrationTestBase
         await InitializeAsync();
         await SetAuthHeaderAsync();
         
-        var location = await Context.Locations.FirstAsync();
-        var request = new CreateManufacturerDto { Name = "Microsoft", LocationId = location.Id };
+        var request = new CreateManufacturerDto { Name = "Microsoft" };
 
         // Act
         var response = await Client.PostAsJsonAsync("/api/manufacturer", request);
@@ -124,8 +123,7 @@ public class ManufacturerControllerIntegrationTests : IntegrationTestBase
         await InitializeAsync();
         await SetAuthHeaderAsync();
         
-        var location = await Context.Locations.FirstAsync();
-        var request = new CreateManufacturerDto { Name = "Apple", LocationId = location.Id }; // Duplicate name
+        var request = new CreateManufacturerDto { Name = "Apple" }; // Duplicate name
 
         // Act
         var response = await Client.PostAsJsonAsync("/api/manufacturer", request);
@@ -146,7 +144,7 @@ public class ManufacturerControllerIntegrationTests : IntegrationTestBase
         await SetAuthHeaderAsync();
         
         var manufacturer = await Context.Manufacturers.FirstAsync();
-        var request = new UpdateManufacturerDto { Name = "Updated Apple", LocationId = manufacturer.LocationId };
+        var request = new UpdateManufacturerDto { Name = "Updated Apple" };
 
         // Act
         var response = await Client.PutAsJsonAsync($"/api/manufacturer/{manufacturer.Id}", request);
@@ -172,8 +170,7 @@ public class ManufacturerControllerIntegrationTests : IntegrationTestBase
         await InitializeAsync();
         await SetAuthHeaderAsync();
         
-        var location = await Context.Locations.FirstAsync();
-        var request = new UpdateManufacturerDto { Name = "Updated Name", LocationId = location.Id };
+        var request = new UpdateManufacturerDto { Name = "Updated Name" };
 
         // Act
         var response = await Client.PutAsJsonAsync("/api/manufacturer/999", request);

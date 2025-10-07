@@ -4,6 +4,9 @@ public static class ApiEndpoints
 {
     public const string BaseUrl = "/api";
     
+    // Health endpoint
+    public const string Health = "/health";
+    
     // Auth endpoints
     public const string Login = "/auth/login";
     public const string Register = "/auth/register";

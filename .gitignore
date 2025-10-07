@@ -154,7 +154,7 @@ env.*
 # Added by Claude Task Master
 .windsurfrules
 .ai-temp/
-
+artifacts/
 
 # Task files
 # tasks.json
