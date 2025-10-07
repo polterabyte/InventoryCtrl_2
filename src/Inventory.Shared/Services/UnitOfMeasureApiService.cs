@@ -2,6 +2,7 @@ using Inventory.Shared.DTOs;
 using Inventory.Shared.Interfaces;
 using Inventory.Shared.Constants;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
 
 namespace Inventory.Shared.Services;
 
@@ -28,7 +29,7 @@ public class UnitOfMeasureApiService(HttpClient httpClient, ILogger<UnitOfMeasur
 
     public async Task<ApiResponse<UnitOfMeasureDto>> GetByIdAsync(int id)
     {
-        var endpoint = ApiEndpoints.UnitOfMeasureById.Replace("{id}", id.ToString());
+        var endpoint = ApiEndpoints.UnitOfMeasureById.Replace("{id}", id.ToString(CultureInfo.InvariantCulture));
         return await GetAsync<UnitOfMeasureDto>(endpoint);
     }
 
@@ -39,13 +40,13 @@ public class UnitOfMeasureApiService(HttpClient httpClient, ILogger<UnitOfMeasur
 
     public async Task<ApiResponse<UnitOfMeasureDto>> UpdateAsync(int id, UpdateUnitOfMeasureDto updateDto)
     {
-        var endpoint = ApiEndpoints.UnitOfMeasureById.Replace("{id}", id.ToString());
+        var endpoint = ApiEndpoints.UnitOfMeasureById.Replace("{id}", id.ToString(CultureInfo.InvariantCulture));
         return await PutAsync<UnitOfMeasureDto>(endpoint, updateDto);
     }
 
     public async Task<ApiResponse<object>> DeleteAsync(int id)
     {
-        var endpoint = ApiEndpoints.UnitOfMeasureById.Replace("{id}", id.ToString());
+        var endpoint = ApiEndpoints.UnitOfMeasureById.Replace("{id}", id.ToString(CultureInfo.InvariantCulture));
         var response = await base.DeleteAsync(endpoint);
         return new ApiResponse<object>
         {

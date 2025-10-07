@@ -1,0 +1,70 @@
+root = true
+
+# C# code style and analyzer configuration
+[*.cs]
+dotnet_analyzer_diagnostic.severity = warning
+
+# Make style/documentation less noisy by default
+dotnet_analyzer_diagnostic.category-Style.severity = suggestion
+dotnet_analyzer_diagnostic.category-Documentation.severity = suggestion
+
+# var usage: use var when type is obvious; allow for built-in types
+csharp_style_var_when_type_is_apparent = true:warning
+csharp_style_var_for_built_in_types = true:warning
+csharp_style_var_elsewhere = true:warning
+
+# Braces and formatting
+csharp_prefer_braces = true:warning
+csharp_style_namespace_declarations = file_scoped:suggestion
+dotnet_style_qualification_for_field = false:suggestion
+dotnet_style_qualification_for_property = false:suggestion
+dotnet_style_qualification_for_method = false:suggestion
+dotnet_style_qualification_for_event = false:suggestion
+
+# Require explicit accessibility modifiers (e.g., always write 'private')
+dotnet_style_require_accessibility_modifiers = always:warning
+
+# Modern C# preferences
+csharp_style_pattern_matching_over_is_with_cast = true:suggestion
+csharp_style_prefer_switch_expression = true:suggestion
+
+# Naming conventions aligned with project guidelines
+
+# Interfaces start with 'I'
+dotnet_naming_rule.interfaces_should_start_with_I.severity = warning
+dotnet_naming_rule.interfaces_should_start_with_I.symbols  = interfaces
+dotnet_naming_rule.interfaces_should_start_with_I.style    = prefix_I
+
+dotnet_naming_symbols.interfaces.applicable_kinds = interface
+dotnet_naming_symbols.interfaces.applicable_accessibilities = *
+
+dotnet_naming_style.prefix_I.required_prefix = I
+dotnet_naming_style.prefix_I.capitalization = pascal_case
+
+# Types use PascalCase
+dotnet_naming_rule.types_pascal_case.severity = suggestion
+dotnet_naming_rule.types_pascal_case.symbols  = types
+dotnet_naming_rule.types_pascal_case.style    = pascal_case_style
+
+dotnet_naming_symbols.types.applicable_kinds = class, struct, enum, delegate
+dotnet_naming_symbols.types.applicable_accessibilities = *
+
+dotnet_naming_style.pascal_case_style.capitalization = pascal_case
+
+# Parameters use camelCase
+dotnet_naming_rule.parameters_camel_case.severity = suggestion
+dotnet_naming_rule.parameters_camel_case.symbols  = parameters
+dotnet_naming_rule.parameters_camel_case.style    = camel_case_style
+
+dotnet_naming_symbols.parameters.applicable_kinds = parameter
+dotnet_naming_symbols.parameters.applicable_accessibilities = *
+
+dotnet_naming_style.camel_case_style.capitalization = camel_case
+
+[test/**/*.cs]
+# Allow underscores in test method names
+dotnet_diagnostic.CA1707.severity = none
+
+[src/Inventory.Shared/**/*.cs]
+# Suppress keyword-conflict naming rule for the Shared assembly
+dotnet_diagnostic.CA1716.severity = none

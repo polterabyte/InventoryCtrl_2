@@ -10,6 +10,7 @@ public class NotificationClientService : INotificationService
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<NotificationClientService> _logger;
+    private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
     public NotificationClientService(HttpClient httpClient, ILogger<NotificationClientService> logger)
     {
@@ -23,7 +24,7 @@ public class NotificationClientService : INotificationService
         {
             var response = await _httpClient.PostAsJsonAsync("/api/notifications", request);
             var content = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<ApiResponse<NotificationDto>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ApiResponse<NotificationDto> { Success = false };
+            return JsonSerializer.Deserialize<ApiResponse<NotificationDto>>(content, JsonOptions) ?? new ApiResponse<NotificationDto> { Success = false };
         }
         catch (Exception ex)
         {
@@ -49,7 +50,7 @@ public class NotificationClientService : INotificationService
                 };
             }
             
-            return JsonSerializer.Deserialize<ApiResponse<List<NotificationDto>>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ApiResponse<List<NotificationDto>> { Success = false };
+            return JsonSerializer.Deserialize<ApiResponse<List<NotificationDto>>>(content, JsonOptions) ?? new ApiResponse<List<NotificationDto>> { Success = false };
         }
         catch (Exception ex)
         {
@@ -64,7 +65,7 @@ public class NotificationClientService : INotificationService
         {
             var response = await _httpClient.GetAsync($"/api/notifications/{notificationId}");
             var content = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<ApiResponse<NotificationDto>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ApiResponse<NotificationDto> { Success = false };
+            return JsonSerializer.Deserialize<ApiResponse<NotificationDto>>(content, JsonOptions) ?? new ApiResponse<NotificationDto> { Success = false };
         }
         catch (Exception ex)
         {
@@ -79,7 +80,7 @@ public class NotificationClientService : INotificationService
         {
             var response = await _httpClient.PutAsync($"/api/notifications/{notificationId}/read", null);
             var content = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<ApiResponse<bool>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ApiResponse<bool> { Success = false };
+            return JsonSerializer.Deserialize<ApiResponse<bool>>(content, JsonOptions) ?? new ApiResponse<bool> { Success = false };
         }
         catch (Exception ex)
         {
@@ -94,7 +95,7 @@ public class NotificationClientService : INotificationService
         {
             var response = await _httpClient.PutAsync($"/api/notifications/mark-all-read?userId={userId}", null);
             var content = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<ApiResponse<bool>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ApiResponse<bool> { Success = false };
+            return JsonSerializer.Deserialize<ApiResponse<bool>>(content, JsonOptions) ?? new ApiResponse<bool> { Success = false };
         }
         catch (Exception ex)
         {
@@ -109,7 +110,7 @@ public class NotificationClientService : INotificationService
         {
             var response = await _httpClient.PutAsync($"/api/notifications/{notificationId}/archive", null);
             var content = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<ApiResponse<bool>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ApiResponse<bool> { Success = false };
+            return JsonSerializer.Deserialize<ApiResponse<bool>>(content, JsonOptions) ?? new ApiResponse<bool> { Success = false };
         }
         catch (Exception ex)
         {
@@ -124,7 +125,7 @@ public class NotificationClientService : INotificationService
         {
             var response = await _httpClient.DeleteAsync($"/api/notifications/{notificationId}");
             var content = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<ApiResponse<bool>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ApiResponse<bool> { Success = false };
+            return JsonSerializer.Deserialize<ApiResponse<bool>>(content, JsonOptions) ?? new ApiResponse<bool> { Success = false };
         }
         catch (Exception ex)
         {
@@ -150,7 +151,7 @@ public class NotificationClientService : INotificationService
                 };
             }
             
-            return JsonSerializer.Deserialize<ApiResponse<NotificationStatsDto>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ApiResponse<NotificationStatsDto> { Success = false };
+            return JsonSerializer.Deserialize<ApiResponse<NotificationStatsDto>>(content, JsonOptions) ?? new ApiResponse<NotificationStatsDto> { Success = false };
         }
         catch (Exception ex)
         {
@@ -165,7 +166,7 @@ public class NotificationClientService : INotificationService
         {
             var response = await _httpClient.GetAsync("/api/notifications/preferences");
             var content = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<ApiResponse<List<NotificationPreferenceDto>>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ApiResponse<List<NotificationPreferenceDto>> { Success = false };
+            return JsonSerializer.Deserialize<ApiResponse<List<NotificationPreferenceDto>>>(content, JsonOptions) ?? new ApiResponse<List<NotificationPreferenceDto>> { Success = false };
         }
         catch (Exception ex)
         {
@@ -180,7 +181,7 @@ public class NotificationClientService : INotificationService
         {
             var response = await _httpClient.PutAsJsonAsync("/api/notifications/preferences", request);
             var content = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<ApiResponse<NotificationPreferenceDto>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ApiResponse<NotificationPreferenceDto> { Success = false };
+            return JsonSerializer.Deserialize<ApiResponse<NotificationPreferenceDto>>(content, JsonOptions) ?? new ApiResponse<NotificationPreferenceDto> { Success = false };
         }
         catch (Exception ex)
         {
@@ -195,7 +196,7 @@ public class NotificationClientService : INotificationService
         {
             var response = await _httpClient.DeleteAsync($"/api/notifications/preferences/{eventType}");
             var content = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<ApiResponse<bool>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ApiResponse<bool> { Success = false };
+            return JsonSerializer.Deserialize<ApiResponse<bool>>(content, JsonOptions) ?? new ApiResponse<bool> { Success = false };
         }
         catch (Exception ex)
         {
@@ -210,7 +211,7 @@ public class NotificationClientService : INotificationService
         {
             var response = await _httpClient.GetAsync("/api/notifications/rules");
             var content = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<ApiResponse<List<NotificationRuleDto>>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ApiResponse<List<NotificationRuleDto>> { Success = false };
+            return JsonSerializer.Deserialize<ApiResponse<List<NotificationRuleDto>>>(content, JsonOptions) ?? new ApiResponse<List<NotificationRuleDto>> { Success = false };
         }
         catch (Exception ex)
         {
@@ -225,7 +226,7 @@ public class NotificationClientService : INotificationService
         {
             var response = await _httpClient.PostAsJsonAsync("/api/notifications/rules", request);
             var content = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<ApiResponse<NotificationRuleDto>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ApiResponse<NotificationRuleDto> { Success = false };
+            return JsonSerializer.Deserialize<ApiResponse<NotificationRuleDto>>(content, JsonOptions) ?? new ApiResponse<NotificationRuleDto> { Success = false };
         }
         catch (Exception ex)
         {
@@ -240,7 +241,7 @@ public class NotificationClientService : INotificationService
         {
             var response = await _httpClient.PutAsJsonAsync($"/api/notifications/rules/{ruleId}", request);
             var content = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<ApiResponse<NotificationRuleDto>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ApiResponse<NotificationRuleDto> { Success = false };
+            return JsonSerializer.Deserialize<ApiResponse<NotificationRuleDto>>(content, JsonOptions) ?? new ApiResponse<NotificationRuleDto> { Success = false };
         }
         catch (Exception ex)
         {
@@ -255,7 +256,7 @@ public class NotificationClientService : INotificationService
         {
             var response = await _httpClient.DeleteAsync($"/api/notifications/rules/{ruleId}");
             var content = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<ApiResponse<bool>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ApiResponse<bool> { Success = false };
+            return JsonSerializer.Deserialize<ApiResponse<bool>>(content, JsonOptions) ?? new ApiResponse<bool> { Success = false };
         }
         catch (Exception ex)
         {
@@ -270,7 +271,7 @@ public class NotificationClientService : INotificationService
         {
             var response = await _httpClient.PutAsync($"/api/notifications/rules/{ruleId}/toggle", null);
             var content = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<ApiResponse<bool>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ApiResponse<bool> { Success = false };
+            return JsonSerializer.Deserialize<ApiResponse<bool>>(content, JsonOptions) ?? new ApiResponse<bool> { Success = false };
         }
         catch (Exception ex)
         {

@@ -83,7 +83,7 @@ namespace Inventory.Shared.Interfaces
     {
         public string Domain { get; set; } = string.Empty;
         public string? Email { get; set; }
-        public bool UseLetsEncrypt { get; set; } = false;
+        public bool UseLetsEncrypt { get; set; }
         public int KeySize { get; set; } = 4096;
         public int ValidityDays { get; set; } = 365;
         public string[]? SubjectAlternativeNames { get; set; }
