@@ -210,11 +210,15 @@
         StateHasChanged();
         try
         {
+            await JSRuntime.InvokeVoidAsync("console.log", "LoadData: Starting ProductGroup data load...");
             allGroups = await ProductGroupService.GetAllProductGroupsAsync();
+            await JSRuntime.InvokeVoidAsync("console.log", $"LoadData: Received {allGroups?.Count ?? 0} product groups from service");
+            await JSRuntime.InvokeVoidAsync("console.log", "LoadData: Product groups data:", allGroups);
             ApplyFilters();
         }
         catch (Exception ex)
         {
+            await JSRuntime.InvokeVoidAsync("console.error", $"LoadData: Error loading product groups: {ex.Message}", ex);
             UiNotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
             ResetGridAndTree();
         }
@@ -227,8 +231,11 @@
 
     private void ApplyFilters()
     {
+        JSRuntime.InvokeVoidAsync("console.log", $"ApplyFilters: Starting with {allGroups?.Count ?? 0} total groups");
+        
         if (allGroups.Count == 0)
         {
+            JSRuntime.InvokeVoidAsync("console.log", "ApplyFilters: No groups available, resetting grid and tree");
             ResetGridAndTree();
             StateHasChanged();
             return;
@@ -242,6 +249,7 @@
         }
 
         var filteredList = query.ToList();
+        JSRuntime.InvokeVoidAsync("console.log", $"ApplyFilters: After status filter: {filteredList.Count} groups");
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
@@ -250,8 +258,11 @@
                 .Where(pg => pg.Name.Contains(term, StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
+            JSRuntime.InvokeVoidAsync("console.log", $"ApplyFilters: After search filter '{term}': {filteredList.Count} groups");
+
             if (filteredList.Count == 0)
             {
+                JSRuntime.InvokeVoidAsync("console.log", "ApplyFilters: No groups after search, resetting grid and tree");
                 ResetGridAndTree();
                 StateHasChanged();
                 return;
@@ -269,12 +280,14 @@
 
             UpdateGridData(filteredList);
             treeRoots = BuildTree(treeSource);
+            JSRuntime.InvokeVoidAsync("console.log", $"ApplyFilters: Final tree roots count: {treeRoots.Count}");
             StateHasChanged();
             return;
         }
 
         UpdateGridData(filteredList);
         treeRoots = BuildTree(filteredList);
+        JSRuntime.InvokeVoidAsync("console.log", $"ApplyFilters: Final data count: {data.Count}, tree roots: {treeRoots.Count}");
         StateHasChanged();
     }
 
@@ -285,6 +298,7 @@
             .ToList();
 
         totalCount = data.Count;
+        JSRuntime.InvokeVoidAsync("console.log", $"UpdateGridData: Updated grid with {data.Count} items");
     }
 
     private void ResetGridAndTree()
