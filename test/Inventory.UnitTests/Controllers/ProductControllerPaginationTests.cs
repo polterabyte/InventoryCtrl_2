@@ -72,8 +72,8 @@ public class ProductControllerPaginationTests : IDisposable
         _context.SaveChanges();
 
         // Add product models
-        var model1 = new ProductModel { Name = "XPS 13", ManufacturerId = manufacturer1.Id };
-        var model2 = new ProductModel { Name = "MacBook Pro", ManufacturerId = manufacturer2.Id };
+        var model1 = new ProductModel { Name = "XPS 13" };
+        var model2 = new ProductModel { Name = "MacBook Pro" };
         _context.ProductModels.AddRange(model1, model2);
         _context.SaveChanges();
 

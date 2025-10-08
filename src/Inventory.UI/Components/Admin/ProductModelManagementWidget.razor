@@ -6,7 +6,6 @@
 @using System.Linq
 @using Inventory.UI.Utilities
 @inject IProductModelService ProductModelService
-@inject IManufacturerService ManufacturerService
 @inject NotificationService UiNotificationService
 @inject IJSRuntime JSRuntime
 @inject DialogService DialogService
@@ -55,9 +54,6 @@
                                         <Template Context="item">
                                             <RadzenText>@item.Name</RadzenText>
                                         </Template>
-                                    </RadzenDataGridColumn>
-                                    <RadzenDataGridColumn TItem="ProductModelDto" Title="Manufacturer">
-                                        <Template Context="item">@item.ManufacturerName</Template>
                                     </RadzenDataGridColumn>
                                     <RadzenDataGridColumn TItem="ProductModelDto" Title="Status">
                                         <Template Context="item">
@@ -112,7 +108,6 @@
 @code {
     private RadzenDataGrid<ProductModelDto>? grid;
     private List<ProductModelDto> pagedModels = new();
-    private List<ManufacturerDto> manufacturers = new();
     private bool isLoading = false;    private bool isEditing = false;
     private bool isSaving = false;
     private int totalCount = 0;
@@ -122,41 +117,10 @@
     private ProductModelDto? selectedItem = null;
     private bool isActive = true;
 
-    private List<ManufacturerOption> manufacturerOptions = new();
-
-    public class ManufacturerOption
-    {
-        public int Value { get; set; }
-        public string Text { get; set; } = "";
-    }
-
     protected override async Task OnInitializedAsync()
     {
-        await LoadManufacturers();
-    }
-
-    private async Task LoadManufacturers()
-    {
-        try
-        {
-            manufacturers = await ManufacturerService.GetAllManufacturersAsync();
-            
-            // Create options for RadzenDropDown
-            manufacturerOptions = new List<ManufacturerOption>();
-            
-            foreach (var manufacturer in manufacturers)
-            {
-                manufacturerOptions.Add(new ManufacturerOption
-                {
-                    Value = manufacturer.Id,
-                    Text = manufacturer.Name
-                });
-            }
-        }
-        catch (Exception ex)
-        {
-            UiNotificationService.ShowError("Error", $"Failed to load manufacturers: {ex.Message}");
-        }
+        // Принудительно загружаем данные при инициализации
+        await RefreshData();
     }
 
     private async Task RefreshData()
@@ -165,13 +129,41 @@
         {
             await grid.Reload();
         }
+        else
+        {
+            // Если grid еще не инициализирован, загружаем данные напрямую
+            await LoadModelsDirectly();
+        }
+    }
+
+    private async Task LoadModelsDirectly()
+    {
+        isLoading = true;
+        StateHasChanged();
+        
+        try
+        {
+            var allModels = await ProductModelService.GetAllProductModelsAsync();
+            totalCount = allModels.Count;
+            pagedModels = allModels.Take(pageSize).ToList();
+        }
+        catch (Exception ex)
+        {
+            UiNotificationService.ShowError("Error", $"An error occurred: {ex.Message}");
+            pagedModels = new();
+            totalCount = 0;
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
     }
 
         private async Task ShowCreateModal()
     {
         currentItem = new CreateProductModelDto
         {
-            ManufacturerId = manufacturerOptions.FirstOrDefault()?.Value ?? 1 // Инициализируем с первым доступным manufacturer
         };
         isActive = true;
         isEditing = false;
@@ -190,8 +182,7 @@
         selectedItem = item;
         currentItem = new CreateProductModelDto
         {
-            Name = item.Name,
-            ManufacturerId = item.ManufacturerId
+            Name = item.Name
         };
         isActive = item.IsActive;
         isEditing = true;
@@ -223,7 +214,6 @@
                 var updateDto = new UpdateProductModelDto
                 {
                     Name = model.Name,
-                    ManufacturerId = model.ManufacturerId,
                     IsActive = isActive
                 };
                 var result = await ProductModelService.UpdateProductModelAsync(selectedItem.Id, updateDto);
@@ -361,26 +351,6 @@
                     builder4.OpenComponent<RadzenRequiredValidator>(1);
                     builder4.AddAttribute(2, "Component", "productmodelName");
                     builder4.AddAttribute(3, "Text", "Name is required");
-                    builder4.CloseComponent();
-                }));
-                builder3.CloseComponent();
-
-                builder3.OpenComponent<RadzenFormField>(2);
-                builder3.AddAttribute(4, "Text", "Manufacturer *");
-                builder3.AddAttribute(5, "ChildContent", (RenderFragment)((builder4) =>
-                {
-                    builder4.OpenComponent<RadzenDropDown<int>>(0);
-                    builder4.AddAttribute(1, "Data", manufacturerOptions);
-                    builder4.AddAttribute(2, "Value", currentItem.ManufacturerId);
-                    builder4.AddAttribute(3, "ValueChanged", EventCallback.Factory.Create<int>(this, (value) => currentItem.ManufacturerId = value));
-                    builder4.AddAttribute(4, "TextProperty", "Text");
-                    builder4.AddAttribute(5, "ValueProperty", "Value");
-                    builder4.AddAttribute(6, "Name", "manufacturerId");
-                    builder4.CloseComponent();
-
-                    builder4.OpenComponent<RadzenRequiredValidator>(1);
-                    builder4.AddAttribute(2, "Component", "manufacturerId");
-                    builder4.AddAttribute(3, "Text", "Manufacturer is required");
                     builder4.CloseComponent();
                 }));
                 builder3.CloseComponent();

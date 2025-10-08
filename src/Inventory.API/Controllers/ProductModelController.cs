@@ -18,13 +18,10 @@ public class ProductModelController(AppDbContext context, ILogger<ProductModelCo
         try
         {
             var productModels = await context.ProductModels
-                .Include(pm => pm.Manufacturer)
                 .Select(pm => new ProductModelDto
                 {
                     Id = pm.Id,
                     Name = pm.Name,
-                    ManufacturerId = pm.ManufacturerId,
-                    ManufacturerName = pm.Manufacturer.Name,
                     IsActive = pm.IsActive,
                     CreatedAt = pm.CreatedAt,
                     UpdatedAt = pm.UpdatedAt
@@ -40,42 +37,12 @@ public class ProductModelController(AppDbContext context, ILogger<ProductModelCo
         }
     }
 
-    [HttpGet("manufacturer/{manufacturerId}")]
-    public async Task<ActionResult<ApiResponse<List<ProductModelDto>>>> GetProductModelsByManufacturer(int manufacturerId)
-    {
-        try
-        {
-            var productModels = await context.ProductModels
-                .Where(pm => pm.ManufacturerId == manufacturerId && pm.IsActive)
-                .Include(pm => pm.Manufacturer)
-                .Select(pm => new ProductModelDto
-                {
-                    Id = pm.Id,
-                    Name = pm.Name,
-                    ManufacturerId = pm.ManufacturerId,
-                    ManufacturerName = pm.Manufacturer.Name,
-                    IsActive = pm.IsActive,
-                    CreatedAt = pm.CreatedAt,
-                    UpdatedAt = pm.UpdatedAt
-                })
-                .ToListAsync();
-
-            return Ok(ApiResponse<List<ProductModelDto>>.SuccessResult(productModels));
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error retrieving product models for manufacturer {ManufacturerId}", manufacturerId);
-            return StatusCode(500, ApiResponse<List<ProductModelDto>>.ErrorResult("Failed to retrieve product models"));
-        }
-    }
-
     [HttpGet("{id}")]
     public async Task<ActionResult<ApiResponse<ProductModelDto>>> GetProductModel(int id)
     {
         try
         {
             var productModel = await context.ProductModels
-                .Include(pm => pm.Manufacturer)
                 .FirstOrDefaultAsync(pm => pm.Id == id);
 
             if (productModel == null)
@@ -87,8 +54,6 @@ public class ProductModelController(AppDbContext context, ILogger<ProductModelCo
             {
                 Id = productModel.Id,
                 Name = productModel.Name,
-                ManufacturerId = productModel.ManufacturerId,
-                ManufacturerName = productModel.Manufacturer.Name,
                 IsActive = productModel.IsActive,
                 CreatedAt = productModel.CreatedAt,
                 UpdatedAt = productModel.UpdatedAt
@@ -119,17 +84,9 @@ public class ProductModelController(AppDbContext context, ILogger<ProductModelCo
                 return BadRequest(ApiResponse<ProductModelDto>.ErrorResult("Validation failed", errors));
             }
 
-            // Check if manufacturer exists
-            var manufacturer = await context.Manufacturers.FindAsync(createProductModelDto.ManufacturerId);
-            if (manufacturer == null)
-            {
-                return BadRequest(ApiResponse<ProductModelDto>.ErrorResult("Manufacturer not found"));
-            }
-
             var productModel = new ProductModel
             {
                 Name = createProductModelDto.Name,
-                ManufacturerId = createProductModelDto.ManufacturerId,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
             };
@@ -141,8 +98,6 @@ public class ProductModelController(AppDbContext context, ILogger<ProductModelCo
             {
                 Id = productModel.Id,
                 Name = productModel.Name,
-                ManufacturerId = productModel.ManufacturerId,
-                ManufacturerName = manufacturer.Name,
                 IsActive = productModel.IsActive,
                 CreatedAt = productModel.CreatedAt,
                 UpdatedAt = productModel.UpdatedAt
@@ -181,15 +136,7 @@ public class ProductModelController(AppDbContext context, ILogger<ProductModelCo
                 return NotFound(ApiResponse<ProductModelDto>.ErrorResult("Product model not found"));
             }
 
-            // Check if manufacturer exists
-            var manufacturer = await context.Manufacturers.FindAsync(updateProductModelDto.ManufacturerId);
-            if (manufacturer == null)
-            {
-                return BadRequest(ApiResponse<ProductModelDto>.ErrorResult("Manufacturer not found"));
-            }
-
             productModel.Name = updateProductModelDto.Name;
-            productModel.ManufacturerId = updateProductModelDto.ManufacturerId;
             productModel.IsActive = updateProductModelDto.IsActive;
             productModel.UpdatedAt = DateTime.UtcNow;
 
@@ -199,8 +146,6 @@ public class ProductModelController(AppDbContext context, ILogger<ProductModelCo
             {
                 Id = productModel.Id,
                 Name = productModel.Name,
-                ManufacturerId = productModel.ManufacturerId,
-                ManufacturerName = manufacturer.Name,
                 IsActive = productModel.IsActive,
                 CreatedAt = productModel.CreatedAt,
                 UpdatedAt = productModel.UpdatedAt

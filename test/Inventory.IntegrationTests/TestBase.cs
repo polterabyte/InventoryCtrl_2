@@ -406,14 +406,12 @@ public abstract class IntegrationTestBase : IClassFixture<WebApplicationFactory<
         {
             var iphoneModel = new ProductModel
             {
-                Name = "iPhone 15",
-                ManufacturerId = (await Context.Manufacturers.FirstAsync(m => m.Name == "Apple")).Id
+                Name = "iPhone 15"
             };
 
             var galaxyModel = new ProductModel
             {
-                Name = "Galaxy S24",
-                ManufacturerId = (await Context.Manufacturers.FirstAsync(m => m.Name == "Samsung")).Id
+                Name = "Galaxy S24"
             };
 
             Context.ProductModels.AddRange(iphoneModel, galaxyModel);

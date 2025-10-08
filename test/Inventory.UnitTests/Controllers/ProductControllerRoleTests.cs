@@ -56,7 +56,7 @@ public class ProductControllerRoleTests : IDisposable
         _context.SaveChanges();
 
         // Add product model
-        var model = new ProductModel { Name = "XPS 13", ManufacturerId = manufacturer.Id };
+        var model = new ProductModel { Name = "XPS 13" };
         _context.ProductModels.Add(model);
         _context.SaveChanges();
 

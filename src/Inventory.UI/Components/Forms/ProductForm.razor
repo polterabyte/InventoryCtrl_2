@@ -7,7 +7,6 @@
 @using Radzen.Blazor
 @inject IProductService ProductService
 @inject IClientCategoryService CategoryService
-@inject IManufacturerService ManufacturerService
 @inject IProductModelService ProductModelService
 @inject IProductGroupService ProductGroupService
 @inject IUnitOfMeasureApiService UnitOfMeasureService
@@ -40,7 +39,7 @@
             <RadzenTextArea @bind-Value="productModel.Description" Rows="3" Name="description" />
         </RadzenFormField>
 
-        <!-- Category and Manufacturer row -->
+        <!-- Category row -->
         <RadzenRow Gap="1rem">
             <RadzenColumn Size="12">
                 <RadzenFormField Text="Категория:">
@@ -50,17 +49,6 @@
                                    TextProperty="Name"
                                    Placeholder="Выберите категорию"
                                    Name="categoryId" />
-                </RadzenFormField>
-            </RadzenColumn>
-            <RadzenColumn Size="12">
-                <RadzenFormField Text="Производитель:">
-                    <RadzenDropDown @bind-Value="productModel.ManufacturerId"
-                                   @bind-Value:after="@OnManufacturerChanged"
-                                   Data="@manufacturers"
-                                   ValueProperty="Id"
-                                   TextProperty="Name"
-                                   Placeholder="Выберите производителя"
-                                   Name="manufacturerId" />
                 </RadzenFormField>
             </RadzenColumn>
         </RadzenRow>
@@ -146,7 +134,6 @@
 
     private CreateProductDto productModel = new();
     private List<CategoryDto> categories = new();
-    private List<ManufacturerDto> manufacturers = new();
     private List<ProductModelDto> productModels = new();
     private List<ProductGroupDto> productGroups = new();
     private List<ProductGroupOption> productGroupOptions = new();
@@ -173,7 +160,6 @@
         try
         {
             categories = await CategoryService.GetAllCategoriesAsync();
-            manufacturers = await ManufacturerService.GetAllManufacturersAsync();
             productModels = await ProductModelService.GetAllProductModelsAsync();
             productGroups = await ProductGroupService.GetAllProductGroupsAsync();
             BuildProductGroupOptions();
@@ -216,29 +202,6 @@
         }
 
         Visit(roots, 0);
-    }
-
-    private async Task OnManufacturerChanged()
-    {
-        if (productModel.ManufacturerId > 0)
-        {
-            try
-            {
-                productModels = await ProductModelService.GetProductModelsByManufacturerAsync(productModel.ManufacturerId);
-                productModel.ProductModelId = 0; // Reset model selection
-                StateHasChanged();
-            }
-            catch (Exception ex)
-            {
-                errorMessage = $"Ошибка загрузки моделей: {ex.Message}";
-            }
-        }
-        else
-        {
-            productModels = new List<ProductModelDto>();
-            productModel.ProductModelId = 0;
-            StateHasChanged();
-        }
     }
 
     private async Task HandleSubmit()

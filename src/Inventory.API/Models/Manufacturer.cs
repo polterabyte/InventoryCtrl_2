@@ -9,7 +9,6 @@ public class Manufacturer
     public string? Website { get; set; }
     public bool IsActive { get; set; } = true;
 
-    public ICollection<ProductModel> Models { get; set; } = new List<ProductModel>();
     public ICollection<Product> Products { get; set; } = new List<Product>();
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }

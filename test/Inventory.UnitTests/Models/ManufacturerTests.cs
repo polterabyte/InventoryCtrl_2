@@ -15,8 +15,6 @@ public class ManufacturerTests
         // Assert
         manufacturer.Should().NotBeNull();
         manufacturer.Name.Should().Be(string.Empty);
-        manufacturer.Models.Should().NotBeNull();
-        manufacturer.Models.Should().BeEmpty();
         manufacturer.Products.Should().NotBeNull();
         manufacturer.Products.Should().BeEmpty();
         manufacturer.CreatedAt.Should().Be(default(DateTime));
@@ -43,24 +41,6 @@ public class ManufacturerTests
         manufacturer.Name.Should().Be("Apple");
         manufacturer.CreatedAt.Should().Be(now);
         manufacturer.UpdatedAt.Should().Be(now);
-    }
-
-    [Fact]
-    public void Manufacturer_WithModels_ShouldMaintainModelRelationship()
-    {
-        // Arrange
-        var manufacturer = new Manufacturer { Id = 1, Name = "Apple" };
-        var model1 = new ProductModel { Id = 1, Name = "iPhone 15", ManufacturerId = 1 };
-        var model2 = new ProductModel { Id = 2, Name = "iPhone 14", ManufacturerId = 1 };
-
-        // Act
-        manufacturer.Models.Add(model1);
-        manufacturer.Models.Add(model2);
-
-        // Assert
-        manufacturer.Models.Should().HaveCount(2);
-        manufacturer.Models.Should().Contain(model1);
-        manufacturer.Models.Should().Contain(model2);
     }
 
     [Fact]

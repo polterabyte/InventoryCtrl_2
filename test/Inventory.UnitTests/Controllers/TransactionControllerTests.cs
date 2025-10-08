@@ -535,7 +535,7 @@ public class TransactionControllerTests : IDisposable
         _context.ProductGroups.Add(productGroup);
         await _context.SaveChangesAsync();
         
-        var productModel = new ProductModel { Name = "Test Model", ManufacturerId = manufacturer.Id };
+        var productModel = new ProductModel { Name = "Test Model" };
         _context.ProductModels.Add(productModel);
         await _context.SaveChangesAsync();
         
@@ -603,7 +603,7 @@ public class TransactionControllerTests : IDisposable
         _context.ProductGroups.Add(productGroup);
         await _context.SaveChangesAsync();
         
-        var productModel = new ProductModel { Name = "Test Model", ManufacturerId = manufacturer.Id };
+        var productModel = new ProductModel { Name = "Test Model" };
         _context.ProductModels.Add(productModel);
         await _context.SaveChangesAsync();
         

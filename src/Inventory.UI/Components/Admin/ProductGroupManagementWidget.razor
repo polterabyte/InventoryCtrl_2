@@ -207,6 +207,7 @@
     private async Task LoadData()
     {
         isLoading = true;
+        StateHasChanged();
         try
         {
             allGroups = await ProductGroupService.GetAllProductGroupsAsync();
@@ -220,6 +221,7 @@
         finally
         {
             isLoading = false;
+            StateHasChanged();
         }
     }
 
@@ -228,6 +230,7 @@
         if (allGroups.Count == 0)
         {
             ResetGridAndTree();
+            StateHasChanged();
             return;
         }
 
@@ -250,6 +253,7 @@
             if (filteredList.Count == 0)
             {
                 ResetGridAndTree();
+                StateHasChanged();
                 return;
             }
 
@@ -265,11 +269,13 @@
 
             UpdateGridData(filteredList);
             treeRoots = BuildTree(treeSource);
+            StateHasChanged();
             return;
         }
 
         UpdateGridData(filteredList);
         treeRoots = BuildTree(filteredList);
+        StateHasChanged();
     }
 
     private void UpdateGridData(List<ProductGroupDto> source)
