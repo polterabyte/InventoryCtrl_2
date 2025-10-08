@@ -170,7 +170,7 @@ public class DashboardControllerTests : IDisposable
         var warehouse = new Warehouse { Id = 1, Name = "Test Warehouse", IsActive = true };
         var user = new User { Id = "1", UserName = "testuser", Email = "test@test.com" };
         var productGroup = new ProductGroup { Id = 1, Name = "Test Group", IsActive = true };
-        var productModel = new ProductModel { Id = 1, Name = "Test Model", ManufacturerId = 1 };
+        var productModel = new ProductModel { Id = 1, Name = "Test Model" };
         var unitOfMeasure = new UnitOfMeasure { Id = 1, Name = "Pieces", Symbol = "pcs" };
 
         _context.Categories.Add(category);
@@ -269,8 +269,8 @@ public class DashboardControllerTests : IDisposable
         _context.ProductGroups.AddRange(productGroup1, productGroup2);
 
         // Add product models
-        var productModel1 = new ProductModel { Id = 1, Name = "Model 1", ManufacturerId = 1 };
-        var productModel2 = new ProductModel { Id = 2, Name = "Model 2", ManufacturerId = 2 };
+        var productModel1 = new ProductModel { Id = 1, Name = "Model 1" };
+        var productModel2 = new ProductModel { Id = 2, Name = "Model 2" };
         _context.ProductModels.AddRange(productModel1, productModel2);
 
         // Add unit of measures

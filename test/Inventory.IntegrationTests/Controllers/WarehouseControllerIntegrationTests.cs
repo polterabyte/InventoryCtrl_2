@@ -357,8 +357,7 @@ public class WarehouseControllerIntegrationTests : IntegrationTestBase
         // Create test product model
         var productModel = new ProductModel
         {
-            Name = "Test Model",
-            ManufacturerId = manufacturer.Id
+            Name = "Test Model"
         };
         Context.ProductModels.Add(productModel);
         await Context.SaveChangesAsync();

@@ -541,9 +541,6 @@ namespace Inventory.API.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<int>("ManufacturerId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -552,8 +549,6 @@ namespace Inventory.API.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ManufacturerId");
 
                     b.ToTable("ProductModels");
                 });
@@ -1724,17 +1719,6 @@ namespace Inventory.API.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Inventory.API.Models.ProductModel", b =>
-                {
-                    b.HasOne("Inventory.API.Models.Manufacturer", "Manufacturer")
-                        .WithMany("Models")
-                        .HasForeignKey("ManufacturerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Manufacturer");
-                });
-
             modelBuilder.Entity("Inventory.API.Models.RequestHistory", b =>
                 {
                     b.HasOne("Inventory.API.Models.Request", "Request")
@@ -1902,8 +1886,6 @@ namespace Inventory.API.Migrations
 
             modelBuilder.Entity("Inventory.API.Models.Manufacturer", b =>
                 {
-                    b.Navigation("Models");
-
                     b.Navigation("Products");
                 });
 

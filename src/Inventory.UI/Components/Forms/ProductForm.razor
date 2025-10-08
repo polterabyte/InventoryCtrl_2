@@ -224,7 +224,7 @@
         {
             try
             {
-                productModels = await ProductModelService.GetProductModelsByManufacturerAsync(productModel.ManufacturerId);
+                productModels = await ProductModelService.GetAllProductModelsAsync();
                 productModel.ProductModelId = 0; // Reset model selection
                 StateHasChanged();
             }

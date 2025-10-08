@@ -15,8 +15,6 @@ public class ManufacturerTests
         // Assert
         manufacturer.Should().NotBeNull();
         manufacturer.Name.Should().Be(string.Empty);
-        manufacturer.Models.Should().NotBeNull();
-        manufacturer.Models.Should().BeEmpty();
         manufacturer.Products.Should().NotBeNull();
         manufacturer.Products.Should().BeEmpty();
         manufacturer.CreatedAt.Should().Be(default(DateTime));
@@ -46,21 +44,21 @@ public class ManufacturerTests
     }
 
     [Fact]
-    public void Manufacturer_WithModels_ShouldMaintainModelRelationship()
+    public void Manufacturer_WithProducts_ShouldMaintainProductRelationship()
     {
         // Arrange
         var manufacturer = new Manufacturer { Id = 1, Name = "Apple" };
-        var model1 = new ProductModel { Id = 1, Name = "iPhone 15", ManufacturerId = 1 };
-        var model2 = new ProductModel { Id = 2, Name = "iPhone 14", ManufacturerId = 1 };
+        var product1 = new Product { Id = 1, Name = "iPhone 15", ManufacturerId = 1 };
+        var product2 = new Product { Id = 2, Name = "iPhone 14", ManufacturerId = 1 };
 
         // Act
-        manufacturer.Models.Add(model1);
-        manufacturer.Models.Add(model2);
+        manufacturer.Products.Add(product1);
+        manufacturer.Products.Add(product2);
 
         // Assert
-        manufacturer.Models.Should().HaveCount(2);
-        manufacturer.Models.Should().Contain(model1);
-        manufacturer.Models.Should().Contain(model2);
+        manufacturer.Products.Should().HaveCount(2);
+        manufacturer.Products.Should().Contain(product1);
+        manufacturer.Products.Should().Contain(product2);
     }
 
     [Fact]

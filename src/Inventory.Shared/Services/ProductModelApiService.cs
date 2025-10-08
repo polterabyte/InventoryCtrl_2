@@ -29,24 +29,6 @@ public class ProductModelApiService(HttpClient httpClient, ILogger<ProductModelA
         return response.Data ?? new List<ProductModelDto>();
     }
 
-    public async Task<List<ProductModelDto>> GetProductModelsByManufacturerAsync(int manufacturerId)
-    {
-        if (_retryService != null)
-        {
-            return await _retryService.ExecuteWithRetryAsync(
-                async () =>
-                {
-                    var response = await GetAsync<List<ProductModelDto>>($"{ApiEndpoints.ProductModels}/manufacturer/{manufacturerId}");
-                    return response.Data ?? new List<ProductModelDto>();
-                },
-                "GetProductModelsByManufacturer"
-            );
-        }
-        
-        var response = await GetAsync<List<ProductModelDto>>($"{ApiEndpoints.ProductModels}/manufacturer/{manufacturerId}");
-        return response.Data ?? new List<ProductModelDto>();
-    }
-
     public async Task<ProductModelDto?> GetProductModelByIdAsync(int id)
     {
         if (_retryService != null)

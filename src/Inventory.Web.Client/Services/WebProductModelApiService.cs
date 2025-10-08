@@ -24,12 +24,6 @@ public class WebProductModelApiService : WebBaseApiService, IProductModelService
         return response.Data ?? new List<ProductModelDto>();
     }
 
-    public async Task<List<ProductModelDto>> GetProductModelsByManufacturerAsync(int manufacturerId)
-    {
-        var response = await GetAsync<List<ProductModelDto>>($"{ApiEndpoints.ProductModels}/manufacturer/{manufacturerId}");
-        return response.Data ?? new List<ProductModelDto>();
-    }
-
     public async Task<ProductModelDto?> GetProductModelByIdAsync(int id)
     {
         var response = await GetAsync<ProductModelDto>($"{ApiEndpoints.ProductModels}/{id}");
