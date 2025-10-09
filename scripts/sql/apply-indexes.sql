@@ -42,16 +42,7 @@ DO $$ BEGIN
     END IF;
 END $$;
 
--- Products indexes
-DO $$ BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
-        WHERE c.relkind='i' AND c.relname='IX_Products_SKU' AND n.nspname = 'public'
-    ) THEN
-        CREATE UNIQUE INDEX "IX_Products_SKU"
-            ON "Products" ("SKU");
-    END IF;
-END $$;
+-- Products indexes (SKU index removed as SKU column was dropped)
 
 DO $$ BEGIN
     IF NOT EXISTS (

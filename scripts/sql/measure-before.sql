@@ -32,7 +32,7 @@ LIMIT 100;
 
 -- Products patterns
 EXPLAIN (ANALYZE, BUFFERS, VERBOSE)
-SELECT "Id","Name","SKU"
+SELECT "Id","Name"
 FROM "Products"
 WHERE "CategoryId" = 1 AND "IsActive" = true
 ORDER BY "Name"
@@ -40,9 +40,9 @@ LIMIT 50;
 
 -- Optional LIKE search (consider pg_trgm if heavy)
 EXPLAIN (ANALYZE, BUFFERS, VERBOSE)
-SELECT "Id","Name","SKU"
+SELECT "Id","Name"
 FROM "Products"
-WHERE lower("Name") LIKE lower('%widget%') OR lower("SKU") LIKE lower('%abc%')
+WHERE lower("Name") LIKE lower('%widget%')
 ORDER BY "Name"
 LIMIT 50;
 

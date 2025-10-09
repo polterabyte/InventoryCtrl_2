@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Inventory.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251007072544_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20251009061234_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -346,9 +346,6 @@ namespace Inventory.API.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<int>("LocationId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -360,8 +357,6 @@ namespace Inventory.API.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("LocationId");
 
                     b.ToTable("Manufacturers");
                 });
@@ -386,7 +381,7 @@ namespace Inventory.API.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<int>("ManufacturerId")
+                    b.Property<int?>("ManufacturerId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Name")
@@ -401,10 +396,6 @@ namespace Inventory.API.Migrations
 
                     b.Property<int>("ProductModelId")
                         .HasColumnType("integer");
-
-                    b.Property<string>("SKU")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<int>("UnitOfMeasureId")
                         .HasColumnType("integer");
@@ -549,9 +540,6 @@ namespace Inventory.API.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<int>("ManufacturerId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -560,8 +548,6 @@ namespace Inventory.API.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ManufacturerId");
 
                     b.ToTable("ProductModels");
                 });
@@ -1660,17 +1646,6 @@ namespace Inventory.API.Migrations
                     b.Navigation("ParentLocation");
                 });
 
-            modelBuilder.Entity("Inventory.API.Models.Manufacturer", b =>
-                {
-                    b.HasOne("Inventory.API.Models.Location", "Location")
-                        .WithMany()
-                        .HasForeignKey("LocationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Location");
-                });
-
             modelBuilder.Entity("Inventory.API.Models.Product", b =>
                 {
                     b.HasOne("Inventory.API.Models.Category", "Category")
@@ -1679,11 +1654,9 @@ namespace Inventory.API.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Inventory.API.Models.Manufacturer", "Manufacturer")
+                    b.HasOne("Inventory.API.Models.Manufacturer", null)
                         .WithMany("Products")
-                        .HasForeignKey("ManufacturerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ManufacturerId");
 
                     b.HasOne("Inventory.API.Models.ProductGroup", "ProductGroup")
                         .WithMany("Products")
@@ -1704,8 +1677,6 @@ namespace Inventory.API.Migrations
                         .IsRequired();
 
                     b.Navigation("Category");
-
-                    b.Navigation("Manufacturer");
 
                     b.Navigation("ProductGroup");
 
@@ -1741,17 +1712,6 @@ namespace Inventory.API.Migrations
                     b.Navigation("Product");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Inventory.API.Models.ProductModel", b =>
-                {
-                    b.HasOne("Inventory.API.Models.Manufacturer", "Manufacturer")
-                        .WithMany("Models")
-                        .HasForeignKey("ManufacturerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Manufacturer");
                 });
 
             modelBuilder.Entity("Inventory.API.Models.RequestHistory", b =>
@@ -1921,8 +1881,6 @@ namespace Inventory.API.Migrations
 
             modelBuilder.Entity("Inventory.API.Models.Manufacturer", b =>
                 {
-                    b.Navigation("Models");
-
                     b.Navigation("Products");
                 });
 

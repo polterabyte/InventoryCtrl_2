@@ -31,16 +31,16 @@ ORDER BY "Date" DESC
 LIMIT 100;
 
 EXPLAIN (ANALYZE, BUFFERS, VERBOSE)
-SELECT "Id","Name","SKU"
+SELECT "Id","Name"
 FROM "Products"
 WHERE "CategoryId" = 1 AND "IsActive" = true
 ORDER BY "Name"
 LIMIT 50;
 
 EXPLAIN (ANALYZE, BUFFERS, VERBOSE)
-SELECT "Id","Name","SKU"
+SELECT "Id","Name"
 FROM "Products"
-WHERE lower("Name") LIKE lower('%widget%') OR lower("SKU") LIKE lower('%abc%')
+WHERE lower("Name") LIKE lower('%widget%')
 ORDER BY "Name"
 LIMIT 50;
 

@@ -61,7 +61,7 @@ ORDER BY indexname;
 
 -- Test 1: Product inventory query (should use ProductOnHandView)
 EXPLAIN (ANALYZE, BUFFERS) 
-SELECT p."Id", p."Name", p."SKU", oh.on_hand_qty
+SELECT p."Id", p."Name", oh.on_hand_qty
 FROM "Products" p
 LEFT JOIN vw_product_on_hand oh ON p."Id" = oh.product_id
 WHERE p."IsActive" = true
@@ -70,7 +70,7 @@ LIMIT 100;
 
 -- Test 2: Low stock products based on Kanban thresholds
 EXPLAIN (ANALYZE, BUFFERS)
-SELECT k."ProductId", p."Name", p."SKU", w."Name" AS warehouse_name,
+SELECT k."ProductId", p."Name", w."Name" AS warehouse_name,
        COALESCE(SUM(CASE WHEN t."Type" = 0 THEN t."Quantity" WHEN t."Type" IN (1,2) THEN -t."Quantity" ELSE 0 END), 0) AS on_hand_qty,
        k."MinThreshold"
 FROM "KanbanCards" k
@@ -78,7 +78,7 @@ JOIN "Products" p ON k."ProductId" = p."Id"
 JOIN "Warehouses" w ON k."WarehouseId" = w."Id"
 LEFT JOIN "InventoryTransactions" t ON t."ProductId" = k."ProductId" AND t."WarehouseId" = k."WarehouseId"
 WHERE p."IsActive" = true AND w."IsActive" = true
-GROUP BY k."ProductId", p."Name", p."SKU", w."Name", k."MinThreshold"
+GROUP BY k."ProductId", p."Name", w."Name", k."MinThreshold"
 HAVING COALESCE(SUM(CASE WHEN t."Type" = 0 THEN t."Quantity" WHEN t."Type" IN (1,2) THEN -t."Quantity" ELSE 0 END), 0) <= k."MinThreshold"
 ORDER BY on_hand_qty NULLS FIRST
 LIMIT 50;
@@ -115,10 +115,9 @@ ORDER BY r."CreatedAt" DESC;
 
 -- Verify that inventory calculations are consistent
 WITH product_transactions AS (
-    SELECT 
+    SELECT
         p."Id" as product_id,
         p."Name" as product_name,
-        p."SKU",
         -- Calculate quantities from transactions
         COALESCE(SUM(
             CASE
@@ -133,7 +132,7 @@ WITH product_transactions AS (
     LEFT JOIN "InventoryTransactions" t ON p."Id" = t."ProductId"
     LEFT JOIN vw_product_on_hand oh ON p."Id" = oh.product_id
     WHERE p."IsActive" = true
-    GROUP BY p."Id", p."Name", p."SKU", oh.on_hand_qty
+    GROUP BY p."Id", p."Name", oh.on_hand_qty
 ),
 inconsistencies AS (
     SELECT *,
@@ -153,10 +152,9 @@ FROM product_transactions;
 
 -- Show any inconsistencies for debugging
 WITH product_transactions AS (
-    SELECT 
+    SELECT
         p."Id" as product_id,
         p."Name" as product_name,
-        p."SKU",
         COALESCE(SUM(
             CASE
                 WHEN t."Type" = 0 THEN t."Quantity"
@@ -169,9 +167,9 @@ WITH product_transactions AS (
     LEFT JOIN "InventoryTransactions" t ON p."Id" = t."ProductId"
     LEFT JOIN vw_product_on_hand oh ON p."Id" = oh.product_id
     WHERE p."IsActive" = true
-    GROUP BY p."Id", p."Name", p."SKU", oh.on_hand_qty
+    GROUP BY p."Id", p."Name", oh.on_hand_qty
 )
-SELECT product_id, product_name, sku, calculated_quantity, view_quantity,
+SELECT product_id, product_name, calculated_quantity, view_quantity,
        (calculated_quantity - COALESCE(view_quantity, 0)) as difference
 FROM product_transactions
 WHERE calculated_quantity != COALESCE(view_quantity, 0)

@@ -9,7 +9,7 @@ WITH on_hand AS (
 SELECT 
   p."Id"              AS product_id,
   p."Name"            AS product_name,
-  p."SKU"             AS sku,
+
   p."Quantity"        AS product_quantity,
   COALESCE(o.on_hand_qty, 0) AS computed_on_hand,
   (COALESCE(o.on_hand_qty, 0) - p."Quantity") AS delta

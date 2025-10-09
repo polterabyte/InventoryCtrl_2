@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Inventory.Shared.Models;
 
 namespace Inventory.API.Models
@@ -223,7 +223,6 @@ namespace Inventory.API.Models
             entity.ToView("vw_product_pending");
             entity.Property(e => e.ProductId).HasColumnName("product_id");
             entity.Property(e => e.ProductName).HasColumnName("product_name");
-            entity.Property(e => e.SKU).HasColumnName("sku");
             entity.Property(e => e.PendingQty).HasColumnName("pending_qty");
             entity.Property(e => e.FirstPendingDate).HasColumnName("first_pending_date");
             entity.Property(e => e.LastPendingDate).HasColumnName("last_pending_date");
@@ -235,7 +234,6 @@ namespace Inventory.API.Models
             entity.ToView("vw_product_on_hand");
             entity.Property(e => e.ProductId).HasColumnName("product_id");
             entity.Property(e => e.ProductName).HasColumnName("product_name");
-            entity.Property(e => e.SKU).HasColumnName("sku");
             entity.Property(e => e.OnHandQty).HasColumnName("on_hand_qty");
         });
 
@@ -245,7 +243,6 @@ namespace Inventory.API.Models
             entity.ToView("vw_product_installed");
             entity.Property(e => e.ProductId).HasColumnName("product_id");
             entity.Property(e => e.ProductName).HasColumnName("product_name");
-            entity.Property(e => e.SKU).HasColumnName("sku");
             entity.Property(e => e.LocationId).HasColumnName("location_id");
             entity.Property(e => e.LocationName).HasColumnName("location_name");
             entity.Property(e => e.InstalledQty).HasColumnName("installed_qty");
@@ -259,7 +256,6 @@ namespace Inventory.API.Models
             entity.ToView("vw_product_on_hand_by_wh");
             entity.Property(e => e.ProductId).HasColumnName("product_id");
             entity.Property(e => e.ProductName).HasColumnName("product_name");
-            entity.Property(e => e.SKU).HasColumnName("sku");
             entity.Property(e => e.WarehouseId).HasColumnName("warehouse_id");
             entity.Property(e => e.WarehouseName).HasColumnName("warehouse_name");
             entity.Property(e => e.OnHandQty).HasColumnName("on_hand_qty");

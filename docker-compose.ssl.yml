@@ -37,8 +37,9 @@ services:
       - Jwt__Issuer=${JWT_ISSUER:-InventoryServer}
       - Jwt__Audience=${JWT_AUDIENCE:-InventoryClient}
       - Jwt__ExpireMinutes=${JWT_EXPIRE_MINUTES:-15}
-      - Jwt__RefreshTokenExpireDays=${JWT_REFRESH_EXPIRE_DAYS:-7}
-      # SSL Configuration
+       - Jwt__RefreshTokenExpireDays=${JWT_REFRESH_EXPIRE_DAYS:-7}
+       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-Admin123!}
+       # SSL Configuration
       - SSL__Path=/etc/nginx/ssl
       - SSL__DefaultKeySize=4096
       - SSL__DefaultValidityDays=365
