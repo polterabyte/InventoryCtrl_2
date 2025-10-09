@@ -30,38 +30,38 @@
     </RadzenStack>
 
     <RadzenRow Class="dashboard-kpi-grid g-3">
-        <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnThirdSize">
+        <RadzenColumn Size="@ColumnFullSize">
             <StatsWidget Label="@GetString("Stats.TotalProducts")"
                             Value="@dashboardStats.TotalProducts"
                             Icon="inventory_2"
                             CardClass="primary" />
         </RadzenColumn>
-        <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnThirdSize">
+        <RadzenColumn Size="@ColumnFullSize">
             <StatsWidget Label="@GetString("Stats.Categories")"
                             Value="@dashboardStats.TotalCategories"
                             Icon="category"
                             CardClass="info" />
         </RadzenColumn>
-        <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnThirdSize">
+        <RadzenColumn Size="@ColumnFullSize">
             <StatsWidget Label="@GetString("Stats.Manufacturers")"
                             Value="@dashboardStats.TotalManufacturers"
                             Icon="precision_manufacturing"
                             CardClass="success" />
         </RadzenColumn>
-        <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnThirdSize">
+        <RadzenColumn Size="@ColumnFullSize">
             <StatsWidget Label="@GetString("Stats.Warehouses")"
                             Value="@dashboardStats.TotalWarehouses"
                             Icon="storefront"
                             CardClass="primary" />
         </RadzenColumn>
-        <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnThirdSize">
+        <RadzenColumn Size="@ColumnFullSize">
             <StatsWidget Label="@GetString("Stats.LowStock")"
                             Value="@dashboardStats.LowStockProducts"
                             SubLabel="@GetString("Stats.LowStockSubLabel")"
                             Icon="warning_amber"
                             CardClass="warning" />
         </RadzenColumn>
-        <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnThirdSize">
+        <RadzenColumn Size="@ColumnFullSize">
             <StatsWidget Label="@GetString("Stats.OutOfStock")"
                             Value="@dashboardStats.OutOfStockProducts"
                             SubLabel="@GetString("Stats.OutOfStockSubLabel")"
@@ -72,10 +72,10 @@
 
 
     <RadzenRow Class="g-3">
-        <RadzenColumn Size="@ColumnFullSize" SizeLg="@ColumnLargeSize">
+        <RadzenColumn Size="@ColumnFullSize">
             <RecentActivity />
         </RadzenColumn>
-        <RadzenColumn Size="@ColumnFullSize" SizeLg="@ColumnThirdSize">
+        <RadzenColumn Size="@ColumnFullSize">
             <LowStockAlert />
         </RadzenColumn>
     </RadzenRow>
@@ -90,7 +90,7 @@
             </RadzenStack>
 
             <RadzenRow Class="quick-actions-grid g-3">
-                <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnQuarterSize">
+                <RadzenColumn Size="@ColumnFullSize">
                     <RadzenButton Text="@GetString("Action.AddProduct")"
                                     Icon="add_circle"
                                     ButtonStyle="ButtonStyle.Primary"
@@ -99,7 +99,7 @@
                                     class="w-100"
                                     @onclick="NavigateToProducts" />
                 </RadzenColumn>
-                <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnQuarterSize">
+                <RadzenColumn Size="@ColumnFullSize">
                     <RadzenButton Text="@GetString("Action.ProductIncome")"
                                     Icon="arrow_downward"
                                     ButtonStyle="ButtonStyle.Success"
@@ -108,7 +108,7 @@
                                     class="w-100"
                                     @onclick="NavigateToProducts" />
                 </RadzenColumn>
-                <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnQuarterSize">
+                <RadzenColumn Size="@ColumnFullSize">
                     <RadzenButton Text="@GetString("Action.ProductExpense")"
                                     Icon="arrow_upward"
                                     ButtonStyle="ButtonStyle.Warning"
@@ -117,7 +117,7 @@
                                     class="w-100"
                                     @onclick="NavigateToProducts" />
                 </RadzenColumn>
-                <RadzenColumn Size="@ColumnFullSize" SizeSm="@ColumnHalfSize" SizeLg="@ColumnQuarterSize">
+                <RadzenColumn Size="@ColumnFullSize">
                     <RadzenButton Text="@GetString("Action.Reports")"
                                     Icon="description"
                                     ButtonStyle="ButtonStyle.Info"

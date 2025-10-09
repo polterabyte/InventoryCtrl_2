@@ -108,7 +108,7 @@
                                     <RadzenCard Class="rz-p-3">
                                         <RadzenStack Gap="1rem">
                                             <RadzenRow Gap="1rem">
-                                                <RadzenColumn Size="@ColumnFull" SizeMd="@ColumnHalf">
+                                                <RadzenColumn Size="@ColumnFull">
                                                     <RadzenStack Gap="0.5rem">
                                                         <RadzenLabel Text="Product *" Component=@($"product-{i}") />
                                                         <RadzenDropDown Data="products"
@@ -124,7 +124,7 @@
                                                         <ValidationMessage For="@(() => createRequest.Items[i].ProductId)" />
                                                     </RadzenStack>
                                                 </RadzenColumn>
-                                                <RadzenColumn Size="@ColumnFull" SizeMd="@ColumnHalf">
+                                                <RadzenColumn Size="@ColumnFull">
                                                     <RadzenStack Gap="0.5rem">
                                                         <RadzenLabel Text="Warehouse *" Component=@($"warehouse-{i}") />
                                                         <RadzenDropDown Data="warehouses"
@@ -143,7 +143,7 @@
                                             </RadzenRow>
 
                                             <RadzenRow Gap="1rem">
-                                                <RadzenColumn Size="@ColumnFull" SizeMd="@ColumnThird">
+                                                <RadzenColumn Size="@ColumnFull">
                                                     <RadzenStack Gap="0.5rem">
                                                         <RadzenLabel Text="Quantity *" Component=@($"quantity-{i}") />
                                                         <RadzenNumeric TValue="int"

@@ -1,4 +1,4 @@
-﻿@page "/products/add"
+@page "/products/add"
 @attribute [Authorize]
 @using Inventory.Shared.DTOs
 @using Inventory.Shared.Interfaces
@@ -30,7 +30,7 @@
 
     <!-- Product form -->
     <RadzenRow JustifyContent="JustifyContent.Center">
-        <RadzenColumn Size="@ColumnFullSize" SizeLg="@ColumnLargeSize" SizeXl="@ColumnExtraLargeSize">
+        <RadzenColumn Size="@ColumnFullSize">
             <RadzenCard>
                 <ProductForm Title="New Product"
                             OnSave="HandleProductSaved"
