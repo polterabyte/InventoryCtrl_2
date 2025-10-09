@@ -98,11 +98,9 @@ public class RequestServiceTests
             {
                 Id = 1,
                 Name = "Test Product",
-                SKU = "TP-001",
                 CurrentQuantity = 0,
                 UnitOfMeasureId = 1,
                 CategoryId = 1,
-                ManufacturerId = 1,
                 ProductModelId = 1,
                 ProductGroupId = 1,
                 CreatedAt = DateTime.UtcNow

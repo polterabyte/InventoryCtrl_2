@@ -185,9 +185,7 @@ public class DashboardControllerTests : IDisposable
         {
             Id = 1,
             Name = "Test Product",
-            SKU = "TEST001",
             CategoryId = 1,
-            ManufacturerId = 1,
             ProductGroupId = 1,
             ProductModelId = 1,
             UnitOfMeasureId = 1,
@@ -292,10 +290,8 @@ public class DashboardControllerTests : IDisposable
         {
             Id = 1,
             Name = "Product 1",
-            SKU = "SKU001",
             // CurrentQuantity = 5, // Low stock
             CategoryId = 1,
-            ManufacturerId = 1,
             ProductModelId = 1,
             ProductGroupId = 1,
             UnitOfMeasureId = 1,
@@ -307,10 +303,9 @@ public class DashboardControllerTests : IDisposable
         {
             Id = 2,
             Name = "Product 2",
-            SKU = "SKU002",
             // CurrentQuantity = 0, // Out of stock
             CategoryId = 2,
-            ManufacturerId = 2,
+
             ProductModelId = 2,
             ProductGroupId = 2,
             UnitOfMeasureId = 1,
@@ -322,10 +317,10 @@ public class DashboardControllerTests : IDisposable
         {
             Id = 3,
             Name = "Product 3",
-            SKU = "SKU003",
+
             // CurrentQuantity = 50, // Normal stock
             CategoryId = 1,
-            ManufacturerId = 1,
+
             ProductModelId = 1,
             ProductGroupId = 1,
             UnitOfMeasureId = 2,

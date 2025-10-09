@@ -12,7 +12,6 @@ public class ProductTests
         var product = new Product();
 
         product.Name.Should().BeEmpty();
-        product.SKU.Should().BeEmpty();
         product.UnitOfMeasureId.Should().Be(0);
         product.IsActive.Should().BeTrue();
         product.CurrentQuantity.Should().Be(0);
@@ -26,7 +25,6 @@ public class ProductTests
         var product = new Product
         {
             Name = "Test Product",
-            SKU = "TEST-001",
             Description = "Test Description",
             CurrentQuantity = 100,
             UnitOfMeasureId = 1,
@@ -35,7 +33,6 @@ public class ProductTests
         };
 
         product.Name.Should().Be("Test Product");
-        product.SKU.Should().Be("TEST-001");
         product.Description.Should().Be("Test Description");
         product.CurrentQuantity.Should().Be(100);
         product.UnitOfMeasureId.Should().Be(1);

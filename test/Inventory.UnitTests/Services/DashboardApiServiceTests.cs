@@ -58,9 +58,7 @@ public class DashboardApiServiceTests
             {
                 ProductId = 1,
                 ProductName = "Low Stock Product",
-                SKU = "LOW001",
                 CategoryName = "Test Category",
-                ManufacturerName = "Test Manufacturer",
                 UnitOfMeasureSymbol = "pcs",
                 KanbanCards = new List<LowStockKanbanDto>
                 {
@@ -69,9 +67,7 @@ public class DashboardApiServiceTests
                         KanbanCardId = 10,
                         ProductId = 1,
                         ProductName = "Low Stock Product",
-                        SKU = "LOW001",
                         CategoryName = "Test Category",
-                        ManufacturerName = "Test Manufacturer",
                         WarehouseId = 100,
                         WarehouseName = "Main WH",
                         CurrentQuantity = 5,
@@ -126,7 +122,6 @@ public class DashboardApiServiceTests
                 {
                     Id = 1,
                     ProductName = "Test Product",
-                    ProductSku = "TEST001",
                     Type = "Income",
                     Quantity = 10,
                     Date = DateTime.UtcNow,
@@ -141,7 +136,6 @@ public class DashboardApiServiceTests
                 {
                     Id = 1,
                     Name = "Test Product",
-                    SKU = "TEST001",
                     Quantity = 50,
                     CategoryName = "Test Category",
                     ManufacturerName = "Test Manufacturer",

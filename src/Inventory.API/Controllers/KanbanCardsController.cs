@@ -222,6 +222,22 @@ public class KanbanCardsController(AppDbContext context, ILogger<KanbanCardsCont
                 return BadRequest(ApiResponse<KanbanCardDto>.ErrorResult("Invalid thresholds: ensure Max >= Min and Min >= 0"));
             }
 
+            // Handle warehouse reassignment if specified
+            if (request.WarehouseId.HasValue && request.WarehouseId.Value != entity.WarehouseId)
+            {
+                var targetWarehouse = await context.Warehouses.FindAsync(request.WarehouseId.Value);
+                if (targetWarehouse == null || !targetWarehouse.IsActive)
+                    return BadRequest(ApiResponse<KanbanCardDto>.ErrorResult("Target warehouse not found or inactive"));
+
+                // Check for duplicate product-warehouse combination
+                var duplicate = await context.KanbanCards
+                    .AnyAsync(k => k.Id != id && k.ProductId == entity.ProductId && k.WarehouseId == request.WarehouseId.Value);
+                if (duplicate)
+                    return Conflict(ApiResponse<KanbanCardDto>.ErrorResult("Kanban card for this product already exists in target warehouse"));
+
+                entity.WarehouseId = request.WarehouseId.Value;
+            }
+
             entity.MinThreshold = request.MinThreshold;
             entity.MaxThreshold = request.MaxThreshold;
             entity.UpdatedAt = DateTime.UtcNow;
@@ -246,6 +262,39 @@ public class KanbanCardsController(AppDbContext context, ILogger<KanbanCardsCont
         {
             logger.LogError(ex, "Error updating Kanban card {Id}", id);
             return StatusCode(500, ApiResponse<KanbanCardDto>.ErrorResult("Failed to update Kanban card"));
+        }
+    }
+
+    [HttpPut("{id}/reassign")]
+    public async Task<ActionResult<ApiResponse<object>>> Reassign(int id, [FromBody] ReassignKanbanCardRequest request)
+    {
+        try
+        {
+            var entity = await context.KanbanCards.FindAsync(id);
+            if (entity == null)
+                return NotFound(ApiResponse<object>.ErrorResult("Kanban card not found"));
+
+            // Check if target warehouse exists and is active
+            var targetWarehouse = await context.Warehouses.FindAsync(request.NewWarehouseId);
+            if (targetWarehouse == null || !targetWarehouse.IsActive)
+                return BadRequest(ApiResponse<object>.ErrorResult("Target warehouse not found or inactive"));
+
+            // Check for duplicate product-warehouse combination
+            var duplicate = await context.KanbanCards
+                .AnyAsync(k => k.Id != id && k.ProductId == entity.ProductId && k.WarehouseId == request.NewWarehouseId);
+            if (duplicate)
+                return Conflict(ApiResponse<object>.ErrorResult("Kanban card for this product already exists in target warehouse"));
+
+            entity.WarehouseId = request.NewWarehouseId;
+            entity.UpdatedAt = DateTime.UtcNow;
+
+            await context.SaveChangesAsync();
+            return Ok(ApiResponse<object>.SuccessResult(new { message = "Kanban card reassigned successfully" }));
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error reassigning Kanban card {Id} to warehouse {WarehouseId}", id, request.NewWarehouseId);
+            return StatusCode(500, ApiResponse<object>.ErrorResult("Failed to reassign Kanban card"));
         }
     }
 

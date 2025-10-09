@@ -43,23 +43,12 @@ public class ManufacturerTests
         manufacturer.UpdatedAt.Should().Be(now);
     }
 
-    [Fact]
-    public void Manufacturer_WithProducts_ShouldMaintainProductRelationship()
-    {
-        // Arrange
-        var manufacturer = new Manufacturer { Id = 1, Name = "Apple" };
-        var product1 = new Product { Id = 1, Name = "iPhone 15", ManufacturerId = 1 };
-        var product2 = new Product { Id = 2, Name = "iPhone 14", ManufacturerId = 1 };
-
-        // Act
-        manufacturer.Products.Add(product1);
-        manufacturer.Products.Add(product2);
-
-        // Assert
-        manufacturer.Products.Should().HaveCount(2);
-        manufacturer.Products.Should().Contain(product1);
-        manufacturer.Products.Should().Contain(product2);
-    }
+    // Test removed - ManufacturerId relationship was removed from Product model
+    // [Fact]
+    // public void Manufacturer_WithProducts_ShouldMaintainProductRelationship()
+    // {
+    //     // This test is no longer valid since ManufacturerId was removed from Product model
+    // }
 
     [Fact]
     public void Manufacturer_CanHaveEmptyName()

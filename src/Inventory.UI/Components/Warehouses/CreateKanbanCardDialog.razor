@@ -6,6 +6,32 @@
 @inject Inventory.Shared.Services.IErrorHandlingService ErrorHandlingService
 @inject Radzen.DialogService DialogService
 
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+    <RadzenDropDown Data="@allWarehouses"
+                    TextProperty="Name"
+                    @bind-Value="@selectedWarehouse"
+                    Placeholder="Склад" />
+
+    <RadzenAutoComplete Data="@productSearchResults"
+                        TextProperty="Name"
+                        ValueProperty="Id"
+                        Change="@OnProductChanged"
+                        Search="@SearchProducts"
+                        Placeholder="Товар (поиск)" />
+
+    <RadzenNumeric @bind-Value="@minThreshold" TValue="int" Placeholder="Минимум" />
+    <RadzenNumeric @bind-Value="@maxThreshold" TValue="int" Placeholder="Максимум" />
+
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+        <RadzenButton Text="Отмена" Click="@Cancel" />
+        <RadzenButton Text="Создать" ButtonStyle="ButtonStyle.Primary" Disabled="@(
+                saving || selectedWarehouse == null || selectedProduct == null || minThreshold < 0 || maxThreshold < minThreshold
+            )" Click="@SaveAsync" />
+    </RadzenStack>
+</RadzenStack>
+
+
 @code {
     [Parameter] public WarehouseDto? PreselectedWarehouse { get; set; }
 
@@ -69,34 +95,8 @@
     }
 
     private void Cancel() => DialogService.Close(false);
-}
 
-<RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
-    <RadzenDropDown Data="@allWarehouses"
-                    TextProperty="Name"
-                    @bind-Value="selectedWarehouse"
-                    Placeholder="Склад" />
-
-    <RadzenAutoComplete Data="@productSearchResults"
-                        TextProperty="Name"
-                        ValueProperty="Id"
-                        Change="@OnProductChanged"
-                        Search="SearchProducts"
-                        Placeholder="Товар (поиск)" />
-
-    <RadzenNumeric @bind-Value="minThreshold" TValue="int" Placeholder="Минимум" />
-    <RadzenNumeric @bind-Value="maxThreshold" TValue="int" Placeholder="Максимум" />
-
-    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
-        <RadzenButton Text="Отмена" Click="@Cancel" />
-        <RadzenButton Text="Создать" ButtonStyle="ButtonStyle.Primary" Disabled="@(
-                saving || selectedWarehouse == null || selectedProduct == null || minThreshold < 0 || maxThreshold < minThreshold
-            )" Click="@SaveAsync" />
-    </RadzenStack>
-</RadzenStack>
-
-@code {
-    private void OnProductChanged(object value)
+        private void OnProductChanged(object value)
     {
         if (value is ProductDto dto)
         {

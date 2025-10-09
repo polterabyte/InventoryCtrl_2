@@ -459,13 +459,11 @@ public abstract class IntegrationTestBase : IClassFixture<WebApplicationFactory<
             var iphoneProduct = new Product
             {
                 Name = "iPhone 15",
-                SKU = "IPHONE15-001",
                 Description = "Latest iPhone model",
                 CurrentQuantity = 50,
                 UnitOfMeasureId = (await Context.UnitOfMeasures.FirstAsync()).Id,
                 IsActive = true,
                 CategoryId = smartphonesCategory.Id,
-                ManufacturerId = (await Context.Manufacturers.FirstAsync(m => m.Name == "Apple")).Id,
                 ProductModelId = (await Context.ProductModels.FirstAsync(m => m.Name == "iPhone 15")).Id,
                 ProductGroupId = (await Context.ProductGroups.FirstAsync(g => g.Name == "Phones")).Id,
                 CreatedAt = DateTime.UtcNow,
@@ -475,13 +473,11 @@ public abstract class IntegrationTestBase : IClassFixture<WebApplicationFactory<
             var samsungProduct = new Product
             {
                 Name = "Samsung Galaxy S24",
-                SKU = "GALAXYS24-001", 
                 Description = "Latest Samsung Galaxy model",
                 CurrentQuantity = 30,
                 UnitOfMeasureId = (await Context.UnitOfMeasures.FirstAsync()).Id,
                 IsActive = true,
                 CategoryId = smartphonesCategory.Id,
-                ManufacturerId = (await Context.Manufacturers.FirstAsync(m => m.Name == "Samsung")).Id,
                 ProductModelId = (await Context.ProductModels.FirstAsync(m => m.Name == "Galaxy S24")).Id,
                 ProductGroupId = (await Context.ProductGroups.FirstAsync(g => g.Name == "Phones")).Id,
                 CreatedAt = DateTime.UtcNow,

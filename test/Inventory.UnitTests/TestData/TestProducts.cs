@@ -8,7 +8,6 @@ public static class TestProducts
     {
         Id = 1,
         Name = "Test Product",
-        SKU = "TEST-001",
         Description = "Test Description",
         // Quantity = 100, // Removed - using CurrentQuantity computed property
         CurrentQuantity = 100,
@@ -23,7 +22,6 @@ public static class TestProducts
     {
         Id = 2,
         Name = "Inactive Product",
-        SKU = "INACTIVE-001",
         Description = "Inactive Description",
         // Quantity = 0, // Removed - using CurrentQuantity computed property
         CurrentQuantity = 0,
@@ -38,7 +36,6 @@ public static class TestProducts
     {
         Id = 3,
         Name = "Low Stock Product",
-        SKU = "LOW-001",
         Description = "Low Stock Description",
         // Quantity = 5, // Removed - using CurrentQuantity computed property
         CurrentQuantity = 5,

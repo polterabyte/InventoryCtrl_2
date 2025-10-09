@@ -25,6 +25,12 @@ public class CreateKanbanCardDto
 
 public class UpdateKanbanCardDto
 {
+    public int? WarehouseId { get; set; } // Optional for reassignment
     public int MinThreshold { get; set; }
     public int MaxThreshold { get; set; }
+}
+
+public class ReassignKanbanCardRequest
+{
+    public int NewWarehouseId { get; set; }
 }

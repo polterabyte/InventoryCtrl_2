@@ -1,0 +1,76 @@
+@using Inventory.Shared.DTOs
+@using Inventory.Shared.Interfaces
+@inject IKanbanCardService KanbanCardService
+@inject Inventory.Shared.Services.IErrorHandlingService ErrorHandlingService
+@inject Radzen.DialogService DialogService
+
+@code {
+    [Parameter] public KanbanCardDto Card { get; set; } = null!;
+
+    private int minThreshold;
+    private int maxThreshold;
+    private bool saving;
+
+    protected override void OnParametersSet()
+    {
+        if (Card != null)
+        {
+            minThreshold = Card.MinThreshold;
+            maxThreshold = Card.MaxThreshold;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (minThreshold < 0 || maxThreshold < minThreshold) return;
+
+        saving = true;
+        try
+        {
+            var dto = new UpdateKanbanCardDto
+            {
+                MinThreshold = minThreshold,
+                MaxThreshold = maxThreshold
+            };
+
+            await KanbanCardService.UpdateAsync(Card.Id, dto);
+            DialogService.Close(true);
+        }
+        catch (Exception ex)
+        {
+            await ErrorHandlingService.HandleErrorAsync(ex, "Update Kanban Card",
+                new { CardId = Card.Id, minThreshold, maxThreshold });
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+
+    private void Cancel() => DialogService.Close(false);
+}
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+    <RadzenText TextStyle="TextStyle.H6">Редактировать канбан-карту</RadzenText>
+
+    <RadzenCard>
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+            <RadzenText TextStyle="TextStyle.Body2">
+                <strong>Товар:</strong> @Card?.ProductName
+            </RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2">
+                <strong>Склад:</strong> @Card?.WarehouseName
+            </RadzenText>
+        </RadzenStack>
+    </RadzenCard>
+
+    <RadzenNumeric @bind-Value="minThreshold" TValue="int" Placeholder="Минимальный порог" />
+    <RadzenNumeric @bind-Value="maxThreshold" TValue="int" Placeholder="Максимальный порог" />
+
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+        <RadzenButton Text="Отмена" Click="@Cancel" />
+        <RadzenButton Text="Сохранить" ButtonStyle="ButtonStyle.Primary" Disabled="@(
+                saving || minThreshold < 0 || maxThreshold < minThreshold
+            )" Click="@SaveAsync" />
+    </RadzenStack>
+</RadzenStack>

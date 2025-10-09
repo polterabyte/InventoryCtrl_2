@@ -440,10 +440,8 @@ public class WarehouseControllerTests : IDisposable
         var product = new Product
         {
             Name = "Test Product",
-            SKU = "TEST001",
             CurrentQuantity = 10,
             CategoryId = category.Id,
-            ManufacturerId = manufacturer.Id,
             ProductGroupId = productGroup.Id,
             ProductModelId = productModel.Id,
             IsActive = true,

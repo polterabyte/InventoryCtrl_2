@@ -84,12 +84,10 @@ public class ProductControllerRoleTests : IDisposable
         var request = new CreateProductDto
         {
             Name = "Test Product",
-            SKU = "TEST-001",
             Description = "Test description",
                 UnitOfMeasureId = 1,
             IsActive = false, // Admin can set to false
             CategoryId = _context.Categories.First().Id,
-            ManufacturerId = _context.Manufacturers.First().Id,
             ProductModelId = _context.ProductModels.First().Id,
             ProductGroupId = _context.ProductGroups.First().Id,
         };
@@ -125,12 +123,10 @@ public class ProductControllerRoleTests : IDisposable
         var request = new CreateProductDto
         {
             Name = "Test Product",
-            SKU = "TEST-002",
             Description = "Test description",
                 UnitOfMeasureId = 1,
             IsActive = false, // User tries to set to false
             CategoryId = _context.Categories.First().Id,
-            ManufacturerId = _context.Manufacturers.First().Id,
             ProductModelId = _context.ProductModels.First().Id,
             ProductGroupId = _context.ProductGroups.First().Id,
         };
@@ -162,12 +158,10 @@ public class ProductControllerRoleTests : IDisposable
         var request = new CreateProductDto
         {
             Name = "Test Product",
-            SKU = "TEST-003",
             Description = "Test description",
                 UnitOfMeasureId = 1,
             IsActive = true, // User sets to true
             CategoryId = _context.Categories.First().Id,
-            ManufacturerId = _context.Manufacturers.First().Id,
             ProductModelId = _context.ProductModels.First().Id,
             ProductGroupId = _context.ProductGroups.First().Id,
         };
@@ -204,13 +198,11 @@ public class ProductControllerRoleTests : IDisposable
         var product = new Product
         {
             Name = "Test Product",
-            SKU = "TEST-004",
             Description = "Test description",
             CurrentQuantity = 0,
                 UnitOfMeasureId = 1,
             IsActive = true,
             CategoryId = _context.Categories.First().Id,
-            ManufacturerId = _context.Manufacturers.First().Id,
             ProductModelId = _context.ProductModels.First().Id,
             ProductGroupId = _context.ProductGroups.First().Id,
             CreatedAt = DateTime.UtcNow
@@ -222,12 +214,10 @@ public class ProductControllerRoleTests : IDisposable
         var request = new UpdateProductDto
         {
             Name = "Updated Product",
-            SKU = "TEST-004",
             Description = "Updated description",
                 UnitOfMeasureId = 1,
             IsActive = false, // Admin can change to false
             CategoryId = _context.Categories.First().Id,
-            ManufacturerId = _context.Manufacturers.First().Id,
             ProductModelId = _context.ProductModels.First().Id,
             ProductGroupId = _context.ProductGroups.First().Id,
         };
@@ -264,13 +254,12 @@ public class ProductControllerRoleTests : IDisposable
         var product = new Product
         {
             Name = "Test Product",
-            SKU = "TEST-005",
+
             Description = "Test description",
             CurrentQuantity = 0,
                 UnitOfMeasureId = 1,
             IsActive = true,
             CategoryId = _context.Categories.First().Id,
-            ManufacturerId = _context.Manufacturers.First().Id,
             ProductModelId = _context.ProductModels.First().Id,
             ProductGroupId = _context.ProductGroups.First().Id,
             CreatedAt = DateTime.UtcNow
@@ -282,12 +271,10 @@ public class ProductControllerRoleTests : IDisposable
         var request = new UpdateProductDto
         {
             Name = "Updated Product",
-            SKU = "TEST-005",
             Description = "Updated description",
                 UnitOfMeasureId = 1,
             IsActive = false, // User tries to change to false
             CategoryId = _context.Categories.First().Id,
-            ManufacturerId = _context.Manufacturers.First().Id,
             ProductModelId = _context.ProductModels.First().Id,
             ProductGroupId = _context.ProductGroups.First().Id,
         };
@@ -320,13 +307,12 @@ public class ProductControllerRoleTests : IDisposable
         var product = new Product
         {
             Name = "Test Product",
-            SKU = "TEST-006",
+
             Description = "Test description",
             CurrentQuantity = 0,
                 UnitOfMeasureId = 1,
             IsActive = true,
             CategoryId = _context.Categories.First().Id,
-            ManufacturerId = _context.Manufacturers.First().Id,
             ProductModelId = _context.ProductModels.First().Id,
             ProductGroupId = _context.ProductGroups.First().Id,
             CreatedAt = DateTime.UtcNow
@@ -363,13 +349,11 @@ public class ProductControllerRoleTests : IDisposable
         var product = new Product
         {
             Name = "Test Product",
-            SKU = "TEST-007",
             Description = "Test description",
             CurrentQuantity = 0,
                 UnitOfMeasureId = 1,
             IsActive = true,
             CategoryId = _context.Categories.First().Id,
-            ManufacturerId = _context.Manufacturers.First().Id,
             ProductModelId = _context.ProductModels.First().Id,
             ProductGroupId = _context.ProductGroups.First().Id,
             CreatedAt = DateTime.UtcNow

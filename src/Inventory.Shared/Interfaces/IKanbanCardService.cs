@@ -9,5 +9,6 @@ public interface IKanbanCardService
     Task<KanbanCardDto> CreateAsync(CreateKanbanCardDto dto);
     Task<KanbanCardDto?> UpdateAsync(int id, UpdateKanbanCardDto dto);
     Task<bool> DeleteAsync(int id);
+    Task<bool> ReassignAsync(int cardId, int newWarehouseId);
 }
 

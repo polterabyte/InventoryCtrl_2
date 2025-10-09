@@ -56,21 +56,49 @@
                                 </RadzenStack>
                                 @if (cardsByWarehouse.TryGetValue(wh.Id, out var cards) && cards.Any())
                                 {
-                                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
-                                        @foreach (var card in cards)
-                                        {
-                                            <RadzenCard Style="@GetCardStyle(card.Id)">
-                                                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
-                                                    <RadzenText TextStyle="TextStyle.Subtitle2">@card.ProductName</RadzenText>
-                                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary);">Порог: @card.MinThreshold–@card.MaxThreshold @card.UnitOfMeasureSymbol</RadzenText>
-                                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary);">Остаток: @card.CurrentQuantity @card.UnitOfMeasureSymbol</RadzenText>
-                                                    @if (IsLowStock(card.Id))
-                                                    {
-                                                        <RadzenBadge Text="Ниже минимума" Style="background: var(--rz-danger); color: white;" />
-                                                    }
-                                                </RadzenStack>
-                                            </RadzenCard>
-                                        }
+                                     <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                                         @foreach (var card in cards)
+                                         {
+                                             <RadzenCard Style="@GetCardStyle(card.Id)">
+                                                 <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                                                     <!-- Card header with actions -->
+                                                     <RadzenStack Orientation="Orientation.Horizontal"
+                                                                  JustifyContent="JustifyContent.SpaceBetween"
+                                                                  AlignItems="AlignItems.Start">
+                                                         <RadzenText TextStyle="TextStyle.Subtitle2">@card.ProductName</RadzenText>
+
+                                                         <AuthorizeView Roles="Admin,Manager">
+                                                             <RadzenDropDownButton Text="" Icon="more_vert"
+                                                                                   Size="ButtonSize.Small"
+                                                                                   Items="@GetCardMenuItems(card)" />
+                                                         </AuthorizeView>
+                                                     </RadzenStack>
+
+                                                     <!-- Card content -->
+                                                     <RadzenText TextStyle="TextStyle.Caption"
+                                                                Style="color: var(--rz-text-secondary);">
+                                                         Порог: @card.MinThreshold–@card.MaxThreshold @card.UnitOfMeasureSymbol
+                                                     </RadzenText>
+
+                                                     <RadzenText TextStyle="TextStyle.Caption"
+                                                                Style="color: var(--rz-text-secondary);">
+                                                         Остаток: @card.CurrentQuantity @card.UnitOfMeasureSymbol
+                                                     </RadzenText>
+
+                                                     <!-- Status indicators -->
+                                                     @if (IsLowStock(card.Id))
+                                                     {
+                                                         <RadzenBadge Text="Низкий запас"
+                                                                     Style="background: var(--rz-danger); color: white;" />
+                                                     }
+                                                     @if (IsOverStock(card.Id))
+                                                     {
+                                                         <RadzenBadge Text="Избыток"
+                                                                     Style="background: var(--rz-warning); color: white;" />
+                                                     }
+                                                 </RadzenStack>
+                                             </RadzenCard>
+                                         }
 
                                         <AuthorizeView Roles="Admin,Manager">
                                             <RadzenButton Text="Добавить карту" Icon="add" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Light" Click="@(() => OpenCreateCardDialog(wh))" />
@@ -150,7 +178,33 @@
         : warehouses.Where(w => (w.Name ?? string.Empty).Contains(filter, StringComparison.OrdinalIgnoreCase));
 
     private string GetCardStyle(int kanbanCardId)
-        => $"border-left:4px solid {(IsLowStock(kanbanCardId) ? "var(--rz-danger)" : "var(--rz-info)")}; padding:0.5rem;";
+        => $"border-left:4px solid {(IsLowStock(kanbanCardId) ? "var(--rz-danger)" : IsOverStock(kanbanCardId) ? "var(--rz-warning)" : "var(--rz-info)")}; padding:0.5rem;";
+
+    private bool IsOverStock(int kanbanCardId)
+    {
+        foreach (var warehouseCards in cardsByWarehouse.Values)
+        {
+            var card = warehouseCards.FirstOrDefault(c => c.Id == kanbanCardId);
+            if (card != null)
+            {
+                return card.CurrentQuantity > card.MaxThreshold;
+            }
+        }
+        return false;
+    }
+
+    private List<object> GetCardMenuItems(KanbanCardDto card)
+    {
+        return new List<object>
+        {
+            new { Text = "Редактировать", Icon = "edit",
+                 Click = (Action)(() => OpenEditCardDialog(card)) },
+            new { Text = "Переместить", Icon = "swap_horiz",
+                 Click = (Action)(() => OpenReassignDialog(card)) },
+            new { Text = "Удалить", Icon = "delete",
+                 Click = (Action)(() => ConfirmDeleteCard(card)) }
+        };
+    }
 
     private async Task OpenCreateCardDialog(WarehouseDto? preselectedWarehouse = null)
     {
@@ -169,6 +223,108 @@
             {
                 Severity = Radzen.NotificationSeverity.Success,
                 Summary = "Карта создана",
+                Duration = 3000
+            });
+            await LoadDataAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task OpenEditCardDialog(KanbanCardDto card)
+    {
+        var result = await DialogService.OpenAsync<EditKanbanCardDialog>(
+            title: $"Редактировать карту: {card.ProductName}",
+            parameters: new Dictionary<string, object?>
+            {
+                [nameof(EditKanbanCardDialog.Card)] = card
+            },
+            options: new Radzen.DialogOptions { Width = "500px", Height = "auto" }
+        );
+
+        if (result is bool updated && updated)
+        {
+            NotificationService.Notify(new Radzen.NotificationMessage
+            {
+                Severity = Radzen.NotificationSeverity.Success,
+                Summary = "Карта обновлена",
+                Duration = 3000
+            });
+            await LoadDataAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task ConfirmDeleteCard(KanbanCardDto card)
+    {
+        var confirmed = await DialogService.Confirm(
+            $"Удалить канбан-карту для товара '{card.ProductName}' на складе '{card.WarehouseName}'?",
+            "Подтверждение удаления",
+            new Radzen.ConfirmOptions
+            {
+                OkButtonText = "Удалить",
+                CancelButtonText = "Отмена"
+            }
+        );
+
+        if (confirmed == true)
+        {
+            await DeleteCardAsync(card);
+        }
+    }
+
+    private async Task DeleteCardAsync(KanbanCardDto card)
+    {
+        try
+        {
+            var success = await KanbanCardService.DeleteAsync(card.Id);
+            if (success)
+            {
+                NotificationService.Notify(new Radzen.NotificationMessage
+                {
+                    Severity = Radzen.NotificationSeverity.Success,
+                    Summary = "Карта удалена",
+                    Detail = $"Карта для '{card.ProductName}' удалена",
+                    Duration = 3000
+                });
+                await LoadDataAsync();
+            }
+            else
+            {
+                NotificationService.Notify(new Radzen.NotificationMessage
+                {
+                    Severity = Radzen.NotificationSeverity.Error,
+                    Summary = "Ошибка удаления",
+                    Detail = "Не удалось удалить карту",
+                    Duration = 5000
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            await ErrorHandlingService.HandleErrorAsync(ex, "Delete Kanban Card",
+                new { CardId = card.Id, ProductName = card.ProductName });
+        }
+    }
+
+    private async Task OpenReassignDialog(KanbanCardDto card)
+    {
+        var result = await DialogService.OpenAsync<ReassignKanbanCardDialog>(
+            title: $"Переместить карту: {card.ProductName}",
+            parameters: new Dictionary<string, object?>
+            {
+                [nameof(ReassignKanbanCardDialog.Card)] = card,
+                [nameof(ReassignKanbanCardDialog.CurrentWarehouseId)] = card.WarehouseId
+            },
+            options: new Radzen.DialogOptions { Width = "500px", Height = "auto" }
+        );
+
+        if (result is bool reassigned && reassigned)
+        {
+            NotificationService.Notify(new Radzen.NotificationMessage
+            {
+                Severity = Radzen.NotificationSeverity.Success,
+                Summary = "Карта перемещена",
+                Detail = $"Карта для '{card.ProductName}' перемещена",
                 Duration = 3000
             });
             await LoadDataAsync();

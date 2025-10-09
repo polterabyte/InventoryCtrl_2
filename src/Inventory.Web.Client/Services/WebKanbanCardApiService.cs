@@ -54,4 +54,12 @@ public class WebKanbanCardApiService : WebBaseApiService, IKanbanCardService
         var response = await base.DeleteAsync(endpoint);
         return response.Success && response.Data;
     }
+
+    public async Task<bool> ReassignAsync(int cardId, int newWarehouseId)
+    {
+        var endpoint = $"{ApiEndpoints.KanbanCardById.Replace("{id}", cardId.ToString())}/reassign";
+        var dto = new { NewWarehouseId = newWarehouseId };
+        var response = await PutAsync<bool>(endpoint, dto);
+        return response.Success && response.Data;
+    }
 }

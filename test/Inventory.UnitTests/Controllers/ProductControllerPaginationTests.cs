@@ -89,13 +89,11 @@ public class ProductControllerPaginationTests : IDisposable
             new Product
             {
                 Name = "Dell XPS 13",
-                SKU = "DELL-XPS13-001",
                 Description = "High-performance laptop",
                 CurrentQuantity = 10,
                 UnitOfMeasureId = 1,
                 IsActive = true,
                 CategoryId = category1.Id,
-                ManufacturerId = manufacturer1.Id,
                 ProductModelId = model1.Id,
                 ProductGroupId = group1.Id,
                 CreatedAt = DateTime.UtcNow
@@ -103,13 +101,11 @@ public class ProductControllerPaginationTests : IDisposable
             new Product
             {
                 Name = "MacBook Pro 16",
-                SKU = "APPLE-MBP16-001",
                 Description = "Professional laptop",
                 CurrentQuantity = 5,
                 UnitOfMeasureId = 1,
                 IsActive = true,
                 CategoryId = category1.Id,
-                ManufacturerId = manufacturer2.Id,
                 ProductModelId = model2.Id,
                 ProductGroupId = group1.Id,
                 CreatedAt = DateTime.UtcNow
@@ -117,13 +113,11 @@ public class ProductControllerPaginationTests : IDisposable
             new Product
             {
                 Name = "iPad Pro",
-                SKU = "APPLE-IPAD-001",
                 Description = "Professional tablet",
                 CurrentQuantity = 15,
                 UnitOfMeasureId = 1,
                 IsActive = false, // Inactive product
                 CategoryId = category1.Id,
-                ManufacturerId = manufacturer2.Id,
                 ProductModelId = model2.Id,
                 ProductGroupId = group2.Id,
                 CreatedAt = DateTime.UtcNow
@@ -205,7 +199,7 @@ public class ProductControllerPaginationTests : IDisposable
         var isActive = false;
 
         // Act
-        var result = await _controller.GetProducts(1, 10, null, null, null, isActive);
+        var result = await _controller.GetProducts(1, 10, null, null, isActive);
 
         // Assert
         result.Should().NotBeNull();

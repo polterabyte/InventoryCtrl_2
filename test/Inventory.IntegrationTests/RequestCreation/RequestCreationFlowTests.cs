@@ -266,9 +266,8 @@ namespace Inventory.IntegrationTests.RequestCreation
             {
                 Name = "Test Product",
                 CategoryId = category.Id,
-                ManufacturerId = manufacturer.Id,
-                UnitOfMeasureId = uom.Id,
-                SKU = "TEST-001"
+
+                UnitOfMeasureId = uom.Id
             };
             if (product.Id == 0)
             {
