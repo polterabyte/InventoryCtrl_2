@@ -4,21 +4,23 @@
 @inject IProductService ProductService
 @inject IKanbanCardService KanbanCardService
 @inject Inventory.Shared.Services.IErrorHandlingService ErrorHandlingService
+@inject Radzen.NotificationService NotificationService
 @inject Radzen.DialogService DialogService
 
 
 <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
     <RadzenDropDown Data="@allWarehouses"
-                    TextProperty="Name"
-                    @bind-Value="@selectedWarehouse"
-                    Placeholder="Склад" />
+                     TextProperty="Name"
+                     @bind-Value="selectedWarehouse"
+                     Placeholder="Склад" />
 
-    <RadzenAutoComplete Data="@productSearchResults"
-                        TextProperty="Name"
-                        ValueProperty="Id"
-                        Change="@OnProductChanged"
-                        Search="@SearchProducts"
-                        Placeholder="Товар (поиск)" />
+    <RadzenDropDown Data="@allProducts"
+                     TextProperty="Name"
+                     @bind-Value="selectedProduct"
+                     AllowFiltering="true"
+                     FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                     Placeholder="Товар (поиск)"
+                     FilterOperator="StringFilterOperator.Contains" />
 
     <RadzenNumeric @bind-Value="@minThreshold" TValue="int" Placeholder="Минимум" />
     <RadzenNumeric @bind-Value="@maxThreshold" TValue="int" Placeholder="Максимум" />
@@ -36,40 +38,43 @@
     [Parameter] public WarehouseDto? PreselectedWarehouse { get; set; }
 
     private List<WarehouseDto> allWarehouses = new();
+    private List<ProductDto> allProducts = new();
     private WarehouseDto? selectedWarehouse;
     private ProductDto? selectedProduct;
     private int minThreshold;
     private int maxThreshold;
     private bool saving;
-    private List<ProductDto> productSearchResults = new();
 
     protected override async Task OnInitializedAsync()
     {
         allWarehouses = await WarehouseService.GetAllWarehousesAsync();
+        allProducts = await ProductService.GetAllProductsAsync();
         selectedWarehouse = PreselectedWarehouse ?? allWarehouses.FirstOrDefault();
     }
 
-    private async Task<IEnumerable<ProductDto>> SearchProducts(string? term)
-    {
-        if (string.IsNullOrWhiteSpace(term))
-        {
-            productSearchResults = new();
-        }
-        else
-        {
-            productSearchResults = await ProductService.SearchProductsAsync(term);
-        }
-        return productSearchResults;
-    }
+
 
     private async Task SaveAsync()
     {
-        if (selectedWarehouse == null || selectedProduct == null) return;
-        if (minThreshold < 0 || maxThreshold < minThreshold) return;
+        Console.WriteLine($"SaveAsync called - selectedWarehouse: {(selectedWarehouse != null ? $"{selectedWarehouse.Id} - {selectedWarehouse.Name}" : "null")}, selectedProduct: {(selectedProduct != null ? $"{selectedProduct.Id} - {selectedProduct.Name}" : "null")}");
+
+        if (selectedWarehouse == null || selectedProduct == null)
+        {
+            Console.WriteLine("Validation failed: selectedWarehouse or selectedProduct is null");
+            return;
+        }
+
+        if (minThreshold < 0 || maxThreshold < minThreshold)
+        {
+            Console.WriteLine($"Validation failed: invalid thresholds - min: {minThreshold}, max: {maxThreshold}");
+            return;
+        }
 
         saving = true;
         try
         {
+            Console.WriteLine($"Creating Kanban card - ProductId: {selectedProduct.Id}, WarehouseId: {selectedWarehouse.Id}, Product: {selectedProduct.Name}, Warehouse: {selectedWarehouse.Name}");
+
             var dto = new CreateKanbanCardDto
             {
                 ProductId = selectedProduct.Id,
@@ -77,15 +82,20 @@
                 MinThreshold = minThreshold,
                 MaxThreshold = maxThreshold
             };
+
+            Console.WriteLine($"Sending DTO to API: ProductId={dto.ProductId}, WarehouseId={dto.WarehouseId}, MinThreshold={dto.MinThreshold}, MaxThreshold={dto.MaxThreshold}");
+
             await KanbanCardService.CreateAsync(dto);
+            Console.WriteLine("Kanban card created successfully");
             DialogService.Close(true);
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"Error creating Kanban card: {ex.Message}");
             await ErrorHandlingService.HandleErrorAsync(
                 ex,
                 "Create Kanban Card",
-                new { WarehouseId = selectedWarehouse?.Id, ProductId = selectedProduct?.Id, minThreshold, maxThreshold }
+                new { WarehouseId = selectedWarehouse.Id, ProductId = selectedProduct.Id, minThreshold, maxThreshold }
             );
         }
         finally
@@ -95,19 +105,4 @@
     }
 
     private void Cancel() => DialogService.Close(false);
-
-        private void OnProductChanged(object value)
-    {
-        if (value is ProductDto dto)
-        {
-            selectedProduct = dto;
-            return;
-        }
-        if (value is int id)
-        {
-            selectedProduct = productSearchResults.FirstOrDefault(p => p.Id == id);
-            return;
-        }
-        selectedProduct = null;
-    }
 }

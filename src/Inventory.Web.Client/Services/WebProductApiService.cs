@@ -80,7 +80,7 @@ public class WebProductApiService : WebBaseApiService, IProductService
 
     public async Task<List<ProductDto>> SearchProductsAsync(string searchTerm)
     {
-        var endpoint = $"{ApiEndpoints.SearchProducts}?term={Uri.EscapeDataString(searchTerm)}";
+        var endpoint = $"{ApiEndpoints.Products}?search={Uri.EscapeDataString(searchTerm)}&pageSize=50";
         var response = await GetPagedAsync<ProductDto>(endpoint);
         return response.Data?.Items ?? new List<ProductDto>();
     }

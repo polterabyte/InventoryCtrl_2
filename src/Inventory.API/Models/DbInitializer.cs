@@ -29,6 +29,9 @@ public static class DbInitializer
         // Создание администратора
         await CreateAdminUserAsync(userManager, configuration);
         
+        // Seed reference data
+        await SeedReferenceDataAsync(db);
+
         // Seed notification data
         await NotificationSeeder.SeedAsync(db, kanbanSettings);
     }
@@ -189,5 +192,134 @@ public static class DbInitializer
         db.KanbanSettings.Add(settings);
         await db.SaveChangesAsync();
         return settings;
+    }
+
+    private static async Task SeedReferenceDataAsync(AppDbContext db)
+    {
+        // Seed locations
+        if (!await db.Locations.AnyAsync())
+        {
+            var location = new Location
+            {
+                Name = "Main Building",
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+            db.Locations.Add(location);
+            await db.SaveChangesAsync();
+            Log.Information("Created location: {Name}", location.Name);
+        }
+
+        // Seed unit of measures
+        if (!await db.UnitOfMeasures.AnyAsync())
+        {
+            var unit = new UnitOfMeasure
+            {
+                Name = "Pieces",
+                Symbol = "pcs",
+                Description = "Individual items",
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+            db.UnitOfMeasures.Add(unit);
+            await db.SaveChangesAsync();
+            Log.Information("Created unit of measure: {Name}", unit.Name);
+        }
+
+        // Seed categories
+        if (!await db.Categories.AnyAsync())
+        {
+            var category = new Category
+            {
+                Name = "Electronics",
+                CreatedAt = DateTime.UtcNow
+            };
+            db.Categories.Add(category);
+            await db.SaveChangesAsync();
+            Log.Information("Created category: {Name}", category.Name);
+        }
+
+        // Seed product groups
+        if (!await db.ProductGroups.AnyAsync())
+        {
+            var productGroup = new ProductGroup
+            {
+                Name = "Smartphones",
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+            db.ProductGroups.Add(productGroup);
+            await db.SaveChangesAsync();
+            Log.Information("Created product group: {Name}", productGroup.Name);
+        }
+
+        // Seed product models
+        if (!await db.ProductModels.AnyAsync())
+        {
+            var productModel = new ProductModel
+            {
+                Name = "iPhone Series",
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+            db.ProductModels.Add(productModel);
+            await db.SaveChangesAsync();
+            Log.Information("Created product model: {Name}", productModel.Name);
+        }
+
+        // Seed warehouses
+        if (!await db.Warehouses.AnyAsync())
+        {
+            var warehouse1 = new Warehouse
+            {
+                Name = "Main Warehouse",
+                LocationId = 1,
+                IsActive = true
+            };
+            var warehouse2 = new Warehouse
+            {
+                Name = "Secondary Warehouse",
+                LocationId = 1,
+                IsActive = true
+            };
+            db.Warehouses.AddRange(warehouse1, warehouse2);
+            await db.SaveChangesAsync();
+            Log.Information("Created warehouses: {Name1}, {Name2}", warehouse1.Name, warehouse2.Name);
+        }
+
+        // Seed products
+        if (!await db.Products.AnyAsync())
+        {
+            var product1 = new Product
+            {
+                Name = "iPhone 15",
+                Description = "Latest iPhone model",
+                CurrentQuantity = 50,
+                UnitOfMeasureId = 1,
+                IsActive = true,
+                CategoryId = 1,
+                ProductGroupId = 1,
+                ProductModelId = 1,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+            var product2 = new Product
+            {
+                Name = "Samsung Galaxy S24",
+                Description = "Latest Samsung Galaxy model",
+                CurrentQuantity = 30,
+                UnitOfMeasureId = 1,
+                IsActive = true,
+                CategoryId = 1,
+                ProductGroupId = 1,
+                ProductModelId = 1,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+            db.Products.AddRange(product1, product2);
+            await db.SaveChangesAsync();
+            Log.Information("Created products: {Name1} (ID: {Id1}), {Name2} (ID: {Id2})",
+                product1.Name, product1.Id, product2.Name, product2.Id);
+        }
     }
 }

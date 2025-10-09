@@ -22,6 +22,16 @@ public class ProductDto
     public string? Note { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+
+    public override bool Equals(object? obj)
+    {
+        return obj is ProductDto other && Id == other.Id;
+    }
+
+    public override int GetHashCode()
+    {
+        return Id.GetHashCode();
+    }
 }
 
 public class CreateProductDto

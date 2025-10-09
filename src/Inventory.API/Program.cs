@@ -1,4 +1,4 @@
-﻿﻿using Serilog;
+using Serilog;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -228,7 +228,7 @@ builder.Services.AddScoped<IRetryService, RetryService>();
 builder.Services.AddScoped<Inventory.Shared.Interfaces.INotificationService, Inventory.API.Services.NotificationService>();
 // Remove this line - using Radzen notifications directly now
 // builder.Services.AddScoped<Inventory.Shared.Services.IUINotificationService, Inventory.Shared.Services.NotificationService>();
-builder.Services.AddScoped<IErrorHandlingService, ErrorHandlingService>();
+builder.Services.AddScoped<IErrorHandlingService, Inventory.API.Services.ErrorHandlingService>();
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();

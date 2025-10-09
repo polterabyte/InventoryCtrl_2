@@ -82,7 +82,7 @@ hubConnection.On<string, string>("ReceiveNotification", OnNotificationReceived);
 ## 📊 Entity Model
 
 ### Базовые сущности и связи
-- **Product**: `Id`, `Name`, `SKU`, связи с Category/Manufacturer
+- **Product**: `Id`, `Name`, связи с Category/Manufacturer
 - **Category**: `Id`, `Name`, self-referencing `ParentCategoryId`
 - **InventoryTransaction**: `ProductId`, `WarehouseId`, `Quantity`, `Type`
 - **User**: Стандартный ASP.NET Identity с дополнительным `Role`
