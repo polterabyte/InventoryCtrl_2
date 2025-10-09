@@ -24,8 +24,7 @@ public class ProductCardTests : ComponentTestBase
             Description = "Test Description",
             Quantity = 100,
             UnitOfMeasureSymbol = "pcs",
-            CategoryName = "Test Category",
-            ManufacturerName = "Test Manufacturer"
+            CategoryName = "Test Category"
         };
 
         var cut = RenderComponent<ProductCard>(parameters => parameters

@@ -109,7 +109,6 @@ public class DashboardController(AppDbContext context, ILogger<DashboardControll
             // Recent products
             var recentProducts = await context.Products
                 .Include(p => p.Category)
-                .Include(p => p.Manufacturer)
                 .Where(p => p.IsActive && p.CreatedAt >= DateTime.UtcNow.AddDays(-30))
                 .OrderByDescending(p => p.CreatedAt)
                 .Take(5)
@@ -120,7 +119,7 @@ public class DashboardController(AppDbContext context, ILogger<DashboardControll
                     SKU = p.SKU,
                     Quantity = 0, // Will be populated from ProductOnHandView
                     CategoryName = p.Category.Name,
-                    ManufacturerName = p.Manufacturer.Name,
+                    ManufacturerName = null, // Manufacturer removed
                     CreatedAt = p.CreatedAt
                 })
                 .ToListAsync();
@@ -168,7 +167,6 @@ public class DashboardController(AppDbContext context, ILogger<DashboardControll
                         ProductName = first.ProductName,
                         SKU = first.SKU,
                         CategoryName = first.CategoryName,
-                        ManufacturerName = first.ManufacturerName,
                         UnitOfMeasureSymbol = first.UnitOfMeasureSymbol,
                         KanbanCards = group.ToList()
                     };
@@ -176,7 +174,7 @@ public class DashboardController(AppDbContext context, ILogger<DashboardControll
                 .OrderBy(p => p.ProductName)
                 .ToList();
 
-            logger.LogInformation("Low stock products retrieved successfully: {Count} products", groupedProducts.Count);
+            logger.LogInformation($"Low stock products retrieved successfully: {groupedProducts.Count} products");
 
             return Ok(ApiResponse<List<LowStockProductDto>>.SuccessResult(groupedProducts));
         }
@@ -224,7 +222,6 @@ public class DashboardController(AppDbContext context, ILogger<DashboardControll
                 ProductName = k.Product.Name,
                 k.Product.SKU,
                 CategoryName = k.Product.Category.Name,
-                ManufacturerName = k.Product.Manufacturer.Name,
                 k.WarehouseId,
                 WarehouseName = k.Warehouse.Name,
                 k.MinThreshold,
@@ -266,7 +263,6 @@ public class DashboardController(AppDbContext context, ILogger<DashboardControll
                     ProductName = card.ProductName,
                     SKU = card.SKU,
                     CategoryName = card.CategoryName,
-                    ManufacturerName = card.ManufacturerName,
                     WarehouseId = card.WarehouseId,
                     WarehouseName = card.WarehouseName,
                     CurrentQuantity = quantity,

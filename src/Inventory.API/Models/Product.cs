@@ -15,8 +15,6 @@ public class Product
     public bool IsActive { get; set; } = true;
     public int CategoryId { get; set; }
     public Category Category { get; set; } = null!;
-    public int ManufacturerId { get; set; }
-    public Manufacturer Manufacturer { get; set; } = null!;
     public int ProductModelId { get; set; }
     public ProductModel ProductModel { get; set; } = null!;
     public int ProductGroupId { get; set; }

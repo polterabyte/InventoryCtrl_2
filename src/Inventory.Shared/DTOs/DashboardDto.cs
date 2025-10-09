@@ -42,7 +42,6 @@ public class LowStockProductDto
     public string ProductName { get; set; } = string.Empty;
     public string SKU { get; set; } = string.Empty;
     public string CategoryName { get; set; } = string.Empty;
-    public string ManufacturerName { get; set; } = string.Empty;
     public string UnitOfMeasureSymbol { get; set; } = string.Empty;
     public List<LowStockKanbanDto> KanbanCards { get; set; } = new();
 }

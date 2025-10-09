@@ -16,8 +16,6 @@ public class ProductDto
     public bool IsActive { get; set; } = true;
     public int CategoryId { get; set; }
     public string CategoryName { get; set; } = string.Empty;
-    public int ManufacturerId { get; set; }
-    public string ManufacturerName { get; set; } = string.Empty;
     public int ProductModelId { get; set; }
     public string ProductModelName { get; set; } = string.Empty;
     public int ProductGroupId { get; set; }
@@ -32,28 +30,24 @@ public class CreateProductDto
     [Required(ErrorMessage = "Product name is required")]
     [StringLength(200, MinimumLength = 2, ErrorMessage = "Product name must be between 2 and 200 characters")]
     public string Name { get; set; } = string.Empty;
-    
+
     [Required(ErrorMessage = "SKU is required")]
     [StringLength(50, MinimumLength = 2, ErrorMessage = "SKU must be between 2 and 50 characters")]
     public string SKU { get; set; } = string.Empty;
-    
+
     [StringLength(1000, ErrorMessage = "Description must not exceed 1000 characters")]
     public string? Description { get; set; }
-    
+
     [Required(ErrorMessage = "Unit of measure is required")]
     [Range(1, int.MaxValue, ErrorMessage = "Unit of measure ID must be greater than 0")]
     public int UnitOfMeasureId { get; set; }
-    
+
     public bool IsActive { get; set; } = true;
-    
+
     [Required(ErrorMessage = "Category is required")]
     [Range(1, int.MaxValue, ErrorMessage = "Category ID must be greater than 0")]
     public int CategoryId { get; set; }
-    
-    [Required(ErrorMessage = "Manufacturer is required")]
-    [Range(1, int.MaxValue, ErrorMessage = "Manufacturer ID must be greater than 0")]
-    public int ManufacturerId { get; set; }
-    
+
     [Required(ErrorMessage = "Product model is required")]
     [Range(1, int.MaxValue, ErrorMessage = "Product model ID must be greater than 0")]
     public int ProductModelId { get; set; }
@@ -88,11 +82,7 @@ public class UpdateProductDto
     [Required(ErrorMessage = "Category is required")]
     [Range(1, int.MaxValue, ErrorMessage = "Category ID must be greater than 0")]
     public int CategoryId { get; set; }
-    
-    [Required(ErrorMessage = "Manufacturer is required")]
-    [Range(1, int.MaxValue, ErrorMessage = "Manufacturer ID must be greater than 0")]
-    public int ManufacturerId { get; set; }
-    
+
     [Required(ErrorMessage = "Product model is required")]
     [Range(1, int.MaxValue, ErrorMessage = "Product model ID must be greater than 0")]
     public int ProductModelId { get; set; }

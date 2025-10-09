@@ -202,13 +202,7 @@ public class ManufacturerController(AppDbContext context, ILogger<ManufacturerCo
                 return NotFound(ApiResponse<object>.ErrorResult("Manufacturer not found"));
             }
 
-            var hasProducts = await context.Products
-                .AnyAsync(p => p.ManufacturerId == id && p.IsActive);
 
-            if (hasProducts)
-            {
-                return BadRequest(ApiResponse<object>.ErrorResult("Cannot delete manufacturer with products"));
-            }
 
             context.Manufacturers.Remove(manufacturer);
             await context.SaveChangesAsync();

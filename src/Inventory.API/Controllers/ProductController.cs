@@ -23,14 +23,12 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
         [FromQuery] int pageSize = 10,
         [FromQuery] string? search = null,
         [FromQuery] int? categoryId = null,
-        [FromQuery] int? manufacturerId = null,
         [FromQuery] bool? isActive = null)
     {
         try
         {
             var query = context.Products
                 .Include(p => p.Category)
-                .Include(p => p.Manufacturer)
                 .Include(p => p.ProductModel)
                 .Include(p => p.ProductGroup)
                 .Include(p => p.UnitOfMeasure)
@@ -46,11 +44,6 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
             if (categoryId.HasValue)
             {
                 query = query.Where(p => p.CategoryId == categoryId.Value);
-            }
-
-            if (manufacturerId.HasValue)
-            {
-                query = query.Where(p => p.ManufacturerId == manufacturerId.Value);
             }
 
             if (isActive.HasValue)
@@ -86,11 +79,9 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                     UnitOfMeasureName = p.UnitOfMeasure.Name,
                     UnitOfMeasureSymbol = p.UnitOfMeasure.Symbol,
                     IsActive = p.IsActive,
-                    CategoryId = p.CategoryId,
-                    CategoryName = p.Category.Name,
-                    ManufacturerId = p.ManufacturerId,
-                    ManufacturerName = p.Manufacturer.Name,
-                    ProductModelId = p.ProductModelId,
+                     CategoryId = p.CategoryId,
+                     CategoryName = p.Category.Name,
+                     ProductModelId = p.ProductModelId,
                     ProductModelName = p.ProductModel.Name,
                     ProductGroupId = p.ProductGroupId,
                     ProductGroupName = p.ProductGroup.Name,
@@ -135,7 +126,6 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
         {
             var product = await context.Products
                 .Include(p => p.Category)
-                .Include(p => p.Manufacturer)
                 .Include(p => p.ProductModel)
                 .Include(p => p.ProductGroup)
                 .Include(p => p.UnitOfMeasure)
@@ -159,8 +149,6 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 IsActive = product.IsActive,
                 CategoryId = product.CategoryId,
                 CategoryName = product.Category.Name,
-                ManufacturerId = product.ManufacturerId,
-                ManufacturerName = product.Manufacturer.Name,
                 ProductModelId = product.ProductModelId,
                 ProductModelName = product.ProductModel.Name,
                 ProductGroupId = product.ProductGroupId,
@@ -193,7 +181,6 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
         {
             var product = await context.Products
                 .Include(p => p.Category)
-                .Include(p => p.Manufacturer)
                 .Include(p => p.ProductModel)
                 .Include(p => p.ProductGroup)
                 .FirstOrDefaultAsync(p => p.SKU == sku && p.IsActive);
@@ -216,8 +203,6 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 IsActive = product.IsActive,
                 CategoryId = product.CategoryId,
                 CategoryName = product.Category.Name,
-                ManufacturerId = product.ManufacturerId,
-                ManufacturerName = product.Manufacturer.Name,
                 ProductModelId = product.ProductModelId,
                 ProductModelName = product.ProductModel.Name,
                 ProductGroupId = product.ProductGroupId,
@@ -277,7 +262,6 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 UnitOfMeasureId = request.UnitOfMeasureId,
                 IsActive = userRole == "Admin" ? request.IsActive : true, // Only Admin can set IsActive
                 CategoryId = request.CategoryId,
-                ManufacturerId = request.ManufacturerId,
                 ProductModelId = request.ProductModelId,
                 ProductGroupId = request.ProductGroupId,
                 Note = request.Note,
@@ -300,9 +284,8 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                     Name = product.Name, 
                     SKU = product.SKU, 
                     Description = product.Description,
-                    CategoryId = product.CategoryId,
-                    ManufacturerId = product.ManufacturerId,
-                    ProductModelId = product.ProductModelId,
+                     CategoryId = product.CategoryId,
+                     ProductModelId = product.ProductModelId,
                     ProductGroupId = product.ProductGroupId,
                     UnitOfMeasureId = product.UnitOfMeasureId,
                             Note = product.Note,
@@ -316,7 +299,6 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
             // Return the created product
             var createdProduct = await context.Products
                 .Include(p => p.Category)
-                .Include(p => p.Manufacturer)
                 .Include(p => p.ProductModel)
                 .Include(p => p.ProductGroup)
                 .Include(p => p.UnitOfMeasure)
@@ -335,8 +317,6 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 IsActive = createdProduct.IsActive,
                 CategoryId = createdProduct.CategoryId,
                 CategoryName = createdProduct.Category.Name,
-                ManufacturerId = createdProduct.ManufacturerId,
-                ManufacturerName = createdProduct.Manufacturer.Name,
                 ProductModelId = createdProduct.ProductModelId,
                 ProductModelName = createdProduct.ProductModel.Name,
                 ProductGroupId = createdProduct.ProductGroupId,
@@ -395,7 +375,6 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 Description = product.Description,
                 UnitOfMeasureId = product.UnitOfMeasureId,
                 CategoryId = product.CategoryId,
-                ManufacturerId = product.ManufacturerId,
                 ProductModelId = product.ProductModelId,
                 ProductGroupId = product.ProductGroupId,
                 Note = product.Note,
@@ -407,7 +386,6 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
             product.Description = request.Description;
             product.UnitOfMeasureId = request.UnitOfMeasureId;
             product.CategoryId = request.CategoryId;
-            product.ManufacturerId = request.ManufacturerId;
             product.ProductModelId = request.ProductModelId;
             product.ProductGroupId = request.ProductGroupId;
             product.Note = request.Note;
@@ -430,7 +408,6 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 Description = product.Description,
                 UnitOfMeasureId = product.UnitOfMeasureId,
                 CategoryId = product.CategoryId,
-                ManufacturerId = product.ManufacturerId,
                 ProductModelId = product.ProductModelId,
                 ProductGroupId = product.ProductGroupId,
                 Note = product.Note,
@@ -464,9 +441,11 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 UnitOfMeasureSymbol = product.UnitOfMeasure.Symbol,
                 IsActive = product.IsActive,
                 CategoryId = product.CategoryId,
-                ManufacturerId = product.ManufacturerId,
+                CategoryName = product.Category.Name,
                 ProductModelId = product.ProductModelId,
+                ProductModelName = product.ProductModel.Name,
                 ProductGroupId = product.ProductGroupId,
+                ProductGroupName = product.ProductGroup.Name,
                 Note = product.Note,
                 CreatedAt = product.CreatedAt,
                 UpdatedAt = product.UpdatedAt

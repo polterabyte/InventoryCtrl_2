@@ -37,10 +37,6 @@ public class UpdateProductDtoValidator : AbstractValidator<UpdateProductDto>
             .GreaterThan(0)
             .WithMessage("Category ID must be greater than 0");
 
-        RuleFor(x => x.ManufacturerId)
-            .GreaterThan(0)
-            .WithMessage("Manufacturer ID must be greater than 0");
-
         RuleFor(x => x.UnitOfMeasureId)
             .GreaterThan(0)
             .WithMessage("Unit of measure ID must be greater than 0");
