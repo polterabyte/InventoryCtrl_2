@@ -1,6 +1,7 @@
 using Inventory.Shared.Constants;
 using Inventory.Shared.DTOs;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Microsoft.Extensions.Logging;
 
 namespace Inventory.Shared.Services;
@@ -10,6 +11,11 @@ public abstract class BaseApiService(HttpClient httpClient, string baseUrl, ILog
     protected HttpClient HttpClient { get; } = httpClient;
     protected string BaseUrl { get; } = baseUrl;
     protected ILogger Logger { get; } = logger;
+
+    private static readonly JsonSerializerOptions DefaultSerializerOptions = new JsonSerializerOptions
+    {
+        PropertyNameCaseInsensitive = true
+    };
 
     protected async Task<ApiResponse<T>> GetAsync<T>(string endpoint)
     {
@@ -21,7 +27,7 @@ public abstract class BaseApiService(HttpClient httpClient, string baseUrl, ILog
             
             if (response.IsSuccessStatusCode)
             {
-                var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<T>>();
+                var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<T>>(DefaultSerializerOptions);
                 Logger.LogDebug("GET request successful for {Endpoint}", endpoint);
                 return apiResponse ?? new ApiResponse<T> { Success = false, ErrorMessage = "Failed to deserialize response" };
             }
@@ -50,7 +56,7 @@ public abstract class BaseApiService(HttpClient httpClient, string baseUrl, ILog
             
             if (response.IsSuccessStatusCode)
             {
-                var apiResponse = await response.Content.ReadFromJsonAsync<PagedApiResponse<T>>();
+                var apiResponse = await response.Content.ReadFromJsonAsync<PagedApiResponse<T>>(DefaultSerializerOptions);
                 Logger.LogDebug("GET request successful for {Endpoint}", endpoint);
                 return apiResponse ?? new PagedApiResponse<T> { Success = false, Error = "Failed to deserialize response" };
             }
@@ -79,7 +85,7 @@ public abstract class BaseApiService(HttpClient httpClient, string baseUrl, ILog
             
             if (response.IsSuccessStatusCode)
             {
-                var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<T>>();
+                var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<T>>(DefaultSerializerOptions);
                 Logger.LogDebug("POST request successful for {Endpoint}", endpoint);
                 return apiResponse ?? new ApiResponse<T> { Success = false, ErrorMessage = "Failed to deserialize response" };
             }
@@ -108,7 +114,7 @@ public abstract class BaseApiService(HttpClient httpClient, string baseUrl, ILog
             
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<T>();
+                var result = await response.Content.ReadFromJsonAsync<T>(DefaultSerializerOptions);
                 Logger.LogDebug("PUT request successful for {Endpoint}", endpoint);
                 return new ApiResponse<T> { Success = true, Data = result };
             }

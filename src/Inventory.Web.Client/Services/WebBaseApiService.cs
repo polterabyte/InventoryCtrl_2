@@ -2,6 +2,7 @@ using System.Net.Http.Json;
 using Inventory.Shared.Constants;
 using Inventory.Shared.DTOs;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 namespace Inventory.Web.Client.Services;
 
@@ -19,6 +20,11 @@ public abstract class WebBaseApiService(
     protected readonly IApiErrorHandler ErrorHandler = errorHandler;
     protected readonly IRequestValidator RequestValidator = requestValidator;
     protected readonly ILogger Logger = logger;
+
+    private static readonly JsonSerializerOptions DefaultSerializerOptions = new JsonSerializerOptions
+    {
+        PropertyNameCaseInsensitive = true
+    };
 
     public async Task<string> GetApiUrlAsync()
     {
@@ -181,11 +187,30 @@ public abstract class WebBaseApiService(
     {
         try
         {
-            return await ExecuteHttpRequestAsync<ApiResponse<T>>(HttpMethod.Get, endpoint);
+            var fullUrl = await BuildFullUrlAsync(endpoint);
+            var request = new HttpRequestMessage(HttpMethod.Get, fullUrl);
+
+            Logger.LogDebug("Making GET request to {FullUrl}", fullUrl);
+
+            var response = await HttpClient.SendAsync(request);
+            Logger.LogDebug("Received response with status {StatusCode} for GET {FullUrl}",
+                response.StatusCode, fullUrl);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<T>>(DefaultSerializerOptions);
+                Logger.LogDebug("GET request successful for {Endpoint}", endpoint);
+                return apiResponse ?? new ApiResponse<T> { Success = false, ErrorMessage = "Failed to deserialize response" };
+            }
+            else
+            {
+                return await ErrorHandler.HandleResponseAsync<T>(response);
+            }
         }
         catch (Exception ex)
         {
-            return await ErrorHandler.HandleExceptionAsync<T>(ex, $"GET {endpoint}");
+            Logger.LogError(ex, "Exception occurred during GET request to {Endpoint}", endpoint);
+            return new ApiResponse<T> { Success = false, ErrorMessage = ex.Message };
         }
     }
 
