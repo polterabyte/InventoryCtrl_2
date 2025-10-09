@@ -1,4 +1,4 @@
-﻿@using Inventory.Shared.DTOs
+@using Inventory.Shared.DTOs
 @using Inventory.UI.Utilities
 @inject IDashboardService DashboardService
 
@@ -38,7 +38,7 @@
                                     @GetTransactionTitle(transaction.Type) для <strong>@transaction.ProductName</strong>
                                 </RadzenText>
                                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
-                                    <RadzenBadge Text="@($"{transaction.Quantity} {transaction.ProductSku}")"
+                                    <RadzenBadge Text="@transaction.Quantity.ToString()"
                                                  Style="@GetTransactionBadgeStyle(transaction.Type)" />
                                     <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary);">
                                         @transaction.UserName - @transaction.WarehouseName

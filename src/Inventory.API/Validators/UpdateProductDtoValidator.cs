@@ -19,16 +19,6 @@ public class UpdateProductDtoValidator : AbstractValidator<UpdateProductDto>
             .MaximumLength(200)
             .WithMessage("Product name must not exceed 200 characters");
 
-        RuleFor(x => x.SKU)
-            .NotEmpty()
-            .WithMessage("SKU is required")
-            .MinimumLength(3)
-            .WithMessage("SKU must be at least 3 characters long")
-            .MaximumLength(50)
-            .WithMessage("SKU must not exceed 50 characters")
-            .Matches("^[A-Z0-9-_]+$")
-            .WithMessage("SKU can only contain uppercase letters, numbers, hyphens, and underscores");
-
         RuleFor(x => x.Description)
             .MaximumLength(1000)
             .WithMessage("Description must not exceed 1000 characters");

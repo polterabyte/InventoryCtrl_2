@@ -16,7 +16,6 @@ public class RecentTransactionDto
 {
     public int Id { get; set; }
     public string ProductName { get; set; } = string.Empty;
-    public string ProductSku { get; set; } = string.Empty;
     public string Type { get; set; } = string.Empty;
     public int Quantity { get; set; }
     public DateTime Date { get; set; }
@@ -29,7 +28,6 @@ public class RecentProductDto
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
-    public string SKU { get; set; } = string.Empty;
     public int Quantity { get; set; }
     public string CategoryName { get; set; } = string.Empty;
     public string ManufacturerName { get; set; } = string.Empty;
@@ -40,7 +38,6 @@ public class LowStockProductDto
 {
     public int ProductId { get; set; }
     public string ProductName { get; set; } = string.Empty;
-    public string SKU { get; set; } = string.Empty;
     public string CategoryName { get; set; } = string.Empty;
     public string UnitOfMeasureSymbol { get; set; } = string.Empty;
     public List<LowStockKanbanDto> KanbanCards { get; set; } = new();

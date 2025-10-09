@@ -23,7 +23,6 @@ public class RecentActivityTests : ComponentTestBase
                 {
                     Id = 1,
                     ProductName = "Test Product 1",
-                    ProductSku = "TEST001",
                     Type = "Income",
                     Quantity = 10,
                     Date = DateTime.UtcNow.AddDays(-1),
@@ -35,7 +34,6 @@ public class RecentActivityTests : ComponentTestBase
                 {
                     Id = 2,
                     ProductName = "Test Product 2",
-                    ProductSku = "TEST002",
                     Type = "Outcome",
                     Quantity = 5,
                     Date = DateTime.UtcNow.AddDays(-2),
@@ -50,7 +48,6 @@ public class RecentActivityTests : ComponentTestBase
                 {
                     Id = 1,
                     Name = "New Product 1",
-                    SKU = "NEW001",
                     Quantity = 50,
                     CategoryName = "Electronics",
                     ManufacturerName = "Test Manufacturer",
@@ -60,7 +57,6 @@ public class RecentActivityTests : ComponentTestBase
                 {
                     Id = 2,
                     Name = "New Product 2",
-                    SKU = "NEW002",
                     Quantity = 25,
                     CategoryName = "Accessories",
                     ManufacturerName = "Test Manufacturer 2",
@@ -144,7 +140,6 @@ public class RecentActivityTests : ComponentTestBase
                 {
                     Id = 1,
                     ProductName = "Test Product",
-                    ProductSku = "TEST001",
                     Type = "Income",
                     Quantity = 10,
                     Date = DateTime.UtcNow,
@@ -185,7 +180,6 @@ public class RecentActivityTests : ComponentTestBase
                 {
                     Id = 1,
                     ProductName = "Test Product",
-                    ProductSku = "TEST001",
                     Type = "Income",
                     Quantity = 10,
                     Date = testDate,

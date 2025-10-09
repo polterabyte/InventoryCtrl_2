@@ -6,7 +6,6 @@ public class ProductDto
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
-    public string SKU { get; set; } = string.Empty;
     public string? Description { get; set; }
     // This quantity is now populated from ProductOnHandView for data consistency
     public int Quantity { get; set; }
@@ -30,10 +29,6 @@ public class CreateProductDto
     [Required(ErrorMessage = "Product name is required")]
     [StringLength(200, MinimumLength = 2, ErrorMessage = "Product name must be between 2 and 200 characters")]
     public string Name { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "SKU is required")]
-    [StringLength(50, MinimumLength = 2, ErrorMessage = "SKU must be between 2 and 50 characters")]
-    public string SKU { get; set; } = string.Empty;
 
     [StringLength(1000, ErrorMessage = "Description must not exceed 1000 characters")]
     public string? Description { get; set; }
@@ -65,11 +60,7 @@ public class UpdateProductDto
     [Required(ErrorMessage = "Product name is required")]
     [StringLength(200, MinimumLength = 2, ErrorMessage = "Product name must be between 2 and 200 characters")]
     public string Name { get; set; } = string.Empty;
-    
-    [Required(ErrorMessage = "SKU is required")]
-    [StringLength(50, MinimumLength = 2, ErrorMessage = "SKU must be between 2 and 50 characters")]
-    public string SKU { get; set; } = string.Empty;
-    
+
     [StringLength(1000, ErrorMessage = "Description must not exceed 1000 characters")]
     public string? Description { get; set; }
     

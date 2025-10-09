@@ -6,7 +6,6 @@ public class Product
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
-    public string SKU { get; set; } = string.Empty;
     public string? Description { get; set; }
     // Quantity removed - use CurrentQuantity computed property instead
     // public int Quantity { get; set; } // Removed to prevent data duplication with ProductOnHandView

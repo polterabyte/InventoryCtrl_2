@@ -20,7 +20,6 @@ public class ProductCardTests : ComponentTestBase
         {
             Id = 1,
             Name = "Test Product",
-            SKU = "TEST-001",
             Description = "Test Description",
             Quantity = 100,
             UnitOfMeasureSymbol = "pcs",
@@ -31,7 +30,6 @@ public class ProductCardTests : ComponentTestBase
             .Add(p => p.Product, product));
 
         cut.Find("h5").TextContent.Should().Be("Test Product");
-        cut.Find(".card-text").TextContent.Should().Contain("TEST-001");
         cut.Find(".badge").TextContent.Should().Be("100 pcs");
     }
 
@@ -42,7 +40,6 @@ public class ProductCardTests : ComponentTestBase
         {
             Id = 1,
             Name = "Low Stock Product",
-            SKU = "LOW-001",
             Quantity = 0,
             UnitOfMeasureSymbol = "pcs"
         };

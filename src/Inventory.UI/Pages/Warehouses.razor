@@ -61,7 +61,7 @@
                                         {
                                             <RadzenCard Style="@GetCardStyle(card.Id)">
                                                 <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
-                                                    <RadzenText TextStyle="TextStyle.Subtitle2">@card.ProductName (@card.SKU)</RadzenText>
+                                                    <RadzenText TextStyle="TextStyle.Subtitle2">@card.ProductName</RadzenText>
                                                     <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary);">Порог: @card.MinThreshold–@card.MaxThreshold @card.UnitOfMeasureSymbol</RadzenText>
                                                     <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary);">Остаток: @card.CurrentQuantity @card.UnitOfMeasureSymbol</RadzenText>
                                                     @if (IsLowStock(card.Id))

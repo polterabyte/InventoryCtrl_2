@@ -37,7 +37,7 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
             // Apply filters
             if (!string.IsNullOrEmpty(search))
             {
-                query = query.Where(p => p.Name.Contains(search) || p.SKU.Contains(search) || 
+                query = query.Where(p => p.Name.Contains(search) ||
                     (p.Description != null && p.Description.Contains(search)));
             }
 
@@ -72,7 +72,6 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 {
                     Id = p.Id,
                     Name = p.Name,
-                    SKU = p.SKU,
                     Description = p.Description,
                     Quantity = 0, // Will be populated from ProductOnHandView
                     UnitOfMeasureId = p.UnitOfMeasureId,
@@ -140,7 +139,6 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
             {
                 Id = product.Id,
                 Name = product.Name,
-                SKU = product.SKU,
                 Description = product.Description,
                 Quantity = 0, // Will be populated from ProductOnHandView
                 UnitOfMeasureId = product.UnitOfMeasureId,
@@ -174,59 +172,7 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
         }
     }
 
-    [HttpGet("sku/{sku}")]
-    public async Task<ActionResult<ApiResponse<ProductDto>>> GetProductBySku(string sku)
-    {
-        try
-        {
-            var product = await context.Products
-                .Include(p => p.Category)
-                .Include(p => p.ProductModel)
-                .Include(p => p.ProductGroup)
-                .FirstOrDefaultAsync(p => p.SKU == sku && p.IsActive);
 
-            if (product == null)
-            {
-                return NotFound(ApiResponse<ProductDto>.ErrorResult("Product not found"));
-            }
-
-            var productDto = new ProductDto
-            {
-                Id = product.Id,
-                Name = product.Name,
-                SKU = product.SKU,
-                Description = product.Description,
-                Quantity = 0, // Will be populated from ProductOnHandView
-                UnitOfMeasureId = product.UnitOfMeasureId,
-                UnitOfMeasureName = product.UnitOfMeasure.Name,
-                UnitOfMeasureSymbol = product.UnitOfMeasure.Symbol,
-                IsActive = product.IsActive,
-                CategoryId = product.CategoryId,
-                CategoryName = product.Category.Name,
-                ProductModelId = product.ProductModelId,
-                ProductModelName = product.ProductModel.Name,
-                ProductGroupId = product.ProductGroupId,
-                ProductGroupName = product.ProductGroup.Name,
-                Note = product.Note,
-                CreatedAt = product.CreatedAt,
-                UpdatedAt = product.UpdatedAt
-            };
-            
-            // Get quantity from ProductOnHandView
-            var onHandQuantity = await context.ProductOnHand
-                .Where(v => v.ProductId == product.Id)
-                .Select(v => v.OnHandQty)
-                .FirstOrDefaultAsync();
-            productDto.Quantity = onHandQuantity;
-
-            return Ok(ApiResponse<ProductDto>.SuccessResult(productDto));
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error retrieving product by SKU {SKU}", sku);
-            return StatusCode(500, ApiResponse<ProductDto>.ErrorResult("Failed to retrieve product"));
-        }
-    }
 
     [HttpPost]
     public async Task<ActionResult<ApiResponse<ProductDto>>> CreateProduct([FromBody] CreateProductDto request)
@@ -246,17 +192,9 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 return StatusCode(StatusCodes.Status403Forbidden, ApiResponse<ProductDto>.ErrorResult("Only administrators can create inactive products"));
             }
 
-            // Check if SKU already exists
-            var existingProduct = await context.Products.FirstOrDefaultAsync(p => p.SKU == request.SKU);
-            if (existingProduct != null)
-            {
-                return BadRequest(ApiResponse<ProductDto>.ErrorResult("Product with this SKU already exists"));
-            }
-
             var product = new Product
             {
                 Name = request.Name,
-                SKU = request.SKU,
                 Description = request.Description,
                 // New products start with 0 quantity - actual quantity managed through transactions
                 UnitOfMeasureId = request.UnitOfMeasureId,
@@ -280,9 +218,8 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 ActionType.Create,
                 "Product",
                 null,
-                new { 
-                    Name = product.Name, 
-                    SKU = product.SKU, 
+                new {
+                    Name = product.Name,
                     Description = product.Description,
                      CategoryId = product.CategoryId,
                      ProductModelId = product.ProductModelId,
@@ -292,7 +229,7 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                     IsActive = product.IsActive,
                     CreatedAt = product.CreatedAt
                 },
-                $"Product '{product.Name}' created with SKU '{product.SKU}'",
+                $"Product '{product.Name}' created",
                 requestId
             );
 
@@ -308,7 +245,6 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
             {
                 Id = createdProduct.Id,
                 Name = createdProduct.Name,
-                SKU = createdProduct.SKU,
                 Description = createdProduct.Description,
                 Quantity = 0, // Will be populated from ProductOnHandView
                 UnitOfMeasureId = createdProduct.UnitOfMeasureId,
@@ -333,7 +269,7 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
                 .FirstOrDefaultAsync();
             productDto.Quantity = onHandQuantity;
 
-            logger.LogInformation("Product created: {ProductName} with SKU {SKU}", product.Name, product.SKU);
+            logger.LogInformation("Product created: {ProductName}", product.Name);
 
             return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, ApiResponse<ProductDto>.SuccessResult(productDto));
         }
@@ -433,7 +369,6 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
             {
                 Id = product.Id,
                 Name = product.Name,
-                SKU = product.SKU,
                 Description = product.Description,
                 Quantity = 0, // Will be populated from ProductOnHandView
                 UnitOfMeasureId = product.UnitOfMeasureId,
@@ -475,7 +410,6 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
             var oldValues = new
             {
                 Name = product.Name,
-                SKU = product.SKU,
                 Description = product.Description,
                 IsActive = product.IsActive,
                 UpdatedAt = product.UpdatedAt
@@ -492,7 +426,6 @@ public class ProductController(AppDbContext context, ILogger<ProductController> 
             var newValues = new
             {
                 Name = product.Name,
-                SKU = product.SKU,
                 Description = product.Description,
                 IsActive = product.IsActive,
                 UpdatedAt = product.UpdatedAt

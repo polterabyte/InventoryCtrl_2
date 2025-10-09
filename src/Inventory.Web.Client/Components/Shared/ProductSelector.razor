@@ -25,9 +25,9 @@
             <RadzenRow Gap="1rem">
                 <RadzenColumn Size="12">
                     <RadzenLabel Text="Search Products" Component="productSearch" />
-                    <RadzenTextBox @bind-Value="searchTerm" 
+                    <RadzenTextBox @bind-Value="searchTerm"
                                    Name="productSearch"
-                                   Placeholder="Search by name, SKU, or description..."
+                                   Placeholder="Search by name or description..."
                                    Style="width: 100%"
                                    @onkeypress="@HandleSearchKeyPress"
                                    @oninput="@HandleSearchInput" />
@@ -71,7 +71,7 @@
                 <RadzenStack Gap="0.5rem">
                     <RadzenText TextStyle="TextStyle.Subtitle1" Class="rz-m-0">Selected: @SelectedProduct.Name</RadzenText>
                     <RadzenText TextStyle="TextStyle.Body2" Class="rz-text-secondary rz-m-0">
-                        SKU: @SelectedProduct.SKU | Category: @SelectedProduct.CategoryName
+                        Category: @SelectedProduct.CategoryName
                     </RadzenText>
                     @if (!string.IsNullOrEmpty(SelectedProduct.Description))
                     {
@@ -142,7 +142,6 @@
                                 SelectionMode="DataGridSelectionMode.Single"
                                 Class="product-grid">
                     <Columns>
-                        <RadzenDataGridColumn TItem="ProductDto" Property="SKU" Title="SKU" Width="120px" />
                         <RadzenDataGridColumn TItem="ProductDto" Property="Name" Title="Name" />
                         <RadzenDataGridColumn TItem="ProductDto" Property="CategoryName" Title="Category" Width="150px" />
                         <RadzenDataGridColumn TItem="ProductDto" Property="Quantity" Title="Stock" Width="80px">
@@ -242,9 +241,8 @@
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
                 var searchLower = searchTerm.ToLowerInvariant();
-                allProducts = allProducts.Where(p => 
+                allProducts = allProducts.Where(p =>
                     p.Name.ToLowerInvariant().Contains(searchLower) ||
-                    p.SKU.ToLowerInvariant().Contains(searchLower) ||
                     (p.Description != null && p.Description.ToLowerInvariant().Contains(searchLower))
                 ).ToList();
             }

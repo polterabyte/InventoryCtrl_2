@@ -234,7 +234,6 @@ public class RequestsController(AppDbContext db, IRequestService service, ILogge
                         Id = t.Id,
                         ProductId = t.ProductId,
                         ProductName = t.Product.Name,
-                        ProductSku = t.Product.SKU,
                         WarehouseId = t.WarehouseId,
                         WarehouseName = t.Warehouse.Name,
                         Quantity = t.Quantity,

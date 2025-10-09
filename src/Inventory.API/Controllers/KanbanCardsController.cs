@@ -29,13 +29,12 @@ public class KanbanCardsController(AppDbContext context, ILogger<KanbanCardsCont
             var items = await query
                 .OrderBy(k => k.Product.Name)
                 .ThenBy(k => k.Warehouse.Name)
-                .Select(k => new KanbanCardDto
-                {
-                    Id = k.Id,
-                    ProductId = k.ProductId,
-                    ProductName = k.Product.Name,
-                    SKU = k.Product.SKU,
-                    WarehouseId = k.WarehouseId,
+                 .Select(k => new KanbanCardDto
+                 {
+                     Id = k.Id,
+                     ProductId = k.ProductId,
+                     ProductName = k.Product.Name,
+                     WarehouseId = k.WarehouseId,
                     WarehouseName = k.Warehouse.Name,
                     MinThreshold = k.MinThreshold,
                     MaxThreshold = k.MaxThreshold,
@@ -109,7 +108,6 @@ public class KanbanCardsController(AppDbContext context, ILogger<KanbanCardsCont
             Id = entity.Id,
             ProductId = entity.ProductId,
             ProductName = entity.Product.Name,
-            SKU = entity.Product.SKU,
             WarehouseId = entity.WarehouseId,
             WarehouseName = entity.Warehouse.Name,
             MinThreshold = entity.MinThreshold,
@@ -183,7 +181,6 @@ public class KanbanCardsController(AppDbContext context, ILogger<KanbanCardsCont
                 Id = entity.Id,
                 ProductId = entity.ProductId,
                 ProductName = entity.Product.Name,
-                SKU = entity.Product.SKU,
                 WarehouseId = entity.WarehouseId,
                 WarehouseName = entity.Warehouse.Name,
                 MinThreshold = entity.MinThreshold,
@@ -235,7 +232,6 @@ public class KanbanCardsController(AppDbContext context, ILogger<KanbanCardsCont
                 Id = entity.Id,
                 ProductId = entity.ProductId,
                 ProductName = entity.Product.Name,
-                SKU = entity.Product.SKU,
                 WarehouseId = entity.WarehouseId,
                 WarehouseName = entity.Warehouse.Name,
                 MinThreshold = entity.MinThreshold,

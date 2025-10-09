@@ -92,12 +92,11 @@ public class DashboardController(AppDbContext context, ILogger<DashboardControll
                 .Where(t => t.Date >= DateTime.UtcNow.AddDays(-7))
                 .OrderByDescending(t => t.Date)
                 .Take(10)
-                .Select(t => new RecentTransactionDto
-                {
-                    Id = t.Id,
-                    ProductName = t.Product.Name,
-                    ProductSku = t.Product.SKU,
-                    Type = t.Type.ToString(),
+                 .Select(t => new RecentTransactionDto
+                 {
+                     Id = t.Id,
+                     ProductName = t.Product.Name,
+                     Type = t.Type.ToString(),
                     Quantity = t.Quantity,
                     Date = t.Date,
                     UserName = t.User.UserName ?? "N/A",
@@ -116,7 +115,6 @@ public class DashboardController(AppDbContext context, ILogger<DashboardControll
                 {
                     Id = p.Id,
                     Name = p.Name,
-                    SKU = p.SKU,
                     Quantity = 0, // Will be populated from ProductOnHandView
                     CategoryName = p.Category.Name,
                     ManufacturerName = null, // Manufacturer removed
@@ -161,12 +159,11 @@ public class DashboardController(AppDbContext context, ILogger<DashboardControll
                 .Select(group =>
                 {
                     var first = group.First();
-                    return new LowStockProductDto
-                    {
-                        ProductId = first.ProductId,
-                        ProductName = first.ProductName,
-                        SKU = first.SKU,
-                        CategoryName = first.CategoryName,
+                     return new LowStockProductDto
+                     {
+                         ProductId = first.ProductId,
+                         ProductName = first.ProductName,
+                         CategoryName = first.CategoryName,
                         UnitOfMeasureSymbol = first.UnitOfMeasureSymbol,
                         KanbanCards = group.ToList()
                     };
@@ -215,13 +212,12 @@ public class DashboardController(AppDbContext context, ILogger<DashboardControll
     {
         var kanbanCards = await context.KanbanCards
             .Where(k => k.Product.IsActive && k.Warehouse.IsActive)
-            .Select(k => new
-            {
-                k.Id,
-                k.ProductId,
-                ProductName = k.Product.Name,
-                k.Product.SKU,
-                CategoryName = k.Product.Category.Name,
+             .Select(k => new
+             {
+                 k.Id,
+                 k.ProductId,
+                 ProductName = k.Product.Name,
+                 CategoryName = k.Product.Category.Name,
                 k.WarehouseId,
                 WarehouseName = k.Warehouse.Name,
                 k.MinThreshold,
@@ -256,13 +252,12 @@ public class DashboardController(AppDbContext context, ILogger<DashboardControll
             {
                 var key = (card.ProductId, card.WarehouseId);
                 var quantity = onHandLookup.TryGetValue(key, out var value) ? value : 0;
-                return new LowStockKanbanDto
-                {
-                    KanbanCardId = card.Id,
-                    ProductId = card.ProductId,
-                    ProductName = card.ProductName,
-                    SKU = card.SKU,
-                    CategoryName = card.CategoryName,
+                 return new LowStockKanbanDto
+                 {
+                     KanbanCardId = card.Id,
+                     ProductId = card.ProductId,
+                     ProductName = card.ProductName,
+                     CategoryName = card.CategoryName,
                     WarehouseId = card.WarehouseId,
                     WarehouseName = card.WarehouseName,
                     CurrentQuantity = quantity,
